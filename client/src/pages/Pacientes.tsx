@@ -3,20 +3,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OPERADORAS } from "@/lib/operadoras";
 
+type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso";
+type SortDirection = "asc" | "desc" | null;
+
 export default function Pacientes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   
-  // Filtros individuais por coluna
-  const [filtroNome, setFiltroNome] = useState("");
-  const [filtroCPF, setFiltroCPF] = useState("");
-  const [filtroTelefone, setFiltroTelefone] = useState("");
+  // Ordenação
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  
+  // Filtros individuais por coluna (removidos Nome, CPF, Telefone)
   const [filtroCidade, setFiltroCidade] = useState("");
   const [filtroUF, setFiltroUF] = useState("");
   const [filtroOperadora, setFiltroOperadora] = useState("");
@@ -33,7 +37,25 @@ export default function Pacientes() {
     limit: 10000,
   });
 
-  // Busca global por Nome, CPF ou ID
+  // Função de ordenação
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Se já está ordenando por este campo, alterna a direção
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        // Terceiro clique remove a ordenação
+        setSortField(null);
+        setSortDirection(null);
+      }
+    } else {
+      // Novo campo, começa com ascendente
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Busca e filtros
   const pacientesFiltrados = useMemo(() => {
     if (!pacientes) return [];
 
@@ -57,26 +79,6 @@ export default function Pacientes() {
     }
 
     // Filtros por coluna
-    if (filtroNome) {
-      resultado = resultado.filter((p) =>
-        p.nome?.toLowerCase().includes(filtroNome.toLowerCase())
-      );
-    }
-
-    if (filtroCPF) {
-      const cpfLimpo = filtroCPF.replace(/[^\d]/g, "");
-      resultado = resultado.filter((p) =>
-        p.cpf?.replace(/[^\d]/g, "").includes(cpfLimpo)
-      );
-    }
-
-    if (filtroTelefone) {
-      const telLimpo = filtroTelefone.replace(/[^\d]/g, "");
-      resultado = resultado.filter((p) =>
-        p.telefone?.replace(/[^\d]/g, "").includes(telLimpo)
-      );
-    }
-
     if (filtroCidade) {
       resultado = resultado.filter((p) =>
         p.cidade?.toLowerCase().includes(filtroCidade.toLowerCase())
@@ -119,7 +121,7 @@ export default function Pacientes() {
 
     if (filtroDataAte) {
       const dataAte = new Date(filtroDataAte);
-      dataAte.setHours(23, 59, 59, 999); // Incluir todo o dia
+      dataAte.setHours(23, 59, 59, 999);
       resultado = resultado.filter((p) => {
         if (!p.dataInclusao) return false;
         const dataInclusao = new Date(p.dataInclusao);
@@ -127,8 +129,19 @@ export default function Pacientes() {
       });
     }
 
+    // Ordenação
+    if (sortField && sortDirection) {
+      resultado = [...resultado].sort((a, b) => {
+        const aVal = a[sortField] || "";
+        const bVal = b[sortField] || "";
+        
+        const comparison = String(aVal).localeCompare(String(bVal), 'pt-BR', { numeric: true });
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
     return resultado;
-  }, [pacientes, searchTerm, filtroNome, filtroCPF, filtroTelefone, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte]);
+  }, [pacientes, searchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, sortField, sortDirection]);
 
   // Paginação
   const totalPaginas = Math.ceil(pacientesFiltrados.length / itensPorPagina);
@@ -138,9 +151,6 @@ export default function Pacientes() {
 
   const limparFiltros = () => {
     setSearchTerm("");
-    setFiltroNome("");
-    setFiltroCPF("");
-    setFiltroTelefone("");
     setFiltroCidade("");
     setFiltroUF("");
     setFiltroOperadora("");
@@ -148,15 +158,34 @@ export default function Pacientes() {
     setFiltroDiagnostico("");
     setFiltroDataDe("");
     setFiltroDataAte("");
+    setSortField(null);
+    setSortDirection(null);
     setPaginaAtual(1);
   };
 
-  const temFiltrosAtivos = searchTerm || filtroNome || filtroCPF || filtroTelefone || filtroCidade || filtroUF || filtroOperadora || filtroStatus || filtroDiagnostico || filtroDataDe || filtroDataAte;
+  const temFiltrosAtivos = searchTerm || filtroCidade || filtroUF || filtroOperadora || filtroStatus || filtroDiagnostico || filtroDataDe || filtroDataAte;
 
   // Resetar página ao mudar filtros
   useMemo(() => {
     setPaginaAtual(1);
-  }, [searchTerm, filtroNome, filtroCPF, filtroTelefone, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte]);
+  }, [searchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte]);
+
+  // Componente de cabeçalho ordenável
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-muted/50 select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field ? (
+          sortDirection === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+        ) : (
+          <ArrowUpDown className="h-4 w-4 opacity-30" />
+        )}
+      </div>
+    </TableHead>
+  );
 
   return (
     <div className="space-y-6">
@@ -210,36 +239,9 @@ export default function Pacientes() {
             )}
           </div>
 
-          {/* Filtros por Coluna */}
+          {/* Filtros por Coluna (simplificados) */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Nome</label>
-                <Input
-                  placeholder="Filtrar por nome..."
-                  value={filtroNome}
-                  onChange={(e) => setFiltroNome(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">CPF</label>
-                <Input
-                  placeholder="Filtrar por CPF..."
-                  value={filtroCPF}
-                  onChange={(e) => setFiltroCPF(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Telefone</label>
-                <Input
-                  placeholder="Filtrar por telefone..."
-                  value={filtroTelefone}
-                  onChange={(e) => setFiltroTelefone(e.target.value)}
-                />
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Cidade</label>
                 <Input
@@ -356,16 +358,16 @@ export default function Pacientes() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>CPF</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead>Cidade</TableHead>
-                      <TableHead>UF</TableHead>
-                      <TableHead>Convênio 1</TableHead>
-                      <TableHead>Convênio 2</TableHead>
-                      <TableHead>Diagnóstico</TableHead>
-                      <TableHead>Status</TableHead>
+                      <SortableHeader field="idPaciente">ID</SortableHeader>
+                      <SortableHeader field="nome">Nome</SortableHeader>
+                      <SortableHeader field="cpf">CPF</SortableHeader>
+                      <SortableHeader field="telefone">Telefone</SortableHeader>
+                      <SortableHeader field="cidade">Cidade</SortableHeader>
+                      <SortableHeader field="uf">UF</SortableHeader>
+                      <SortableHeader field="operadora1">Convênio 1</SortableHeader>
+                      <SortableHeader field="operadora2">Convênio 2</SortableHeader>
+                      <SortableHeader field="diagnosticoEspecifico">Diagnóstico</SortableHeader>
+                      <SortableHeader field="statusCaso">Status</SortableHeader>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

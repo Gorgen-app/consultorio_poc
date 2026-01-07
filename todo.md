@@ -251,3 +251,11 @@
 - [x] Botões Anterior/Próxima para navegação
 - [x] Seletor de itens por página (20, 50, 100)
 - [x] Performance otimizada com useMemo
+
+
+### Refinamentos Gorgen 1.1
+- [x] Ordenação por coluna ao clicar no cabeçalho (A-Z / Z-A alternando)
+- [x] Remover filtros redundantes: Nome, CPF, Telefone (manter apenas na busca global)
+- [x] Ícone visual indicando direção da ordenação (↑ ↓)
+- [x] Terceiro clique remove ordenação
+- [x] Hover effect nos cabeçalhos ordenáveis
