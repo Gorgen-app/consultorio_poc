@@ -112,8 +112,7 @@ export default function Atendimentos() {
     // Filtros por coluna
     if (filtroIdade) {
       resultado = resultado.filter((atd) => {
-        const idade = atd.pacientes?.nome?.match(/\d+$/)?.[0];
-        return idade === filtroIdade;
+        return atd.pacientes?.idade?.toString() === filtroIdade;
       });
     }
 
@@ -426,8 +425,8 @@ export default function Atendimentos() {
                         <TableCell className="font-medium">{atd.atendimento}</TableCell>
                         <TableCell>{formatarData(atd.dataAtendimento)}</TableCell>
                         <TableCell>{atd.tipoAtendimento || "-"}</TableCell>
-                        <TableCell>{atd.pacientes?.nome?.replace(/\s+\d+$/, '') || atd.pacientes?.nome || "-"}</TableCell>
-                        <TableCell>{atd.pacientes?.nome?.match(/\d+$/)?.[0] || "-"}</TableCell>
+                        <TableCell>{atd.pacientes?.nome || "-"}</TableCell>
+                        <TableCell>{atd.pacientes?.idade ?? "-"}</TableCell>
                         <TableCell>{atd.local || "-"}</TableCell>
                         <TableCell>{atd.convenio || "-"}</TableCell>
                         <TableCell>

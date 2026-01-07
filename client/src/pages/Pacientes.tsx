@@ -92,8 +92,7 @@ export default function Pacientes() {
     // Filtros por coluna
     if (filtroIdade) {
       resultado = resultado.filter((p) => {
-        const idade = p.nome?.match(/\d+$/)?.[0];
-        return idade === filtroIdade;
+        return p.idade?.toString() === filtroIdade;
       });
     }
 
@@ -412,8 +411,8 @@ export default function Pacientes() {
                     {pacientesPaginados.map((paciente) => (
                       <TableRow key={paciente.id}>
                         <TableCell className="font-medium">{paciente.idPaciente}</TableCell>
-                        <TableCell>{paciente.nome?.replace(/\s+\d+$/, '') || paciente.nome}</TableCell>
-                        <TableCell>{paciente.nome?.match(/\d+$/)?.[0] || "-"}</TableCell>
+                        <TableCell>{paciente.nome}</TableCell>
+                        <TableCell>{paciente.idade ?? "-"}</TableCell>
                         <TableCell>{paciente.cpf || "-"}</TableCell>
                         <TableCell>{paciente.telefone || "-"}</TableCell>
                         <TableCell>{paciente.cidade || "-"}</TableCell>

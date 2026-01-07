@@ -14,9 +14,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface Paciente {
   id: number;
   idPaciente: string;
+  dataInclusao: string | Date | null;
   nome: string;
   cpf: string | null;
-  dataNascimento: string | null;
+  dataNascimento: string | Date | null;
   sexo: string | null;
   telefone: string | null;
   email: string | null;
@@ -38,7 +39,7 @@ interface Paciente {
   vigente2: string | null;
   privativo2: string | null;
   obitoPerda: string | null;
-  dataObitoLastFU: string | null;
+  dataObitoLastFU: string | Date | null;
   statusCaso: string | null;
   grupoDiagnostico: string | null;
   diagnosticoEspecifico: string | null;
@@ -86,10 +87,20 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
     e.preventDefault();
     if (!paciente) return;
 
+    // Converter campos Date para string
     const dataToSubmit = {
       ...formData,
       operadora1: formData.operadora1 === "Outro" ? outroOperadora1 : formData.operadora1,
       operadora2: formData.operadora2 === "Outro" ? outroOperadora2 : formData.operadora2,
+      dataInclusao: formData.dataInclusao instanceof Date 
+        ? formData.dataInclusao.toISOString().split('T')[0] 
+        : formData.dataInclusao,
+      dataNascimento: formData.dataNascimento instanceof Date 
+        ? formData.dataNascimento.toISOString().split('T')[0] 
+        : formData.dataNascimento,
+      dataObitoLastFU: formData.dataObitoLastFU instanceof Date 
+        ? formData.dataObitoLastFU.toISOString().split('T')[0] 
+        : formData.dataObitoLastFU,
     };
 
     updateMutation.mutate({
@@ -147,7 +158,7 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                     <Input
                       id="dataNascimento"
                       type="date"
-                      value={formData.dataNascimento || ""}
+                      value={formData.dataNascimento instanceof Date ? formData.dataNascimento.toISOString().split('T')[0] : (formData.dataNascimento || "")}
                       onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
                     />
                   </div>
@@ -474,7 +485,7 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                       <Input
                         id="dataObitoLastFU"
                         type="date"
-                        value={formData.dataObitoLastFU || ""}
+                        value={formData.dataObitoLastFU instanceof Date ? formData.dataObitoLastFU.toISOString().split('T')[0] : (formData.dataObitoLastFU || "")}
                         onChange={(e) => setFormData({ ...formData, dataObitoLastFU: e.target.value })}
                       />
                     </div>

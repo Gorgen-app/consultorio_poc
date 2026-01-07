@@ -344,3 +344,7 @@
 - [x] Bug: ID, data, local, tipo de atendimento e convênio não aparecem na tabela de Atendimentos (RESOLVIDO: corrigido select no db.ts para retornar estrutura flat com getTableColumns)
 
 - [x] Adicionar coluna "Idade" nas tabelas de Pacientes e Atendimentos (extrair número após o nome, com filtro e ordenação)
+
+- [x] Implementar idade dinâmica baseada em data de nascimento (calcular automaticamente com base na data atual)
+
+- [x] Bug: Erro ao atualizar paciente - "Invalid input: expected string, received Date" no campo dataInclusao

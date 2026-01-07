@@ -125,7 +125,7 @@ export async function listPacientes(filters?: {
   status?: string;
   limit?: number;
   offset?: number;
-}): Promise<Paciente[]> {
+}): Promise<any[]> {
   const db = await getDb();
   if (!db) return [];
 
@@ -172,7 +172,11 @@ export async function listPacientes(filters?: {
     query = query.offset(filters.offset) as any;
   }
 
-  return query;
+  const result = await query;
+  
+  // Adicionar idade calculada a cada paciente
+  const { adicionarIdadeAosPacientes } = await import('./idade-helper');
+  return adicionarIdadeAosPacientes(result);
 }
 
 export async function updatePaciente(id: number, data: Partial<InsertPaciente>): Promise<Paciente | undefined> {
@@ -250,6 +254,7 @@ export async function listAtendimentos(filters?: {
         id: pacientesColumns.id,
         nome: pacientesColumns.nome,
         idPaciente: pacientesColumns.idPaciente,
+        dataNascimento: pacientesColumns.dataNascimento,
       }
     })
     .from(atendimentos)
@@ -286,7 +291,17 @@ export async function listAtendimentos(filters?: {
     query = query.offset(filters.offset) as any;
   }
 
-  return query;
+  const result = await query;
+  
+  // Adicionar idade calculada para cada paciente nos atendimentos
+  const { calcularIdade } = await import('./idade-helper');
+  return result.map(atd => ({
+    ...atd,
+    pacientes: atd.pacientes ? {
+      ...atd.pacientes,
+      idade: calcularIdade(atd.pacientes.dataNascimento)
+    } : null
+  }));
 }
 
 export async function updateAtendimento(id: number, data: Partial<InsertAtendimento>): Promise<Atendimento | undefined> {
