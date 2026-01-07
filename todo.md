@@ -422,4 +422,20 @@
 
 - [x] Bug: Botão Novo Atendimento retorna erro 404 (corrigido - rota era /atendimentos/novo)
 
-- [x] Bug: Sistema de busca corrigido - melhorado autocomplete em Novo Atendimento com feedback visual de "nenhum resultado"
+- [ ] Bug: Sistema de busca ainda não funciona - autocomplete não filtra resultados ao digitar
+- [ ] Adicionar botão "Pesquisar" nas abas de busca como alternativa
+
+
+## 🚀 GORGEN 1.9 - Correção de Bug de Busca
+
+### Bug Corrigido: Busca/Filtro não funcionava
+- [x] Identificado problema: filtroIdade não estava nas dependências do useMemo
+- [x] Corrigido em Pacientes.tsx: adicionado filtroIdade às dependências
+- [x] Corrigido em Atendimentos.tsx: adicionado filtroIdade às dependências
+- [x] Removidos console.logs de debug
+- [x] Criado teste automatizado (pacientes.search.test.ts) com 8 casos de teste
+- [x] Todos os testes passando (busca por nome, CPF, ID, filtro de idade, estrutura flat)
+
+**Problema Raiz:** O useMemo não estava reagindo a mudanças no filtroIdade porque a dependência estava faltando no array de dependências. Isso causava o filtro não recalcular quando o usuário alterava o campo de busca ou filtros.
+
+**Solução:** Adicionar filtroIdade ao array de dependências do useMemo em ambas as páginas (Pacientes e Atendimentos).

@@ -190,7 +190,7 @@ export default function Atendimentos() {
     }
 
     return resultado;
-  }, [atendimentos, searchTerm, filtroTipo, filtroLocal, filtroConvenio, filtroPago, filtroDataDe, filtroDataAte, sortField, sortDirection]);
+  }, [atendimentos, searchTerm, filtroIdade, filtroTipo, filtroLocal, filtroConvenio, filtroPago, filtroDataDe, filtroDataAte, sortField, sortDirection]);
 
   // Paginação
   const totalPaginas = Math.ceil(atendimentosFiltrados.length / itensPorPagina);

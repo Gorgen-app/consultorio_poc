@@ -159,7 +159,7 @@ export default function Pacientes() {
     }
 
     return resultado;
-  }, [pacientes, searchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, sortField, sortDirection]);
+  }, [pacientes, searchTerm, filtroIdade, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, sortField, sortDirection]);
 
   // Paginação
   const totalPaginas = Math.ceil(pacientesFiltrados.length / itensPorPagina);
