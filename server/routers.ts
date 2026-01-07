@@ -86,6 +86,11 @@ export const appRouter = router({
   }),
 
   pacientes: router({
+    getNextId: protectedProcedure
+      .query(async () => {
+        return await db.getNextPacienteId();
+      }),
+
     create: protectedProcedure
       .input(pacienteSchema)
       .mutation(async ({ input }) => {

@@ -41,3 +41,15 @@
 - Autenticação: Manus OAuth
 - Design: Tema médico profissional com azul elegante
 - Fonte: Inter (Google Fonts)
+
+
+## Melhorias de Usabilidade Solicitadas
+
+- [x] ID automático sequencial para novos pacientes
+- [x] Mudar "Pasta do Paciente" para "Pasta de Documentos" com link automático
+- [x] Máscaras automáticas para CPF (999.999.999-99)
+- [x] Máscaras automáticas para telefone ((51) 99999-9999)
+- [x] Máscaras automáticas para CEP (99999-999)
+- [x] Converter campos "Vigente" e "Privativo" para checkboxes
+- [x] Converter "Óbito/Perda" para checkbox Sim/Não
+- [x] Mensagens de erro detalhadas nos formulários

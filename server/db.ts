@@ -360,3 +360,32 @@ export async function getDashboardStats() {
     })),
   };
 }
+
+export async function getNextPacienteId(): Promise<string> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select({ idPaciente: pacientes.idPaciente })
+    .from(pacientes)
+    .orderBy(desc(pacientes.id))
+    .limit(1);
+
+  if (result.length === 0) {
+    return `${new Date().getFullYear()}-0000001`;
+  }
+
+  const lastId = result[0].idPaciente;
+  if (!lastId) {
+    return `${new Date().getFullYear()}-0000001`;
+  }
+
+  const parts = lastId.split("-");
+  const year = new Date().getFullYear().toString();
+  const lastNumber = parseInt(parts[1] || "0");
+  const nextNumber = lastNumber + 1;
+
+  return `${year}-${String(nextNumber).padStart(7, "0")}`;
+}

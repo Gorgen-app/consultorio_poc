@@ -4,14 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save } from "lucide-react";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { MaskedInput } from "@/components/MaskedInput";
 
 export default function NovoPaciente() {
   const [, setLocation] = useLocation();
   const createMutation = trpc.pacientes.create.useMutation();
+  const { data: nextId, isLoading: loadingId } = trpc.pacientes.getNextId.useQuery();
 
   const [formData, setFormData] = useState({
     idPaciente: "",
@@ -33,20 +36,26 @@ export default function NovoPaciente() {
     operadora1: "",
     planoModalidade1: "",
     matriculaConvenio1: "",
-    vigente1: "",
-    privativo1: "",
+    vigente1: false,
+    privativo1: false,
     operadora2: "",
     planoModalidade2: "",
     matriculaConvenio2: "",
-    vigente2: "",
-    privativo2: "",
-    obitoPerda: "",
+    vigente2: false,
+    privativo2: false,
+    obitoPerda: false,
     dataObitoLastFU: "",
     statusCaso: "Ativo",
     grupoDiagnostico: "",
     diagnosticoEspecifico: "",
     tempoSeguimentoAnos: "",
   });
+
+  useEffect(() => {
+    if (nextId) {
+      setFormData((prev) => ({ ...prev, idPaciente: nextId }));
+    }
+  }, [nextId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,18 +64,31 @@ export default function NovoPaciente() {
       return;
     }
     try {
-      await createMutation.mutateAsync(formData as any);
+      const dataToSend = {
+        ...formData,
+        vigente1: formData.vigente1 ? "Sim" : "Não",
+        privativo1: formData.privativo1 ? "Sim" : "Não",
+        vigente2: formData.vigente2 ? "Sim" : "Não",
+        privativo2: formData.privativo2 ? "Sim" : "Não",
+        obitoPerda: formData.obitoPerda ? "Sim" : "Não",
+      };
+      await createMutation.mutateAsync(dataToSend as any);
       toast.success("Paciente cadastrado com sucesso!");
       setLocation("/pacientes");
-    } catch (error) {
-      toast.error("Erro ao cadastrar paciente");
-      console.error(error);
+    } catch (error: any) {
+      const errorMessage = error?.message || "Erro desconhecido ao cadastrar paciente";
+      toast.error(`Erro: ${errorMessage}`);
+      console.error("Erro completo:", error);
     }
   };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  if (loadingId) {
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -89,16 +111,16 @@ export default function NovoPaciente() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="idPaciente">ID Paciente *</Label>
-                  <Input id="idPaciente" value={formData.idPaciente} onChange={(e) => handleChange("idPaciente", e.target.value)} placeholder="2025-0000001" required />
+                  <Label htmlFor="idPaciente">ID Paciente (Automático)</Label>
+                  <Input id="idPaciente" value={formData.idPaciente} disabled className="bg-muted" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dataInclusao">Data de Inclusão</Label>
                   <Input id="dataInclusao" type="date" value={formData.dataInclusao} onChange={(e) => handleChange("dataInclusao", e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pastaPaciente">Pasta do Paciente</Label>
-                  <Input id="pastaPaciente" value={formData.pastaPaciente} onChange={(e) => handleChange("pastaPaciente", e.target.value)} placeholder="Número da pasta" />
+                  <Label htmlFor="pastaPaciente">Pasta de Documentos</Label>
+                  <Input id="pastaPaciente" value={formData.pastaPaciente} onChange={(e) => handleChange("pastaPaciente", e.target.value)} placeholder="Link para pasta" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -129,7 +151,7 @@ export default function NovoPaciente() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cpf">CPF</Label>
-                  <Input id="cpf" value={formData.cpf} onChange={(e) => handleChange("cpf", e.target.value)} placeholder="000.000.000-00" />
+                  <MaskedInput mask="cpf" id="cpf" value={formData.cpf} onChange={(e) => handleChange("cpf", e.target.value)} placeholder="000.000.000-00" />
                 </div>
               </div>
             </CardContent>
@@ -147,7 +169,7 @@ export default function NovoPaciente() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="telefone">Telefone</Label>
-                  <Input id="telefone" value={formData.telefone} onChange={(e) => handleChange("telefone", e.target.value)} placeholder="(00) 00000-0000" />
+                  <MaskedInput mask="telefone" id="telefone" value={formData.telefone} onChange={(e) => handleChange("telefone", e.target.value)} placeholder="(51) 99999-9999" />
                 </div>
               </div>
             </CardContent>
@@ -171,7 +193,7 @@ export default function NovoPaciente() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="cep">CEP</Label>
-                  <Input id="cep" value={formData.cep} onChange={(e) => handleChange("cep", e.target.value)} placeholder="00000-000" />
+                  <MaskedInput mask="cep" id="cep" value={formData.cep} onChange={(e) => handleChange("cep", e.target.value)} placeholder="00000-000" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cidade">Cidade</Label>
@@ -209,13 +231,13 @@ export default function NovoPaciente() {
                   <Label htmlFor="matriculaConvenio1">Matrícula</Label>
                   <Input id="matriculaConvenio1" value={formData.matriculaConvenio1} onChange={(e) => handleChange("matriculaConvenio1", e.target.value)} placeholder="Número da matrícula" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vigente1">Vigente</Label>
-                  <Input id="vigente1" value={formData.vigente1} onChange={(e) => handleChange("vigente1", e.target.value)} placeholder="Sim/Não" />
+                <div className="flex items-center space-x-2 mt-8">
+                  <Checkbox id="vigente1" checked={formData.vigente1} onCheckedChange={(checked) => handleChange("vigente1", checked)} />
+                  <Label htmlFor="vigente1" className="cursor-pointer">Vigente</Label>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="privativo1">Privativo</Label>
-                  <Input id="privativo1" value={formData.privativo1} onChange={(e) => handleChange("privativo1", e.target.value)} placeholder="Sim/Não" />
+                <div className="flex items-center space-x-2 mt-8">
+                  <Checkbox id="privativo1" checked={formData.privativo1} onCheckedChange={(checked) => handleChange("privativo1", checked)} />
+                  <Label htmlFor="privativo1" className="cursor-pointer">Privativo</Label>
                 </div>
               </div>
             </CardContent>
@@ -241,13 +263,13 @@ export default function NovoPaciente() {
                   <Label htmlFor="matriculaConvenio2">Matrícula</Label>
                   <Input id="matriculaConvenio2" value={formData.matriculaConvenio2} onChange={(e) => handleChange("matriculaConvenio2", e.target.value)} placeholder="Número da matrícula" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vigente2">Vigente</Label>
-                  <Input id="vigente2" value={formData.vigente2} onChange={(e) => handleChange("vigente2", e.target.value)} placeholder="Sim/Não" />
+                <div className="flex items-center space-x-2 mt-8">
+                  <Checkbox id="vigente2" checked={formData.vigente2} onCheckedChange={(checked) => handleChange("vigente2", checked)} />
+                  <Label htmlFor="vigente2" className="cursor-pointer">Vigente</Label>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="privativo2">Privativo</Label>
-                  <Input id="privativo2" value={formData.privativo2} onChange={(e) => handleChange("privativo2", e.target.value)} placeholder="Sim/Não" />
+                <div className="flex items-center space-x-2 mt-8">
+                  <Checkbox id="privativo2" checked={formData.privativo2} onCheckedChange={(checked) => handleChange("privativo2", checked)} />
+                  <Label htmlFor="privativo2" className="cursor-pointer">Privativo</Label>
                 </div>
               </div>
             </CardContent>
@@ -276,14 +298,12 @@ export default function NovoPaciente() {
                     <SelectContent>
                       <SelectItem value="Ativo">Ativo</SelectItem>
                       <SelectItem value="Inativo">Inativo</SelectItem>
-                      <SelectItem value="Óbito">Óbito</SelectItem>
-                      <SelectItem value="Perda de Seguimento">Perda de Seguimento</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="obitoPerda">Óbito/Perda</Label>
-                  <Input id="obitoPerda" value={formData.obitoPerda} onChange={(e) => handleChange("obitoPerda", e.target.value)} placeholder="Informações adicionais" />
+                <div className="flex items-center space-x-2 mt-8">
+                  <Checkbox id="obitoPerda" checked={formData.obitoPerda} onCheckedChange={(checked) => handleChange("obitoPerda", checked)} />
+                  <Label htmlFor="obitoPerda" className="cursor-pointer">Óbito/Perda de Seguimento</Label>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dataObitoLastFU">Data Óbito/Last FU</Label>
