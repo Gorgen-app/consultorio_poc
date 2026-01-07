@@ -10,6 +10,7 @@ import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { MaskedInput } from "@/components/MaskedInput";
+import { OPERADORAS } from "@/lib/operadoras";
 
 export default function NovoPaciente() {
   const [, setLocation] = useLocation();
@@ -34,11 +35,13 @@ export default function NovoPaciente() {
     uf: "",
     pais: "Brasil",
     operadora1: "",
+    operadora1Outro: "",
     planoModalidade1: "",
     matriculaConvenio1: "",
     vigente1: false,
     privativo1: false,
     operadora2: "",
+    operadora2Outro: "",
     planoModalidade2: "",
     matriculaConvenio2: "",
     vigente2: false,
@@ -66,11 +69,36 @@ export default function NovoPaciente() {
     try {
       const dataToSend = {
         ...formData,
+        // Converter datas vazias para null
+        dataInclusao: formData.dataInclusao || null,
+        dataNascimento: formData.dataNascimento || null,
+        dataObitoLastFU: formData.dataObitoLastFU || null,
+        // Converter checkboxes
         vigente1: formData.vigente1 ? "Sim" : "Não",
         privativo1: formData.privativo1 ? "Sim" : "Não",
         vigente2: formData.vigente2 ? "Sim" : "Não",
         privativo2: formData.privativo2 ? "Sim" : "Não",
         obitoPerda: formData.obitoPerda ? "Sim" : "Não",
+        // Converter campos vazios para null
+        cpf: formData.cpf || null,
+        nomeMae: formData.nomeMae || null,
+        email: formData.email || null,
+        telefone: formData.telefone || null,
+        endereco: formData.endereco || null,
+        bairro: formData.bairro || null,
+        cep: formData.cep || null,
+        cidade: formData.cidade || null,
+        uf: formData.uf || null,
+        operadora1: formData.operadora1 === "Outro" ? formData.operadora1Outro : formData.operadora1 || null,
+        planoModalidade1: formData.planoModalidade1 || null,
+        matriculaConvenio1: formData.matriculaConvenio1 || null,
+        operadora2: formData.operadora2 === "Outro" ? formData.operadora2Outro : formData.operadora2 || null,
+        planoModalidade2: formData.planoModalidade2 || null,
+        matriculaConvenio2: formData.matriculaConvenio2 || null,
+        grupoDiagnostico: formData.grupoDiagnostico || null,
+        diagnosticoEspecifico: formData.diagnosticoEspecifico || null,
+        tempoSeguimentoAnos: formData.tempoSeguimentoAnos || null,
+        pastaPaciente: formData.pastaPaciente || null,
       };
       await createMutation.mutateAsync(dataToSend as any);
       toast.success("Paciente cadastrado com sucesso!");
@@ -219,8 +247,21 @@ export default function NovoPaciente() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="operadora1">Operadora</Label>
-                  <Input id="operadora1" value={formData.operadora1} onChange={(e) => handleChange("operadora1", e.target.value)} placeholder="Nome da operadora" />
+                  <Select value={formData.operadora1} onValueChange={(value) => handleChange("operadora1", value)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione a operadora" /></SelectTrigger>
+                    <SelectContent>
+                      {OPERADORAS.map((op) => (
+                        <SelectItem key={op} value={op}>{op}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+                {formData.operadora1 === "Outro" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="operadora1Outro">Descreva a Operadora</Label>
+                    <Input id="operadora1Outro" value={formData.operadora1Outro} onChange={(e) => handleChange("operadora1Outro", e.target.value)} placeholder="Nome da operadora" />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="planoModalidade1">Plano/Modalidade</Label>
                   <Input id="planoModalidade1" value={formData.planoModalidade1} onChange={(e) => handleChange("planoModalidade1", e.target.value)} placeholder="Tipo do plano" />
@@ -251,8 +292,21 @@ export default function NovoPaciente() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="operadora2">Operadora</Label>
-                  <Input id="operadora2" value={formData.operadora2} onChange={(e) => handleChange("operadora2", e.target.value)} placeholder="Nome da operadora" />
+                  <Select value={formData.operadora2} onValueChange={(value) => handleChange("operadora2", value)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione a operadora" /></SelectTrigger>
+                    <SelectContent>
+                      {OPERADORAS.map((op) => (
+                        <SelectItem key={op} value={op}>{op}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+                {formData.operadora2 === "Outro" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="operadora2Outro">Descreva a Operadora</Label>
+                    <Input id="operadora2Outro" value={formData.operadora2Outro} onChange={(e) => handleChange("operadora2Outro", e.target.value)} placeholder="Nome da operadora" />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="planoModalidade2">Plano/Modalidade</Label>
                   <Input id="planoModalidade2" value={formData.planoModalidade2} onChange={(e) => handleChange("planoModalidade2", e.target.value)} placeholder="Tipo do plano" />

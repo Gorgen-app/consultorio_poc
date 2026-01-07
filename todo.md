@@ -53,3 +53,9 @@
 - [x] Converter campos "Vigente" e "Privativo" para checkboxes
 - [x] Converter "Óbito/Perda" para checkbox Sim/Não
 - [x] Mensagens de erro detalhadas nos formulários
+
+
+## Correções Urgentes
+
+- [x] Adicionar dropdown de operadoras com lista da tabela original
+- [x] Corrigir erro de inserção no banco de dados (campos obrigatórios)
