@@ -34,54 +34,58 @@
 
 ## 🚧 FASE 1: Consolidação da Base Administrativa (EM ANDAMENTO)
 
-### Sprint 1: Filtros e Busca Avançada (Semana 1)
-- [ ] **Filtros na Página de Pacientes**
-  - [ ] Barra de busca global
-  - [ ] Filtro por nome (busca parcial)
-  - [ ] Filtro por CPF
-  - [ ] Filtro por convênio (dropdown)
-  - [ ] Filtro por diagnóstico
-  - [ ] Filtro por status (Ativo/Óbito/Perda)
-  - [ ] Filtro por data de inclusão (período)
-  - [ ] Botão "Limpar Filtros"
-  - [ ] Contador de resultados
-  - [ ] Paginação (20, 50, 100 por página)
+### Sprint 1: Filtros e Busca Avançada ✅ CONCLUÍDO
+- [x] **Filtros na Página de Pacientes**
+  - [x] Barra de busca global (Nome, CPF, ID)
+  - [x] Filtro por nome (busca parcial) - corrigido em 07/01/2026
+  - [x] Filtro por CPF
+  - [x] Filtro por convênio (dropdown)
+  - [x] Filtro por diagnóstico
+  - [x] Filtro por status (Ativo/Óbito/Perda)
+  - [x] Filtro por data de inclusão (período)
+  - [x] Filtro por idade
+  - [x] Filtro por cidade e UF
+  - [x] Botão "Limpar Filtros"
+  - [x] Contador de resultados
+  - [x] Paginação (20, 50, 100 por página)
+  - [x] Ordenação por coluna (clique no cabeçalho)
 
-- [ ] **Filtros na Página de Atendimentos**
-  - [ ] Barra de busca global
-  - [ ] Filtro por paciente (autocomplete)
-  - [ ] Filtro por tipo de atendimento
-  - [ ] Filtro por local
-  - [ ] Filtro por convênio
-  - [ ] Filtro por data (período)
-  - [ ] Filtro por status de pagamento
-  - [ ] Filtros rápidos (Últimos 30 dias, Este mês, Este ano)
-  - [ ] Ordenação por coluna
-  - [ ] Paginação
+- [x] **Filtros na Página de Atendimentos**
+  - [x] Barra de busca global (ID, Paciente, Procedimento)
+  - [x] Filtro por tipo de atendimento
+  - [x] Filtro por local
+  - [x] Filtro por convênio
+  - [x] Filtro por data (período)
+  - [x] Filtro por status de pagamento
+  - [x] Ordenação por coluna
+  - [x] Paginação (20, 50, 100 por página)
+  - [x] Botão "Limpar Filtros"
+  - [x] Contador de resultados
 
-- [ ] **Exportação de Dados**
+- [ ] **Exportação de Dados** (PENDENTE)
   - [ ] Botão "Exportar para Excel" em Pacientes
   - [ ] Botão "Exportar para Excel" em Atendimentos
   - [ ] Exportar apenas registros filtrados
   - [ ] Formatação profissional (cabeçalhos, larguras, máscaras)
   - [ ] Nome de arquivo com data
 
-### Sprint 2: Edição de Registros (Semana 2 - Parte 1)
-- [ ] **Edição de Pacientes**
-  - [ ] Botão "Editar" em cada linha da tabela
-  - [ ] Página de edição com formulário pré-preenchido
-  - [ ] Validações mantidas
-  - [ ] Salvar alterações
-  - [ ] Log de alterações (auditoria)
+### Sprint 2: Edição de Registros
+- [x] **Edição de Pacientes** ✅ CONCLUÍDO
+  - [x] Botão "Editar" em cada linha da tabela
+  - [x] Modal de edição com formulário pré-preenchido
+  - [x] Formulário organizado em abas (Dados Básicos, Contato, Convênios, Clínico)
+  - [x] Validações mantidas
+  - [x] Salvar alterações com feedback toast
+  - [ ] Log de alterações (auditoria) - PENDENTE
 
-- [ ] **Edição de Atendimentos**
+- [ ] **Edição de Atendimentos** (PENDENTE)
   - [ ] Botão "Editar" em cada linha da tabela
-  - [ ] Página de edição com formulário pré-preenchido
+  - [ ] Modal de edição com formulário pré-preenchido
   - [ ] Não permitir alterar paciente vinculado
   - [ ] Salvar alterações
   - [ ] Log de alterações
 
-- [ ] **Exclusão de Registros**
+- [ ] **Exclusão de Registros** (PENDENTE)
   - [ ] Botão "Excluir" com confirmação
   - [ ] Exclusão lógica (soft delete)
   - [ ] Apenas administradores podem excluir
@@ -423,3 +427,39 @@
 - [x] Bug: Botão Novo Atendimento retorna erro 404 (corrigido - rota era /atendimentos/novo)
 
 - [x] Bug: Sistema de busca corrigido - melhorado autocomplete em Novo Atendimento com feedback visual de "nenhum resultado"
+
+
+---
+
+## 🚀 GORGEN 1.9.1 - Correção de Bug (07/01/2026)
+
+### Bug Corrigido
+- [x] **Filtro de busca por nome não funcionava**
+  - Problema: Busca por CPF e ID funcionava, mas busca por nome não filtrava
+  - Causa: Conversão de tipo incorreta no campo `nome`
+  - Solução: Usar `String()` para garantir conversão correta
+  - Adicionar `filtroIdade` às dependências do useMemo
+
+### Status Atual do Sistema
+- **Versão:** 1.9.1
+- **Checkpoint:** 2b61af73
+- **Data:** 07/01/2026
+
+---
+
+## 📊 RESUMO DE PROGRESSO
+
+### Fase 1 - Consolidação Base Administrativa
+| Sprint | Status | Progresso |
+|--------|--------|-----------|
+| Sprint 1: Filtros e Busca | ✅ Concluído | 100% |
+| Sprint 2: Edição | 🟡 Parcial | 60% (Pacientes OK, Atendimentos pendente) |
+| Sprint 3: Importação | ⏳ Pendente | 0% |
+| Sprint 4: Tabelas/Branding | ⏳ Pendente | 0% |
+
+### Próximas Prioridades
+1. [ ] Exportação para Excel (Pacientes e Atendimentos)
+2. [ ] Edição de Atendimentos
+3. [ ] Importação dos 21.000+ pacientes reais
+4. [ ] Integração tabela CBHPM
+
