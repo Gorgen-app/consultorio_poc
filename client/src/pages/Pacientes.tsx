@@ -2,17 +2,121 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Search, X, Filter } from "lucide-react";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { OPERADORAS } from "@/lib/operadoras";
 
 export default function Pacientes() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Filtros individuais por coluna
+  const [filtroNome, setFiltroNome] = useState("");
+  const [filtroCPF, setFiltroCPF] = useState("");
+  const [filtroTelefone, setFiltroTelefone] = useState("");
+  const [filtroCidade, setFiltroCidade] = useState("");
+  const [filtroUF, setFiltroUF] = useState("");
+  const [filtroOperadora, setFiltroOperadora] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("");
+  const [filtroDiagnostico, setFiltroDiagnostico] = useState("");
+
   const { data: pacientes, isLoading } = trpc.pacientes.list.useQuery({
-    nome: searchTerm || undefined,
-    limit: 50,
+    limit: 1000,
   });
+
+  // Busca global por Nome, CPF ou ID
+  const pacientesFiltrados = useMemo(() => {
+    if (!pacientes) return [];
+
+    let resultado = pacientes;
+
+    // Busca global (Nome, CPF ou ID)
+    if (searchTerm) {
+      const termo = searchTerm.toLowerCase().trim();
+      resultado = resultado.filter((p) => {
+        const nome = p.nome?.toLowerCase() || "";
+        const cpf = p.cpf?.toLowerCase().replace(/[^\d]/g, "") || "";
+        const id = p.idPaciente?.toLowerCase() || "";
+        const termoLimpo = termo.replace(/[^\d]/g, "");
+        
+        return (
+          nome.includes(termo) ||
+          cpf.includes(termoLimpo) ||
+          id.includes(termo)
+        );
+      });
+    }
+
+    // Filtros por coluna
+    if (filtroNome) {
+      resultado = resultado.filter((p) =>
+        p.nome?.toLowerCase().includes(filtroNome.toLowerCase())
+      );
+    }
+
+    if (filtroCPF) {
+      const cpfLimpo = filtroCPF.replace(/[^\d]/g, "");
+      resultado = resultado.filter((p) =>
+        p.cpf?.replace(/[^\d]/g, "").includes(cpfLimpo)
+      );
+    }
+
+    if (filtroTelefone) {
+      const telLimpo = filtroTelefone.replace(/[^\d]/g, "");
+      resultado = resultado.filter((p) =>
+        p.telefone?.replace(/[^\d]/g, "").includes(telLimpo)
+      );
+    }
+
+    if (filtroCidade) {
+      resultado = resultado.filter((p) =>
+        p.cidade?.toLowerCase().includes(filtroCidade.toLowerCase())
+      );
+    }
+
+    if (filtroUF) {
+      resultado = resultado.filter((p) =>
+        p.uf?.toLowerCase().includes(filtroUF.toLowerCase())
+      );
+    }
+
+    if (filtroOperadora && filtroOperadora !== "todos") {
+      resultado = resultado.filter((p) =>
+        p.operadora1?.toLowerCase().includes(filtroOperadora.toLowerCase()) ||
+        p.operadora2?.toLowerCase().includes(filtroOperadora.toLowerCase())
+      );
+    }
+
+    if (filtroStatus && filtroStatus !== "todos") {
+      resultado = resultado.filter((p) => p.statusCaso === filtroStatus);
+    }
+
+    if (filtroDiagnostico) {
+      resultado = resultado.filter((p) =>
+        p.grupoDiagnostico?.toLowerCase().includes(filtroDiagnostico.toLowerCase()) ||
+        p.diagnosticoEspecifico?.toLowerCase().includes(filtroDiagnostico.toLowerCase())
+      );
+    }
+
+    return resultado;
+  }, [pacientes, searchTerm, filtroNome, filtroCPF, filtroTelefone, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico]);
+
+  const limparFiltros = () => {
+    setSearchTerm("");
+    setFiltroNome("");
+    setFiltroCPF("");
+    setFiltroTelefone("");
+    setFiltroCidade("");
+    setFiltroUF("");
+    setFiltroOperadora("");
+    setFiltroStatus("");
+    setFiltroDiagnostico("");
+  };
+
+  const temFiltrosAtivos = searchTerm || filtroNome || filtroCPF || filtroTelefone || filtroCidade || filtroUF || filtroOperadora || filtroStatus || filtroDiagnostico;
 
   return (
     <div className="space-y-6">
@@ -31,21 +135,132 @@ export default function Pacientes() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Buscar Pacientes</CardTitle>
-          <CardDescription>Filtrar por nome, CPF ou convênio</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Buscar Pacientes</CardTitle>
+              <CardDescription>Buscar por nome, CPF ou ID do paciente</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Busca Global */}
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Digite o nome do paciente..."
+                placeholder="Digite nome, CPF ou ID do paciente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
               />
             </div>
+            {temFiltrosAtivos && (
+              <Button variant="outline" onClick={limparFiltros}>
+                <X className="h-4 w-4 mr-2" />
+                Limpar Filtros
+              </Button>
+            )}
           </div>
+
+          {/* Filtros por Coluna */}
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nome</label>
+                <Input
+                  placeholder="Filtrar por nome..."
+                  value={filtroNome}
+                  onChange={(e) => setFiltroNome(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">CPF</label>
+                <Input
+                  placeholder="Filtrar por CPF..."
+                  value={filtroCPF}
+                  onChange={(e) => setFiltroCPF(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Telefone</label>
+                <Input
+                  placeholder="Filtrar por telefone..."
+                  value={filtroTelefone}
+                  onChange={(e) => setFiltroTelefone(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Cidade</label>
+                <Input
+                  placeholder="Filtrar por cidade..."
+                  value={filtroCidade}
+                  onChange={(e) => setFiltroCidade(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">UF</label>
+                <Input
+                  placeholder="Filtrar por UF..."
+                  value={filtroUF}
+                  onChange={(e) => setFiltroUF(e.target.value)}
+                  maxLength={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Operadora</label>
+                <Select value={filtroOperadora} onValueChange={setFiltroOperadora}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todas</SelectItem>
+                    {OPERADORAS.map((op) => (
+                      <SelectItem key={op} value={op}>
+                        {op}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
+                <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Óbito">Óbito</SelectItem>
+                    <SelectItem value="Perda de Seguimento">Perda de Seguimento</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Diagnóstico</label>
+                <Input
+                  placeholder="Filtrar por diagnóstico..."
+                  value={filtroDiagnostico}
+                  onChange={(e) => setFiltroDiagnostico(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -53,14 +268,15 @@ export default function Pacientes() {
         <CardHeader>
           <CardTitle>Lista de Pacientes</CardTitle>
           <CardDescription>
-            {pacientes?.length || 0} pacientes encontrados
+            {pacientesFiltrados.length} de {pacientes?.length || 0} pacientes
+            {temFiltrosAtivos && " (filtrados)"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-center py-8 text-muted-foreground">Carregando...</p>
-          ) : pacientes && pacientes.length > 0 ? (
-            <div className="rounded-md border">
+          ) : pacientesFiltrados && pacientesFiltrados.length > 0 ? (
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -68,18 +284,28 @@ export default function Pacientes() {
                     <TableHead>Nome</TableHead>
                     <TableHead>CPF</TableHead>
                     <TableHead>Telefone</TableHead>
-                    <TableHead>Convênio</TableHead>
+                    <TableHead>Cidade</TableHead>
+                    <TableHead>UF</TableHead>
+                    <TableHead>Convênio 1</TableHead>
+                    <TableHead>Convênio 2</TableHead>
+                    <TableHead>Diagnóstico</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pacientes.map((paciente) => (
+                  {pacientesFiltrados.map((paciente) => (
                     <TableRow key={paciente.id}>
                       <TableCell className="font-medium">{paciente.idPaciente}</TableCell>
                       <TableCell>{paciente.nome}</TableCell>
                       <TableCell>{paciente.cpf || "-"}</TableCell>
                       <TableCell>{paciente.telefone || "-"}</TableCell>
+                      <TableCell>{paciente.cidade || "-"}</TableCell>
+                      <TableCell>{paciente.uf || "-"}</TableCell>
                       <TableCell>{paciente.operadora1 || "-"}</TableCell>
+                      <TableCell>{paciente.operadora2 || "-"}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {paciente.diagnosticoEspecifico || paciente.grupoDiagnostico || "-"}
+                      </TableCell>
                       <TableCell>
                         <span className={`badge-${paciente.statusCaso === "Ativo" ? "success" : "warning"} px-2 py-1 rounded text-xs`}>
                           {paciente.statusCaso || "N/A"}
@@ -92,7 +318,7 @@ export default function Pacientes() {
             </div>
           ) : (
             <p className="text-center py-8 text-muted-foreground">
-              Nenhum paciente encontrado
+              Nenhum paciente encontrado com os filtros aplicados
             </p>
           )}
         </CardContent>

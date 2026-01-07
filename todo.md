@@ -222,3 +222,23 @@
 - Após Sprint 2: Checkpoint com edição
 - Após Sprint 3: Checkpoint com dados reais
 - Após Sprint 4: Checkpoint final da Fase 1
+
+
+---
+
+## 🚀 GORGEN 1.1 - Melhorias Solicitadas
+
+### Página de Pacientes - Busca e Filtros
+- [x] Busca global por Nome, CPF ou ID (não apenas nome)
+- [x] Filtros individuais por coluna:
+  - [x] Filtro por Nome
+  - [x] Filtro por CPF
+  - [x] Filtro por Telefone
+  - [x] Filtro por Cidade
+  - [x] Filtro por UF
+  - [x] Filtro por Operadora (ambas)
+  - [x] Filtro por Status (Ativo/Óbito/Perda)
+  - [x] Filtro por Diagnóstico
+- [x] Botão "Mostrar/Ocultar Filtros"
+- [x] Botão "Limpar Filtros"
+- [x] Contador de resultados filtrados
