@@ -239,85 +239,91 @@ export default function Pacientes() {
             )}
           </div>
 
-          {/* Filtros por Coluna (simplificados) */}
+          {/* Filtros por Coluna (simplificados - 2 linhas) */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Cidade</label>
-                <Input
-                  placeholder="Filtrar por cidade..."
-                  value={filtroCidade}
-                  onChange={(e) => setFiltroCidade(e.target.value)}
-                />
+            <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+              {/* Primeira linha: Cidade, UF, Operadora, Status */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Cidade</label>
+                  <Input
+                    placeholder="Filtrar por cidade..."
+                    value={filtroCidade}
+                    onChange={(e) => setFiltroCidade(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">UF</label>
+                  <Input
+                    placeholder="Filtrar por UF..."
+                    value={filtroUF}
+                    onChange={(e) => setFiltroUF(e.target.value)}
+                    maxLength={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Operadora</label>
+                  <Select value={filtroOperadora} onValueChange={setFiltroOperadora}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todas</SelectItem>
+                      {OPERADORAS.map((op) => (
+                        <SelectItem key={op} value={op}>
+                          {op}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Status</label>
+                  <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Óbito">Óbito</SelectItem>
+                      <SelectItem value="Perda de Seguimento">Perda de Seguimento</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">UF</label>
-                <Input
-                  placeholder="Filtrar por UF..."
-                  value={filtroUF}
-                  onChange={(e) => setFiltroUF(e.target.value)}
-                  maxLength={2}
-                />
-              </div>
+              {/* Segunda linha: Diagnóstico, Data De, Data Até */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Diagnóstico</label>
+                  <Input
+                    placeholder="Filtrar por diagnóstico..."
+                    value={filtroDiagnostico}
+                    onChange={(e) => setFiltroDiagnostico(e.target.value)}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Operadora</label>
-                <Select value={filtroOperadora} onValueChange={setFiltroOperadora}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todas</SelectItem>
-                    {OPERADORAS.map((op) => (
-                      <SelectItem key={op} value={op}>
-                        {op}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data Inclusão (De)</label>
+                  <Input
+                    type="date"
+                    value={filtroDataDe}
+                    onChange={(e) => setFiltroDataDe(e.target.value)}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Óbito">Óbito</SelectItem>
-                    <SelectItem value="Perda de Seguimento">Perda de Seguimento</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Diagnóstico</label>
-                <Input
-                  placeholder="Filtrar por diagnóstico..."
-                  value={filtroDiagnostico}
-                  onChange={(e) => setFiltroDiagnostico(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Data Inclusão (De)</label>
-                <Input
-                  type="date"
-                  value={filtroDataDe}
-                  onChange={(e) => setFiltroDataDe(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Data Inclusão (Até)</label>
-                <Input
-                  type="date"
-                  value={filtroDataAte}
-                  onChange={(e) => setFiltroDataAte(e.target.value)}
-                />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data Inclusão (Até)</label>
+                  <Input
+                    type="date"
+                    value={filtroDataAte}
+                    onChange={(e) => setFiltroDataAte(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           )}

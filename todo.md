@@ -259,3 +259,9 @@
 - [x] Ícone visual indicando direção da ordenação (↑ ↓)
 - [x] Terceiro clique remove ordenação
 - [x] Hover effect nos cabeçalhos ordenáveis
+
+
+### Melhorias Estéticas Gorgen 1.1
+- [x] Reorganizar layout de filtros para 2 linhas
+- [x] Mover Status para ao lado de Operadora (linha 1: 4 campos, linha 2: 3 campos)
+- [x] Layout mais compacto e visualmente agradável
