@@ -34,6 +34,7 @@ export default function Atendimentos() {
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   
   // Filtros individuais por coluna
+  const [filtroIdade, setFiltroIdade] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("");
   const [filtroLocal, setFiltroLocal] = useState("");
   const [filtroConvenio, setFiltroConvenio] = useState("");
@@ -109,6 +110,13 @@ export default function Atendimentos() {
     }
 
     // Filtros por coluna
+    if (filtroIdade) {
+      resultado = resultado.filter((atd) => {
+        const idade = atd.pacientes?.nome?.match(/\d+$/)?.[0];
+        return idade === filtroIdade;
+      });
+    }
+
     if (filtroTipo && filtroTipo !== "todos") {
       resultado = resultado.filter((atd) => atd.tipoAtendimento === filtroTipo);
     }
@@ -262,8 +270,20 @@ export default function Atendimentos() {
           {/* Filtros por Coluna (2 linhas) */}
           {showFilters && (
             <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-              {/* Primeira linha: Tipo, Local, Convênio, Pago */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Primeira linha: Idade, Tipo, Local, Convênio, Pago */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Idade</label>
+                  <Input
+                    type="number"
+                    placeholder="Idade..."
+                    value={filtroIdade}
+                    onChange={(e) => setFiltroIdade(e.target.value)}
+                    min="0"
+                    max="150"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Tipo</label>
                   <Select value={filtroTipo} onValueChange={setFiltroTipo}>
@@ -393,6 +413,7 @@ export default function Atendimentos() {
                       <SortableHeader field="dataAtendimento">Data</SortableHeader>
                       <SortableHeader field="tipoAtendimento">Tipo</SortableHeader>
                       <SortableHeader field="pacienteNome">Paciente</SortableHeader>
+                      <TableHead>Idade</TableHead>
                       <SortableHeader field="local">Local</SortableHeader>
                       <SortableHeader field="convenio">Convênio</SortableHeader>
                       <SortableHeader field="faturamentoPrevistoFinal">Valor</SortableHeader>
@@ -405,7 +426,8 @@ export default function Atendimentos() {
                         <TableCell className="font-medium">{atd.atendimento}</TableCell>
                         <TableCell>{formatarData(atd.dataAtendimento)}</TableCell>
                         <TableCell>{atd.tipoAtendimento || "-"}</TableCell>
-                        <TableCell>{atd.pacientes?.nome || "-"}</TableCell>
+                        <TableCell>{atd.pacientes?.nome?.replace(/\s+\d+$/, '') || atd.pacientes?.nome || "-"}</TableCell>
+                        <TableCell>{atd.pacientes?.nome?.match(/\d+$/)?.[0] || "-"}</TableCell>
                         <TableCell>{atd.local || "-"}</TableCell>
                         <TableCell>{atd.convenio || "-"}</TableCell>
                         <TableCell>

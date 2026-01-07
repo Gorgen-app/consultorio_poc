@@ -22,6 +22,7 @@ export default function Pacientes() {
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   
   // Filtros individuais por coluna (removidos Nome, CPF, Telefone)
+  const [filtroIdade, setFiltroIdade] = useState("");
   const [filtroCidade, setFiltroCidade] = useState("");
   const [filtroUF, setFiltroUF] = useState("");
   const [filtroOperadora, setFiltroOperadora] = useState("");
@@ -89,6 +90,13 @@ export default function Pacientes() {
     }
 
     // Filtros por coluna
+    if (filtroIdade) {
+      resultado = resultado.filter((p) => {
+        const idade = p.nome?.match(/\d+$/)?.[0];
+        return idade === filtroIdade;
+      });
+    }
+
     if (filtroCidade) {
       resultado = resultado.filter((p) =>
         p.cidade?.toLowerCase().includes(filtroCidade.toLowerCase())
@@ -252,8 +260,20 @@ export default function Pacientes() {
           {/* Filtros por Coluna (simplificados - 2 linhas) */}
           {showFilters && (
             <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-              {/* Primeira linha: Cidade, UF, Operadora, Status */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Primeira linha: Idade, Cidade, UF, Operadora, Status */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Idade</label>
+                  <Input
+                    type="number"
+                    placeholder="Idade..."
+                    value={filtroIdade}
+                    onChange={(e) => setFiltroIdade(e.target.value)}
+                    min="0"
+                    max="150"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Cidade</label>
                   <Input
@@ -376,6 +396,7 @@ export default function Pacientes() {
                     <TableRow>
                       <SortableHeader field="idPaciente">ID</SortableHeader>
                       <SortableHeader field="nome">Nome</SortableHeader>
+                      <TableHead>Idade</TableHead>
                       <SortableHeader field="cpf">CPF</SortableHeader>
                       <SortableHeader field="telefone">Telefone</SortableHeader>
                       <SortableHeader field="cidade">Cidade</SortableHeader>
@@ -391,7 +412,8 @@ export default function Pacientes() {
                     {pacientesPaginados.map((paciente) => (
                       <TableRow key={paciente.id}>
                         <TableCell className="font-medium">{paciente.idPaciente}</TableCell>
-                        <TableCell>{paciente.nome}</TableCell>
+                        <TableCell>{paciente.nome?.replace(/\s+\d+$/, '') || paciente.nome}</TableCell>
+                        <TableCell>{paciente.nome?.match(/\d+$/)?.[0] || "-"}</TableCell>
                         <TableCell>{paciente.cpf || "-"}</TableCell>
                         <TableCell>{paciente.telefone || "-"}</TableCell>
                         <TableCell>{paciente.cidade || "-"}</TableCell>
