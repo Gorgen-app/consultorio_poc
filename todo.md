@@ -286,3 +286,55 @@
 - [x] Contador de resultados ("Mostrando X a Y de Z")
 - [x] Botão "Limpar Filtros"
 - [x] Performance otimizada com useMemo
+
+
+---
+
+## 🔐 FASE 1.5: Sistema de Controle de Acesso (PLANEJADO - NÃO IMPLEMENTAR AGORA)
+
+### Gestão de Usuários
+- [ ] Criar aba "Usuários" no menu
+- [ ] Tabela de listagem de usuários (Nome, Email, Perfil, Status)
+- [ ] Formulário de cadastro de novo usuário
+- [ ] Formulário de edição de usuário
+- [ ] Botão Ativar/Desativar usuário
+
+### Níveis de Acesso
+- [ ] **Administrador Master** (Dr. André Gorgen): Acesso total sem restrições
+- [ ] **Médico**: Acesso apenas a pacientes autorizados (com atendimento registrado + autorização)
+- [ ] **Paciente**: Acesso apenas aos próprios dados
+
+### Sistema de Autorizações
+- [ ] Criar tabela `autorizacoes_prontuario` no banco
+- [ ] Interface para paciente conceder/revogar acesso de médicos
+- [ ] Interface para admin visualizar todas as autorizações
+- [ ] Autorização automática ao registrar primeiro atendimento
+
+### Middleware de Controle
+- [ ] `adminProcedure`: Requer perfil Admin
+- [ ] `medicoProcedure`: Requer perfil Médico
+- [ ] `pacienteProcedure`: Requer perfil Paciente
+- [ ] Validação de acesso a prontuário em todas as queries
+
+### Log de Auditoria (LGPD)
+- [ ] Criar tabela `audit_log` no banco
+- [ ] Registrar todas as ações sensíveis (visualizar, editar, criar, excluir)
+- [ ] Página "Logs de Auditoria" (apenas Admin)
+- [ ] Exportar logs para análise
+
+### Segurança
+- [ ] Autenticação multifator (MFA) para Admin
+- [ ] Política de senhas fortes
+- [ ] Bloqueio após 5 tentativas de login
+- [ ] Timeout de sessão (30 minutos)
+- [ ] Criptografia de dados sensíveis
+
+**Observação**: Implementar ANTES da Fase 2 (Prontuário) para garantir segurança desde o início.
+
+
+---
+
+## 🐛 BUGS A CORRIGIR
+
+### Gorgen 1.2
+- [x] Nomes dos pacientes não aparecem na tabela de Atendimentos (JOIN implementado)

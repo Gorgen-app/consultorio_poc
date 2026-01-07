@@ -374,3 +374,302 @@
 ---
 
 **Aguardando sua decisão para iniciar a implementação! 🚀**
+
+
+---
+
+## 🔐 FASE 1.5: Sistema de Controle de Acesso e Gestão de Usuários (PLANEJADO)
+
+### Visão Geral
+Implementar sistema robusto de controle de acesso baseado em perfis (RBAC - Role-Based Access Control) para garantir conformidade LGPD e segurança dos dados sensíveis de pacientes.
+
+### Níveis de Acesso Definidos
+
+#### 1. **Administrador Master (Usuário Master)**
+**Responsável**: Dr. André Gorgen
+
+**Permissões**:
+- ✅ Acesso completo e irrestrito a todos os dados do sistema
+- ✅ Visualizar, criar, editar e excluir qualquer registro (pacientes, atendimentos, usuários)
+- ✅ Gerenciar todos os usuários do sistema
+- ✅ Conceder e revogar permissões de acesso a prontuários
+- ✅ Acessar logs de auditoria completos
+- ✅ Configurar parâmetros do sistema
+- ✅ Realizar importação/exportação de dados
+- ✅ Gerenciar tabelas auxiliares (CBHPM, honorários, operadoras)
+
+**Restrições**: Nenhuma
+
+---
+
+#### 2. **Médico (Profissional de Saúde)**
+
+**Permissões**:
+- ✅ Visualizar e editar **apenas** pacientes que:
+  - Tiveram atendimento registrado pelo próprio médico
+  - Concederam autorização explícita de acesso ao prontuário
+- ✅ Registrar novos atendimentos para seus pacientes autorizados
+- ✅ Visualizar histórico completo de atendimentos dos pacientes autorizados
+- ✅ Upload de exames e documentos para pacientes autorizados
+- ✅ Gerar documentos médicos (atestados, receitas) para pacientes autorizados
+- ✅ Visualizar dashboard com métricas **apenas dos seus pacientes**
+- ✅ Buscar e filtrar **apenas seus pacientes autorizados**
+
+**Restrições**:
+- ❌ Não pode visualizar pacientes de outros médicos sem autorização
+- ❌ Não pode acessar dados financeiros globais do consultório
+- ❌ Não pode gerenciar usuários
+- ❌ Não pode alterar configurações do sistema
+- ❌ Não pode excluir registros (apenas Administrador Master)
+- ❌ Acesso ao prontuário pode ser revogado pelo paciente ou Administrador Master a qualquer momento
+
+---
+
+#### 3. **Paciente (Usuário Final)**
+
+**Permissões**:
+- ✅ Visualizar **apenas seus próprios dados pessoais**
+- ✅ Visualizar histórico de seus atendimentos
+- ✅ Fazer upload de exames e documentos pessoais
+- ✅ Visualizar lista de médicos autorizados a acessar seu prontuário
+- ✅ **Conceder autorização** de acesso ao prontuário para médicos específicos
+- ✅ **Revogar autorização** de acesso ao prontuário de qualquer médico
+- ✅ Atualizar dados pessoais (telefone, endereço, email)
+- ✅ Agendar consultas (quando funcionalidade estiver disponível)
+- ✅ Visualizar receitas e prescrições médicas
+
+**Restrições**:
+- ❌ Não pode visualizar dados de outros pacientes
+- ❌ Não pode editar dados clínicos (diagnósticos, procedimentos)
+- ❌ Não pode visualizar valores de honorários ou dados financeiros
+- ❌ Não pode excluir atendimentos registrados
+- ❌ Não pode acessar área administrativa
+- ❌ Não pode gerenciar usuários
+
+---
+
+### Funcionalidades a Implementar
+
+#### 1. **Gestão de Usuários (Aba "Usuários")**
+
+**Página de Listagem de Usuários**:
+- [ ] Tabela com todos os usuários cadastrados
+- [ ] Colunas: Nome, Email, Perfil (Master/Médico/Paciente), Status (Ativo/Inativo), Data de Cadastro
+- [ ] Busca por nome ou email
+- [ ] Filtro por perfil
+- [ ] Botão "Novo Usuário" (apenas para Administrador Master)
+- [ ] Botão "Editar" em cada linha
+- [ ] Botão "Desativar/Ativar" usuário
+- [ ] Indicador visual de usuários online
+
+**Formulário de Cadastro/Edição de Usuário**:
+- [ ] Campos: Nome completo, Email, Perfil (dropdown), CRM (se médico), CPF
+- [ ] Senha inicial (gerada automaticamente e enviada por email)
+- [ ] Checkbox "Forçar troca de senha no primeiro login"
+- [ ] Status (Ativo/Inativo)
+- [ ] Data de criação e última modificação
+
+---
+
+#### 2. **Sistema de Autorizações de Acesso ao Prontuário**
+
+**Tabela no Banco de Dados**:
+```sql
+CREATE TABLE autorizacoes_prontuario (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  paciente_id INT NOT NULL,
+  medico_id INT NOT NULL,
+  autorizado_por VARCHAR(50), -- 'paciente' ou 'admin'
+  data_autorizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  data_revogacao TIMESTAMP NULL,
+  status ENUM('ativa', 'revogada') DEFAULT 'ativa',
+  motivo_revogacao TEXT NULL,
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+  FOREIGN KEY (medico_id) REFERENCES users(id)
+);
+```
+
+**Interface para Paciente (Portal do Paciente)**:
+- [ ] Página "Meus Médicos Autorizados"
+- [ ] Lista de médicos com acesso ao prontuário
+- [ ] Botão "Autorizar Novo Médico" (busca por nome ou CRM)
+- [ ] Botão "Revogar Acesso" com confirmação
+- [ ] Histórico de autorizações e revogações
+
+**Interface para Administrador Master**:
+- [ ] Página "Autorizações de Prontuário" no menu administrativo
+- [ ] Visualizar todas as autorizações ativas
+- [ ] Conceder acesso manualmente (paciente + médico)
+- [ ] Revogar acesso com justificativa obrigatória
+- [ ] Relatório de autorizações por paciente
+- [ ] Relatório de autorizações por médico
+
+---
+
+#### 3. **Middleware de Controle de Acesso (Backend)**
+
+**Procedures tRPC Protegidas**:
+- [ ] `protectedProcedure` → Requer autenticação (qualquer usuário logado)
+- [ ] `adminProcedure` → Requer perfil Administrador Master
+- [ ] `medicoProcedure` → Requer perfil Médico
+- [ ] `pacienteProcedure` → Requer perfil Paciente
+
+**Validação de Acesso a Prontuário**:
+```typescript
+// Exemplo de middleware
+const checkProntuarioAccess = async (ctx, pacienteId) => {
+  // Administrador Master: acesso total
+  if (ctx.user.role === 'admin') return true;
+  
+  // Médico: verificar autorização
+  if (ctx.user.role === 'medico') {
+    const autorizado = await db.checkAutorizacao(pacienteId, ctx.user.id);
+    if (!autorizado) throw new TRPCError({ code: 'FORBIDDEN' });
+    return true;
+  }
+  
+  // Paciente: apenas seus próprios dados
+  if (ctx.user.role === 'paciente') {
+    const paciente = await db.getPacienteByUserId(ctx.user.id);
+    if (paciente.id !== pacienteId) throw new TRPCError({ code: 'FORBIDDEN' });
+    return true;
+  }
+  
+  throw new TRPCError({ code: 'UNAUTHORIZED' });
+};
+```
+
+---
+
+#### 4. **Filtros Automáticos por Perfil**
+
+**Para Médicos**:
+- [ ] Listar apenas pacientes autorizados na página "Pacientes"
+- [ ] Dashboard mostra métricas apenas dos pacientes autorizados
+- [ ] Busca retorna apenas pacientes autorizados
+- [ ] Formulário "Novo Atendimento" permite selecionar apenas pacientes autorizados
+
+**Para Pacientes**:
+- [ ] Acesso apenas ao próprio perfil
+- [ ] Visualização de histórico de atendimentos próprios
+- [ ] Upload de exames apenas para si mesmo
+
+---
+
+#### 5. **Log de Auditoria (Conformidade LGPD)**
+
+**Tabela de Auditoria**:
+```sql
+CREATE TABLE audit_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NOT NULL,
+  acao VARCHAR(100) NOT NULL, -- 'visualizar', 'editar', 'criar', 'excluir', 'autorizar', 'revogar'
+  entidade VARCHAR(50) NOT NULL, -- 'paciente', 'atendimento', 'prontuario', 'usuario'
+  entidade_id INT NOT NULL,
+  detalhes JSON,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Funcionalidades**:
+- [ ] Registrar automaticamente todas as ações sensíveis
+- [ ] Página "Logs de Auditoria" (apenas Administrador Master)
+- [ ] Filtros: usuário, ação, entidade, período
+- [ ] Exportar logs para análise externa
+- [ ] Alertas automáticos para ações suspeitas
+
+---
+
+#### 6. **Interface de Autorização no Cadastro de Atendimento**
+
+**Fluxo Automático**:
+- [ ] Ao registrar primeiro atendimento de um médico com um paciente:
+  - Sistema cria automaticamente autorização de acesso ao prontuário
+  - Notifica paciente sobre a autorização (email/SMS)
+  - Paciente pode revogar posteriormente se desejar
+
+**Fluxo Manual**:
+- [ ] Médico solicita acesso ao prontuário de paciente
+- [ ] Paciente recebe notificação e pode aprovar/rejeitar
+- [ ] Histórico de solicitações pendentes
+
+---
+
+### Prioridade de Implementação
+
+**Alta Prioridade** (Implementar antes da Fase 2 - Prontuário):
+1. Gestão de usuários (CRUD completo)
+2. Sistema de perfis (Admin, Médico, Paciente)
+3. Middleware de controle de acesso
+4. Tabela de autorizações de prontuário
+5. Filtros automáticos por perfil
+
+**Média Prioridade** (Implementar junto com Fase 2):
+6. Interface de autorizações para pacientes
+7. Log de auditoria básico
+8. Notificações de autorização/revogação
+
+**Baixa Prioridade** (Implementar na Fase 3 - Portal do Paciente):
+9. Solicitações de acesso por médicos
+10. Dashboard de autorizações para administrador
+11. Relatórios avançados de auditoria
+
+---
+
+### Considerações de Segurança
+
+**Autenticação**:
+- [ ] Implementar autenticação multifator (MFA) para Administrador Master
+- [ ] Política de senhas fortes (mínimo 8 caracteres, letras, números, símbolos)
+- [ ] Bloqueio de conta após 5 tentativas de login falhadas
+- [ ] Sessões com timeout automático (30 minutos de inatividade)
+
+**Criptografia**:
+- [ ] Senhas armazenadas com bcrypt (hash + salt)
+- [ ] Dados sensíveis criptografados no banco (CPF, dados clínicos)
+- [ ] Comunicação via HTTPS obrigatório
+
+**Conformidade LGPD**:
+- [ ] Termo de consentimento para coleta de dados
+- [ ] Política de privacidade acessível
+- [ ] Direito ao esquecimento (anonimização de dados)
+- [ ] Portabilidade de dados (exportação em formato padrão)
+- [ ] Notificação de vazamento de dados (se ocorrer)
+
+---
+
+### Estimativa de Tempo
+
+- **Gestão de Usuários**: 1 semana
+- **Sistema de Perfis e Middleware**: 1 semana
+- **Autorizações de Prontuário**: 1 semana
+- **Log de Auditoria**: 3 dias
+- **Testes e Ajustes**: 3 dias
+
+**Total estimado**: 3-4 semanas
+
+---
+
+### Dependências
+
+- Fase 1 (Consolidação da Base Administrativa) deve estar 100% concluída
+- Importação dos 21.000+ pacientes reais deve estar finalizada
+- Testes de performance com volume real de dados
+
+---
+
+### Critérios de Sucesso
+
+- ✅ Administrador Master tem acesso total sem restrições
+- ✅ Médico visualiza apenas pacientes autorizados
+- ✅ Paciente visualiza apenas seus próprios dados
+- ✅ Tentativa de acesso não autorizado retorna erro 403 (Forbidden)
+- ✅ Todas as ações sensíveis são registradas em log de auditoria
+- ✅ Paciente consegue revogar acesso de médico em < 30 segundos
+- ✅ Sistema passa em auditoria de conformidade LGPD
+
+---
+
+**Observação**: Esta funcionalidade é **crítica** e deve ser implementada **antes** da Fase 2 (Prontuário Médico Eletrônico) para garantir que dados sensíveis de saúde estejam protegidos desde o início.

@@ -236,11 +236,14 @@ export async function listAtendimentos(filters?: {
   convenio?: string;
   limit?: number;
   offset?: number;
-}): Promise<Atendimento[]> {
+}): Promise<any[]> {
   const db = await getDb();
   if (!db) return [];
 
-  let query = db.select().from(atendimentos);
+  let query = db
+    .select()
+    .from(atendimentos)
+    .leftJoin(pacientes, eq(atendimentos.pacienteId, pacientes.id));
   
   const conditions = [];
   

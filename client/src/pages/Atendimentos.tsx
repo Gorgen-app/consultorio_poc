@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TIPOS_ATENDIMENTO, LOCAIS_ATENDIMENTO } from "@/lib/atendimentos-constants";
 import { OPERADORAS } from "@/lib/operadoras";
 
-type SortField = "atendimento" | "dataAtendimento" | "tipoAtendimento" | "nomePaciente" | "local" | "convenio" | "faturamentoPrevistoFinal";
+type SortField = "atendimento" | "dataAtendimento" | "tipoAtendimento" | "pacienteNome" | "local" | "convenio" | "faturamentoPrevistoFinal";
 type SortDirection = "asc" | "desc" | null;
 
 export default function Atendimentos() {
@@ -88,7 +88,7 @@ export default function Atendimentos() {
       resultado = resultado.filter(
         (atd) =>
           atd.atendimento?.toLowerCase().includes(termo) ||
-          atd.nomePaciente?.toLowerCase().includes(termo) ||
+          atd.pacientes?.nome?.toLowerCase().includes(termo) ||
           atd.procedimento?.toLowerCase().includes(termo)
       );
     }
@@ -129,8 +129,17 @@ export default function Atendimentos() {
     // Ordenação
     if (sortField && sortDirection) {
       resultado.sort((a, b) => {
-        let aVal: any = a[sortField];
-        let bVal: any = b[sortField];
+        let aVal: any;
+        let bVal: any;
+
+        // Tratamento especial para nome do paciente
+        if (sortField === "pacienteNome") {
+          aVal = a.pacientes?.nome;
+          bVal = b.pacientes?.nome;
+        } else {
+          aVal = a[sortField];
+          bVal = b[sortField];
+        }
 
         // Tratamento especial para datas
         if (sortField === "dataAtendimento") {
@@ -368,7 +377,7 @@ export default function Atendimentos() {
                       <SortableHeader field="atendimento">ID</SortableHeader>
                       <SortableHeader field="dataAtendimento">Data</SortableHeader>
                       <SortableHeader field="tipoAtendimento">Tipo</SortableHeader>
-                      <SortableHeader field="nomePaciente">Paciente</SortableHeader>
+                      <SortableHeader field="pacienteNome">Paciente</SortableHeader>
                       <SortableHeader field="local">Local</SortableHeader>
                       <SortableHeader field="convenio">Convênio</SortableHeader>
                       <SortableHeader field="faturamentoPrevistoFinal">Valor</SortableHeader>
@@ -381,7 +390,7 @@ export default function Atendimentos() {
                         <TableCell className="font-medium">{atd.atendimento}</TableCell>
                         <TableCell>{new Date(atd.dataAtendimento).toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell>{atd.tipoAtendimento || "-"}</TableCell>
-                        <TableCell>{atd.nomePaciente || "-"}</TableCell>
+                        <TableCell>{atd.pacientes?.nome || "-"}</TableCell>
                         <TableCell>{atd.local || "-"}</TableCell>
                         <TableCell>{atd.convenio || "-"}</TableCell>
                         <TableCell>
