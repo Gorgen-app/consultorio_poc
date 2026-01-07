@@ -28,8 +28,11 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: Users, label: "Pacientes", path: "/pacientes" },
+  { icon: LayoutDashboard, label: "Novo Paciente", path: "/pacientes/novo" },
+  { icon: LayoutDashboard, label: "Atendimentos", path: "/atendimentos" },
+  { icon: LayoutDashboard, label: "Novo Atendimento", path: "/atendimentos/novo" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

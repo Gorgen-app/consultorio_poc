@@ -1,11 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -89,4 +88,275 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ===== PACIENTES =====
+
+export async function createPaciente(data: InsertPaciente): Promise<Paciente> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(pacientes).values(data);
+  const insertedId = Number(result[0].insertId);
+  
+  const inserted = await db.select().from(pacientes).where(eq(pacientes.id, insertedId)).limit(1);
+  return inserted[0]!;
+}
+
+export async function getPacienteById(id: number): Promise<Paciente | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(pacientes).where(eq(pacientes.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getPacienteByIdPaciente(idPaciente: string): Promise<Paciente | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(pacientes).where(eq(pacientes.idPaciente, idPaciente)).limit(1);
+  return result[0];
+}
+
+export async function listPacientes(filters?: {
+  nome?: string;
+  cpf?: string;
+  convenio?: string;
+  diagnostico?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<Paciente[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  let query = db.select().from(pacientes);
+  
+  const conditions = [];
+  
+  if (filters?.nome) {
+    conditions.push(like(pacientes.nome, `%${filters.nome}%`));
+  }
+  if (filters?.cpf) {
+    conditions.push(like(pacientes.cpf, `%${filters.cpf}%`));
+  }
+  if (filters?.convenio) {
+    conditions.push(
+      or(
+        like(pacientes.operadora1, `%${filters.convenio}%`),
+        like(pacientes.operadora2, `%${filters.convenio}%`)
+      )!
+    );
+  }
+  if (filters?.diagnostico) {
+    conditions.push(
+      or(
+        like(pacientes.grupoDiagnostico, `%${filters.diagnostico}%`),
+        like(pacientes.diagnosticoEspecifico, `%${filters.diagnostico}%`)
+      )!
+    );
+  }
+  if (filters?.status) {
+    conditions.push(eq(pacientes.statusCaso, filters.status));
+  }
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)!) as any;
+  }
+
+  query = query.orderBy(desc(pacientes.createdAt)) as any;
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit) as any;
+  }
+  if (filters?.offset) {
+    query = query.offset(filters.offset) as any;
+  }
+
+  return query;
+}
+
+export async function updatePaciente(id: number, data: Partial<InsertPaciente>): Promise<Paciente | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  await db.update(pacientes).set(data).where(eq(pacientes.id, id));
+  return getPacienteById(id);
+}
+
+export async function deletePaciente(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.delete(pacientes).where(eq(pacientes.id, id));
+  return true;
+}
+
+export async function countPacientes(filters?: {
+  status?: string;
+}): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  let query = db.select({ count: sql<number>`count(*)` }).from(pacientes);
+
+  if (filters?.status) {
+    query = query.where(eq(pacientes.statusCaso, filters.status)) as any;
+  }
+
+  const result = await query;
+  return Number(result[0]?.count || 0);
+}
+
+// ===== ATENDIMENTOS =====
+
+export async function createAtendimento(data: InsertAtendimento): Promise<Atendimento> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(atendimentos).values(data);
+  const insertedId = Number(result[0].insertId);
+  
+  const inserted = await db.select().from(atendimentos).where(eq(atendimentos.id, insertedId)).limit(1);
+  return inserted[0]!;
+}
+
+export async function getAtendimentoById(id: number): Promise<Atendimento | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(atendimentos).where(eq(atendimentos.id, id)).limit(1);
+  return result[0];
+}
+
+export async function listAtendimentos(filters?: {
+  pacienteId?: number;
+  dataInicio?: Date;
+  dataFim?: Date;
+  tipo?: string;
+  convenio?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<Atendimento[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  let query = db.select().from(atendimentos);
+  
+  const conditions = [];
+  
+  if (filters?.pacienteId) {
+    conditions.push(eq(atendimentos.pacienteId, filters.pacienteId));
+  }
+  if (filters?.dataInicio) {
+    conditions.push(sql`${atendimentos.dataAtendimento} >= ${filters.dataInicio}`);
+  }
+  if (filters?.dataFim) {
+    conditions.push(sql`${atendimentos.dataAtendimento} <= ${filters.dataFim}`);
+  }
+  if (filters?.tipo) {
+    conditions.push(eq(atendimentos.tipoAtendimento, filters.tipo));
+  }
+  if (filters?.convenio) {
+    conditions.push(like(atendimentos.convenio, `%${filters.convenio}%`));
+  }
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)!) as any;
+  }
+
+  query = query.orderBy(desc(atendimentos.dataAtendimento)) as any;
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit) as any;
+  }
+  if (filters?.offset) {
+    query = query.offset(filters.offset) as any;
+  }
+
+  return query;
+}
+
+export async function updateAtendimento(id: number, data: Partial<InsertAtendimento>): Promise<Atendimento | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  await db.update(atendimentos).set(data).where(eq(atendimentos.id, id));
+  return getAtendimentoById(id);
+}
+
+export async function deleteAtendimento(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.delete(atendimentos).where(eq(atendimentos.id, id));
+  return true;
+}
+
+export async function countAtendimentos(filters?: {
+  pacienteId?: number;
+  dataInicio?: Date;
+  dataFim?: Date;
+}): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  let query = db.select({ count: sql<number>`count(*)` }).from(atendimentos);
+
+  const conditions = [];
+  if (filters?.pacienteId) {
+    conditions.push(eq(atendimentos.pacienteId, filters.pacienteId));
+  }
+  if (filters?.dataInicio) {
+    conditions.push(sql`${atendimentos.dataAtendimento} >= ${filters.dataInicio}`);
+  }
+  if (filters?.dataFim) {
+    conditions.push(sql`${atendimentos.dataAtendimento} <= ${filters.dataFim}`);
+  }
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)!) as any;
+  }
+
+  const result = await query;
+  return Number(result[0]?.count || 0);
+}
+
+export async function getDashboardStats() {
+  const db = await getDb();
+  if (!db) return null;
+
+  const totalPacientes = await countPacientes();
+  const pacientesAtivos = await countPacientes({ status: "Ativo" });
+  const totalAtendimentos = await countAtendimentos();
+
+  // Faturamento total previsto e realizado
+  const faturamento = await db
+    .select({
+      previsto: sql<number>`SUM(${atendimentos.faturamentoPrevistoFinal})`,
+      realizado: sql<number>`SUM(CASE WHEN ${atendimentos.pagamentoEfetivado} = 1 THEN ${atendimentos.faturamentoPrevistoFinal} ELSE 0 END)`,
+    })
+    .from(atendimentos);
+
+  // Distribuição por convênio
+  const distribuicaoConvenio = await db
+    .select({
+      convenio: atendimentos.convenio,
+      total: sql<number>`COUNT(*)`,
+    })
+    .from(atendimentos)
+    .groupBy(atendimentos.convenio)
+    .orderBy(desc(sql<number>`COUNT(*)`))
+    .limit(10);
+
+  return {
+    totalPacientes,
+    pacientesAtivos,
+    totalAtendimentos,
+    faturamentoPrevisto: Number(faturamento[0]?.previsto || 0),
+    faturamentoRealizado: Number(faturamento[0]?.realizado || 0),
+    distribuicaoConvenio: distribuicaoConvenio.map(d => ({
+      convenio: d.convenio || "Não informado",
+      total: Number(d.total),
+    })),
+  };
+}
