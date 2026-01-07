@@ -419,3 +419,5 @@
 
 - [x] Bug: Busca/autocomplete corrigido em Novo Atendimento (usando Card ao invés de button)
 - [ ] Bug: Botão "Novo Atendimento" não aparece na tabela de pacientes (código correto, problema de cache do navegador - usuário precisa limpar cache)
+
+- [x] Bug: Botão Novo Atendimento retorna erro 404 (corrigido - rota era /atendimentos/novo)

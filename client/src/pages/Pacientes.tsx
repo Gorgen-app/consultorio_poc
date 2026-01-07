@@ -443,7 +443,7 @@ export default function Pacientes() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setLocation(`/novo-atendimento?pacienteId=${paciente.id}`)}
+                              onClick={() => setLocation(`/atendimentos/novo?pacienteId=${paciente.id}`)}
                               className="h-8 w-8 p-0"
                               title="Novo atendimento"
                             >
