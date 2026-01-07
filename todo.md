@@ -242,3 +242,12 @@
 - [x] Botão "Mostrar/Ocultar Filtros"
 - [x] Botão "Limpar Filtros"
 - [x] Contador de resultados filtrados
+
+
+### Melhorias Adicionais para Gorgen 1.1
+- [x] Filtro por Data de Inclusão (seletor de período de/até)
+- [x] Paginação (20, 50, 100 registros por página)
+- [x] Contador "Mostrando X a Y de Z pacientes"
+- [x] Botões Anterior/Próxima para navegação
+- [x] Seletor de itens por página (20, 50, 100)
+- [x] Performance otimizada com useMemo
