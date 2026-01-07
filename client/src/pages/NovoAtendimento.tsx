@@ -192,19 +192,25 @@ export default function NovoAtendimento() {
                         className="pl-10"
                       />
                     </div>
-                    {searchPaciente && filteredPacientes && filteredPacientes.length > 0 && (
+                    {searchPaciente && (
                       <Card className="max-h-64 overflow-y-auto">
                         <CardContent className="p-2">
-                          {filteredPacientes.slice(0, 10).map((paciente) => (
-                            <div
-                              key={paciente.id}
-                              onClick={() => handlePacienteSelect(paciente.id)}
-                              className="w-full text-left px-3 py-2 hover:bg-accent rounded-md cursor-pointer transition-colors"
-                            >
-                              <div className="font-medium">{paciente.nome}</div>
-                              <div className="text-sm text-muted-foreground">ID: {paciente.idPaciente}</div>
+                          {filteredPacientes && filteredPacientes.length > 0 ? (
+                            filteredPacientes.slice(0, 10).map((paciente) => (
+                              <div
+                                key={paciente.id}
+                                onClick={() => handlePacienteSelect(paciente.id)}
+                                className="w-full text-left px-3 py-2 hover:bg-accent rounded-md cursor-pointer transition-colors"
+                              >
+                                <div className="font-medium">{paciente.nome}</div>
+                                <div className="text-sm text-muted-foreground">ID: {paciente.idPaciente}</div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                              Nenhum paciente encontrado
                             </div>
-                          ))}
+                          )}
                         </CardContent>
                       </Card>
                     )}
