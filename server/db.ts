@@ -1,4 +1,4 @@
-import { eq, like, and, or, sql, desc, asc } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -240,8 +240,18 @@ export async function listAtendimentos(filters?: {
   const db = await getDb();
   if (!db) return [];
 
+  const atendimentosColumns = getTableColumns(atendimentos);
+  const pacientesColumns = getTableColumns(pacientes);
+  
   let query = db
-    .select()
+    .select({
+      ...atendimentosColumns,
+      pacientes: {
+        id: pacientesColumns.id,
+        nome: pacientesColumns.nome,
+        idPaciente: pacientesColumns.idPaciente,
+      }
+    })
     .from(atendimentos)
     .leftJoin(pacientes, eq(atendimentos.pacienteId, pacientes.id));
   
