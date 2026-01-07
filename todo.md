@@ -1,78 +1,224 @@
-# Sistema de Gestão - Prova de Conceito
+# Gorgen - Sistema de Gestão em Saúde
+## Lista de Tarefas
 
-## Funcionalidades Implementadas
+---
 
-- [x] Banco de dados completo (33 campos pacientes + 26 campos atendimentos)
-- [x] Schema com relacionamento via ID
-- [x] APIs tRPC para CRUD de pacientes
-- [x] APIs tRPC para CRUD de atendimentos
-- [x] APIs tRPC para dashboard com métricas
-- [x] Design system elegante com tema médico profissional
+## ✅ Funcionalidades Concluídas
+
+### Base do Sistema
+- [x] Schema do banco de dados (pacientes + atendimentos)
+- [x] CRUD completo de pacientes
+- [x] CRUD completo de atendimentos
+- [x] Dashboard com métricas em tempo real
+- [x] Design elegante com tema médico profissional
 - [x] Layout com sidebar de navegação
 - [x] Autenticação integrada
-- [x] Dashboard com métricas principais
-- [x] Distribuição por convênio
-- [x] Importação de dados de amostra (50 pacientes + 100 atendimentos)
-- [x] Página de listagem de pacientes
-- [x] Página de listagem de atendimentos
-- [x] Busca de pacientes por nome
 
-## Funcionalidades Pendentes
+### Formulários
+- [x] Formulário completo de cadastro de pacientes (33 campos)
+- [x] Formulário completo de cadastro de atendimentos (26 campos)
+- [x] ID automático sequencial para pacientes
+- [x] ID automático sequencial para atendimentos
+- [x] Máscaras automáticas (CPF, telefone, CEP)
+- [x] Checkboxes para campos Sim/Não
+- [x] Dropdown de operadoras customizado
+- [x] Dropdown de tipos de atendimento
+- [x] Dropdown de locais de atendimento
+- [x] Convênio vinculado ao paciente selecionado
 
-- [x] **[PRIORIDADE]** Formulário completo de cadastro de pacientes (33 campos)
-- [x] **[PRIORIDADE]** Formulário completo de cadastro de atendimentos (26 campos)
-- [ ] Validações e máscaras nos formulários (CPF, telefone, CEP)
-- [ ] Edição de pacientes
-- [ ] Edição de atendimentos
-- [ ] Filtros avançados (CPF, convênio, diagnóstico, status)
-- [ ] Visualização detalhada de paciente individual
-- [ ] Histórico de atendimentos por paciente
-- [ ] Exportação de relatórios
-- [ ] Gráficos adicionais no dashboard
-- [ ] Paginação nas listagens
-- [ ] Validações de formulário
-- [ ] Testes unitários
+### Dados de Demonstração
+- [x] Importação de 50 pacientes de amostra
+- [x] Importação de 100 atendimentos de amostra
 
-## Notas Técnicas
+---
 
-- Banco: MySQL com Drizzle ORM
-- Frontend: React 19 + Tailwind 4
-- Backend: tRPC + Express
-- Autenticação: Manus OAuth
-- Design: Tema médico profissional com azul elegante
-- Fonte: Inter (Google Fonts)
+## 🚧 FASE 1: Consolidação da Base Administrativa (EM ANDAMENTO)
 
+### Sprint 1: Filtros e Busca Avançada (Semana 1)
+- [ ] **Filtros na Página de Pacientes**
+  - [ ] Barra de busca global
+  - [ ] Filtro por nome (busca parcial)
+  - [ ] Filtro por CPF
+  - [ ] Filtro por convênio (dropdown)
+  - [ ] Filtro por diagnóstico
+  - [ ] Filtro por status (Ativo/Óbito/Perda)
+  - [ ] Filtro por data de inclusão (período)
+  - [ ] Botão "Limpar Filtros"
+  - [ ] Contador de resultados
+  - [ ] Paginação (20, 50, 100 por página)
 
-## Melhorias de Usabilidade Solicitadas
+- [ ] **Filtros na Página de Atendimentos**
+  - [ ] Barra de busca global
+  - [ ] Filtro por paciente (autocomplete)
+  - [ ] Filtro por tipo de atendimento
+  - [ ] Filtro por local
+  - [ ] Filtro por convênio
+  - [ ] Filtro por data (período)
+  - [ ] Filtro por status de pagamento
+  - [ ] Filtros rápidos (Últimos 30 dias, Este mês, Este ano)
+  - [ ] Ordenação por coluna
+  - [ ] Paginação
 
-- [x] ID automático sequencial para novos pacientes
-- [x] Mudar "Pasta do Paciente" para "Pasta de Documentos" com link automático
-- [x] Máscaras automáticas para CPF (999.999.999-99)
-- [x] Máscaras automáticas para telefone ((51) 99999-9999)
-- [x] Máscaras automáticas para CEP (99999-999)
-- [x] Converter campos "Vigente" e "Privativo" para checkboxes
-- [x] Converter "Óbito/Perda" para checkbox Sim/Não
-- [x] Mensagens de erro detalhadas nos formulários
+- [ ] **Exportação de Dados**
+  - [ ] Botão "Exportar para Excel" em Pacientes
+  - [ ] Botão "Exportar para Excel" em Atendimentos
+  - [ ] Exportar apenas registros filtrados
+  - [ ] Formatação profissional (cabeçalhos, larguras, máscaras)
+  - [ ] Nome de arquivo com data
 
+### Sprint 2: Edição de Registros (Semana 2 - Parte 1)
+- [ ] **Edição de Pacientes**
+  - [ ] Botão "Editar" em cada linha da tabela
+  - [ ] Página de edição com formulário pré-preenchido
+  - [ ] Validações mantidas
+  - [ ] Salvar alterações
+  - [ ] Log de alterações (auditoria)
 
-## Correções Urgentes
+- [ ] **Edição de Atendimentos**
+  - [ ] Botão "Editar" em cada linha da tabela
+  - [ ] Página de edição com formulário pré-preenchido
+  - [ ] Não permitir alterar paciente vinculado
+  - [ ] Salvar alterações
+  - [ ] Log de alterações
 
-- [x] Adicionar dropdown de operadoras com lista da tabela original
-- [x] Corrigir erro de inserção no banco de dados (campos obrigatórios)
+- [ ] **Exclusão de Registros**
+  - [ ] Botão "Excluir" com confirmação
+  - [ ] Exclusão lógica (soft delete)
+  - [ ] Apenas administradores podem excluir
+  - [ ] Log de exclusão
 
+### Sprint 3: Importação de Dados Reais (Semana 2 - Parte 2)
+- [ ] **Preparação do Script de Importação**
+  - [ ] Analisar estrutura do banco atual
+  - [ ] Mapear campos (banco antigo → Gorgen)
+  - [ ] Limpeza de dados (duplicatas, formatos)
+  - [ ] Criar script de importação (Python/Node.js)
+  - [ ] Processar em lotes (1000 por vez)
+  - [ ] Validação de cada registro
+  - [ ] Log de erros
 
-## Melhorias no Formulário de Atendimentos
+- [ ] **Execução da Importação**
+  - [ ] Backup do banco antes da importação
+  - [ ] Importação em ambiente de teste
+  - [ ] Validação dos resultados
+  - [ ] Importação em produção
+  - [ ] Gerar relatório de importação
 
-- [x] Dropdown de tipos de atendimento (cirurgia, consulta, visita internado, procedimento em consultório, exame)
-- [x] Dropdown de locais (Consultorio, On-line, HMV, Santa Casa, HMD, HMD CG)
-- [x] Vincular procedimento ao código CBHPM (estrutura para tabela futura)
-- [x] Convênio vinculado ao paciente selecionado + Particular + Cortesia
-- [x] Honorários vinculados a tabela (estrutura para implementação futura)
-- [x] Simplificar campos adicionais para apenas "Observações"
+- [ ] **Importação de Atendimentos Históricos**
+  - [ ] Mapear atendimentos do banco antigo
+  - [ ] Vincular a pacientes importados
+  - [ ] Importar em lotes
+  - [ ] Validar relacionamentos
+  - [ ] Gerar relatório
 
+- [ ] **Validação Pós-Importação**
+  - [ ] Verificar total de registros
+  - [ ] Testar busca de pacientes aleatórios
+  - [ ] Verificar relacionamentos
+  - [ ] Testar filtros com dados reais
+  - [ ] Verificar performance
 
-## Nova Demanda - ID Automático para Atendimentos
+### Sprint 4: Tabelas Auxiliares e Branding (Semana 3)
+- [ ] **Integração de Tabela CBHPM**
+  - [ ] Criar tabela `procedimentos_cbhpm` no banco
+  - [ ] Importar dados da tabela CBHPM
+  - [ ] Atualizar formulário de Novo Atendimento (dropdown)
+  - [ ] Preenchimento automático do código
+  - [ ] Permitir adicionar novos procedimentos
 
-- [x] Implementar geração automática de ID sequencial para atendimentos (formato 20260001, 20260002, etc.)
-- [x] Remover campo manual de ID do formulário de Novo Atendimento
-- [x] Criar procedure getNextAtendimentoId no backend
+- [ ] **Integração de Tabela de Honorários**
+  - [ ] Criar tabela `honorarios` no banco
+  - [ ] Importar dados da tabela de honorários
+  - [ ] Cálculo automático por procedimento + convênio
+  - [ ] Permitir edição manual
+  - [ ] Histórico de valores
+
+- [ ] **Branding "Gorgen"**
+  - [ ] Atualizar título: "Gorgen - Aplicativo de Gestão em Saúde"
+  - [ ] Criar/adicionar logo
+  - [ ] Atualizar favicon
+  - [ ] Adicionar tagline na sidebar
+  - [ ] Atualizar rodapé com copyright
+
+- [ ] **Testes Finais e Documentação**
+  - [ ] Testar todos os filtros
+  - [ ] Testar edição de registros
+  - [ ] Testar exportação
+  - [ ] Testar performance
+  - [ ] Testar em múltiplos navegadores
+  - [ ] Testar em dispositivos móveis
+  - [ ] Criar manual do usuário (PDF)
+  - [ ] Criar vídeo tutorial
+  - [ ] Criar FAQ
+
+---
+
+## 📅 FASE 2: Prontuário Médico Eletrônico (FUTURO)
+
+### Estrutura do Prontuário
+- [ ] Criar tabela de prontuários no banco
+- [ ] Página de visualização de prontuário por paciente
+- [ ] Timeline de atendimentos
+- [ ] Seções: Anamnese, Exame físico, Diagnóstico, Conduta, Evolução
+
+### Upload e Gestão de Exames
+- [ ] Criar tabela de exames no banco
+- [ ] Sistema de upload de arquivos (PDF, imagens, DICOM)
+- [ ] Armazenamento em S3
+- [ ] Visualizador de exames
+- [ ] Categorização de exames
+
+### Documentos Médicos
+- [ ] Geração de atestados
+- [ ] Geração de receitas
+- [ ] Geração de solicitações de exames
+- [ ] Templates customizáveis
+- [ ] Assinatura digital
+
+### Acesso ao Prontuário
+- [ ] Botão "Ver Prontuário" na listagem de pacientes
+- [ ] Navegação entre seções
+- [ ] Impressão de prontuário completo
+
+---
+
+## 📅 FASE 3: Portal do Paciente (FUTURO)
+
+### Autenticação e Perfil
+- [ ] Sistema de registro de pacientes
+- [ ] Login separado para pacientes
+- [ ] Perfil com dados básicos
+- [ ] Recuperação de senha
+
+### Autogestão de Dados
+- [ ] Paciente atualiza dados pessoais
+- [ ] Paciente faz upload de exames
+- [ ] Paciente visualiza histórico de atendimentos
+- [ ] Paciente vê prescrições e receitas
+
+### Agendamento Online
+- [ ] Calendário de disponibilidade
+- [ ] Sistema de agendamento
+- [ ] Confirmação automática
+- [ ] Lembretes de consulta
+
+---
+
+## 📝 Notas e Observações
+
+### Dados Necessários para Fase 1
+- Banco de dados atual (21.000+ pacientes)
+- Tabela CBHPM (procedimentos e códigos)
+- Tabela de honorários (valores por convênio)
+
+### Critérios de Sucesso
+- Busca em < 3 segundos com 21.000+ registros
+- Cadastro de paciente em < 2 minutos
+- Registro de atendimento em < 1 minuto
+- Taxa de importação > 99%
+
+### Próximos Checkpoints
+- Após Sprint 1: Checkpoint com filtros
+- Após Sprint 2: Checkpoint com edição
+- Após Sprint 3: Checkpoint com dados reais
+- Após Sprint 4: Checkpoint final da Fase 1
