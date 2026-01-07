@@ -49,6 +49,9 @@ export default function Atendimentos() {
     limit: 10000,
   });
 
+  // Debug: verificar dados
+  console.log("Atendimentos recebidos:", atendimentos?.slice(0, 2));
+
   // Função de ordenação
   const handleSort = (field: SortField) => {
     if (sortField === field) {

@@ -1,0 +1,50 @@
+{
+  "query": "SELECT atendimento, data_atendimento, tipo_atendimento, local, convenio, faturamento_previsto_final FROM atendimentos LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT atendimento, data_atendimento, tipo_atendimento, local, convenio, faturamento_previsto_final FROM atendimentos LIMIT 5",
+  "rows": [
+    {
+      "atendimento": "20260001",
+      "data_atendimento": "2026-01-22 05:00:00",
+      "tipo_atendimento": "Cirurgia",
+      "local": "HMV",
+      "convenio": "UNIMED",
+      "faturamento_previsto_final": "4880.00"
+    },
+    {
+      "atendimento": "20260002",
+      "data_atendimento": "2026-01-03 05:00:00",
+      "tipo_atendimento": "Consulta",
+      "local": "Hospital São Lucas",
+      "convenio": "Golden Cross",
+      "faturamento_previsto_final": "1839.00"
+    },
+    {
+      "atendimento": "20260003",
+      "data_atendimento": "2026-01-22 05:00:00",
+      "tipo_atendimento": "Consulta",
+      "local": "HMV",
+      "convenio": "CASSI",
+      "faturamento_previsto_final": "4655.00"
+    },
+    {
+      "atendimento": "20260004",
+      "data_atendimento": "2026-01-03 05:00:00",
+      "tipo_atendimento": "Visita Internado",
+      "local": "Hospital Moinhos",
+      "convenio": "Bradesco Saúde",
+      "faturamento_previsto_final": "1112.00"
+    },
+    {
+      "atendimento": "20260005",
+      "data_atendimento": "2026-01-30 05:00:00",
+      "tipo_atendimento": "Consulta",
+      "local": "Hospital Moinhos",
+      "convenio": "Golden Cross",
+      "faturamento_previsto_final": "946.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "atendimento\tdata_atendimento\ttipo_atendimento\tlocal\tconvenio\tfaturamento_previsto_final\n20260001\t2026-01-22 05:00:00\tCirurgia\tHMV\tUNIMED\t4880.00\n20260002\t2026-01-03 05:00:00\tConsulta\tHospital São Lucas\tGolden Cross\t1839.00\n20260003\t2026-01-22 05:00:00\tConsulta\tHMV\tCASSI\t4655.00\n20260004\t2026-01-03 05:00:00\tVisita Internado\tHospital Moinhos\tBradesco Saúde\t1112.00\n20260005\t2026-01-30 05:00:00\tConsulta\tHospital Moinhos\tGolden Cross\t946.00\n",
+  "stderr": "",
+  "execution_time_ms": 478
+}

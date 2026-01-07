@@ -340,3 +340,5 @@
 - [x] Nomes dos pacientes não aparecem na tabela de Atendimentos (JOIN implementado)
 
 - [x] Bug: "Invalid Date" aparecendo na página de Atendimentos (função formatarData com validação)
+
+- [x] Bug: ID, data, local, tipo de atendimento e convênio não aparecem na tabela de Atendimentos (seed corrigido e dados repopulados)
