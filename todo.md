@@ -338,3 +338,5 @@
 
 ### Gorgen 1.2
 - [x] Nomes dos pacientes não aparecem na tabela de Atendimentos (JOIN implementado)
+
+- [x] Bug: "Invalid Date" aparecendo na página de Atendimentos (função formatarData com validação)

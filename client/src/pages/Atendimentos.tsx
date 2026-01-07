@@ -13,6 +13,18 @@ import { OPERADORAS } from "@/lib/operadoras";
 type SortField = "atendimento" | "dataAtendimento" | "tipoAtendimento" | "pacienteNome" | "local" | "convenio" | "faturamentoPrevistoFinal";
 type SortDirection = "asc" | "desc" | null;
 
+// Helper para formatar data com segurança
+const formatarData = (data: any): string => {
+  if (!data) return "-";
+  try {
+    const dataObj = new Date(data);
+    if (isNaN(dataObj.getTime())) return "-";
+    return dataObj.toLocaleDateString("pt-BR");
+  } catch {
+    return "-";
+  }
+};
+
 export default function Atendimentos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -388,7 +400,7 @@ export default function Atendimentos() {
                     {atendimentosPaginados.map((atd) => (
                       <TableRow key={atd.id}>
                         <TableCell className="font-medium">{atd.atendimento}</TableCell>
-                        <TableCell>{new Date(atd.dataAtendimento).toLocaleDateString("pt-BR")}</TableCell>
+                        <TableCell>{formatarData(atd.dataAtendimento)}</TableCell>
                         <TableCell>{atd.tipoAtendimento || "-"}</TableCell>
                         <TableCell>{atd.pacientes?.nome || "-"}</TableCell>
                         <TableCell>{atd.local || "-"}</TableCell>
