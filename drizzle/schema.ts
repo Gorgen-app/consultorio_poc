@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, date, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, date, boolean, json } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -62,6 +62,10 @@ export const pacientes = mysqlTable("pacientes", {
   diagnosticoEspecifico: text("diagnostico_especifico"),
   tempoSeguimentoAnos: decimal("tempo_seguimento_anos", { precision: 10, scale: 2 }),
   
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: int("deleted_by"),
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
@@ -108,9 +112,45 @@ export const atendimentos = mysqlTable("atendimentos", {
   trimestre: varchar("trimestre", { length: 10 }),
   trimestreAno: varchar("trimestre_ano", { length: 20 }),
   
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: int("deleted_by"),
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
 
 export type Atendimento = typeof atendimentos.$inferSelect;
 export type InsertAtendimento = typeof atendimentos.$inferInsert;
+
+/**
+ * Tabela de Log de Auditoria - Registra todas as alterações no sistema
+ */
+export const auditLog = mysqlTable("audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Quem fez a ação
+  userId: int("user_id").references(() => users.id),
+  userName: varchar("user_name", { length: 255 }),
+  userEmail: varchar("user_email", { length: 320 }),
+  
+  // O que foi feito
+  action: mysqlEnum("action", ["CREATE", "UPDATE", "DELETE", "RESTORE"]).notNull(),
+  entityType: mysqlEnum("entity_type", ["paciente", "atendimento", "user"]).notNull(),
+  entityId: int("entity_id").notNull(),
+  entityIdentifier: varchar("entity_identifier", { length: 100 }), // idPaciente ou atendimento
+  
+  // Detalhes da alteração
+  oldValues: json("old_values"), // Valores antes da alteração
+  newValues: json("new_values"), // Valores depois da alteração
+  changedFields: json("changed_fields"), // Lista de campos alterados
+  
+  // Metadados
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type AuditLog = typeof auditLog.$inferSelect;
+export type InsertAuditLog = typeof auditLog.$inferInsert;

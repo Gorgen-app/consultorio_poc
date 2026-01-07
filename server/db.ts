@@ -478,3 +478,231 @@ export async function getNextAtendimentoId(pacienteId: number, dataAtendimento: 
 
   return `${prefix}${String(nextNumber).padStart(4, "0")}`;
 }
+
+
+// ===== AUDITORIA E SOFT DELETE =====
+
+import { auditLog, InsertAuditLog, AuditLog } from "../drizzle/schema";
+
+export interface AuditContext {
+  userId?: number;
+  userName?: string;
+  userEmail?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+/**
+ * Registra uma ação no log de auditoria
+ */
+export async function createAuditLog(
+  action: "CREATE" | "UPDATE" | "DELETE" | "RESTORE",
+  entityType: "paciente" | "atendimento" | "user",
+  entityId: number,
+  entityIdentifier: string | null,
+  oldValues: Record<string, any> | null,
+  newValues: Record<string, any> | null,
+  context: AuditContext
+): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Audit] Database not available, skipping audit log");
+    return;
+  }
+
+  // Calcular campos alterados
+  let changedFields: string[] | null = null;
+  if (action === "UPDATE" && oldValues && newValues) {
+    changedFields = Object.keys(newValues).filter(
+      key => JSON.stringify(oldValues[key]) !== JSON.stringify(newValues[key])
+    );
+  }
+
+  try {
+    await db.insert(auditLog).values({
+      userId: context.userId,
+      userName: context.userName,
+      userEmail: context.userEmail,
+      action,
+      entityType,
+      entityId,
+      entityIdentifier,
+      oldValues: oldValues ? JSON.stringify(oldValues) : null,
+      newValues: newValues ? JSON.stringify(newValues) : null,
+      changedFields: changedFields ? JSON.stringify(changedFields) : null,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+    } as any);
+  } catch (error) {
+    console.error("[Audit] Failed to create audit log:", error);
+  }
+}
+
+/**
+ * Lista logs de auditoria com filtros
+ */
+export async function listAuditLogs(filters?: {
+  entityType?: "paciente" | "atendimento" | "user";
+  entityId?: number;
+  action?: "CREATE" | "UPDATE" | "DELETE" | "RESTORE";
+  userId?: number;
+  limit?: number;
+  offset?: number;
+}): Promise<AuditLog[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  let query = db.select().from(auditLog);
+  
+  const conditions = [];
+  
+  if (filters?.entityType) {
+    conditions.push(eq(auditLog.entityType, filters.entityType));
+  }
+  if (filters?.entityId) {
+    conditions.push(eq(auditLog.entityId, filters.entityId));
+  }
+  if (filters?.action) {
+    conditions.push(eq(auditLog.action, filters.action));
+  }
+  if (filters?.userId) {
+    conditions.push(eq(auditLog.userId, filters.userId));
+  }
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)!) as any;
+  }
+
+  query = query.orderBy(desc(auditLog.createdAt)) as any;
+
+  if (filters?.limit) {
+    query = query.limit(filters.limit) as any;
+  }
+  if (filters?.offset) {
+    query = query.offset(filters.offset) as any;
+  }
+
+  return await query;
+}
+
+/**
+ * Soft delete de paciente
+ */
+export async function softDeletePaciente(id: number, deletedBy: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.update(pacientes).set({
+    deletedAt: new Date(),
+    deletedBy,
+  } as any).where(eq(pacientes.id, id));
+  
+  return true;
+}
+
+/**
+ * Restaurar paciente excluído
+ */
+export async function restorePaciente(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.update(pacientes).set({
+    deletedAt: null,
+    deletedBy: null,
+  } as any).where(eq(pacientes.id, id));
+  
+  return true;
+}
+
+/**
+ * Soft delete de atendimento
+ */
+export async function softDeleteAtendimento(id: number, deletedBy: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.update(atendimentos).set({
+    deletedAt: new Date(),
+    deletedBy,
+  } as any).where(eq(atendimentos.id, id));
+  
+  return true;
+}
+
+/**
+ * Restaurar atendimento excluído
+ */
+export async function restoreAtendimento(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.update(atendimentos).set({
+    deletedAt: null,
+    deletedBy: null,
+  } as any).where(eq(atendimentos.id, id));
+  
+  return true;
+}
+
+/**
+ * Lista pacientes incluindo ou excluindo deletados
+ */
+export async function listPacientesWithDeleted(includeDeleted: boolean = false): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  let query = db.select().from(pacientes);
+  
+  if (!includeDeleted) {
+    query = query.where(sql`${pacientes.deletedAt} IS NULL`) as any;
+  }
+
+  query = query.orderBy(desc(pacientes.createdAt)) as any;
+
+  const result = await query;
+  
+  const { adicionarIdadeAosPacientes } = await import('./idade-helper');
+  return adicionarIdadeAosPacientes(result);
+}
+
+/**
+ * Lista atendimentos incluindo ou excluindo deletados
+ */
+export async function listAtendimentosWithDeleted(includeDeleted: boolean = false): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const atendimentosColumns = getTableColumns(atendimentos);
+  const pacientesColumns = getTableColumns(pacientes);
+  
+  let query = db
+    .select({
+      ...atendimentosColumns,
+      pacientes: {
+        id: pacientesColumns.id,
+        nome: pacientesColumns.nome,
+        idPaciente: pacientesColumns.idPaciente,
+        dataNascimento: pacientesColumns.dataNascimento,
+      }
+    })
+    .from(atendimentos)
+    .leftJoin(pacientes, eq(atendimentos.pacienteId, pacientes.id));
+
+  if (!includeDeleted) {
+    query = query.where(sql`${atendimentos.deletedAt} IS NULL`) as any;
+  }
+
+  query = query.orderBy(desc(atendimentos.dataAtendimento)) as any;
+
+  const result = await query;
+  
+  const { calcularIdade } = await import('./idade-helper');
+  return result.map(atd => ({
+    ...atd,
+    pacientes: atd.pacientes ? {
+      ...atd.pacientes,
+      idade: calcularIdade(atd.pacientes.dataNascimento)
+    } : null
+  }));
+}

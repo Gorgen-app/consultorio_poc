@@ -15,6 +15,13 @@
       "when": 1767764377919,
       "tag": "0001_wide_speedball",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1767817110038,
+      "tag": "0002_thick_zaladane",
+      "breakpoints": true
     }
   ]
 }

@@ -3,12 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TIPOS_ATENDIMENTO, LOCAIS_ATENDIMENTO } from "@/lib/atendimentos-constants";
 import { OPERADORAS } from "@/lib/operadoras";
+import { EditarAtendimentoModal } from "@/components/EditarAtendimentoModal";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 type SortField = "atendimento" | "dataAtendimento" | "tipoAtendimento" | "pacienteNome" | "local" | "convenio" | "faturamentoPrevistoFinal";
 type SortDirection = "asc" | "desc" | null;
@@ -46,12 +49,47 @@ export default function Atendimentos() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [itensPorPagina, setItensPorPagina] = useState(20);
 
+  // Modal de edição
+  const [atendimentoSelecionado, setAtendimentoSelecionado] = useState<any>(null);
+  const [modalEditarAberto, setModalEditarAberto] = useState(false);
+
+  // Dialog de exclusão
+  const [atendimentoParaExcluir, setAtendimentoParaExcluir] = useState<any>(null);
+  const [dialogExcluirAberto, setDialogExcluirAberto] = useState(false);
+
+  const utils = trpc.useUtils();
+
   const { data: atendimentos, isLoading } = trpc.atendimentos.list.useQuery({
     limit: 10000,
   });
 
-  // Debug: verificar dados
-  console.log("Atendimentos recebidos:", atendimentos?.slice(0, 2));
+  const deleteMutation = trpc.atendimentos.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Atendimento excluído com sucesso!");
+      utils.atendimentos.list.invalidate();
+      setDialogExcluirAberto(false);
+      setAtendimentoParaExcluir(null);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao excluir atendimento: ${error.message}`);
+    },
+  });
+
+  const handleEditar = (atendimento: any) => {
+    setAtendimentoSelecionado(atendimento);
+    setModalEditarAberto(true);
+  };
+
+  const handleExcluir = (atendimento: any) => {
+    setAtendimentoParaExcluir(atendimento);
+    setDialogExcluirAberto(true);
+  };
+
+  const confirmarExclusao = () => {
+    if (atendimentoParaExcluir) {
+      deleteMutation.mutate({ id: atendimentoParaExcluir.id });
+    }
+  };
 
   // Função de ordenação
   const handleSort = (field: SortField) => {
@@ -190,7 +228,7 @@ export default function Atendimentos() {
     }
 
     return resultado;
-  }, [atendimentos, searchTerm, filtroTipo, filtroLocal, filtroConvenio, filtroPago, filtroDataDe, filtroDataAte, sortField, sortDirection]);
+  }, [atendimentos, searchTerm, filtroIdade, filtroTipo, filtroLocal, filtroConvenio, filtroPago, filtroDataDe, filtroDataAte, sortField, sortDirection]);
 
   // Paginação
   const totalPaginas = Math.ceil(atendimentosFiltrados.length / itensPorPagina);
@@ -199,9 +237,10 @@ export default function Atendimentos() {
   const atendimentosPaginados = atendimentosFiltrados.slice(indiceInicio, indiceFim);
 
   // Verificar se há filtros ativos
-  const temFiltrosAtivos = filtroTipo || filtroLocal || filtroConvenio || filtroPago || filtroDataDe || filtroDataAte;
+  const temFiltrosAtivos = filtroTipo || filtroLocal || filtroConvenio || filtroPago || filtroDataDe || filtroDataAte || filtroIdade;
 
   const limparFiltros = () => {
+    setFiltroIdade("");
     setFiltroTipo("");
     setFiltroLocal("");
     setFiltroConvenio("");
@@ -266,7 +305,7 @@ export default function Atendimentos() {
             )}
           </div>
 
-          {/* Filtros por Coluna (2 linhas) */}
+          {/* Filtros por Coluna */}
           {showFilters && (
             <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
               {/* Primeira linha: Idade, Tipo, Local, Convênio, Pago */}
@@ -292,9 +331,7 @@ export default function Atendimentos() {
                     <SelectContent>
                       <SelectItem value="todos">Todos</SelectItem>
                       {TIPOS_ATENDIMENTO.map((tipo) => (
-                        <SelectItem key={tipo} value={tipo}>
-                          {tipo}
-                        </SelectItem>
+                        <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -309,9 +346,7 @@ export default function Atendimentos() {
                     <SelectContent>
                       <SelectItem value="todos">Todos</SelectItem>
                       {LOCAIS_ATENDIMENTO.map((local) => (
-                        <SelectItem key={local} value={local}>
-                          {local}
-                        </SelectItem>
+                        <SelectItem key={local} value={local}>{local}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -326,24 +361,22 @@ export default function Atendimentos() {
                     <SelectContent>
                       <SelectItem value="todos">Todos</SelectItem>
                       {OPERADORAS.map((op) => (
-                        <SelectItem key={op} value={op}>
-                          {op}
-                        </SelectItem>
+                        <SelectItem key={op} value={op}>{op}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Pagamento</label>
+                  <label className="text-sm font-medium">Pago</label>
                   <Select value={filtroPago} onValueChange={setFiltroPago}>
                     <SelectTrigger>
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="todos">Todos</SelectItem>
-                      <SelectItem value="sim">Pago</SelectItem>
-                      <SelectItem value="nao">Pendente</SelectItem>
+                      <SelectItem value="sim">Sim</SelectItem>
+                      <SelectItem value="nao">Não</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -417,6 +450,7 @@ export default function Atendimentos() {
                       <SortableHeader field="convenio">Convênio</SortableHeader>
                       <SortableHeader field="faturamentoPrevistoFinal">Valor</SortableHeader>
                       <TableHead>Pago</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -435,9 +469,30 @@ export default function Atendimentos() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <span className={`badge-${atd.pagamentoEfetivado ? "success" : "warning"} px-2 py-1 rounded text-xs`}>
+                          <span className={`px-2 py-1 rounded text-xs ${atd.pagamentoEfetivado ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
                             {atd.pagamentoEfetivado ? "Sim" : "Não"}
                           </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditar(atd)}
+                              title="Editar atendimento"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleExcluir(atd)}
+                              title="Excluir atendimento"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -481,6 +536,41 @@ export default function Atendimentos() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Edição */}
+      <EditarAtendimentoModal
+        atendimento={atendimentoSelecionado}
+        open={modalEditarAberto}
+        onOpenChange={setModalEditarAberto}
+      />
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={dialogExcluirAberto} onOpenChange={setDialogExcluirAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o atendimento <strong>{atendimentoParaExcluir?.atendimento}</strong>?
+              <br /><br />
+              Paciente: {atendimentoParaExcluir?.pacientes?.nome || atendimentoParaExcluir?.nomePaciente}
+              <br />
+              Data: {formatarData(atendimentoParaExcluir?.dataAtendimento)}
+              <br /><br />
+              Esta ação pode ser revertida posteriormente pelo administrador.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExclusao}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

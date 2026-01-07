@@ -453,7 +453,7 @@
 | Sprint | Status | Progresso |
 |--------|--------|-----------|
 | Sprint 1: Filtros e Busca | ✅ Concluído | 100% |
-| Sprint 2: Edição | 🟡 Parcial | 60% (Pacientes OK, Atendimentos pendente) |
+| Sprint 2: Edição | ✅ Concluído | 100% |
 | Sprint 3: Importação | ⏳ Pendente | 0% |
 | Sprint 4: Tabelas/Branding | ⏳ Pendente | 0% |
 
@@ -463,3 +463,59 @@
 3. [ ] Importação dos 21.000+ pacientes reais
 4. [ ] Integração tabela CBHPM
 
+
+
+---
+
+## 🚀 GORGEN 2.0 - Sprint 2 Completo ✅ CONCLUÍDO (07/01/2026)
+
+### Edição de Atendimentos
+- [x] Modal de edição com formulário pré-preenchido (3 abas: Dados Básicos, Faturamento, Pagamento)
+- [x] Não permitir alterar paciente vinculado
+- [ ] Salvar alterações com feedback toast
+- [ ] Validações mantidas
+
+### Exclusão de Registros (Soft Delete)
+- [ ] Adicionar campo `deletedAt` nas tabelas
+- [ ] Botão "Excluir" com confirmação em Pacientes
+- [ ] Botão "Excluir" com confirmação em Atendimentos
+- [ ] Filtrar registros excluídos nas listagens
+- [ ] Opção para visualizar registros excluídos (admin)
+
+### Log de Auditoria
+- [ ] Criar tabela `audit_log` no banco
+- [ ] Registrar criação de registros
+- [ ] Registrar edição de registros (antes/depois)
+- [ ] Registrar exclusão de registros
+- [ ] Página de visualização de logs (admin)
+
+
+
+### ✅ IMPLEMENTADO EM 07/01/2026
+
+**Edição de Atendimentos:**
+- [x] Modal de edição com 3 abas (Dados Básicos, Faturamento, Pagamento)
+- [x] Todos os campos editáveis
+- [x] Salvar alterações com feedback toast
+- [x] Validações mantidas
+
+**Exclusão de Registros (Soft Delete):**
+- [x] Campo `deletedAt` e `deletedBy` nas tabelas pacientes e atendimentos
+- [x] Botão "Excluir" com confirmação em Pacientes
+- [x] Botão "Excluir" com confirmação em Atendimentos
+- [x] Registros excluídos são marcados, não removidos fisicamente
+- [x] Listagens filtram automaticamente registros excluídos
+
+**Log de Auditoria:**
+- [x] Tabela `audit_log` criada no banco
+- [x] Registra criação, edição e exclusão de registros
+- [x] Armazena dados antigos e novos para comparação
+- [x] Procedure para listar logs de auditoria
+
+**Testes Automatizados:**
+- [x] 5 testes passando para Sprint 2
+- [x] Teste de listagem de pacientes
+- [x] Teste de listagem de atendimentos
+- [x] Teste de edição de pacientes
+- [x] Teste de edição de atendimentos
+- [x] Teste de log de auditoria

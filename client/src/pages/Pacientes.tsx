@@ -3,12 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OPERADORAS } from "@/lib/operadoras";
 import { EditarPacienteModal } from "@/components/EditarPacienteModal";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso";
 type SortDirection = "asc" | "desc" | null;
@@ -40,9 +42,38 @@ export default function Pacientes() {
   const [pacienteSelecionado, setPacienteSelecionado] = useState<any>(null);
   const [modalEditarAberto, setModalEditarAberto] = useState(false);
 
+  // Dialog de exclusão
+  const [pacienteParaExcluir, setPacienteParaExcluir] = useState<any>(null);
+  const [dialogExcluirAberto, setDialogExcluirAberto] = useState(false);
+
+  const utils = trpc.useUtils();
+
+  const deleteMutation = trpc.pacientes.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Paciente excluído com sucesso!");
+      utils.pacientes.list.invalidate();
+      setDialogExcluirAberto(false);
+      setPacienteParaExcluir(null);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao excluir paciente: ${error.message}`);
+    },
+  });
+
   const handleEditar = (paciente: any) => {
     setPacienteSelecionado(paciente);
     setModalEditarAberto(true);
+  };
+
+  const handleExcluir = (paciente: any) => {
+    setPacienteParaExcluir(paciente);
+    setDialogExcluirAberto(true);
+  };
+
+  const confirmarExclusao = () => {
+    if (pacienteParaExcluir) {
+      deleteMutation.mutate({ id: pacienteParaExcluir.id });
+    }
   };
 
   const { data: pacientes, isLoading } = trpc.pacientes.list.useQuery({
@@ -451,6 +482,15 @@ export default function Pacientes() {
                             >
                               <Plus className="h-4 w-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleExcluir(paciente)}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title="Excluir paciente"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -502,6 +542,34 @@ export default function Pacientes() {
         open={modalEditarAberto}
         onOpenChange={setModalEditarAberto}
       />
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={dialogExcluirAberto} onOpenChange={setDialogExcluirAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o paciente <strong>{pacienteParaExcluir?.nome}</strong>?
+              <br /><br />
+              ID: {pacienteParaExcluir?.idPaciente}
+              <br />
+              CPF: {pacienteParaExcluir?.cpf || "Não informado"}
+              <br /><br />
+              Esta ação pode ser revertida posteriormente pelo administrador.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExclusao}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
