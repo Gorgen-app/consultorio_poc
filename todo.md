@@ -69,3 +69,10 @@
 - [x] Convênio vinculado ao paciente selecionado + Particular + Cortesia
 - [x] Honorários vinculados a tabela (estrutura para implementação futura)
 - [x] Simplificar campos adicionais para apenas "Observações"
+
+
+## Nova Demanda - ID Automático para Atendimentos
+
+- [x] Implementar geração automática de ID sequencial para atendimentos (formato 20260001, 20260002, etc.)
+- [x] Remover campo manual de ID do formulário de Novo Atendimento
+- [x] Criar procedure getNextAtendimentoId no backend

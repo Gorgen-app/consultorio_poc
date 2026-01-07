@@ -15,11 +15,19 @@ export default function NovoAtendimento() {
   const [, setLocation] = useLocation();
   const createMutation = trpc.atendimentos.create.useMutation();
   const { data: pacientes } = trpc.pacientes.list.useQuery({ limit: 1000 });
+  const { data: nextId } = trpc.atendimentos.getNextId.useQuery();
 
   const [searchPaciente, setSearchPaciente] = useState("");
   const [pacienteSelecionado, setPacienteSelecionado] = useState<any>(null);
+
+  // Atualizar ID quando carregado
+  useEffect(() => {
+    if (nextId && !formData.atendimento) {
+      setFormData((prev) => ({ ...prev, atendimento: nextId }));
+    }
+  }, [nextId]);
   const [formData, setFormData] = useState({
-    atendimento: "",
+    atendimento: nextId || "",
     pacienteId: 0,
     dataAtendimento: new Date().toISOString().split("T")[0],
     tipoAtendimento: "",
@@ -129,10 +137,11 @@ export default function NovoAtendimento() {
                   <Input
                     id="atendimento"
                     value={formData.atendimento}
-                    onChange={(e) => handleChange("atendimento", e.target.value)}
-                    placeholder="20260001"
-                    required
+                    disabled
+                    className="bg-muted"
+                    placeholder="Carregando..."
                   />
+                  <p className="text-xs text-muted-foreground">ID gerado automaticamente</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dataAtendimento">Data do Atendimento *</Label>

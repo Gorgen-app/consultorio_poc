@@ -148,6 +148,10 @@ export const appRouter = router({
   }),
 
   atendimentos: router({
+    getNextId: protectedProcedure.query(async () => {
+      return await db.getNextAtendimentoId();
+    }),
+
     create: protectedProcedure
       .input(atendimentoSchema)
       .mutation(async ({ input }) => {

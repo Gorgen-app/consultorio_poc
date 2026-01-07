@@ -389,3 +389,32 @@ export async function getNextPacienteId(): Promise<string> {
 
   return `${year}-${String(nextNumber).padStart(7, "0")}`;
 }
+
+export async function getNextAtendimentoId(): Promise<string> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select({ atendimento: atendimentos.atendimento })
+    .from(atendimentos)
+    .orderBy(desc(atendimentos.id))
+    .limit(1);
+
+  if (result.length === 0) {
+    return `${new Date().getFullYear()}0001`;
+  }
+
+  const lastId = result[0].atendimento;
+  if (!lastId) {
+    return `${new Date().getFullYear()}0001`;
+  }
+
+  // Formato: 20260001, 20260002, etc.
+  const year = new Date().getFullYear().toString();
+  const lastNumber = parseInt(lastId.slice(-4));
+  const nextNumber = lastNumber + 1;
+
+  return `${year}${String(nextNumber).padStart(4, "0")}`;
+}
