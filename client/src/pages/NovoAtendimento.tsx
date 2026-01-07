@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Search } from "lucide-react";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { TIPOS_ATENDIMENTO, LOCAIS_ATENDIMENTO, PROCEDIMENTOS_CBHPM, TABELA_HONORARIOS } from "@/lib/atendimentos";
 
 export default function NovoAtendimento() {
   const [, setLocation] = useLocation();
@@ -15,6 +17,7 @@ export default function NovoAtendimento() {
   const { data: pacientes } = trpc.pacientes.list.useQuery({ limit: 1000 });
 
   const [searchPaciente, setSearchPaciente] = useState("");
+  const [pacienteSelecionado, setPacienteSelecionado] = useState<any>(null);
   const [formData, setFormData] = useState({
     atendimento: "",
     pacienteId: 0,
@@ -28,12 +31,7 @@ export default function NovoAtendimento() {
     faturamentoPrevistoInicial: "",
     faturamentoPrevistoFinal: "",
     dataFaturamento: "",
-    pagamentoEfetivado: false,
     dataPagamento: "",
-    mes: new Date().getMonth() + 1,
-    ano: new Date().getFullYear(),
-    diasDesdeUltimoAtendimento: "",
-    sequenciaAtendimentoAno: "",
     observacoes: "",
   });
 
@@ -42,6 +40,37 @@ export default function NovoAtendimento() {
     p.idPaciente?.toLowerCase().includes(searchPaciente.toLowerCase())
   );
 
+  // Quando seleciona um paciente, carrega os convênios dele
+  const conveniosDisponiveis = pacienteSelecionado
+    ? [
+        ...(pacienteSelecionado.operadora1 ? [pacienteSelecionado.operadora1] : []),
+        ...(pacienteSelecionado.operadora2 ? [pacienteSelecionado.operadora2] : []),
+        "Particular",
+        "Cortesia"
+      ]
+    : ["Particular", "Cortesia"];
+
+  const handlePacienteSelect = (pacienteId: number) => {
+    const paciente = pacientes?.find((p) => p.id === pacienteId);
+    if (paciente) {
+      setPacienteSelecionado(paciente);
+      setFormData((prev) => ({ ...prev, pacienteId }));
+      setSearchPaciente("");
+    }
+  };
+
+  // Auto-preencher código CBHPM quando seleciona procedimento
+  const handleProcedimentoChange = (procedimento: string) => {
+    const codigo = PROCEDIMENTOS_CBHPM[procedimento] || "";
+    const honorario = TABELA_HONORARIOS[procedimento] || "";
+    setFormData((prev) => ({
+      ...prev,
+      procedimento,
+      codigoCBHPM: codigo,
+      faturamentoPrevistoInicial: honorario ? honorario.toString() : "",
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.atendimento || formData.pacienteId === 0) {
@@ -49,16 +78,23 @@ export default function NovoAtendimento() {
       return;
     }
     try {
-      await createMutation.mutateAsync({
+      const dataToSend = {
         ...formData,
         dataAtendimento: new Date(formData.dataAtendimento),
-        dataFaturamento: formData.dataFaturamento ? new Date(formData.dataFaturamento) : undefined,
-        dataPagamento: formData.dataPagamento ? new Date(formData.dataPagamento) : undefined,
-      } as any);
+        dataFaturamento: formData.dataFaturamento || null,
+        dataPagamento: formData.dataPagamento || null,
+        faturamentoPrevistoInicial: formData.faturamentoPrevistoInicial || null,
+        faturamentoPrevistoFinal: formData.faturamentoPrevistoFinal || null,
+        codigoCBHPM: formData.codigoCBHPM || null,
+        plano: formData.plano || null,
+        observacoes: formData.observacoes || null,
+      };
+      await createMutation.mutateAsync(dataToSend as any);
       toast.success("Atendimento cadastrado com sucesso!");
       setLocation("/atendimentos");
-    } catch (error) {
-      toast.error("Erro ao cadastrar atendimento");
+    } catch (error: any) {
+      const errorMessage = error?.message || "Erro desconhecido ao cadastrar atendimento";
+      toast.error(`Erro: ${errorMessage}`);
       console.error(error);
     }
   };
@@ -111,39 +147,52 @@ export default function NovoAtendimento() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="pacienteSearch">Selecionar Paciente *</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="pacienteSearch"
-                    placeholder="Buscar por nome ou ID..."
-                    value={searchPaciente}
-                    onChange={(e) => setSearchPaciente(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                {searchPaciente && filteredPacientes && filteredPacientes.length > 0 && (
-                  <div className="border rounded-md mt-2 max-h-48 overflow-y-auto">
-                    {filteredPacientes.slice(0, 10).map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          handleChange("pacienteId", p.id);
-                          setSearchPaciente(p.nome || "");
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-muted transition-colors"
-                      >
-                        <div className="font-medium">{p.nome}</div>
-                        <div className="text-sm text-muted-foreground">{p.idPaciente}</div>
-                      </button>
-                    ))}
+                <Label>Paciente *</Label>
+                {!pacienteSelecionado ? (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar paciente por nome ou ID..."
+                        value={searchPaciente}
+                        onChange={(e) => setSearchPaciente(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    {searchPaciente && filteredPacientes && filteredPacientes.length > 0 && (
+                      <div className="border rounded-md max-h-48 overflow-y-auto">
+                        {filteredPacientes.slice(0, 10).map((paciente) => (
+                          <button
+                            key={paciente.id}
+                            type="button"
+                            onClick={() => handlePacienteSelect(paciente.id)}
+                            className="w-full text-left px-4 py-2 hover:bg-accent transition-colors"
+                          >
+                            <div className="font-medium">{paciente.nome}</div>
+                            <div className="text-sm text-muted-foreground">ID: {paciente.idPaciente}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-                {formData.pacienteId > 0 && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Paciente selecionado: ID {formData.pacienteId}
-                  </p>
+                ) : (
+                  <div className="flex items-center justify-between p-4 border rounded-md bg-muted/50">
+                    <div>
+                      <div className="font-medium">{pacienteSelecionado.nome}</div>
+                      <div className="text-sm text-muted-foreground">ID: {pacienteSelecionado.idPaciente}</div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setPacienteSelecionado(null);
+                        setFormData((prev) => ({ ...prev, pacienteId: 0, convenio: "" }));
+                      }}
+                    >
+                      Trocar
+                    </Button>
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -151,34 +200,40 @@ export default function NovoAtendimento() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Tipo e Procedimento</CardTitle>
-              <CardDescription>Detalhes do atendimento realizado</CardDescription>
+              <CardTitle>Detalhes do Atendimento</CardTitle>
+              <CardDescription>Tipo, local e procedimento realizado</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="tipoAtendimento">Tipo de Atendimento</Label>
+                  <Label htmlFor="tipoAtendimento">Tipo de Atendimento *</Label>
                   <Select value={formData.tipoAtendimento} onValueChange={(value) => handleChange("tipoAtendimento", value)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
+                      <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Consulta">Consulta</SelectItem>
-                      <SelectItem value="Visita Internado">Visita Internado</SelectItem>
-                      <SelectItem value="Cirurgia">Cirurgia</SelectItem>
-                      <SelectItem value="Retorno">Retorno</SelectItem>
-                      <SelectItem value="Exame">Exame</SelectItem>
+                      {TIPOS_ATENDIMENTO.map((tipo) => (
+                        <SelectItem key={tipo} value={tipo}>
+                          {tipo}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="local">Local</Label>
-                  <Input
-                    id="local"
-                    value={formData.local}
-                    onChange={(e) => handleChange("local", e.target.value)}
-                    placeholder="Ex: Consultório, Hospital"
-                  />
+                  <Label htmlFor="local">Local *</Label>
+                  <Select value={formData.local} onValueChange={(value) => handleChange("local", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o local" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LOCAIS_ATENDIMENTO.map((local) => (
+                        <SelectItem key={local} value={local}>
+                          {local}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -188,9 +243,12 @@ export default function NovoAtendimento() {
                   <Input
                     id="procedimento"
                     value={formData.procedimento}
-                    onChange={(e) => handleChange("procedimento", e.target.value)}
-                    placeholder="Descrição do procedimento"
+                    onChange={(e) => handleProcedimentoChange(e.target.value)}
+                    placeholder="Descreva o procedimento"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Tabela CBHPM será vinculada automaticamente em breve
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="codigoCBHPM">Código CBHPM</Label>
@@ -198,7 +256,7 @@ export default function NovoAtendimento() {
                     id="codigoCBHPM"
                     value={formData.codigoCBHPM}
                     onChange={(e) => handleChange("codigoCBHPM", e.target.value)}
-                    placeholder="Código do procedimento"
+                    placeholder="Código automático"
                   />
                 </div>
               </div>
@@ -207,22 +265,32 @@ export default function NovoAtendimento() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Convênio e Plano</CardTitle>
-              <CardDescription>Informações de cobertura</CardDescription>
+              <CardTitle>Convênio e Faturamento</CardTitle>
+              <CardDescription>Informações de pagamento e convênio</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="convenio">Convênio</Label>
-                  <Input
-                    id="convenio"
+                  <Label htmlFor="convenio">Convênio *</Label>
+                  <Select
                     value={formData.convenio}
-                    onChange={(e) => handleChange("convenio", e.target.value)}
-                    placeholder="Nome do convênio"
-                  />
+                    onValueChange={(value) => handleChange("convenio", value)}
+                    disabled={!pacienteSelecionado}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={pacienteSelecionado ? "Selecione o convênio" : "Selecione um paciente primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {conveniosDisponiveis.map((conv) => (
+                        <SelectItem key={conv} value={conv}>
+                          {conv}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="plano">Plano</Label>
+                  <Label htmlFor="plano">Plano/Modalidade</Label>
                   <Input
                     id="plano"
                     value={formData.plano}
@@ -231,18 +299,10 @@ export default function NovoAtendimento() {
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Faturamento</CardTitle>
-              <CardDescription>Valores e datas de pagamento</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="faturamentoPrevistoInicial">Faturamento Previsto Inicial (R$)</Label>
+                  <Label htmlFor="faturamentoPrevistoInicial">Honorários Previstos (R$)</Label>
                   <Input
                     id="faturamentoPrevistoInicial"
                     type="number"
@@ -251,9 +311,12 @@ export default function NovoAtendimento() {
                     onChange={(e) => handleChange("faturamentoPrevistoInicial", e.target.value)}
                     placeholder="0.00"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Tabela de honorários será vinculada automaticamente em breve
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="faturamentoPrevistoFinal">Faturamento Previsto Final (R$)</Label>
+                  <Label htmlFor="faturamentoPrevistoFinal">Faturamento Efetivado (R$)</Label>
                   <Input
                     id="faturamentoPrevistoFinal"
                     type="number"
@@ -265,7 +328,7 @@ export default function NovoAtendimento() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="dataFaturamento">Data de Faturamento</Label>
                   <Input
@@ -284,66 +347,24 @@ export default function NovoAtendimento() {
                     onChange={(e) => handleChange("dataPagamento", e.target.value)}
                   />
                 </div>
-                <div className="space-y-2 flex items-end">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.pagamentoEfetivado}
-                      onChange={(e) => handleChange("pagamentoEfetivado", e.target.checked)}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm font-medium">Pagamento Efetivado</span>
-                  </label>
-                </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Informações Adicionais</CardTitle>
-              <CardDescription>Dados complementares do atendimento</CardDescription>
+              <CardTitle>Observações</CardTitle>
+              <CardDescription>Informações adicionais sobre o atendimento</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="mes">Mês</Label>
-                  <Input
-                    id="mes"
-                    type="number"
-                    min="1"
-                    max="12"
-                    value={formData.mes}
-                    onChange={(e) => handleChange("mes", parseInt(e.target.value))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ano">Ano</Label>
-                  <Input
-                    id="ano"
-                    type="number"
-                    value={formData.ano}
-                    onChange={(e) => handleChange("ano", parseInt(e.target.value))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sequenciaAtendimentoAno">Sequência no Ano</Label>
-                  <Input
-                    id="sequenciaAtendimentoAno"
-                    value={formData.sequenciaAtendimentoAno}
-                    onChange={(e) => handleChange("sequenciaAtendimentoAno", e.target.value)}
-                    placeholder="Ex: 1, 2, 3..."
-                  />
-                </div>
-              </div>
-
+            <CardContent>
               <div className="space-y-2">
                 <Label htmlFor="observacoes">Observações</Label>
-                <Input
+                <Textarea
                   id="observacoes"
                   value={formData.observacoes}
                   onChange={(e) => handleChange("observacoes", e.target.value)}
-                  placeholder="Observações adicionais sobre o atendimento"
+                  placeholder="Adicione observações relevantes sobre este atendimento..."
+                  rows={4}
                 />
               </div>
             </CardContent>
@@ -354,9 +375,7 @@ export default function NovoAtendimento() {
               Cancelar
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? (
-                "Salvando..."
-              ) : (
+              {createMutation.isPending ? "Salvando..." : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
                   Salvar Atendimento

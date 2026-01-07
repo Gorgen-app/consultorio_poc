@@ -59,3 +59,13 @@
 
 - [x] Adicionar dropdown de operadoras com lista da tabela original
 - [x] Corrigir erro de inserção no banco de dados (campos obrigatórios)
+
+
+## Melhorias no Formulário de Atendimentos
+
+- [x] Dropdown de tipos de atendimento (cirurgia, consulta, visita internado, procedimento em consultório, exame)
+- [x] Dropdown de locais (Consultorio, On-line, HMV, Santa Casa, HMD, HMD CG)
+- [x] Vincular procedimento ao código CBHPM (estrutura para tabela futura)
+- [x] Convênio vinculado ao paciente selecionado + Particular + Cortesia
+- [x] Honorários vinculados a tabela (estrutura para implementação futura)
+- [x] Simplificar campos adicionais para apenas "Observações"
