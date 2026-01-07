@@ -77,16 +77,18 @@ export default function Pacientes() {
     if (searchTerm) {
       const termo = searchTerm.toLowerCase().trim();
       resultado = resultado.filter((p) => {
-        const nome = p.nome?.toLowerCase() || "";
-        const cpf = p.cpf?.toLowerCase().replace(/[^\d]/g, "") || "";
-        const id = p.idPaciente?.toLowerCase() || "";
+        // Garantir que nome seja string e fazer busca
+        const nomeStr = String(p.nome || "").toLowerCase();
+        const cpfStr = String(p.cpf || "").replace(/[^\d]/g, "");
+        const idStr = String(p.idPaciente || "").toLowerCase();
         const termoLimpo = termo.replace(/[^\d]/g, "");
         
-        return (
-          nome.includes(termo) ||
-          cpf.includes(termoLimpo) ||
-          id.includes(termo)
-        );
+        // Verificar se o termo está em qualquer um dos campos
+        const matchNome = nomeStr.includes(termo);
+        const matchCpf = termoLimpo.length > 0 && cpfStr.includes(termoLimpo);
+        const matchId = idStr.includes(termo);
+        
+        return matchNome || matchCpf || matchId;
       });
     }
 
@@ -159,7 +161,7 @@ export default function Pacientes() {
     }
 
     return resultado;
-  }, [pacientes, searchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, sortField, sortDirection]);
+  }, [pacientes, searchTerm, filtroIdade, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, sortField, sortDirection]);
 
   // Paginação
   const totalPaginas = Math.ceil(pacientesFiltrados.length / itensPorPagina);
