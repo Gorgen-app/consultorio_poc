@@ -148,9 +148,16 @@ export const appRouter = router({
   }),
 
   atendimentos: router({
-    getNextId: protectedProcedure.query(async () => {
-      return await db.getNextAtendimentoId();
-    }),
+    getNextId: protectedProcedure
+      .input(
+        z.object({
+          pacienteId: z.number(),
+          dataAtendimento: z.date(),
+        })
+      )
+      .query(async ({ input }) => {
+        return await db.getNextAtendimentoId(input.pacienteId, input.dataAtendimento);
+      }),
 
     create: protectedProcedure
       .input(atendimentoSchema)

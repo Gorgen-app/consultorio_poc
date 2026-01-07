@@ -1,0 +1,80 @@
+{
+  "query": "SELECT a.id, a.atendimento, a.paciente_id, a.data_atendimento, p.id_paciente \nFROM atendimentos a \nJOIN pacientes p ON a.paciente_id = p.id \nORDER BY a.id \nLIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT a.id, a.atendimento, a.paciente_id, a.data_atendimento, p.id_paciente \nFROM atendimentos a \nJOIN pacientes p ON a.paciente_id = p.id \nORDER BY a.id \nLIMIT 10",
+  "rows": [
+    {
+      "id": "30101",
+      "atendimento": "20260000001",
+      "paciente_id": "9",
+      "data_atendimento": "2025-10-23 04:00:00",
+      "id_paciente": "2025-0000009"
+    },
+    {
+      "id": "30102",
+      "atendimento": "20260000002",
+      "paciente_id": "41",
+      "data_atendimento": "2025-11-21 05:00:00",
+      "id_paciente": "2025-0000041"
+    },
+    {
+      "id": "30103",
+      "atendimento": "20260000003",
+      "paciente_id": "50",
+      "data_atendimento": "2025-10-16 04:00:00",
+      "id_paciente": "2025-0000050"
+    },
+    {
+      "id": "30104",
+      "atendimento": "20260000004",
+      "paciente_id": "1",
+      "data_atendimento": "2025-10-20 04:00:00",
+      "id_paciente": "2025-0000001"
+    },
+    {
+      "id": "30105",
+      "atendimento": "20260000005",
+      "paciente_id": "22",
+      "data_atendimento": "2025-01-25 05:00:00",
+      "id_paciente": "2025-0000022"
+    },
+    {
+      "id": "30106",
+      "atendimento": "20260000006",
+      "paciente_id": "16",
+      "data_atendimento": "2025-03-21 04:00:00",
+      "id_paciente": "2025-0000016"
+    },
+    {
+      "id": "30107",
+      "atendimento": "20260000007",
+      "paciente_id": "37",
+      "data_atendimento": "2025-09-21 04:00:00",
+      "id_paciente": "2025-0000037"
+    },
+    {
+      "id": "30108",
+      "atendimento": "20260000008",
+      "paciente_id": "30",
+      "data_atendimento": "2025-04-19 04:00:00",
+      "id_paciente": "2025-0000030"
+    },
+    {
+      "id": "30109",
+      "atendimento": "20260000009",
+      "paciente_id": "4",
+      "data_atendimento": "2025-11-17 05:00:00",
+      "id_paciente": "2025-0000004"
+    },
+    {
+      "id": "30110",
+      "atendimento": "20260000010",
+      "paciente_id": "14",
+      "data_atendimento": "2025-02-07 05:00:00",
+      "id_paciente": "2025-0000014"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tatendimento\tpaciente_id\tdata_atendimento\tid_paciente\n30101\t20260000001\t9\t2025-10-23 04:00:00\t2025-0000009\n30102\t20260000002\t41\t2025-11-21 05:00:00\t2025-0000041\n30103\t20260000003\t50\t2025-10-16 04:00:00\t2025-0000050\n30104\t20260000004\t1\t2025-10-20 04:00:00\t2025-0000001\n30105\t20260000005\t22\t2025-01-25 05:00:00\t2025-0000022\n30106\t20260000006\t16\t2025-03-21 04:00:00\t2025-0000016\n30107\t20260000007\t37\t2025-09-21 04:00:00\t2025-0000037\n30108\t20260000008\t30\t2025-04-19 04:00:00\t2025-0000030\n30109\t20260000009\t4\t2025-11-17 05:00:00\t2025-0000004\n30110\t20260000010\t14\t2025-02-07 05:00:00\t2025-0000014\n",
+  "stderr": "",
+  "execution_time_ms": 506
+}

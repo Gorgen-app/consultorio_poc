@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OPERADORAS } from "@/lib/operadoras";
@@ -14,6 +14,7 @@ type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | 
 type SortDirection = "asc" | "desc" | null;
 
 export default function Pacientes() {
+  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   
@@ -428,14 +429,27 @@ export default function Pacientes() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditar(paciente)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          {/* Ações: Editar + Novo Atendimento */}
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditar(paciente)}
+                              className="h-8 w-8 p-0"
+                              title="Editar paciente"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setLocation(`/novo-atendimento?pacienteId=${paciente.id}`)}
+                              className="h-8 w-8 p-0"
+                              title="Novo atendimento"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

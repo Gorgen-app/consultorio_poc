@@ -350,3 +350,72 @@
 - [x] Bug: Erro ao atualizar paciente - "Invalid input: expected string, received Date" no campo dataInclusao
 
 - [x] Adicionar campo de data de nascimento no formulário de cadastro de novos pacientes (campo já existia, testado e validado)
+
+
+## FASE 0: FUNCIONALIDADES ESSENCIAIS (Próxima)
+
+### Sistema de Usuários e Controle de Acesso
+- [ ] Criar tabela de usuários no schema
+- [ ] Implementar perfis de usuário (Admin, Secretária, Assistente, Financeiro)
+- [ ] Criar middleware de autorização no backend
+- [ ] Implementar UI de gerenciamento de usuários
+- [ ] Adicionar logs de auditoria para ações sensíveis
+
+### Autenticação com Senha
+- [ ] Implementar hash de senhas com bcrypt
+- [ ] Criar tela de login local
+- [ ] Implementar recuperação de senha via email
+- [ ] Adicionar bloqueio após tentativas falhas
+- [ ] Implementar política de senhas fortes
+
+### Prontuário Médico Eletrônico
+- [ ] Criar schema de prontuário no banco
+- [ ] Implementar editor de texto rico
+- [ ] Adicionar suporte a anexos (PDFs, imagens)
+- [ ] Criar visualização cronológica do histórico
+- [ ] Implementar busca dentro dos prontuários
+- [ ] Adicionar assinatura digital e rastreabilidade
+- [ ] Implementar impressão de relatórios de evolução
+
+### Sistema de Agenda
+- [ ] Criar schema de agendamentos
+- [ ] Implementar calendário visual (mensal, semanal, diário)
+- [ ] Adicionar configuração de horários de trabalho
+- [ ] Implementar marcação de consultas
+- [ ] Criar gestão de conflitos de horários
+- [ ] Adicionar status de agendamento (agendado, confirmado, realizado, faltou)
+- [ ] Implementar lista de espera
+
+### Produção Automatizada de Guias
+- [ ] Criar templates de guias por convênio
+- [ ] Implementar geração de PDF
+- [ ] Adicionar preenchimento automático de dados
+- [ ] Criar numeração sequencial de guias
+- [ ] Implementar armazenamento no histórico do atendimento
+- [ ] Adicionar funcionalidade de reimpressão
+
+## FASE A: FUNCIONALIDADES BÁSICAS
+
+- [ ] Implementar edição de atendimentos (modal similar ao de pacientes)
+- [ ] Criar relatório de inadimplência (atendimentos não pagos agrupados)
+- [ ] Implementar exportação para Excel em todas as tabelas
+
+## FASE B: MIGRAÇÃO DE DADOS
+
+- [ ] Desenvolver script de importação em massa
+- [ ] Implementar validação e limpeza de dados
+- [ ] Importar tabela CBHPM completa
+- [ ] Criar tabela de honorários por convênio
+- [ ] Implementar cálculo automático de valores
+
+## FASE C: AUTOMAÇÕES E UX
+
+- [ ] Implementar sistema de notificações automáticas
+- [ ] Criar lembretes de consultas (email/SMS)
+- [ ] Desenvolver interface de relatórios personalizados
+- [ ] Adicionar agendamento de relatórios automáticos
+
+- [x] Implementar novo formato de ID de atendimento (ID_PACIENTE-YYYYNNNN)
+
+- [x] Bug: Busca/autocomplete corrigido em Novo Atendimento (usando Card ao invés de button)
+- [ ] Bug: Botão "Novo Atendimento" não aparece na tabela de pacientes (código correto, problema de cache do navegador - usuário precisa limpar cache)

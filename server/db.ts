@@ -418,31 +418,63 @@ export async function getNextPacienteId(): Promise<string> {
   return `${year}-${String(nextNumber).padStart(7, "0")}`;
 }
 
-export async function getNextAtendimentoId(): Promise<string> {
+/**
+ * Gera o próximo ID de atendimento no formato: ID_PACIENTE-YYYYNNNN
+ * Exemplo: 2025-0000009-20260001
+ * Onde:
+ * - ID_PACIENTE: ID do paciente (ex: 2025-0000009)
+ * - YYYY: Ano do atendimento (ex: 2026)
+ * - NNNN: Número sequencial do atendimento no ano para aquele paciente (4 dígitos, começa em 0001)
+ */
+export async function getNextAtendimentoId(pacienteId: number, dataAtendimento: Date): Promise<string> {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
 
+  // Buscar o ID do paciente (formato: 2025-0000009)
+  const paciente = await db
+    .select({ idPaciente: pacientes.idPaciente })
+    .from(pacientes)
+    .where(eq(pacientes.id, pacienteId))
+    .limit(1);
+
+  if (paciente.length === 0) {
+    throw new Error(`Paciente com ID ${pacienteId} não encontrado`);
+  }
+
+  const idPaciente = paciente[0].idPaciente;
+  const year = dataAtendimento.getFullYear();
+
+  // Buscar o último atendimento deste paciente neste ano
+  // Formato esperado: 2025-0000009-20260001
+  const prefix = `${idPaciente}-${year}`;
+  
   const result = await db
     .select({ atendimento: atendimentos.atendimento })
     .from(atendimentos)
-    .orderBy(desc(atendimentos.id))
+    .where(
+      and(
+        eq(atendimentos.pacienteId, pacienteId),
+        like(atendimentos.atendimento, `${prefix}%`)
+      )!
+    )
+    .orderBy(desc(atendimentos.atendimento))
     .limit(1);
 
   if (result.length === 0) {
-    return `${new Date().getFullYear()}0001`;
+    // Primeiro atendimento deste paciente neste ano
+    return `${prefix}0001`;
   }
 
   const lastId = result[0].atendimento;
   if (!lastId) {
-    return `${new Date().getFullYear()}0001`;
+    return `${prefix}0001`;
   }
 
-  // Formato: 20260001, 20260002, etc.
-  const year = new Date().getFullYear().toString();
+  // Extrair o número sequencial (4 últimos dígitos)
   const lastNumber = parseInt(lastId.slice(-4));
   const nextNumber = lastNumber + 1;
 
-  return `${year}${String(nextNumber).padStart(4, "0")}`;
+  return `${prefix}${String(nextNumber).padStart(4, "0")}`;
 }
