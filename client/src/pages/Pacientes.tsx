@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OPERADORAS } from "@/lib/operadoras";
+import { EditarPacienteModal } from "@/components/EditarPacienteModal";
 
 type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso";
 type SortDirection = "asc" | "desc" | null;
@@ -32,6 +33,15 @@ export default function Pacientes() {
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [itensPorPagina, setItensPorPagina] = useState(20);
+
+  // Modal de edição
+  const [pacienteSelecionado, setPacienteSelecionado] = useState<any>(null);
+  const [modalEditarAberto, setModalEditarAberto] = useState(false);
+
+  const handleEditar = (paciente: any) => {
+    setPacienteSelecionado(paciente);
+    setModalEditarAberto(true);
+  };
 
   const { data: pacientes, isLoading } = trpc.pacientes.list.useQuery({
     limit: 10000,
@@ -374,6 +384,7 @@ export default function Pacientes() {
                       <SortableHeader field="operadora2">Convênio 2</SortableHeader>
                       <SortableHeader field="diagnosticoEspecifico">Diagnóstico</SortableHeader>
                       <SortableHeader field="statusCaso">Status</SortableHeader>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -394,6 +405,16 @@ export default function Pacientes() {
                           <span className={`badge-${paciente.statusCaso === "Ativo" ? "success" : "warning"} px-2 py-1 rounded text-xs`}>
                             {paciente.statusCaso || "N/A"}
                           </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditar(paciente)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -437,6 +458,13 @@ export default function Pacientes() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Edição */}
+      <EditarPacienteModal
+        paciente={pacienteSelecionado}
+        open={modalEditarAberto}
+        onOpenChange={setModalEditarAberto}
+      />
     </div>
   );
 }

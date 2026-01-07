@@ -265,3 +265,24 @@
 - [x] Reorganizar layout de filtros para 2 linhas
 - [x] Mover Status para ao lado de Operadora (linha 1: 4 campos, linha 2: 3 campos)
 - [x] Layout mais compacto e visualmente agradável
+
+
+## 🚀 GORGEN 1.2 - Novas Funcionalidades
+
+### Edição de Pacientes
+- [x] Adicionar botão "Editar" em cada linha da tabela de pacientes
+- [x] Criar modal de edição com formulário pré-preenchido
+- [x] Procedure tRPC para atualizar paciente (já existia)
+- [x] Formulário organizado em abas (Dados Básicos, Contato, Convênios, Clínico)
+- [x] Checkboxes para campos Sim/Não
+- [x] Feedback visual de sucesso/erro com toast
+
+### Melhorias na Página de Atendimentos
+- [x] Busca global por ID, Paciente ou Procedimento
+- [x] Ordenação por coluna ao clicar no cabeçalho (A-Z / Z-A)
+- [x] Filtros otimizados: Tipo, Local, Convênio, Pagamento, Período
+- [x] Paginação (20, 50, 100 registros)
+- [x] Layout de filtros em 2 linhas compactas
+- [x] Contador de resultados ("Mostrando X a Y de Z")
+- [x] Botão "Limpar Filtros"
+- [x] Performance otimizada com useMemo
