@@ -19,8 +19,9 @@
 
 ## Funcionalidades Pendentes
 
-- [ ] Formulário completo de cadastro de pacientes (33 campos)
-- [ ] Formulário completo de cadastro de atendimentos (26 campos)
+- [x] **[PRIORIDADE]** Formulário completo de cadastro de pacientes (33 campos)
+- [x] **[PRIORIDADE]** Formulário completo de cadastro de atendimentos (26 campos)
+- [ ] Validações e máscaras nos formulários (CPF, telefone, CEP)
 - [ ] Edição de pacientes
 - [ ] Edição de atendimentos
 - [ ] Filtros avançados (CPF, convênio, diagnóstico, status)
