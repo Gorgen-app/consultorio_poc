@@ -1265,6 +1265,132 @@ export const appRouter = router({
           });
         }
       }),
+
+    // ========================================
+    // VÍNCULOS SECRETÁRIA-MÉDICO
+    // ========================================
+
+    // Criar vínculo entre secretária e médico
+    criarVinculo: protectedProcedure
+      .input(z.object({
+        medicoUserId: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.openId) throw new Error("Usuário não autenticado");
+        
+        // Verificar se o usuário tem perfil de secretária
+        const profile = await db.getUserProfile(ctx.user.id);
+        if (!profile?.isSecretaria) {
+          throw new Error("Apenas secretárias podem criar vínculos");
+        }
+
+        return await db.criarVinculo(ctx.user.openId, input.medicoUserId);
+      }),
+
+    // Listar vínculos da secretária logada
+    listarMeusVinculos: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user?.openId) return [];
+      
+      const profile = await db.getUserProfile(ctx.user.id);
+      if (!profile) return [];
+
+      // Se for secretária, listar médicos vinculados
+      if (profile.isSecretaria) {
+        return await db.listarVinculosSecretaria(ctx.user.openId);
+      }
+      
+      // Se for médico, listar secretárias vinculadas
+      if (profile.isMedico) {
+        return await db.listarVinculosMedico(ctx.user.openId);
+      }
+
+      return [];
+    }),
+
+    // Renovar vínculo (médico aceita renovação)
+    renovarVinculo: protectedProcedure
+      .input(z.object({
+        vinculoId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.openId) throw new Error("Usuário não autenticado");
+        
+        // Verificar se o usuário é o médico do vínculo
+        const profile = await db.getUserProfile(ctx.user.id);
+        if (!profile?.isMedico) {
+          throw new Error("Apenas médicos podem renovar vínculos");
+        }
+
+        await db.renovarVinculo(input.vinculoId);
+        return { success: true };
+      }),
+
+    // Cancelar vínculo
+    cancelarVinculo: protectedProcedure
+      .input(z.object({
+        vinculoId: z.number(),
+        motivo: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.openId) throw new Error("Usuário não autenticado");
+        
+        await db.cancelarVinculo(input.vinculoId, input.motivo);
+        return { success: true };
+      }),
+
+    // ========================================
+    // ESPECIALIDADES DO MÉDICO
+    // ========================================
+
+    // Atualizar especialidades do médico
+    atualizarEspecialidades: protectedProcedure
+      .input(z.object({
+        especialidadePrincipal: z.string().nullable(),
+        especialidadeSecundaria: z.string().nullable(),
+        areaAtuacao: z.string().nullable(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.openId) throw new Error("Usuário não autenticado");
+        
+        const profile = await db.getUserProfile(ctx.user.id);
+        if (!profile?.isMedico) {
+          throw new Error("Apenas médicos podem atualizar especialidades");
+        }
+
+        await db.atualizarEspecialidadesMedico(
+          ctx.user.openId,
+          input.especialidadePrincipal,
+          input.especialidadeSecundaria,
+          input.areaAtuacao
+        );
+        return { success: true };
+      }),
+
+    // Obter especialidades do médico
+    getEspecialidades: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user?.openId) return null;
+      return await db.getEspecialidadesMedico(ctx.user.openId);
+    }),
+
+    // Listar médicos disponíveis para vínculo (para secretárias)
+    listarMedicosDisponiveis: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user?.id) return [];
+      
+      const profile = await db.getUserProfile(ctx.user.id);
+      if (!profile?.isSecretaria) return [];
+
+      // Buscar todos os usuários com perfil de médico
+      const profiles = await db.listUserProfiles();
+      return profiles
+        .filter(p => p.isMedico)
+        .map(p => ({
+          userId: p.userId,
+          nomeCompleto: p.nomeCompleto,
+          email: p.email,
+          crm: p.crm,
+          especialidade: p.especialidade,
+        }));
+    }),
   }),
 
   // ============================================

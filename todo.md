@@ -921,3 +921,13 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Implementar proteção de rotas no frontend
 - [x] Implementar verificação de permissões no backend (procedures)
 - [x] Testar acesso com diferentes perfis
+
+## Configurações de Perfil - Vínculo e Especialidades
+- [ ] Criar tabela de vínculo secretária-médico com data de início e validade
+- [ ] Criar sistema de renovação anual de vínculo
+- [ ] Implementar notificação para renovação de vínculo
+- [ ] Adicionar campos de especialidade e área de atuação para médico
+- [x] Criar lista de especialidades médicas do CFM
+- [ ] Criar lista de áreas de atuação reconhecidas
+- [ ] Atualizar página de Configurações com campos específicos
+- [ ] Testar vínculos e especialidades

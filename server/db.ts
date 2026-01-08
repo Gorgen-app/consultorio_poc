@@ -1,6 +1,6 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1876,4 +1876,293 @@ export async function ensureUserProfile(userId: number, userData: { name?: strin
   }
   
   return profile;
+}
+
+
+// ========================================
+// VÍNCULO SECRETÁRIA-MÉDICO
+// ========================================
+
+export interface VinculoSecretariaMedico {
+  id: number;
+  secretariaUserId: string;
+  medicoUserId: string;
+  dataInicio: Date;
+  dataValidade: Date;
+  status: "ativo" | "pendente_renovacao" | "expirado" | "cancelado";
+  notificacaoEnviada: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Cria um novo vínculo entre secretária e médico
+ * Validade padrão: 1 ano a partir da data de início
+ */
+export async function criarVinculo(
+  secretariaUserId: string,
+  medicoUserId: string,
+  dataInicio: Date = new Date()
+): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Calcular data de validade (1 ano após início)
+  const dataValidade = new Date(dataInicio);
+  dataValidade.setFullYear(dataValidade.getFullYear() + 1);
+
+  const result = await db.insert(vinculoSecretariaMedico).values({
+    secretariaUserId,
+    medicoUserId,
+    dataInicio,
+    dataValidade,
+    status: "ativo",
+    notificacaoEnviada: false,
+  });
+
+  const vinculoId = Number(result[0].insertId);
+
+  // Registrar no histórico
+  await db.insert(historicoVinculo).values({
+    vinculoId,
+    acao: "criado",
+    observacao: `Vínculo criado com validade até ${dataValidade.toLocaleDateString("pt-BR")}`,
+  });
+
+  return vinculoId;
+}
+
+/**
+ * Lista os vínculos de uma secretária
+ */
+export async function listarVinculosSecretaria(secretariaUserId: string): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const vinculos = await db
+    .select()
+    .from(vinculoSecretariaMedico)
+    .where(eq(vinculoSecretariaMedico.secretariaUserId, secretariaUserId));
+
+  // Buscar informações dos médicos vinculados
+  const result = [];
+  for (const vinculo of vinculos) {
+    // Buscar o user pelo openId para obter o userId numérico
+    const userResult = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.openId, vinculo.medicoUserId))
+      .limit(1);
+    
+    if (userResult.length === 0) {
+      result.push({ ...vinculo, medico: null });
+      continue;
+    }
+
+    const medico = await db
+      .select({
+        nomeCompleto: userProfiles.nomeCompleto,
+        email: userProfiles.email,
+        crm: userProfiles.crm,
+        especialidade: userProfiles.especialidade,
+      })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userResult[0].id))
+      .limit(1);
+
+    result.push({
+      ...vinculo,
+      medico: medico[0] || null,
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Lista os vínculos de um médico (secretárias vinculadas)
+ */
+export async function listarVinculosMedico(medicoUserId: string): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const vinculos = await db
+    .select()
+    .from(vinculoSecretariaMedico)
+    .where(eq(vinculoSecretariaMedico.medicoUserId, medicoUserId));
+
+  // Buscar informações das secretárias vinculadas
+  const result = [];
+  for (const vinculo of vinculos) {
+    // Buscar o user pelo openId para obter o userId numérico
+    const userResult = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.openId, vinculo.secretariaUserId))
+      .limit(1);
+    
+    if (userResult.length === 0) {
+      result.push({ ...vinculo, secretaria: null });
+      continue;
+    }
+
+    const secretaria = await db
+      .select({
+        nomeCompleto: userProfiles.nomeCompleto,
+        email: userProfiles.email,
+      })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userResult[0].id))
+      .limit(1);
+
+    result.push({
+      ...vinculo,
+      secretaria: secretaria[0] || null,
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Renova um vínculo por mais 1 ano
+ */
+export async function renovarVinculo(vinculoId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Buscar vínculo atual
+  const vinculoAtual = await db
+    .select()
+    .from(vinculoSecretariaMedico)
+    .where(eq(vinculoSecretariaMedico.id, vinculoId))
+    .limit(1);
+
+  if (vinculoAtual.length === 0) {
+    throw new Error("Vínculo não encontrado");
+  }
+
+  // Calcular nova data de validade (1 ano a partir de agora)
+  const novaDataValidade = new Date();
+  novaDataValidade.setFullYear(novaDataValidade.getFullYear() + 1);
+
+  await db
+    .update(vinculoSecretariaMedico)
+    .set({
+      dataValidade: novaDataValidade,
+      status: "ativo",
+      notificacaoEnviada: false,
+    })
+    .where(eq(vinculoSecretariaMedico.id, vinculoId));
+
+  // Registrar no histórico
+  await db.insert(historicoVinculo).values({
+    vinculoId,
+    acao: "renovado",
+    observacao: `Vínculo renovado até ${novaDataValidade.toLocaleDateString("pt-BR")}`,
+  });
+}
+
+/**
+ * Cancela um vínculo
+ */
+export async function cancelarVinculo(vinculoId: number, motivo?: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(vinculoSecretariaMedico)
+    .set({ status: "cancelado" })
+    .where(eq(vinculoSecretariaMedico.id, vinculoId));
+
+  // Registrar no histórico
+  await db.insert(historicoVinculo).values({
+    vinculoId,
+    acao: "cancelado",
+    observacao: motivo || "Vínculo cancelado pelo usuário",
+  });
+}
+
+/**
+ * Verifica vínculos próximos de expirar (30 dias) e marca para notificação
+ */
+export async function verificarVinculosExpirando(): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const dataLimite = new Date();
+  dataLimite.setDate(dataLimite.getDate() + 30);
+
+  // Buscar vínculos ativos que expiram nos próximos 30 dias e ainda não foram notificados
+  const vinculosExpirando = await db
+    .select()
+    .from(vinculoSecretariaMedico)
+    .where(
+      and(
+        eq(vinculoSecretariaMedico.status, "ativo"),
+        eq(vinculoSecretariaMedico.notificacaoEnviada, false),
+        sql`${vinculoSecretariaMedico.dataValidade} <= ${dataLimite}`
+      )!
+    );
+
+  // Marcar como pendente de renovação
+  for (const vinculo of vinculosExpirando) {
+    await db
+      .update(vinculoSecretariaMedico)
+      .set({
+        status: "pendente_renovacao",
+        notificacaoEnviada: true,
+      })
+      .where(eq(vinculoSecretariaMedico.id, vinculo.id));
+  }
+
+  return vinculosExpirando;
+}
+
+/**
+ * Atualiza especialidades do médico
+ */
+export async function atualizarEspecialidadesMedico(
+  userId: string,
+  especialidadePrincipal: string | null,
+  especialidadeSecundaria: string | null,
+  areaAtuacao: string | null
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.execute(sql`
+    UPDATE user_profiles 
+    SET especialidade_principal = ${especialidadePrincipal},
+        especialidade_secundaria = ${especialidadeSecundaria},
+        area_atuacao = ${areaAtuacao}
+    WHERE user_id = ${userId}
+  `);
+}
+
+/**
+ * Busca especialidades do médico
+ */
+export async function getEspecialidadesMedico(userId: string): Promise<{
+  especialidadePrincipal: string | null;
+  especialidadeSecundaria: string | null;
+  areaAtuacao: string | null;
+} | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.execute(sql`
+    SELECT especialidade_principal, especialidade_secundaria, area_atuacao
+    FROM user_profiles
+    WHERE user_id = ${userId}
+  `);
+
+  const rows = (result as unknown as any[][])[0];
+  if (rows.length === 0) return null;
+
+  return {
+    especialidadePrincipal: rows[0].especialidade_principal,
+    especialidadeSecundaria: rows[0].especialidade_secundaria,
+    areaAtuacao: rows[0].area_atuacao,
+  };
 }

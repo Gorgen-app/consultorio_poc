@@ -1,4 +1,5 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, date, boolean, json } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, date, boolean, json, datetime } from "drizzle-orm/mysql-core";
+import { sql } from "drizzle-orm";
 
 /**
  * Core user table backing auth flow.
@@ -875,3 +876,42 @@ export const userSettings = mysqlTable("user_settings", {
 
 export type UserSetting = typeof userSettings.$inferSelect;
 export type InsertUserSetting = typeof userSettings.$inferInsert;
+
+
+// ========================================
+// VÍNCULO SECRETÁRIA-MÉDICO
+// ========================================
+
+export const statusVinculoEnum = mysqlEnum("status", [
+  "ativo",
+  "pendente_renovacao",
+  "expirado",
+  "cancelado",
+]);
+
+export const vinculoSecretariaMedico = mysqlTable("vinculo_secretaria_medico", {
+  id: int("id").primaryKey().autoincrement(),
+  secretariaUserId: varchar("secretaria_user_id", { length: 255 }).notNull(),
+  medicoUserId: varchar("medico_user_id", { length: 255 }).notNull(),
+  dataInicio: datetime("data_inicio").notNull(),
+  dataValidade: datetime("data_validade").notNull(),
+  status: mysqlEnum("status", ["ativo", "pendente_renovacao", "expirado", "cancelado"]).default("ativo"),
+  notificacaoEnviada: boolean("notificacao_enviada").default(false),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+});
+
+export const acaoVinculoEnum = mysqlEnum("acao", [
+  "criado",
+  "renovado",
+  "expirado",
+  "cancelado",
+]);
+
+export const historicoVinculo = mysqlTable("historico_vinculo", {
+  id: int("id").primaryKey().autoincrement(),
+  vinculoId: int("vinculo_id").notNull(),
+  acao: mysqlEnum("acao", ["criado", "renovado", "expirado", "cancelado"]).notNull(),
+  dataAcao: datetime("data_acao").default(sql`CURRENT_TIMESTAMP`),
+  observacao: text("observacao"),
+});
