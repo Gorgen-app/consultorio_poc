@@ -10,15 +10,15 @@ describe("Sistema de Permissões", () => {
       expect(temPermissao("admin_master", "usuarios")).toBe(true);
     });
 
-    it("deve negar acesso ao prontuário para perfil financeiro", () => {
-      expect(temPermissao("financeiro", "prontuario")).toBe(false);
-      expect(temPermissao("financeiro", "prontuario.editar")).toBe(false);
+    it("deve permitir acesso ao prontuário para perfil auditor (apenas visualização)", () => {
+      expect(temPermissao("auditor", "prontuario")).toBe(true);
+      expect(temPermissao("auditor", "prontuario.editar")).toBe(false);
     });
 
-    it("deve permitir acesso ao faturamento para perfil financeiro", () => {
-      expect(temPermissao("financeiro", "faturamento")).toBe(true);
-      expect(temPermissao("financeiro", "faturamento.criar")).toBe(true);
-      expect(temPermissao("financeiro", "faturamento.editar")).toBe(true);
+    it("deve permitir acesso ao faturamento para perfil auditor (apenas visualização)", () => {
+      expect(temPermissao("auditor", "faturamento")).toBe(true);
+      expect(temPermissao("auditor", "faturamento.criar")).toBe(false);
+      expect(temPermissao("auditor", "faturamento.editar")).toBe(false);
     });
 
     it("deve negar acesso ao faturamento para perfil médico", () => {
@@ -40,9 +40,9 @@ describe("Sistema de Permissões", () => {
       expect(temPermissao("secretaria", "agenda.criar")).toBe(true);
     });
 
-    it("deve negar criação de agenda para perfil financeiro", () => {
-      expect(temPermissao("financeiro", "agenda")).toBe(true); // pode ver
-      expect(temPermissao("financeiro", "agenda.criar")).toBe(false); // não pode criar
+    it("deve negar criação de agenda para perfil auditor", () => {
+      expect(temPermissao("auditor", "agenda")).toBe(true); // pode ver
+      expect(temPermissao("auditor", "agenda.criar")).toBe(false); // não pode criar
     });
 
     it("deve retornar false para perfil null ou undefined", () => {
@@ -50,13 +50,13 @@ describe("Sistema de Permissões", () => {
       expect(temPermissao(undefined, "dashboard")).toBe(false);
     });
 
-    it("deve negar tudo para perfil visualizador exceto visualização", () => {
-      expect(temPermissao("visualizador", "dashboard")).toBe(true);
-      expect(temPermissao("visualizador", "agenda")).toBe(true);
-      expect(temPermissao("visualizador", "agenda.criar")).toBe(false);
-      expect(temPermissao("visualizador", "pacientes.criar")).toBe(false);
-      expect(temPermissao("visualizador", "prontuario")).toBe(false);
-      expect(temPermissao("visualizador", "faturamento")).toBe(false);
+    it("deve permitir paciente ver seu próprio prontuário mas não editar", () => {
+      expect(temPermissao("paciente", "prontuario")).toBe(true);
+      expect(temPermissao("paciente", "prontuario.editar")).toBe(false);
+      expect(temPermissao("paciente", "agenda")).toBe(true);
+      expect(temPermissao("paciente", "agenda.criar")).toBe(false);
+      expect(temPermissao("paciente", "pacientes.criar")).toBe(false);
+      expect(temPermissao("paciente", "dashboard")).toBe(false); // Paciente não vê dashboard geral
     });
   });
 
@@ -69,13 +69,12 @@ describe("Sistema de Permissões", () => {
       expect(funcionalidades).toContain("usuarios");
     });
 
-    it("deve retornar funcionalidades limitadas para visualizador", () => {
-      const funcionalidades = getFuncionalidadesPermitidas("visualizador");
-      expect(funcionalidades).toContain("dashboard");
+    it("deve retornar funcionalidades limitadas para paciente", () => {
+      const funcionalidades = getFuncionalidadesPermitidas("paciente");
       expect(funcionalidades).toContain("agenda");
+      expect(funcionalidades).toContain("prontuario"); // Pode ver seu próprio prontuário
       expect(funcionalidades).not.toContain("agenda.criar");
-      expect(funcionalidades).not.toContain("prontuario");
-      expect(funcionalidades).not.toContain("faturamento");
+      expect(funcionalidades).not.toContain("dashboard"); // Paciente não vê dashboard geral
     });
   });
 
@@ -85,31 +84,37 @@ describe("Sistema de Permissões", () => {
       expect(permissoesPorPerfil).toHaveProperty("admin_master");
       expect(permissoesPorPerfil).toHaveProperty("medico");
       expect(permissoesPorPerfil).toHaveProperty("secretaria");
-      expect(permissoesPorPerfil).toHaveProperty("financeiro");
-      expect(permissoesPorPerfil).toHaveProperty("visualizador");
+      expect(permissoesPorPerfil).toHaveProperty("auditor");
+      expect(permissoesPorPerfil).toHaveProperty("paciente");
     });
 
     it("deve ter as mesmas funcionalidades em todos os perfis", () => {
       const funcionalidadesAdmin = Object.keys(permissoesPorPerfil.admin_master);
       const funcionalidadesMedico = Object.keys(permissoesPorPerfil.medico);
       const funcionalidadesSecretaria = Object.keys(permissoesPorPerfil.secretaria);
-      const funcionalidadesFinanceiro = Object.keys(permissoesPorPerfil.financeiro);
-      const funcionalidadesVisualizador = Object.keys(permissoesPorPerfil.visualizador);
+      const funcionalidadesAuditor = Object.keys(permissoesPorPerfil.auditor);
+      const funcionalidadesPaciente = Object.keys(permissoesPorPerfil.paciente);
 
       expect(funcionalidadesAdmin.length).toBe(funcionalidadesMedico.length);
       expect(funcionalidadesAdmin.length).toBe(funcionalidadesSecretaria.length);
-      expect(funcionalidadesAdmin.length).toBe(funcionalidadesFinanceiro.length);
-      expect(funcionalidadesAdmin.length).toBe(funcionalidadesVisualizador.length);
+      expect(funcionalidadesAdmin.length).toBe(funcionalidadesAuditor.length);
+      expect(funcionalidadesAdmin.length).toBe(funcionalidadesPaciente.length);
     });
   });
 
   describe("Regras de negócio específicas", () => {
-    it("sigilo médico: apenas médico e admin podem acessar prontuário", () => {
+    it("sigilo médico: médico, admin e auditor podem acessar prontuário", () => {
       expect(temPermissao("admin_master", "prontuario")).toBe(true);
       expect(temPermissao("medico", "prontuario")).toBe(true);
+      expect(temPermissao("auditor", "prontuario")).toBe(true); // Auditor pode ver para auditoria
       expect(temPermissao("secretaria", "prontuario")).toBe(false);
-      expect(temPermissao("financeiro", "prontuario")).toBe(false);
-      expect(temPermissao("visualizador", "prontuario")).toBe(false);
+    });
+
+    it("edição de prontuário: apenas médico e admin podem editar", () => {
+      expect(temPermissao("admin_master", "prontuario.editar")).toBe(true);
+      expect(temPermissao("medico", "prontuario.editar")).toBe(true);
+      expect(temPermissao("auditor", "prontuario.editar")).toBe(false); // Auditor não edita
+      expect(temPermissao("paciente", "prontuario.editar")).toBe(false);
     });
 
     it("gestão de usuários: apenas admin pode gerenciar usuários", () => {
@@ -117,12 +122,14 @@ describe("Sistema de Permissões", () => {
       expect(temPermissao("admin_master", "usuarios.criar")).toBe(true);
       expect(temPermissao("medico", "usuarios")).toBe(false);
       expect(temPermissao("secretaria", "usuarios")).toBe(false);
-      expect(temPermissao("financeiro", "usuarios")).toBe(false);
+      expect(temPermissao("auditor", "usuarios")).toBe(false);
     });
 
-    it("faturamento: apenas financeiro e admin podem acessar", () => {
+    it("faturamento: auditor e admin podem ver, apenas admin pode editar", () => {
       expect(temPermissao("admin_master", "faturamento")).toBe(true);
-      expect(temPermissao("financeiro", "faturamento")).toBe(true);
+      expect(temPermissao("admin_master", "faturamento.editar")).toBe(true);
+      expect(temPermissao("auditor", "faturamento")).toBe(true);
+      expect(temPermissao("auditor", "faturamento.editar")).toBe(false);
       expect(temPermissao("medico", "faturamento")).toBe(false);
       expect(temPermissao("secretaria", "faturamento")).toBe(false);
     });

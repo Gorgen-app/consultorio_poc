@@ -29,8 +29,8 @@ describe("Sistema de Perfis de Usuário", () => {
       expect(perfis).toContain("admin_master");
       expect(perfis).toContain("medico");
       expect(perfis).toContain("secretaria");
-      expect(perfis).toContain("financeiro");
-      expect(perfis).toContain("visualizador");
+      expect(perfis).toContain("auditor");
+      expect(perfis).toContain("paciente");
     });
 
     it("deve retornar array vazio para usuário sem perfil", async () => {
