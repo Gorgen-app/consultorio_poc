@@ -785,6 +785,77 @@ O acesso ao Gorgen é controlado por **perfis de usuário**. Um mesmo CPF pode t
 
 ---
 
+## 6. AUTOMAÇÃO E ELIMINAÇÃO DE DUPLO TRABALHO
+
+> **"O que puder ser automatizado, será. Não existe duplo trabalho no Gorgen."**
+
+### Princípio
+Todo dado inserido uma vez no Gorgen é **propagado automaticamente** para todos os contextos onde for necessário. Este pilar promove a **conciliação entre medicina e administração**, eliminando a distância entre profissionais da área médica e administrativa.
+
+### Justificativa
+- **Dor do Setor**: Existe uma distância histórica entre quem atua na medicina e quem atua na administração
+- **Dupla Digitação**: Profissionais frequentemente precisam inserir os mesmos dados em múltiplos sistemas
+- **Erros de Transcrição**: Cada redigitação é uma oportunidade de erro
+- **Perda de Tempo**: Tempo gasto em burocracia é tempo perdido no cuidado ao paciente
+
+### Exemplo Prático: CPF do Paciente
+- CPF inserido **uma única vez** no cadastro do paciente
+- Aparece automaticamente em:
+  - Guias de autorização
+  - Receitas e atestados
+  - Notas fiscais
+  - Relatórios de faturamento
+  - Documentos para convênios
+  - Qualquer campo que exija CPF
+
+### Áreas de Automação
+
+#### Documentos Médicos
+- Receitas pré-preenchidas com dados do paciente e médico
+- Atestados com CID vinculado ao atendimento
+- Solicitações de exames com histórico clínico relevante
+- Laudos com dados antropométricos atuais
+
+#### Faturamento e Guias
+- Guias TISS geradas automaticamente após atendimento
+- Dados do convênio puxados do cadastro do paciente
+- Códigos de procedimento vinculados ao tipo de atendimento
+- Honorários calculados conforme tabela configurada
+
+#### Administração
+- Relatórios financeiros consolidados automaticamente
+- Conciliação de pagamentos com atendimentos
+- Alertas de glosas e pendências
+- Dashboard unificado médico-administrativo
+
+### Dashboard Unificado (Visão Futura)
+A dashboard deve integrar **medicina e administração**:
+
+#### Métricas Financeiras (✅ Já Implementado)
+- Faturamento previsto
+- Taxa de recebimento
+- Distribuição por convênio
+
+#### Métricas Médicas (📅 Futuro)
+- Número de atendimentos ao longo do tempo
+- Médias móveis de 28 dias para atendimentos
+- Análise por tipo de atendimento (consulta, retorno, procedimento)
+- Distribuição por diagnóstico
+- Taxa de retorno de pacientes
+- Tempo médio entre consultas
+
+### Implementação Técnica
+- **Campos Vinculados**: Referência única para dados do paciente em todas as tabelas
+- **Preenchimento Automático**: Formulários buscam dados existentes antes de solicitar digitação
+- **Templates Inteligentes**: Documentos gerados com merge de dados do banco
+- **Validação Cruzada**: Sistema alerta quando dados divergem entre fontes
+- **Sincronização**: Atualização em um local reflete em todos os documentos
+
+### Regra de Ouro
+> **Nenhum dado deve ser digitado mais de uma vez.** Se o sistema já conhece a informação, ela deve ser preenchida automaticamente.
+
+---
+
 ## 📋 IMPLEMENTAÇÃO DOS PILARES
 
 ### Histórico de Medidas Antropométricas
