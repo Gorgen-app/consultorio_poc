@@ -931,3 +931,7 @@ A dashboard deve integrar **medicina e administração**:
 - [ ] Criar lista de áreas de atuação reconhecidas
 - [ ] Atualizar página de Configurações com campos específicos
 - [ ] Testar vínculos e especialidades
+- [x] Renomear perfil "Visualizador" para "Paciente"
+- [x] Renomear perfil "Financeiro" para "Auditor"
+- [x] Adicionar seção de Assinatura nas Configurações (ajustes, mudanças, cancelamento)
+- [x] Adicionar título do mês na visualização da Agenda

@@ -838,16 +838,16 @@ export const userProfiles = mysqlTable("user_profiles", {
     "admin_master",
     "medico",
     "secretaria",
-    "financeiro",
-    "visualizador"
-  ]).default("visualizador").notNull(),
+    "auditor",
+    "paciente"
+  ]).default("paciente").notNull(),
   
   // Flags de perfis disponíveis para o usuário
   isAdminMaster: boolean("is_admin_master").default(false).notNull(),
   isMedico: boolean("is_medico").default(false).notNull(),
   isSecretaria: boolean("is_secretaria").default(false).notNull(),
-  isFinanceiro: boolean("is_financeiro").default(false).notNull(),
-  isVisualizador: boolean("is_visualizador").default(true).notNull(),
+  isAuditor: boolean("is_auditor").default(false).notNull(),
+  isPaciente: boolean("is_paciente").default(true).notNull(),
   
   // Dados específicos do médico
   crm: varchar("crm", { length: 20 }),

@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE user_profiles SET is_auditor = 1, is_paciente = 1 WHERE nome_completo LIKE '%Gorgen%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute UPDATE user_profiles SET is_auditor = 1, is_paciente = 1 WHERE nome_completo LIKE '%Gorgen%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3282
+}

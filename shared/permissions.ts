@@ -8,11 +8,11 @@
  * - admin_master: Acesso total ao sistema
  * - medico: Acesso clínico completo
  * - secretaria: Acesso administrativo (agenda, pacientes)
- * - financeiro: Acesso financeiro (faturamento, relatórios)
- * - visualizador: Apenas visualização limitada
+ * - auditor: Acesso para auditoria (visualização ampla, sem edição)
+ * - paciente: Acesso limitado aos próprios dados
  */
 
-export type PerfilType = 'admin_master' | 'medico' | 'secretaria' | 'financeiro' | 'visualizador';
+export type PerfilType = 'admin_master' | 'medico' | 'secretaria' | 'auditor' | 'paciente';
 
 export type Funcionalidade = 
   | 'dashboard'
@@ -116,51 +116,51 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'usuarios.criar': false,
     'usuarios.editar': false,
   },
-  financeiro: {
+  auditor: {
     dashboard: true,
-    agenda: true, // Pode ver agenda para conferir atendimentos
+    agenda: true, // Pode ver agenda para auditoria
     'agenda.criar': false,
     'agenda.editar': false,
     'agenda.cancelar': false,
-    pacientes: true, // Pode ver dados básicos do paciente
+    pacientes: true, // Pode ver dados do paciente para auditoria
     'pacientes.criar': false,
     'pacientes.editar': false,
-    prontuario: false, // Financeiro NÃO acessa prontuário (sigilo médico)
-    'prontuario.editar': false,
-    atendimentos: true, // Pode ver atendimentos para faturamento
+    prontuario: true, // Auditor pode ver prontuário para auditoria
+    'prontuario.editar': false, // Mas não pode editar
+    atendimentos: true, // Pode ver atendimentos para auditoria
     'atendimentos.criar': false,
     'atendimentos.editar': false,
-    faturamento: true,
-    'faturamento.criar': true,
-    'faturamento.editar': true,
+    faturamento: true, // Pode ver faturamento para auditoria
+    'faturamento.criar': false,
+    'faturamento.editar': false,
     relatorios: true,
-    'relatorios.financeiro': true,
+    'relatorios.financeiro': true, // Pode ver relatórios financeiros
     configuracoes: true,
     'configuracoes.sistema': false,
     usuarios: false,
     'usuarios.criar': false,
     'usuarios.editar': false,
   },
-  visualizador: {
-    dashboard: true,
-    agenda: true,
+  paciente: {
+    dashboard: false, // Paciente não vê dashboard geral
+    agenda: true, // Pode ver sua própria agenda
     'agenda.criar': false,
     'agenda.editar': false,
     'agenda.cancelar': false,
-    pacientes: true,
+    pacientes: false, // Não vê lista de pacientes
     'pacientes.criar': false,
     'pacientes.editar': false,
-    prontuario: false, // Visualizador não acessa prontuário
+    prontuario: true, // Pode ver seu próprio prontuário
     'prontuario.editar': false,
-    atendimentos: true,
+    atendimentos: true, // Pode ver seus próprios atendimentos
     'atendimentos.criar': false,
     'atendimentos.editar': false,
-    faturamento: false,
+    faturamento: true, // Pode ver suas próprias faturas
     'faturamento.criar': false,
     'faturamento.editar': false,
-    relatorios: true,
+    relatorios: false,
     'relatorios.financeiro': false,
-    configuracoes: true,
+    configuracoes: true, // Pode acessar suas configurações
     'configuracoes.sistema': false,
     usuarios: false,
     'usuarios.criar': false,
@@ -193,8 +193,8 @@ export const perfilLabels: Record<PerfilType, string> = {
   admin_master: 'Administrador Master',
   medico: 'Médico',
   secretaria: 'Secretária',
-  financeiro: 'Financeiro',
-  visualizador: 'Visualizador',
+  auditor: 'Auditor',
+  paciente: 'Paciente',
 };
 
 /**

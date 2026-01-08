@@ -1759,7 +1759,7 @@ export async function updateUserProfile(userId: number, data: Partial<InsertUser
   return getUserProfile(userId);
 }
 
-export async function setPerfilAtivo(userId: number, perfil: "admin_master" | "medico" | "secretaria" | "financeiro" | "visualizador"): Promise<UserProfile | null> {
+export async function setPerfilAtivo(userId: number, perfil: "admin_master" | "medico" | "secretaria" | "auditor" | "paciente"): Promise<UserProfile | null> {
   const db = await getDb();
   if (!db) return null;
   
@@ -1771,8 +1771,8 @@ export async function setPerfilAtivo(userId: number, perfil: "admin_master" | "m
     admin_master: profile.isAdminMaster,
     medico: profile.isMedico,
     secretaria: profile.isSecretaria,
-    financeiro: profile.isFinanceiro,
-    visualizador: profile.isVisualizador,
+    auditor: profile.isAuditor,
+    paciente: profile.isPaciente,
   };
   
   if (!perfilMap[perfil]) {
@@ -1798,8 +1798,8 @@ export async function getAvailablePerfis(userId: number): Promise<string[]> {
   if (profile.isAdminMaster) perfis.push("admin_master");
   if (profile.isMedico) perfis.push("medico");
   if (profile.isSecretaria) perfis.push("secretaria");
-  if (profile.isFinanceiro) perfis.push("financeiro");
-  if (profile.isVisualizador) perfis.push("visualizador");
+  if (profile.isAuditor) perfis.push("auditor");
+  if (profile.isPaciente) perfis.push("paciente");
   
   return perfis;
 }
@@ -1870,8 +1870,8 @@ export async function ensureUserProfile(userId: number, userData: { name?: strin
       userId,
       nomeCompleto: userData.name || null,
       email: userData.email || null,
-      perfilAtivo: "visualizador",
-      isVisualizador: true,
+      perfilAtivo: "paciente",
+      isPaciente: true,
     });
   }
   

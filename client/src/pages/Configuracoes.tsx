@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,7 +13,6 @@ import {
   Shield,
   Stethoscope,
   Calendar,
-  DollarSign,
   Eye,
   Save,
   Building2,
@@ -26,6 +24,9 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
+  CreditCard,
+  Crown,
+  AlertCircle,
 } from "lucide-react";
 import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especialidadesMedicas";
 
@@ -34,8 +35,8 @@ const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: 
   admin_master: { label: "Administrador Master", icon: <Shield className="h-4 w-4" />, color: "bg-red-500" },
   medico: { label: "Médico", icon: <Stethoscope className="h-4 w-4" />, color: "bg-blue-500" },
   secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-green-500" },
-  financeiro: { label: "Financeiro", icon: <DollarSign className="h-4 w-4" />, color: "bg-yellow-500" },
-  visualizador: { label: "Visualizador", icon: <Eye className="h-4 w-4" />, color: "bg-gray-500" },
+  auditor: { label: "Auditor", icon: <Eye className="h-4 w-4" />, color: "bg-purple-500" },
+  paciente: { label: "Paciente", icon: <User className="h-4 w-4" />, color: "bg-gray-500" },
 };
 
 // Status do vínculo para exibição
@@ -47,6 +48,8 @@ const statusVinculoInfo: Record<string, { label: string; color: string; icon: Re
 };
 
 export default function Configuracoes() {
+  const [activeTab, setActiveTab] = useState("perfil");
+  
   const { data: profile, isLoading, refetch } = trpc.perfil.me.useQuery();
   const { data: availablePerfis } = trpc.perfil.getAvailablePerfis.useQuery();
   const { data: vinculos, refetch: refetchVinculos } = trpc.perfil.listarMeusVinculos.useQuery();
@@ -113,12 +116,6 @@ export default function Configuracoes() {
       toast.error(`Erro ao atualizar especialidades: ${error.message}`);
     },
   });
-
-  const handleTrocarPerfil = (perfil: "admin_master" | "medico" | "secretaria" | "financeiro" | "visualizador") => {
-    if (perfil !== currentPerfil) {
-      setPerfilAtivo.mutate({ perfil });
-    }
-  };
 
   const [formData, setFormData] = useState({
     nomeCompleto: "",
@@ -189,10 +186,16 @@ export default function Configuracoes() {
     );
   }
 
-  const currentPerfil = profile?.perfilAtivo || "visualizador";
+  const currentPerfil = profile?.perfilAtivo || "paciente";
   const currentPerfilInfo = perfilInfo[currentPerfil];
   const isSecretaria = profile?.isSecretaria;
   const isMedico = profile?.isMedico;
+
+  const handleTrocarPerfil = (perfil: "admin_master" | "medico" | "secretaria" | "auditor" | "paciente") => {
+    if (perfil !== currentPerfil) {
+      setPerfilAtivo.mutate({ perfil });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -229,7 +232,7 @@ export default function Configuracoes() {
                     key={perfil}
                     variant={isActive ? "default" : "outline"}
                     className={`${isActive ? info?.color + " text-white" : "cursor-pointer hover:bg-accent"} transition-colors`}
-                    onClick={() => handleTrocarPerfil(perfil as "admin_master" | "medico" | "secretaria" | "financeiro" | "visualizador")}
+                    onClick={() => handleTrocarPerfil(perfil as "admin_master" | "medico" | "secretaria" | "auditor" | "paciente")}
                   >
                     {info?.icon}
                     <span className="ml-1">{info?.label}</span>
@@ -242,379 +245,440 @@ export default function Configuracoes() {
         </Card>
       )}
 
-      {/* Tabs de configurações */}
-      <Tabs defaultValue="perfil" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
-          <TabsTrigger value="perfil" className="flex items-center gap-2">
+      {/* Abas de configurações - usando botões manuais */}
+      <div className="w-full">
+        <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg mb-4">
+          <Button
+            variant={activeTab === "perfil" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("perfil")}
+            className="flex items-center gap-2"
+          >
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Perfil</span>
-          </TabsTrigger>
+          </Button>
           
           {/* Aba de Vínculos para Secretária */}
           {isSecretaria && currentPerfil === "secretaria" && (
-            <TabsTrigger value="vinculos" className="flex items-center gap-2">
+            <Button
+              variant={activeTab === "vinculos" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("vinculos")}
+              className="flex items-center gap-2"
+            >
               <UserPlus className="h-4 w-4" />
               <span className="hidden sm:inline">Vínculos</span>
-            </TabsTrigger>
+            </Button>
           )}
 
-          {/* Aba de Vínculos para Médico (ver secretárias vinculadas) */}
+          {/* Aba de Secretárias para Médico */}
           {isMedico && currentPerfil === "medico" && (
-            <TabsTrigger value="vinculos" className="flex items-center gap-2">
+            <Button
+              variant={activeTab === "vinculos" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("vinculos")}
+              className="flex items-center gap-2"
+            >
               <UserPlus className="h-4 w-4" />
               <span className="hidden sm:inline">Secretárias</span>
-            </TabsTrigger>
+            </Button>
           )}
           
           {/* Abas específicas por perfil */}
           {(currentPerfil === "admin_master" || currentPerfil === "medico") && (
-            <TabsTrigger value="clinica" className="flex items-center gap-2">
+            <Button
+              variant={activeTab === "clinica" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("clinica")}
+              className="flex items-center gap-2"
+            >
               <Building2 className="h-4 w-4" />
               <span className="hidden sm:inline">Clínica</span>
-            </TabsTrigger>
+            </Button>
           )}
           
           {currentPerfil === "medico" && (
-            <TabsTrigger value="profissional" className="flex items-center gap-2">
+            <Button
+              variant={activeTab === "profissional" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("profissional")}
+              className="flex items-center gap-2"
+            >
               <Stethoscope className="h-4 w-4" />
               <span className="hidden sm:inline">Profissional</span>
-            </TabsTrigger>
+            </Button>
           )}
           
-          {(currentPerfil === "admin_master" || currentPerfil === "secretaria") && (
-            <TabsTrigger value="agendamento" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Agendamento</span>
-            </TabsTrigger>
-          )}
-          
-          {(currentPerfil === "admin_master" || currentPerfil === "financeiro") && (
-            <TabsTrigger value="financeiro" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              <span className="hidden sm:inline">Financeiro</span>
-            </TabsTrigger>
-          )}
-          
-          <TabsTrigger value="notificacoes" className="flex items-center gap-2">
+          <Button
+            variant={activeTab === "notificacoes" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("notificacoes")}
+            className="flex items-center gap-2"
+          >
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">Notificações</span>
-          </TabsTrigger>
-        </TabsList>
+          </Button>
+          
+          {/* Aba de Assinatura - visível para todos */}
+          <Button
+            variant={activeTab === "assinatura" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("assinatura")}
+            className="flex items-center gap-2"
+          >
+            <CreditCard className="h-4 w-4" />
+            <span className="hidden sm:inline">Assinatura</span>
+          </Button>
+        </div>
 
+        {/* Conteúdo das abas */}
+        
         {/* Tab: Perfil */}
-        <TabsContent value="perfil" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações Pessoais</CardTitle>
-              <CardDescription>
-                Seus dados de identificação no sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nomeCompleto">Nome Completo</Label>
-                  <Input
-                    id="nomeCompleto"
-                    value={formData.nomeCompleto}
-                    onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })}
-                    placeholder="Seu nome completo"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cpf">CPF</Label>
-                  <Input
-                    id="cpf"
-                    value={formData.cpf}
-                    onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                    placeholder="000.000.000-00"
-                  />
+        {activeTab === "perfil" && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações Pessoais</CardTitle>
+                <CardDescription>
+                  Seus dados de identificação no sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nomeCompleto">Nome Completo</Label>
+                    <Input
+                      id="nomeCompleto"
+                      placeholder="Seu nome completo"
+                      value={formData.nomeCompleto}
+                      onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cpf">CPF</Label>
+                    <Input
+                      id="cpf"
+                      placeholder="000.000.000-00"
+                      value={formData.cpf}
+                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">E-mail</Label>
                   <Input
                     id="email"
                     type="email"
+                    placeholder="seu@email.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="seu@email.com"
                   />
                 </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="flex justify-end">
-                <Button onClick={handleSaveProfile} disabled={updateProfile.isPending}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {updateProfile.isPending ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Seção de segurança */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                Segurança
-              </CardTitle>
-              <CardDescription>
-                Configurações de acesso e autenticação
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Autenticação em duas etapas</p>
-                  <p className="text-sm text-muted-foreground">
-                    Adicione uma camada extra de segurança à sua conta
-                  </p>
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveProfile} disabled={updateProfile.isPending}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar Alterações
+                  </Button>
                 </div>
-                <Button variant="outline" disabled>
-                  Em breve
-                </Button>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Sessões ativas</p>
-                  <p className="text-sm text-muted-foreground">
-                    Gerencie os dispositivos conectados à sua conta
-                  </p>
-                </div>
-                <Button variant="outline" disabled>
-                  Em breve
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
 
-        {/* Tab: Vínculos (Secretária ou Médico) */}
-        <TabsContent value="vinculos" className="space-y-4">
-          {/* Seção para Secretária - Criar vínculo com médico */}
-          {isSecretaria && currentPerfil === "secretaria" && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <UserPlus className="h-5 w-5" />
-                  Vincular a um Médico
+                  <Lock className="h-5 w-5" />
+                  Segurança
                 </CardTitle>
                 <CardDescription>
-                  Crie um vínculo com um médico para gerenciar sua agenda. O vínculo tem validade de 1 ano e precisa ser renovado pelo médico.
+                  Configurações de acesso e autenticação
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <Label>Selecione o Médico</Label>
-                    <Select value={medicoSelecionado} onValueChange={setMedicoSelecionado}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um médico..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {medicosDisponiveis?.map((medico) => (
-                          <SelectItem key={String(medico.userId)} value={String(medico.userId)}>
-                            {medico.nomeCompleto || "Sem nome"} {medico.crm ? `- CRM ${medico.crm}` : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Autenticação em duas etapas</p>
+                    <p className="text-sm text-muted-foreground">
+                      Adicione uma camada extra de segurança à sua conta
+                    </p>
                   </div>
-                  <div className="flex items-end">
-                    <Button onClick={handleCriarVinculo} disabled={criarVinculo.isPending || !medicoSelecionado}>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      {criarVinculo.isPending ? "Criando..." : "Criar Vínculo"}
-                    </Button>
+                  <Badge variant="outline">Em breve</Badge>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Sessões ativas</p>
+                    <p className="text-sm text-muted-foreground">
+                      Gerencie os dispositivos conectados à sua conta
+                    </p>
+                  </div>
+                  <Badge variant="outline">Em breve</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Tab: Vínculos */}
+        {activeTab === "vinculos" && (
+          <div className="space-y-4">
+            {/* Para Secretária: gerenciar vínculos com médicos */}
+            {isSecretaria && currentPerfil === "secretaria" && (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Criar Novo Vínculo</CardTitle>
+                    <CardDescription>
+                      Vincule-se a um médico para ter acesso à agenda e pacientes dele.
+                      O vínculo tem validade de 1 ano e pode ser renovado.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-4">
+                      <Select value={medicoSelecionado} onValueChange={setMedicoSelecionado}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Selecione um médico" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {medicosDisponiveis?.map((medico) => (
+                            <SelectItem key={String(medico.userId)} value={String(medico.userId)}>
+                              {medico.nomeCompleto} - {medico.especialidade || "Sem especialidade"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button onClick={handleCriarVinculo} disabled={criarVinculo.isPending}>
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Criar Vínculo
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Meus Vínculos</CardTitle>
+                    <CardDescription>
+                      Médicos aos quais você está vinculada
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {vinculos && vinculos.length > 0 ? (
+                      <div className="space-y-3">
+                        {vinculos.map((vinculo: any) => {
+                          const statusInfo = statusVinculoInfo[vinculo.status];
+                          const dataExpiracao = new Date(vinculo.dataExpiracao);
+                          const diasRestantes = Math.ceil((dataExpiracao.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                          
+                          return (
+                            <div key={vinculo.id} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-full ${statusInfo?.color} text-white`}>
+                                  <Stethoscope className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <p className="font-medium">{vinculo.medicoNome}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Expira em: {dataExpiracao.toLocaleDateString("pt-BR")}
+                                    {diasRestantes > 0 && diasRestantes <= 30 && (
+                                      <span className="text-yellow-600 ml-2">({diasRestantes} dias)</span>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge className={`${statusInfo?.color} text-white`}>
+                                  {statusInfo?.icon}
+                                  <span className="ml-1">{statusInfo?.label}</span>
+                                </Badge>
+                                {vinculo.status === "pendente_renovacao" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => renovarVinculo.mutate({ vinculoId: vinculo.id })}
+                                    disabled={renovarVinculo.isPending}
+                                  >
+                                    <RefreshCw className="h-4 w-4 mr-1" />
+                                    Renovar
+                                  </Button>
+                                )}
+                                {vinculo.status === "ativo" && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => cancelarVinculo.mutate({ vinculoId: vinculo.id })}
+                                    disabled={cancelarVinculo.isPending}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-4">
+                        Você ainda não possui vínculos com médicos.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {/* Para Médico: ver secretárias vinculadas */}
+            {isMedico && currentPerfil === "medico" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Secretárias Vinculadas</CardTitle>
+                  <CardDescription>
+                    Secretárias que têm acesso à sua agenda e pacientes.
+                    Você receberá notificações para renovar vínculos próximos do vencimento.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {vinculos && vinculos.length > 0 ? (
+                    <div className="space-y-3">
+                      {vinculos.map((vinculo: any) => {
+                        const statusInfo = statusVinculoInfo[vinculo.status];
+                        const dataExpiracao = new Date(vinculo.dataExpiracao);
+                        
+                        return (
+                          <div key={vinculo.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-full ${statusInfo?.color} text-white`}>
+                                <Calendar className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{vinculo.secretariaNome}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Vínculo até: {dataExpiracao.toLocaleDateString("pt-BR")}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className={`${statusInfo?.color} text-white`}>
+                                {statusInfo?.icon}
+                                <span className="ml-1">{statusInfo?.label}</span>
+                              </Badge>
+                              {vinculo.status === "pendente_renovacao" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => renovarVinculo.mutate({ vinculoId: vinculo.id })}
+                                  disabled={renovarVinculo.isPending}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Aprovar Renovação
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-4">
+                      Nenhuma secretária vinculada no momento.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Tab: Clínica */}
+        {activeTab === "clinica" && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Dados da Clínica</CardTitle>
+                <CardDescription>
+                  Informações do consultório ou clínica
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Nome da Clínica</Label>
+                    <Input placeholder="Nome do consultório/clínica" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CNPJ</Label>
+                    <Input placeholder="00.000.000/0000-00" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Endereço</Label>
+                  <Input placeholder="Endereço completo" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Input placeholder="Cidade" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Estado</Label>
+                    <Input placeholder="UF" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CEP</Label>
+                    <Input placeholder="00000-000" />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Tab: Profissional (Médico) */}
+        {activeTab === "profissional" && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Registro Profissional</CardTitle>
+                <CardDescription>
+                  Dados do seu registro no Conselho Regional de Medicina
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="crm">CRM</Label>
+                    <Input
+                      id="crm"
+                      placeholder="CRM/UF 000000"
+                      value={formData.crm}
+                      onChange={(e) => setFormData({ ...formData, crm: e.target.value })}
+                    />
                   </div>
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* Lista de vínculos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {isSecretaria && currentPerfil === "secretaria" ? "Médicos Vinculados" : "Secretárias Vinculadas"}
-              </CardTitle>
-              <CardDescription>
-                {isSecretaria && currentPerfil === "secretaria" 
-                  ? "Médicos com os quais você possui vínculo ativo"
-                  : "Secretárias que possuem vínculo com você. Você pode renovar ou cancelar os vínculos."
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {vinculos && vinculos.length > 0 ? (
-                <div className="space-y-4">
-                  {vinculos.map((vinculo: any) => {
-                    const statusInfo = statusVinculoInfo[vinculo.status] || statusVinculoInfo.ativo;
-                    const pessoa = isSecretaria ? vinculo.medico : vinculo.secretaria;
-                    const dataValidade = new Date(vinculo.dataValidade);
-                    const diasRestantes = Math.ceil((dataValidade.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                    
-                    return (
-                      <div key={vinculo.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            {isSecretaria ? <Stethoscope className="h-5 w-5" /> : <Calendar className="h-5 w-5" />}
-                          </div>
-                          <div>
-                            <p className="font-medium">{pessoa?.nomeCompleto || "Nome não informado"}</p>
-                            <p className="text-sm text-muted-foreground">{pessoa?.email || "Email não informado"}</p>
-                            {isSecretaria && pessoa?.crm && (
-                              <p className="text-xs text-muted-foreground">CRM: {pessoa.crm}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <Badge className={`${statusInfo.color} text-white`}>
-                              {statusInfo.icon}
-                              <span className="ml-1">{statusInfo.label}</span>
-                            </Badge>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {vinculo.status === "ativo" && diasRestantes > 0 
-                                ? `Expira em ${diasRestantes} dias`
-                                : vinculo.status === "pendente_renovacao"
-                                ? "Aguardando renovação"
-                                : `Válido até ${dataValidade.toLocaleDateString("pt-BR")}`
-                              }
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            {/* Médico pode renovar vínculos pendentes */}
-                            {isMedico && currentPerfil === "medico" && vinculo.status === "pendente_renovacao" && (
-                              <Button 
-                                size="sm" 
-                                onClick={() => renovarVinculo.mutate({ vinculoId: vinculo.id })}
-                                disabled={renovarVinculo.isPending}
-                              >
-                                <RefreshCw className="h-4 w-4 mr-1" />
-                                Renovar
-                              </Button>
-                            )}
-                            {/* Ambos podem cancelar */}
-                            {vinculo.status !== "cancelado" && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => cancelarVinculo.mutate({ vinculoId: vinculo.id })}
-                                disabled={cancelarVinculo.isPending}
-                              >
-                                <X className="h-4 w-4 mr-1" />
-                                Cancelar
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <UserPlus className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Nenhum vínculo encontrado</p>
-                  {isSecretaria && currentPerfil === "secretaria" && (
-                    <p className="text-sm mt-2">Crie um vínculo com um médico para começar</p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Informações sobre o sistema de vínculos */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Sobre os Vínculos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>• Cada vínculo tem validade de <strong>1 ano</strong> a partir da data de criação.</p>
-              <p>• <strong>30 dias antes</strong> do vencimento, o médico receberá uma notificação para renovar o vínculo.</p>
-              <p>• Se não renovado, o vínculo expira automaticamente e a secretária perde acesso à agenda do médico.</p>
-              <p>• Tanto o médico quanto a secretária podem cancelar o vínculo a qualquer momento.</p>
-              <p>• O histórico de vínculos é mantido para auditoria, conforme os Pilares do Gorgen.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab: Clínica (Admin/Médico) */}
-        <TabsContent value="clinica" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Dados da Clínica</CardTitle>
-              <CardDescription>
-                Informações do consultório para documentos e relatórios
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Nome da Clínica</Label>
-                  <Input placeholder="Consultório Dr. André Gorgen" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label>CNPJ</Label>
-                  <Input placeholder="00.000.000/0000-00" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label>Endereço</Label>
-                  <Input placeholder="Endereço completo" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label>Telefone</Label>
-                  <Input placeholder="(00) 0000-0000" disabled />
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                * Configurações da clínica serão implementadas em breve
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab: Profissional (Médico) */}
-        <TabsContent value="profissional" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Dados Profissionais</CardTitle>
-              <CardDescription>
-                Informações para documentos médicos e prescrições
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="crm">CRM</Label>
-                  <Input
-                    id="crm"
-                    value={formData.crm}
-                    onChange={(e) => setFormData({ ...formData, crm: e.target.value })}
-                    placeholder="CRM/UF 00000"
-                  />
-                </div>
-              </div>
-              
-              <Separator />
-
-              <h4 className="font-medium">Especialidades Médicas</h4>
-              <p className="text-sm text-muted-foreground">
-                Selecione suas especialidades reconhecidas pelo CFM (Resolução nº 2.330/2023)
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Especialidades e Área de Atuação</CardTitle>
+                <CardDescription>
+                  Especialidades reconhecidas pelo CFM (Resolução nº 2.330/2023)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Especialidade Principal</Label>
-                  <Select 
-                    value={especialidadeForm.especialidadePrincipal} 
+                  <Select
+                    value={especialidadeForm.especialidadePrincipal}
                     onValueChange={(value) => setEspecialidadeForm({ ...especialidadeForm, especialidadePrincipal: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a especialidade principal..." />
+                      <SelectValue placeholder="Selecione sua especialidade principal" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="_none">Nenhuma</SelectItem>
@@ -624,15 +688,15 @@ export default function Configuracoes() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label>Segunda Especialidade (opcional)</Label>
-                  <Select 
-                    value={especialidadeForm.especialidadeSecundaria} 
+                  <Label>Especialidade Secundária (opcional)</Label>
+                  <Select
+                    value={especialidadeForm.especialidadeSecundaria}
                     onValueChange={(value) => setEspecialidadeForm({ ...especialidadeForm, especialidadeSecundaria: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a segunda especialidade..." />
+                      <SelectValue placeholder="Selecione uma segunda especialidade" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="_none">Nenhuma</SelectItem>
@@ -642,15 +706,15 @@ export default function Configuracoes() {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="space-y-2 md:col-span-2">
+
+                <div className="space-y-2">
                   <Label>Área de Atuação</Label>
-                  <Select 
-                    value={especialidadeForm.areaAtuacao} 
+                  <Select
+                    value={especialidadeForm.areaAtuacao}
                     onValueChange={(value) => setEspecialidadeForm({ ...especialidadeForm, areaAtuacao: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a área de atuação..." />
+                      <SelectValue placeholder="Selecione sua área de atuação" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="_none">Nenhuma</SelectItem>
@@ -660,199 +724,235 @@ export default function Configuracoes() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-4">
-                <h4 className="font-medium">Configurações de Prontuário</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Modelo SOAP</p>
-                      <p className="text-sm text-muted-foreground">Usar formato SOAP nas evoluções</p>
-                    </div>
-                    <Badge variant="outline">Ativo</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Assinatura Digital</p>
-                      <p className="text-sm text-muted-foreground">Assinar documentos digitalmente</p>
-                    </div>
-                    <Badge variant="outline">Em breve</Badge>
-                  </div>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="flex justify-end gap-2">
-                <Button onClick={handleSaveEspecialidades} disabled={atualizarEspecialidades.isPending} variant="outline">
-                  <Save className="h-4 w-4 mr-2" />
-                  {atualizarEspecialidades.isPending ? "Salvando..." : "Salvar Especialidades"}
-                </Button>
-                <Button onClick={handleSaveProfile} disabled={updateProfile.isPending}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {updateProfile.isPending ? "Salvando..." : "Salvar CRM"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        {/* Tab: Agendamento (Admin/Secretária) */}
-        <TabsContent value="agendamento" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações de Agendamento</CardTitle>
-              <CardDescription>
-                Defina horários de funcionamento e regras de agendamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Horário de Início</Label>
-                  <Input type="time" defaultValue="07:00" disabled />
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveEspecialidades} disabled={atualizarEspecialidades.isPending}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar Especialidades
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label>Horário de Término</Label>
-                  <Input type="time" defaultValue="20:00" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label>Duração Padrão da Consulta</Label>
-                  <Input type="number" defaultValue="30" disabled />
-                  <p className="text-xs text-muted-foreground">Em minutos</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Intervalo entre Consultas</Label>
-                  <Input type="number" defaultValue="0" disabled />
-                  <p className="text-xs text-muted-foreground">Em minutos</p>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-4">
-                <h4 className="font-medium">Dias de Funcionamento</h4>
-                <div className="flex flex-wrap gap-2">
-                  {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((dia, index) => (
-                    <Badge 
-                      key={dia} 
-                      variant={index < 5 ? "default" : "outline"}
-                      className={index < 5 ? "bg-primary" : ""}
-                    >
-                      {dia}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              
-              <p className="text-sm text-muted-foreground">
-                * Configurações de agendamento serão implementadas em breve
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab: Financeiro (Admin/Financeiro) */}
-        <TabsContent value="financeiro" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações Financeiras</CardTitle>
-              <CardDescription>
-                Defina valores padrão e regras de faturamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Valor Padrão da Consulta</Label>
-                  <Input type="number" placeholder="0,00" disabled />
-                </div>
-                <div className="space-y-2">
-                  <Label>Valor Padrão do Retorno</Label>
-                  <Input type="number" placeholder="0,00" disabled />
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-4">
-                <h4 className="font-medium">Formas de Pagamento Aceitas</h4>
-                <div className="flex flex-wrap gap-2">
-                  {["Dinheiro", "PIX", "Cartão Débito", "Cartão Crédito", "Convênio"].map((forma) => (
-                    <Badge key={forma} variant="outline">{forma}</Badge>
-                  ))}
-                </div>
-              </div>
-              
-              <p className="text-sm text-muted-foreground">
-                * Configurações financeiras serão implementadas em breve
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Tab: Notificações */}
-        <TabsContent value="notificacoes" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferências de Notificação</CardTitle>
-              <CardDescription>
-                Configure como e quando deseja receber notificações
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
+        {activeTab === "notificacoes" && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Preferências de Notificação</CardTitle>
+                <CardDescription>
+                  Configure como deseja receber notificações do sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Novos agendamentos</p>
+                    <p className="font-medium">Notificações por E-mail</p>
                     <p className="text-sm text-muted-foreground">
-                      Receber notificação quando um novo agendamento for criado
-                    </p>
-                  </div>
-                  <Badge variant="outline">Ativo</Badge>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Cancelamentos</p>
-                    <p className="text-sm text-muted-foreground">
-                      Receber notificação quando um agendamento for cancelado
-                    </p>
-                  </div>
-                  <Badge variant="outline">Ativo</Badge>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Renovação de vínculo</p>
-                    <p className="text-sm text-muted-foreground">
-                      Receber notificação quando um vínculo estiver próximo de expirar
-                    </p>
-                  </div>
-                  <Badge variant="outline">Ativo</Badge>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Lembretes de consulta</p>
-                    <p className="text-sm text-muted-foreground">
-                      Enviar lembretes automáticos aos pacientes
+                      Receba lembretes de consultas e atualizações por e-mail
                     </p>
                   </div>
                   <Badge variant="outline">Em breve</Badge>
                 </div>
-              </div>
-              
-              <p className="text-sm text-muted-foreground">
-                * Sistema de notificações será expandido em breve
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Notificações por WhatsApp</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receba lembretes e confirmações via WhatsApp
+                    </p>
+                  </div>
+                  <Badge variant="outline">Em breve</Badge>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Renovação de Vínculos</p>
+                    <p className="text-sm text-muted-foreground">
+                      Notificações sobre vínculos próximos do vencimento (30 dias antes)
+                    </p>
+                  </div>
+                  <Badge className="bg-green-500 text-white">Ativo</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Tab: Assinatura */}
+        {activeTab === "assinatura" && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-yellow-500" />
+                  Assinatura Gorgen
+                </CardTitle>
+                <CardDescription>
+                  Gerencie sua assinatura e forma de pagamento
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Status atual */}
+                <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-green-800 dark:text-green-200 flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5" />
+                        Plano Profissional
+                      </h3>
+                      <p className="text-sm text-green-600 dark:text-green-400">
+                        Sua assinatura está ativa
+                      </p>
+                    </div>
+                    <Badge className="bg-green-500 text-white">Ativo</Badge>
+                  </div>
+                  <Separator className="my-3" />
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Próxima cobrança</p>
+                      <p className="font-medium">08/02/2026</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Valor mensal</p>
+                      <p className="font-medium">R$ 199,00</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Opções de plano */}
+                <div>
+                  <h4 className="font-medium mb-3">Alterar Plano</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="border-2 hover:border-primary cursor-pointer transition-colors">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Básico</CardTitle>
+                        <CardDescription>Para consultórios pequenos</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">R$ 99<span className="text-sm font-normal">/mês</span></p>
+                        <ul className="mt-2 text-sm text-muted-foreground space-y-1">
+                          <li>• Até 100 pacientes</li>
+                          <li>• 1 usuário</li>
+                          <li>• Agenda básica</li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-2 border-primary">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base">Profissional</CardTitle>
+                          <Badge>Atual</Badge>
+                        </div>
+                        <CardDescription>Para clínicas em crescimento</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">R$ 199<span className="text-sm font-normal">/mês</span></p>
+                        <ul className="mt-2 text-sm text-muted-foreground space-y-1">
+                          <li>• Pacientes ilimitados</li>
+                          <li>• Até 5 usuários</li>
+                          <li>• Agenda completa</li>
+                          <li>• Relatórios</li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-2 hover:border-primary cursor-pointer transition-colors">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Empresarial</CardTitle>
+                        <CardDescription>Para grandes clínicas</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold">R$ 399<span className="text-sm font-normal">/mês</span></p>
+                        <ul className="mt-2 text-sm text-muted-foreground space-y-1">
+                          <li>• Tudo do Profissional</li>
+                          <li>• Usuários ilimitados</li>
+                          <li>• Múltiplas unidades</li>
+                          <li>• Suporte prioritário</li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                {/* Forma de pagamento */}
+                <div>
+                  <h4 className="font-medium mb-3">Forma de Pagamento</h4>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-muted rounded">
+                            <CreditCard className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Cartão de Crédito</p>
+                            <p className="text-sm text-muted-foreground">•••• •••• •••• 4242</p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Alterar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Histórico de faturas */}
+                <div>
+                  <h4 className="font-medium mb-3">Histórico de Faturas</h4>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between py-2 border-b">
+                          <div>
+                            <p className="font-medium">Janeiro 2026</p>
+                            <p className="text-sm text-muted-foreground">08/01/2026</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="font-medium">R$ 199,00</span>
+                            <Badge className="bg-green-500 text-white">Pago</Badge>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between py-2 border-b">
+                          <div>
+                            <p className="font-medium">Dezembro 2025</p>
+                            <p className="text-sm text-muted-foreground">08/12/2025</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="font-medium">R$ 199,00</span>
+                            <Badge className="bg-green-500 text-white">Pago</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Cancelamento */}
+                <div className="pt-4 border-t">
+                  <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-950 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-red-800 dark:text-red-200">Cancelar Assinatura</h4>
+                      <p className="text-sm text-red-600 dark:text-red-400 mb-3">
+                        Ao cancelar, você perderá acesso ao sistema no final do período atual.
+                        Seus dados serão mantidos por 90 dias para possível reativação.
+                      </p>
+                      <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-100">
+                        Cancelar Assinatura
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

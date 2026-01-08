@@ -1201,7 +1201,7 @@ export const appRouter = router({
     // Trocar perfil ativo
     setPerfilAtivo: protectedProcedure
       .input(z.object({
-        perfil: z.enum(["admin_master", "medico", "secretaria", "financeiro", "visualizador"]),
+        perfil: z.enum(["admin_master", "medico", "secretaria", "auditor", "paciente"]),
       }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user?.id) throw new Error("Usuário não autenticado");

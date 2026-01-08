@@ -536,7 +536,12 @@ export default function Agenda() {
           <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => navegarPeriodo(1)}>
             <ChevronRight className="w-4 h-4" />
           </Button>
-          <span className="ml-2 text-sm font-medium capitalize">{getTituloPeriodo()}</span>
+          <div className="ml-2 flex flex-col">
+            <span className="text-lg font-bold capitalize text-primary">
+              {dataAtual.toLocaleDateString("pt-BR", { month: "long" })}
+            </span>
+            <span className="text-xs text-muted-foreground capitalize">{getTituloPeriodo()}</span>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {/* Legenda compacta */}

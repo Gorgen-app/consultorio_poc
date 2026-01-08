@@ -63,6 +63,8 @@ function Router() {
           <Configuracoes />
         </ProtectedRoute>
       </Route>
+      <Route path="/config-simples">
+      </Route>
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
