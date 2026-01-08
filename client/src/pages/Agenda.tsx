@@ -63,6 +63,63 @@ const CORES_TIPO: Record<string, string> = {
   "Bloqueio": "bg-gray-500",
 };
 
+// Feriados nacionais do Brasil (fixos e móveis para 2025-2027)
+// Feriados móveis são calculados com base na Páscoa
+const FERIADOS_FIXOS: Record<string, string> = {
+  "01-01": "Confraternização Universal",
+  "04-21": "Tiradentes",
+  "05-01": "Dia do Trabalho",
+  "09-07": "Independência do Brasil",
+  "10-12": "Nossa Senhora Aparecida",
+  "11-02": "Finados",
+  "11-15": "Proclamação da República",
+  "12-25": "Natal",
+};
+
+// Feriados móveis (Carnaval, Sexta-feira Santa, Páscoa, Corpus Christi)
+// Calculados para cada ano
+const FERIADOS_MOVEIS: Record<string, string> = {
+  // 2025
+  "2025-03-03": "Carnaval",
+  "2025-03-04": "Carnaval",
+  "2025-04-18": "Sexta-feira Santa",
+  "2025-04-20": "Páscoa",
+  "2025-06-19": "Corpus Christi",
+  // 2026
+  "2026-02-16": "Carnaval",
+  "2026-02-17": "Carnaval",
+  "2026-04-03": "Sexta-feira Santa",
+  "2026-04-05": "Páscoa",
+  "2026-06-04": "Corpus Christi",
+  // 2027
+  "2027-02-08": "Carnaval",
+  "2027-02-09": "Carnaval",
+  "2027-03-26": "Sexta-feira Santa",
+  "2027-03-28": "Páscoa",
+  "2027-05-27": "Corpus Christi",
+};
+
+// Função para verificar se uma data é feriado
+function getFeriado(data: Date): string | null {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+  
+  // Verificar feriados fixos
+  const chaveFixa = `${mes}-${dia}`;
+  if (FERIADOS_FIXOS[chaveFixa]) {
+    return FERIADOS_FIXOS[chaveFixa];
+  }
+  
+  // Verificar feriados móveis
+  const chaveMovel = `${ano}-${mes}-${dia}`;
+  if (FERIADOS_MOVEIS[chaveMovel]) {
+    return FERIADOS_MOVEIS[chaveMovel];
+  }
+  
+  return null;
+}
+
 // Cores por status
 const CORES_STATUS: Record<string, string> = {
   "Agendado": "border-l-4 border-l-blue-500",
@@ -547,17 +604,27 @@ export default function Agenda() {
               <div className="px-1 py-1 text-center text-xs font-medium border-r bg-muted">
                 Horário
               </div>
-              {diasSemana.map((dia, i) => (
-                <div 
-                  key={i} 
-                  className={`px-1 py-1 text-center text-xs font-medium border-r ${
-                    dia.toDateString() === new Date().toDateString() ? "bg-blue-50" : ""
-                  }`}
-                >
-                  <div className="capitalize">{dia.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</div>
-                  <div className="text-sm font-bold">{dia.getDate()}</div>
-                </div>
-              ))}
+              {diasSemana.map((dia, i) => {
+                const feriado = getFeriado(dia);
+                const isHoje = dia.toDateString() === new Date().toDateString();
+                return (
+                  <div 
+                    key={i} 
+                    className={`px-1 py-1 text-center text-xs font-medium border-r ${
+                      isHoje ? "bg-blue-50" : feriado ? "bg-amber-100" : ""
+                    }`}
+                    title={feriado || undefined}
+                  >
+                    <div className="capitalize">{dia.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</div>
+                    <div className="text-sm font-bold">{dia.getDate()}</div>
+                    {feriado && (
+                      <div className="text-[8px] text-amber-700 truncate" title={feriado}>
+                        {feriado}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <div>
               {horarios.map((hora) => (
@@ -571,15 +638,16 @@ export default function Agenda() {
                     const agendamentosDia = agendamentosPorDia[chave] || [];
                     const agendamentosHora = agendamentosDia.filter((ag: any) => {
                       const horaAg = new Date(ag.dataHoraInicio).getHours();
-
                       return horaAg === hora;
                     });
+                    const feriado = getFeriado(dia);
+                    const isHoje = dia.toDateString() === new Date().toDateString();
                     
                     return (
                       <div 
                         key={i} 
                         className={`px-0.5 py-0 border-r overflow-hidden ${
-                          dia.toDateString() === new Date().toDateString() ? "bg-blue-50/50" : ""
+                          isHoje ? "bg-blue-50/50" : feriado ? "bg-amber-50" : ""
                         }`}
                       >
                         {agendamentosHora.map(renderAgendamento)}
