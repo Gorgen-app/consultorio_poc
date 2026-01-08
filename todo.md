@@ -666,6 +666,125 @@ Cada operação realizada no Gorgen é registrada com:
 
 ---
 
+## 4. SIMPLICIDADE COM PROFUNDIDADE SOB DEMANDA
+
+> **"O sistema deve ser simples de pronto, mas capaz de responder imediatamente a quem exige detalhes."**
+
+### Princípio
+A interface do Gorgen é **simples por padrão**, exibindo apenas as informações essenciais. Porém, todos os dados detalhados estão **prontos no background** para acesso imediato com **um único clique**.
+
+### Justificativa
+- **Redução de Carga Cognitiva**: O usuário não é sobrecarregado com informações desnecessárias
+- **Eficiência**: Tarefas rotineiras são rápidas e diretas
+- **Profundidade Disponível**: Quando necessário, o detalhe está a um clique de distância
+- **Adaptação ao Contexto**: O sistema atende tanto ao uso rápido quanto à análise aprofundada
+
+### Exemplo Prático: Peso e Altura
+- **Visão Simples**: No cabeçalho do prontuário, exibe apenas o peso atual, altura e IMC
+- **Visão Detalhada**: Com um clique em "Medidas Antropométricas", acessa histórico completo com gráficos de evolução
+- **Background Pronto**: Os dados históricos já estão carregados, sem espera adicional
+
+### Padrões de Interface
+1. **Resumo → Detalhe**: Toda seção mostra resumo primeiro, detalhe sob demanda
+2. **Expansão In-Place**: Detalhes expandem na mesma tela quando possível
+3. **Tooltips Informativos**: Informações complementares aparecem ao passar o mouse
+4. **Modais para Ações**: Formulários complexos em modais, não em novas páginas
+5. **Navegação Lateral**: Menu sempre visível para acesso rápido a qualquer seção
+
+### Regra de Ouro
+> **Máximo de 2 cliques** para acessar qualquer informação detalhada a partir da tela principal.
+
+### Implementação Técnica
+- **Pré-carregamento**: Dados frequentemente acessados são carregados em background
+- **Cache Inteligente**: Consultas recentes ficam em cache para acesso instantâneo
+- **Lazy Loading**: Dados pesados (imagens, PDFs) carregam apenas quando solicitados
+- **Skeleton Loading**: Feedback visual imediato enquanto dados carregam
+
+---
+
+## 5. CONTROLE DE ACESSO BASEADO EM PERFIS
+
+> **"Cada usuário acessa apenas o que lhe é permitido, com base em seu perfil e autorizações explícitas."**
+
+### Princípio
+O acesso ao Gorgen é controlado por **perfis de usuário**. Um mesmo CPF pode ter **múltiplos perfis** simultâneos (ex: médico que também é paciente de outro médico no sistema).
+
+### Os 5 Perfis do Gorgen
+
+#### 🔑 ADMINISTRADOR
+- **Acesso**: Total e irrestrito a todo o sistema
+- **Permissões**: Pode modificar qualquer coisa, incluir/excluir usuários, configurar sistema
+- **Quem**: Dr. André Gorgen e equipe técnica autorizada
+- **Responsabilidade**: Único perfil que pode executar exclusões físicas de dados
+
+#### 🩺 MÉDICO
+- **Acesso**: Prontuários de pacientes que:
+  1. Lhe conferiram **autorização expressa** para consulta, OU
+  2. O médico já **atendeu** (autorização implícita por atendimento)
+- **Restrições**:
+  - Não acessa perfis de outros médicos
+  - Não modifica funções do sistema
+  - Sem atendimento ou autorização = sem acesso
+- **Papel**: Consumidor do sistema, atua apenas sobre dados dos seus pacientes
+
+#### 👤 PACIENTE
+- **Acesso**: Apenas aos próprios dados
+- **Permissões**:
+  - Incluir informações pessoais
+  - Fazer upload de documentos e exames
+  - **Conceder/revogar** acesso a médicos a qualquer tempo
+  - Apagar seu perfil do Gorgen com poucos cliques (direito LGPD)
+- **Restrições**: Não pode deletar informações clínicas (imutabilidade)
+
+#### 📝 SECRETÁRIA
+- **Acesso**: Vinculado a um ou mais médicos específicos
+- **Permissões**:
+  - Manejar agenda do(s) médico(s) vinculado(s)
+  - Acessar dados cadastrais básicos de pacientes
+  - Acessar dados de faturamento e agendamento
+- **Restrições**:
+  - **Não pode consultar prontuários médicos**
+  - Atua como preposto do médico que lhe autorizou
+
+#### 🔍 AUDITOR
+- **Acesso**: Similar ao médico, porém:
+  - Autorização concedida pelo **Administrador** (não pelo paciente)
+  - Acesso para fins de auditoria e conformidade
+- **Restrições**:
+  - **Não pode editar absolutamente nenhuma informação**
+  - Acesso somente leitura (read-only)
+  - Todas as consultas são registradas em log
+
+### Matriz de Permissões
+
+| Ação | Admin | Médico | Paciente | Secretária | Auditor |
+|-------|-------|--------|----------|------------|--------|
+| Ver prontuário | ✅ | ✅* | Próprio | ❌ | ✅** |
+| Editar prontuário | ✅ | ✅* | ❌ | ❌ | ❌ |
+| Criar evolução | ✅ | ✅* | ❌ | ❌ | ❌ |
+| Upload documentos | ✅ | ✅* | ✅ | ❌ | ❌ |
+| Gerenciar agenda | ✅ | ✅ | ❌ | ✅*** | ❌ |
+| Ver faturamento | ✅ | ✅ | Próprio | ✅*** | ✅** |
+| Configurar sistema | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Excluir dados | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Conceder acesso | ✅ | ❌ | ✅**** | ❌ | ❌ |
+| Ver logs auditoria | ✅ | ❌ | ❌ | ❌ | ✅ |
+
+*Legenda:*
+- \* Com autorização do paciente ou atendimento prévio
+- \*\* Com autorização do administrador
+- \*\*\* Apenas dos médicos vinculados
+- \*\*\*\* Concede/revoga acesso de médicos ao próprio prontuário
+
+### Implementação Técnica
+- Tabela `usuarios` com campo `perfis` (array de perfis)
+- Tabela `autorizacoes_prontuario` (paciente → médico)
+- Tabela `vinculos_secretaria` (secretária → médico)
+- Middleware de autorização em todas as rotas
+- Log de todas as tentativas de acesso (autorizadas e negadas)
+
+---
+
 ## 📋 IMPLEMENTAÇÃO DOS PILARES
 
 ### Histórico de Medidas Antropométricas
