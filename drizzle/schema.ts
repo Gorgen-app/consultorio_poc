@@ -31,6 +31,13 @@ export const pacientes = mysqlTable("pacientes", {
   sexo: mysqlEnum("sexo", ["M", "F", "Outro"]),
   cpf: varchar("cpf", { length: 14 }),
   nomeMae: varchar("nome_mae", { length: 255 }),
+  
+  // Responsável / Next of Kin
+  responsavelNome: varchar("responsavel_nome", { length: 255 }),
+  responsavelParentesco: varchar("responsavel_parentesco", { length: 100 }),
+  responsavelTelefone: varchar("responsavel_telefone", { length: 20 }),
+  responsavelEmail: varchar("responsavel_email", { length: 320 }),
+  
   email: varchar("email", { length: 320 }),
   telefone: varchar("telefone", { length: 20 }),
   endereco: varchar("endereco", { length: 500 }),
@@ -154,3 +161,464 @@ export const auditLog = mysqlTable("audit_log", {
 
 export type AuditLog = typeof auditLog.$inferSelect;
 export type InsertAuditLog = typeof auditLog.$inferInsert;
+
+
+// ===== PRONTUÁRIO MÉDICO ELETRÔNICO =====
+
+/**
+ * Resumo Clínico do Paciente - Informações persistentes do prontuário
+ */
+export const resumoClinico = mysqlTable("resumo_clinico", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id).unique(),
+  
+  // História clínica resumida
+  historiaClinica: text("historia_clinica"),
+  
+  // Antecedentes
+  antecedentesPessoais: text("antecedentes_pessoais"),
+  antecedentesFamiliares: text("antecedentes_familiares"),
+  habitos: text("habitos"), // Tabagismo, etilismo, etc.
+  
+  // Informações obstétricas (apenas para mulheres)
+  gestacoes: int("gestacoes"),
+  partos: int("partos"),
+  abortos: int("abortos"),
+  dum: date("dum"), // Data última menstruação
+  
+  // Dados antropométricos atuais
+  pesoAtual: decimal("peso_atual", { precision: 5, scale: 2 }),
+  altura: decimal("altura", { precision: 3, scale: 2 }),
+  imc: decimal("imc", { precision: 4, scale: 1 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ResumoClinico = typeof resumoClinico.$inferSelect;
+export type InsertResumoClinico = typeof resumoClinico.$inferInsert;
+
+/**
+ * Problemas Ativos do Paciente (Lista de Problemas)
+ */
+export const problemasAtivos = mysqlTable("problemas_ativos", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  descricao: varchar("descricao", { length: 500 }).notNull(),
+  cid10: varchar("cid10", { length: 20 }),
+  dataInicio: date("data_inicio"),
+  dataResolucao: date("data_resolucao"),
+  ativo: boolean("ativo").default(true).notNull(),
+  observacoes: text("observacoes"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProblemaAtivo = typeof problemasAtivos.$inferSelect;
+export type InsertProblemaAtivo = typeof problemasAtivos.$inferInsert;
+
+/**
+ * Alergias do Paciente
+ */
+export const alergias = mysqlTable("alergias", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  tipo: mysqlEnum("tipo", ["Medicamento", "Alimento", "Ambiental", "Outro"]).notNull(),
+  substancia: varchar("substancia", { length: 255 }).notNull(),
+  reacao: varchar("reacao", { length: 500 }),
+  gravidade: mysqlEnum("gravidade", ["Leve", "Moderada", "Grave"]),
+  confirmada: boolean("confirmada").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Alergia = typeof alergias.$inferSelect;
+export type InsertAlergia = typeof alergias.$inferInsert;
+
+/**
+ * Medicamentos em Uso
+ */
+export const medicamentosUso = mysqlTable("medicamentos_uso", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  medicamento: varchar("medicamento", { length: 255 }).notNull(),
+  principioAtivo: varchar("principio_ativo", { length: 255 }),
+  dosagem: varchar("dosagem", { length: 100 }),
+  posologia: varchar("posologia", { length: 255 }), // Ex: 1 cp 12/12h
+  viaAdministracao: varchar("via_administracao", { length: 50 }), // VO, EV, IM, SC
+  dataInicio: date("data_inicio"),
+  dataFim: date("data_fim"),
+  motivoUso: varchar("motivo_uso", { length: 255 }),
+  prescritoPor: varchar("prescrito_por", { length: 255 }),
+  ativo: boolean("ativo").default(true).notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicamentoUso = typeof medicamentosUso.$inferSelect;
+export type InsertMedicamentoUso = typeof medicamentosUso.$inferInsert;
+
+/**
+ * Evoluções Clínicas (Consultas)
+ */
+export const evolucoes = mysqlTable("evolucoes", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  atendimentoId: int("atendimento_id").references(() => atendimentos.id),
+  
+  dataEvolucao: timestamp("data_evolucao").notNull(),
+  tipo: mysqlEnum("tipo", ["Consulta", "Retorno", "Urgência", "Teleconsulta", "Parecer"]).default("Consulta"),
+  
+  // SOAP ou texto livre
+  subjetivo: text("subjetivo"), // Queixa principal, HDA
+  objetivo: text("objetivo"), // Exame físico
+  avaliacao: text("avaliacao"), // Impressão diagnóstica
+  plano: text("plano"), // Conduta
+  
+  // Sinais vitais
+  pressaoArterial: varchar("pressao_arterial", { length: 20 }),
+  frequenciaCardiaca: int("frequencia_cardiaca"),
+  temperatura: decimal("temperatura", { precision: 4, scale: 1 }),
+  peso: decimal("peso", { precision: 5, scale: 2 }),
+  altura: decimal("altura", { precision: 3, scale: 2 }),
+  imc: decimal("imc", { precision: 4, scale: 1 }),
+  
+  // Metadados
+  profissionalId: int("profissional_id").references(() => users.id),
+  profissionalNome: varchar("profissional_nome", { length: 255 }),
+  assinado: boolean("assinado").default(false),
+  dataAssinatura: timestamp("data_assinatura"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Evolucao = typeof evolucoes.$inferSelect;
+export type InsertEvolucao = typeof evolucoes.$inferInsert;
+
+/**
+ * Internações Hospitalares
+ */
+export const internacoes = mysqlTable("internacoes", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  hospital: varchar("hospital", { length: 255 }).notNull(),
+  setor: varchar("setor", { length: 100 }),
+  leito: varchar("leito", { length: 50 }),
+  
+  dataAdmissao: timestamp("data_admissao").notNull(),
+  dataAlta: timestamp("data_alta"),
+  motivoInternacao: text("motivo_internacao"),
+  diagnosticoAdmissao: varchar("diagnostico_admissao", { length: 500 }),
+  cid10Admissao: varchar("cid10_admissao", { length: 20 }),
+  
+  diagnosticoAlta: varchar("diagnostico_alta", { length: 500 }),
+  cid10Alta: varchar("cid10_alta", { length: 20 }),
+  tipoAlta: mysqlEnum("tipo_alta", ["Melhorado", "Curado", "Transferido", "Óbito", "Evasão", "A pedido"]),
+  
+  resumoInternacao: text("resumo_internacao"),
+  complicacoes: text("complicacoes"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Internacao = typeof internacoes.$inferSelect;
+export type InsertInternacao = typeof internacoes.$inferInsert;
+
+/**
+ * Cirurgias
+ */
+export const cirurgias = mysqlTable("cirurgias", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  internacaoId: int("internacao_id").references(() => internacoes.id),
+  
+  dataCirurgia: timestamp("data_cirurgia").notNull(),
+  procedimento: varchar("procedimento", { length: 500 }).notNull(),
+  codigosCBHPM: text("codigos_cbhpm"),
+  
+  hospital: varchar("hospital", { length: 255 }),
+  salaOperatoria: varchar("sala_operatoria", { length: 50 }),
+  
+  cirurgiaoResponsavel: varchar("cirurgiao_responsavel", { length: 255 }),
+  equipe: text("equipe"), // JSON com membros da equipe
+  anestesista: varchar("anestesista", { length: 255 }),
+  tipoAnestesia: varchar("tipo_anestesia", { length: 100 }),
+  
+  indicacao: text("indicacao"),
+  descricaoCirurgica: text("descricao_cirurgica"),
+  achados: text("achados"),
+  complicacoes: text("complicacoes"),
+  
+  duracaoMinutos: int("duracao_minutos"),
+  sangramento: varchar("sangramento", { length: 100 }),
+  
+  // Status do agendamento
+  status: mysqlEnum("status", ["Agendada", "Realizada", "Cancelada", "Adiada"]).default("Agendada"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Cirurgia = typeof cirurgias.$inferSelect;
+export type InsertCirurgia = typeof cirurgias.$inferInsert;
+
+/**
+ * Exames Laboratoriais
+ */
+export const examesLaboratoriais = mysqlTable("exames_laboratoriais", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  dataColeta: date("data_coleta").notNull(),
+  dataResultado: date("data_resultado"),
+  laboratorio: varchar("laboratorio", { length: 255 }),
+  
+  tipoExame: varchar("tipo_exame", { length: 255 }).notNull(), // Hemograma, Bioquímica, etc.
+  exame: varchar("exame", { length: 255 }).notNull(), // Nome específico
+  resultado: text("resultado"),
+  valorReferencia: varchar("valor_referencia", { length: 255 }),
+  unidade: varchar("unidade", { length: 50 }),
+  
+  alterado: boolean("alterado").default(false),
+  observacoes: text("observacoes"),
+  
+  // Arquivo do laudo
+  arquivoUrl: varchar("arquivo_url", { length: 500 }),
+  arquivoNome: varchar("arquivo_nome", { length: 255 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ExameLaboratorial = typeof examesLaboratoriais.$inferSelect;
+export type InsertExameLaboratorial = typeof examesLaboratoriais.$inferInsert;
+
+/**
+ * Exames de Imagem
+ */
+export const examesImagem = mysqlTable("exames_imagem", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  dataExame: date("data_exame").notNull(),
+  tipoExame: mysqlEnum("tipo_exame", ["Raio-X", "Tomografia", "Ressonância", "Ultrassonografia", "Mamografia", "Densitometria", "PET-CT", "Cintilografia", "Outro"]).notNull(),
+  regiao: varchar("regiao", { length: 255 }).notNull(), // Ex: Tórax, Abdome, Crânio
+  
+  clinicaServico: varchar("clinica_servico", { length: 255 }),
+  medicoSolicitante: varchar("medico_solicitante", { length: 255 }),
+  medicoLaudador: varchar("medico_laudador", { length: 255 }),
+  
+  indicacao: text("indicacao"),
+  laudo: text("laudo"),
+  conclusao: text("conclusao"),
+  
+  // Arquivos
+  arquivoLaudoUrl: varchar("arquivo_laudo_url", { length: 500 }),
+  arquivoImagemUrl: varchar("arquivo_imagem_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ExameImagem = typeof examesImagem.$inferSelect;
+export type InsertExameImagem = typeof examesImagem.$inferInsert;
+
+/**
+ * Endoscopias (EDA, Colonoscopia, etc.)
+ */
+export const endoscopias = mysqlTable("endoscopias", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  dataExame: date("data_exame").notNull(),
+  tipoExame: mysqlEnum("tipo_exame", ["EDA", "Colonoscopia", "Retossigmoidoscopia", "CPRE", "Ecoendoscopia", "Enteroscopia", "Outro"]).notNull(),
+  
+  clinicaServico: varchar("clinica_servico", { length: 255 }),
+  medicoExecutor: varchar("medico_executor", { length: 255 }),
+  
+  indicacao: text("indicacao"),
+  preparo: varchar("preparo", { length: 255 }),
+  sedacao: varchar("sedacao", { length: 255 }),
+  
+  descricao: text("descricao"),
+  conclusao: text("conclusao"),
+  biopsia: boolean("biopsia").default(false),
+  localBiopsia: varchar("local_biopsia", { length: 255 }),
+  resultadoBiopsia: text("resultado_biopsia"),
+  
+  // Arquivos
+  arquivoLaudoUrl: varchar("arquivo_laudo_url", { length: 500 }),
+  arquivoImagensUrl: varchar("arquivo_imagens_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Endoscopia = typeof endoscopias.$inferSelect;
+export type InsertEndoscopia = typeof endoscopias.$inferInsert;
+
+/**
+ * Exames de Cardiologia
+ */
+export const cardiologia = mysqlTable("cardiologia", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  dataExame: date("data_exame").notNull(),
+  tipoExame: mysqlEnum("tipo_exame", ["ECG", "Ecocardiograma", "Teste Ergométrico", "Holter 24h", "MAPA", "Cintilografia Miocárdica", "Cateterismo", "Angiotomografia", "Outro"]).notNull(),
+  
+  clinicaServico: varchar("clinica_servico", { length: 255 }),
+  medicoExecutor: varchar("medico_executor", { length: 255 }),
+  
+  indicacao: text("indicacao"),
+  descricao: text("descricao"),
+  conclusao: text("conclusao"),
+  
+  // Dados específicos do ecocardiograma
+  feve: decimal("feve", { precision: 4, scale: 1 }), // Fração de ejeção
+  ddve: decimal("ddve", { precision: 4, scale: 1 }), // Diâmetro diastólico VE
+  dsve: decimal("dsve", { precision: 4, scale: 1 }), // Diâmetro sistólico VE
+  ae: decimal("ae", { precision: 4, scale: 1 }), // Átrio esquerdo
+  
+  // Arquivos
+  arquivoLaudoUrl: varchar("arquivo_laudo_url", { length: 500 }),
+  arquivoExameUrl: varchar("arquivo_exame_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Cardiologia = typeof cardiologia.$inferSelect;
+export type InsertCardiologia = typeof cardiologia.$inferInsert;
+
+/**
+ * Terapias e Infusões (Quimioterapia, Imunobiológicos, etc.)
+ */
+export const terapias = mysqlTable("terapias", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  dataTerapia: timestamp("data_terapia").notNull(),
+  tipoTerapia: mysqlEnum("tipo_terapia", ["Quimioterapia", "Imunoterapia", "Terapia Alvo", "Imunobiológico", "Infusão", "Transfusão", "Outro"]).notNull(),
+  
+  protocolo: varchar("protocolo", { length: 255 }),
+  ciclo: int("ciclo"),
+  dia: int("dia"),
+  
+  medicamentos: text("medicamentos"), // JSON com medicamentos e doses
+  local: varchar("local", { length: 255 }),
+  
+  preQuimio: text("pre_quimio"), // Avaliação pré-infusão
+  intercorrencias: text("intercorrencias"),
+  observacoes: text("observacoes"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Terapia = typeof terapias.$inferSelect;
+export type InsertTerapia = typeof terapias.$inferInsert;
+
+/**
+ * Obstetrícia (apenas para pacientes do sexo feminino)
+ */
+export const obstetricia = mysqlTable("obstetricia", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  tipoRegistro: mysqlEnum("tipo_registro", ["Pré-natal", "Parto", "Puerpério", "Aborto"]).notNull(),
+  dataRegistro: date("data_registro").notNull(),
+  
+  // Pré-natal
+  dum: date("dum"),
+  dpp: date("dpp"), // Data provável do parto
+  idadeGestacional: varchar("idade_gestacional", { length: 20 }),
+  
+  // Parto
+  tipoParto: mysqlEnum("tipo_parto", ["Normal", "Cesárea", "Fórceps", "Vácuo"]),
+  dataParto: timestamp("data_parto"),
+  hospital: varchar("hospital", { length: 255 }),
+  
+  // Recém-nascido
+  pesoRN: decimal("peso_rn", { precision: 5, scale: 0 }), // em gramas
+  apgar1: int("apgar_1"),
+  apgar5: int("apgar_5"),
+  sexoRN: mysqlEnum("sexo_rn", ["M", "F"]),
+  
+  observacoes: text("observacoes"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Obstetricia = typeof obstetricia.$inferSelect;
+export type InsertObstetricia = typeof obstetricia.$inferInsert;
+
+/**
+ * Documentos Médicos (Receitas, Atestados, Solicitações, etc.)
+ */
+export const documentosMedicos = mysqlTable("documentos_medicos", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  evolucaoId: int("evolucao_id").references(() => evolucoes.id),
+  
+  tipo: mysqlEnum("tipo", [
+    "Receita",
+    "Receita Especial",
+    "Solicitação de Exames",
+    "Atestado Comparecimento",
+    "Atestado Afastamento",
+    "Laudo Médico",
+    "Relatório Médico",
+    "Protocolo Cirurgia",
+    "Guia SADT",
+    "Guia Internação",
+    "Outro"
+  ]).notNull(),
+  
+  dataEmissao: timestamp("data_emissao").notNull(),
+  
+  // Conteúdo do documento
+  conteudo: text("conteudo"), // Texto principal do documento
+  
+  // Campos específicos para receitas
+  medicamentos: text("medicamentos"), // JSON com lista de medicamentos
+  
+  // Campos específicos para atestados
+  cid10: varchar("cid10", { length: 20 }),
+  diasAfastamento: int("dias_afastamento"),
+  dataInicio: date("data_inicio"),
+  dataFim: date("data_fim"),
+  
+  // Campos específicos para solicitações
+  examesSolicitados: text("exames_solicitados"), // JSON com lista de exames
+  justificativa: text("justificativa"),
+  
+  // Campos específicos para protocolo de cirurgia
+  procedimentoProposto: varchar("procedimento_proposto", { length: 500 }),
+  dataPrevista: date("data_prevista"),
+  hospitalPrevisto: varchar("hospital_previsto", { length: 255 }),
+  
+  // Metadados
+  profissionalId: int("profissional_id").references(() => users.id),
+  profissionalNome: varchar("profissional_nome", { length: 255 }),
+  crm: varchar("crm", { length: 20 }),
+  
+  // Arquivo gerado
+  arquivoUrl: varchar("arquivo_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DocumentoMedico = typeof documentosMedicos.$inferSelect;
+export type InsertDocumentoMedico = typeof documentosMedicos.$inferInsert;

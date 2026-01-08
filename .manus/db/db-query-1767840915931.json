@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS resumo_clinico (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL UNIQUE,\n  historia_clinica TEXT,\n  antecedentes_pessoais TEXT,\n  antecedentes_familiares TEXT,\n  habitos TEXT,\n  gestacoes INT,\n  partos INT,\n  abortos INT,\n  dum DATE,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS resumo_clinico (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL UNIQUE,\n  historia_clinica TEXT,\n  antecedentes_pessoais TEXT,\n  antecedentes_familiares TEXT,\n  habitos TEXT,\n  gestacoes INT,\n  partos INT,\n  abortos INT,\n  dum DATE,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 594
+}

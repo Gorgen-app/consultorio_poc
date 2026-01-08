@@ -529,3 +529,61 @@
 - [x] ID de atendimentos verificado - formato correto
 - [x] Função getNextPacienteId reescrita com regex para ignorar IDs inválidos
 - [x] Testes automatizados adicionados
+
+
+---
+
+## 🏥 FASE 2: PRONTUÁRIO MÉDICO ELETRÔNICO (PME)
+
+### Estrutura do Prontuário
+- [ ] **Cabeçalho do Paciente**
+  - [ ] Dados pessoais (nome, idade, sexo, contato)
+  - [ ] Resumo da história clínica
+  - [ ] Lista de problemas ativos
+  - [ ] Alergias conhecidas
+  - [ ] Medicamentos em uso
+
+### Seções do Prontuário (Menu Lateral)
+- [ ] **Evolução** - Registro de consultas e evoluções clínicas
+- [ ] **Internações** - Histórico de internações hospitalares
+- [ ] **Cirurgias** - Procedimentos cirúrgicos realizados
+- [ ] **Exames Laboratoriais** - Resultados de exames de sangue, urina, etc.
+- [ ] **Exames de Imagem** - Raio-X, TC, RM, USG com laudos e imagens
+- [ ] **Endoscopia** - EDA, colonoscopia, etc.
+- [ ] **Cardiologia** - ECG, ecocardiograma, teste ergométrico
+- [ ] **Terapias e Infusões** - Quimioterapia, imunobiológicos, etc.
+- [ ] **Obstetrícia** - Apenas para pacientes do sexo feminino
+
+### Documentos Médicos
+- [ ] **Receitas** - Receita simples
+- [ ] **Receita Especial** - Receita de controle especial
+- [ ] **Solicitação de Exames** - Requisição de exames
+- [ ] **Atestado de Comparecimento** - Declaração de presença
+- [ ] **Atestado de Afastamento** - Atestado médico com CID
+- [ ] **Protocolo de Cirurgia** - Agendamento cirúrgico
+- [ ] **Guias** - Guias de autorização
+
+### Integração
+- [ ] Link no nome do paciente na lista
+- [ ] Ícone de prontuário ao lado do botão editar
+- [ ] Navegação entre seções do prontuário
+
+### Schema do Banco
+- [ ] Tabela evolucoes
+- [ ] Tabela internacoes
+- [ ] Tabela cirurgias
+- [ ] Tabela exames_laboratoriais
+- [ ] Tabela exames_imagem
+- [ ] Tabela endoscopias
+- [ ] Tabela cardiologia
+- [ ] Tabela terapias
+- [ ] Tabela obstetricia
+- [ ] Tabela documentos_medicos
+- [ ] Tabela alergias
+- [ ] Tabela medicamentos_uso
+- [ ] Tabela problemas_ativos
+
+
+### Requisitos Adicionais (07/01/2026)
+- [ ] Adicionar campos peso, altura e IMC automático no cabeçalho do prontuário
+- [ ] Adicionar campo de contato de responsável/next of kin na tabela de pacientes

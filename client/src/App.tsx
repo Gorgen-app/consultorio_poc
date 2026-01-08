@@ -10,6 +10,7 @@ import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
 import Atendimentos from "./pages/Atendimentos";
 import NovoAtendimento from "./pages/NovoAtendimento";
+import Prontuario from "./pages/Prontuario";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/pacientes/novo" component={NovoPaciente} />
       <Route path="/atendimentos" component={Atendimentos} />
       <Route path="/atendimentos/novo" component={NovoAtendimento} />
+      <Route path="/prontuario/:id" component={Prontuario} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

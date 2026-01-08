@@ -424,6 +424,546 @@ export const appRouter = router({
         return await db.listAuditLogs(input);
       }),
   }),
+
+  // ===== PRONTUÁRIO MÉDICO ELETRÔNICO =====
+  
+  prontuario: router({
+    // Buscar prontuário completo
+    completo: protectedProcedure
+      .input(z.object({ pacienteId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getProntuarioCompleto(input.pacienteId);
+      }),
+
+    // Resumo Clínico
+    resumoClinico: router({
+      get: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.getResumoClinico(input.pacienteId);
+        }),
+      
+      upsert: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          historiaClinica: z.string().optional().nullable(),
+          antecedentesPessoais: z.string().optional().nullable(),
+          antecedentesFamiliares: z.string().optional().nullable(),
+          habitos: z.string().optional().nullable(),
+          gestacoes: z.number().optional().nullable(),
+          partos: z.number().optional().nullable(),
+          abortos: z.number().optional().nullable(),
+          dum: z.string().optional().nullable(),
+          pesoAtual: z.string().optional().nullable(),
+          altura: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.upsertResumoClinico(input as any);
+        }),
+    }),
+
+    // Problemas Ativos
+    problemas: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listProblemasAtivos(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          descricao: z.string().min(1),
+          cid10: z.string().optional().nullable(),
+          dataInicio: z.string().optional().nullable(),
+          dataResolucao: z.string().optional().nullable(),
+          ativo: z.boolean().default(true),
+          observacoes: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createProblemaAtivo(input as any);
+        }),
+      
+      update: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          descricao: z.string().optional(),
+          cid10: z.string().optional().nullable(),
+          dataInicio: z.string().optional().nullable(),
+          dataResolucao: z.string().optional().nullable(),
+          ativo: z.boolean().optional(),
+          observacoes: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await db.updateProblemaAtivo(id, data as any);
+        }),
+    }),
+
+    // Alergias
+    alergias: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listAlergias(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          tipo: z.enum(["Medicamento", "Alimento", "Ambiental", "Outro"]),
+          substancia: z.string().min(1),
+          reacao: z.string().optional().nullable(),
+          gravidade: z.enum(["Leve", "Moderada", "Grave"]).optional().nullable(),
+          confirmada: z.boolean().default(false),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createAlergia(input as any);
+        }),
+      
+      delete: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          return await db.deleteAlergia(input.id);
+        }),
+    }),
+
+    // Medicamentos em Uso
+    medicamentos: router({
+      list: protectedProcedure
+        .input(z.object({ 
+          pacienteId: z.number(),
+          apenasAtivos: z.boolean().default(true),
+        }))
+        .query(async ({ input }) => {
+          return await db.listMedicamentosUso(input.pacienteId, input.apenasAtivos);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          medicamento: z.string().min(1),
+          principioAtivo: z.string().optional().nullable(),
+          dosagem: z.string().optional().nullable(),
+          posologia: z.string().optional().nullable(),
+          viaAdministracao: z.string().optional().nullable(),
+          dataInicio: z.string().optional().nullable(),
+          dataFim: z.string().optional().nullable(),
+          motivoUso: z.string().optional().nullable(),
+          prescritoPor: z.string().optional().nullable(),
+          ativo: z.boolean().default(true),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createMedicamentoUso(input as any);
+        }),
+      
+      update: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          medicamento: z.string().optional(),
+          principioAtivo: z.string().optional().nullable(),
+          dosagem: z.string().optional().nullable(),
+          posologia: z.string().optional().nullable(),
+          viaAdministracao: z.string().optional().nullable(),
+          dataInicio: z.string().optional().nullable(),
+          dataFim: z.string().optional().nullable(),
+          motivoUso: z.string().optional().nullable(),
+          prescritoPor: z.string().optional().nullable(),
+          ativo: z.boolean().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await db.updateMedicamentoUso(id, data as any);
+        }),
+    }),
+
+    // Evoluções
+    evolucoes: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listEvolucoes(input.pacienteId);
+        }),
+      
+      get: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .query(async ({ input }) => {
+          return await db.getEvolucao(input.id);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          atendimentoId: z.number().optional().nullable(),
+          dataEvolucao: z.date(),
+          tipo: z.enum(["Consulta", "Retorno", "Urgência", "Teleconsulta", "Parecer"]).default("Consulta"),
+          subjetivo: z.string().optional().nullable(),
+          objetivo: z.string().optional().nullable(),
+          avaliacao: z.string().optional().nullable(),
+          plano: z.string().optional().nullable(),
+          pressaoArterial: z.string().optional().nullable(),
+          frequenciaCardiaca: z.number().optional().nullable(),
+          temperatura: z.string().optional().nullable(),
+          peso: z.string().optional().nullable(),
+          altura: z.string().optional().nullable(),
+          profissionalNome: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input, ctx }) => {
+          return await db.createEvolucao({
+            ...input,
+            profissionalId: ctx.user?.id,
+            profissionalNome: input.profissionalNome || ctx.user?.name,
+          } as any);
+        }),
+      
+      update: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          subjetivo: z.string().optional().nullable(),
+          objetivo: z.string().optional().nullable(),
+          avaliacao: z.string().optional().nullable(),
+          plano: z.string().optional().nullable(),
+          pressaoArterial: z.string().optional().nullable(),
+          frequenciaCardiaca: z.number().optional().nullable(),
+          temperatura: z.string().optional().nullable(),
+          peso: z.string().optional().nullable(),
+          altura: z.string().optional().nullable(),
+          assinado: z.boolean().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await db.updateEvolucao(id, data as any);
+        }),
+    }),
+
+    // Internações
+    internacoes: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listInternacoes(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          hospital: z.string().min(1),
+          setor: z.string().optional().nullable(),
+          leito: z.string().optional().nullable(),
+          dataAdmissao: z.date(),
+          dataAlta: z.date().optional().nullable(),
+          motivoInternacao: z.string().optional().nullable(),
+          diagnosticoAdmissao: z.string().optional().nullable(),
+          cid10Admissao: z.string().optional().nullable(),
+          diagnosticoAlta: z.string().optional().nullable(),
+          cid10Alta: z.string().optional().nullable(),
+          tipoAlta: z.enum(["Melhorado", "Curado", "Transferido", "Óbito", "Evasão", "A pedido"]).optional().nullable(),
+          resumoInternacao: z.string().optional().nullable(),
+          complicacoes: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createInternacao(input as any);
+        }),
+      
+      update: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          hospital: z.string().optional(),
+          setor: z.string().optional().nullable(),
+          leito: z.string().optional().nullable(),
+          dataAlta: z.date().optional().nullable(),
+          diagnosticoAlta: z.string().optional().nullable(),
+          cid10Alta: z.string().optional().nullable(),
+          tipoAlta: z.enum(["Melhorado", "Curado", "Transferido", "Óbito", "Evasão", "A pedido"]).optional().nullable(),
+          resumoInternacao: z.string().optional().nullable(),
+          complicacoes: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await db.updateInternacao(id, data as any);
+        }),
+    }),
+
+    // Cirurgias
+    cirurgias: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listCirurgias(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          internacaoId: z.number().optional().nullable(),
+          dataCirurgia: z.date(),
+          procedimento: z.string().min(1),
+          codigosCbhpm: z.string().optional().nullable(),
+          hospital: z.string().optional().nullable(),
+          salaOperatoria: z.string().optional().nullable(),
+          cirurgiaoResponsavel: z.string().optional().nullable(),
+          equipe: z.string().optional().nullable(),
+          anestesista: z.string().optional().nullable(),
+          tipoAnestesia: z.string().optional().nullable(),
+          indicacao: z.string().optional().nullable(),
+          descricaoCirurgica: z.string().optional().nullable(),
+          achados: z.string().optional().nullable(),
+          complicacoes: z.string().optional().nullable(),
+          duracaoMinutos: z.number().optional().nullable(),
+          sangramento: z.string().optional().nullable(),
+          status: z.enum(["Agendada", "Realizada", "Cancelada", "Adiada"]).default("Agendada"),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createCirurgia(input as any);
+        }),
+      
+      update: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          dataCirurgia: z.date().optional(),
+          procedimento: z.string().optional(),
+          codigosCbhpm: z.string().optional().nullable(),
+          hospital: z.string().optional().nullable(),
+          salaOperatoria: z.string().optional().nullable(),
+          cirurgiaoResponsavel: z.string().optional().nullable(),
+          equipe: z.string().optional().nullable(),
+          anestesista: z.string().optional().nullable(),
+          tipoAnestesia: z.string().optional().nullable(),
+          indicacao: z.string().optional().nullable(),
+          descricaoCirurgica: z.string().optional().nullable(),
+          achados: z.string().optional().nullable(),
+          complicacoes: z.string().optional().nullable(),
+          duracaoMinutos: z.number().optional().nullable(),
+          sangramento: z.string().optional().nullable(),
+          status: z.enum(["Agendada", "Realizada", "Cancelada", "Adiada"]).optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await db.updateCirurgia(id, data as any);
+        }),
+    }),
+
+    // Exames Laboratoriais
+    examesLab: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listExamesLaboratoriais(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          dataColeta: z.string(),
+          dataResultado: z.string().optional().nullable(),
+          laboratorio: z.string().optional().nullable(),
+          tipoExame: z.string().min(1),
+          exame: z.string().min(1),
+          resultado: z.string().optional().nullable(),
+          valorReferencia: z.string().optional().nullable(),
+          unidade: z.string().optional().nullable(),
+          alterado: z.boolean().default(false),
+          observacoes: z.string().optional().nullable(),
+          arquivoUrl: z.string().optional().nullable(),
+          arquivoNome: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createExameLaboratorial(input as any);
+        }),
+    }),
+
+    // Exames de Imagem
+    examesImagem: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listExamesImagem(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          dataExame: z.string(),
+          tipoExame: z.enum(["Raio-X", "Tomografia", "Ressonância", "Ultrassonografia", "Mamografia", "Densitometria", "PET-CT", "Cintilografia", "Outro"]),
+          regiao: z.string().min(1),
+          clinicaServico: z.string().optional().nullable(),
+          medicoSolicitante: z.string().optional().nullable(),
+          medicoLaudador: z.string().optional().nullable(),
+          indicacao: z.string().optional().nullable(),
+          laudo: z.string().optional().nullable(),
+          conclusao: z.string().optional().nullable(),
+          arquivoLaudoUrl: z.string().optional().nullable(),
+          arquivoImagemUrl: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createExameImagem(input as any);
+        }),
+    }),
+
+    // Endoscopias
+    endoscopias: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listEndoscopias(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          dataExame: z.string(),
+          tipoExame: z.enum(["EDA", "Colonoscopia", "Retossigmoidoscopia", "CPRE", "Ecoendoscopia", "Enteroscopia", "Outro"]),
+          clinicaServico: z.string().optional().nullable(),
+          medicoExecutor: z.string().optional().nullable(),
+          indicacao: z.string().optional().nullable(),
+          preparo: z.string().optional().nullable(),
+          sedacao: z.string().optional().nullable(),
+          descricao: z.string().optional().nullable(),
+          conclusao: z.string().optional().nullable(),
+          biopsia: z.boolean().default(false),
+          localBiopsia: z.string().optional().nullable(),
+          resultadoBiopsia: z.string().optional().nullable(),
+          arquivoLaudoUrl: z.string().optional().nullable(),
+          arquivoImagensUrl: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createEndoscopia(input as any);
+        }),
+    }),
+
+    // Cardiologia
+    cardiologia: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listCardiologia(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          dataExame: z.string(),
+          tipoExame: z.enum(["ECG", "Ecocardiograma", "Teste Ergométrico", "Holter 24h", "MAPA", "Cintilografia Miocárdica", "Cateterismo", "Angiotomografia", "Outro"]),
+          clinicaServico: z.string().optional().nullable(),
+          medicoExecutor: z.string().optional().nullable(),
+          indicacao: z.string().optional().nullable(),
+          descricao: z.string().optional().nullable(),
+          conclusao: z.string().optional().nullable(),
+          feve: z.string().optional().nullable(),
+          ddve: z.string().optional().nullable(),
+          dsve: z.string().optional().nullable(),
+          ae: z.string().optional().nullable(),
+          arquivoLaudoUrl: z.string().optional().nullable(),
+          arquivoExameUrl: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createCardiologia(input as any);
+        }),
+    }),
+
+    // Terapias
+    terapias: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listTerapias(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          dataTerapia: z.date(),
+          tipoTerapia: z.enum(["Quimioterapia", "Imunoterapia", "Terapia Alvo", "Imunobiológico", "Infusão", "Transfusão", "Outro"]),
+          protocolo: z.string().optional().nullable(),
+          ciclo: z.number().optional().nullable(),
+          dia: z.number().optional().nullable(),
+          medicamentos: z.string().optional().nullable(),
+          local: z.string().optional().nullable(),
+          preQuimio: z.string().optional().nullable(),
+          intercorrencias: z.string().optional().nullable(),
+          observacoes: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createTerapia(input as any);
+        }),
+    }),
+
+    // Obstetrícia
+    obstetricia: router({
+      list: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.listObstetricia(input.pacienteId);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          tipoRegistro: z.enum(["Pré-natal", "Parto", "Puerpério", "Aborto"]),
+          dataRegistro: z.string(),
+          dum: z.string().optional().nullable(),
+          dpp: z.string().optional().nullable(),
+          idadeGestacional: z.string().optional().nullable(),
+          tipoParto: z.enum(["Normal", "Cesárea", "Fórceps", "Vácuo"]).optional().nullable(),
+          dataParto: z.date().optional().nullable(),
+          hospital: z.string().optional().nullable(),
+          pesoRn: z.number().optional().nullable(),
+          apgar1: z.number().optional().nullable(),
+          apgar5: z.number().optional().nullable(),
+          sexoRn: z.enum(["M", "F"]).optional().nullable(),
+          observacoes: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input }) => {
+          return await db.createObstetricia(input as any);
+        }),
+    }),
+
+    // Documentos Médicos
+    documentos: router({
+      list: protectedProcedure
+        .input(z.object({ 
+          pacienteId: z.number(),
+          tipo: z.string().optional(),
+        }))
+        .query(async ({ input }) => {
+          return await db.listDocumentosMedicos(input.pacienteId, input.tipo);
+        }),
+      
+      get: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .query(async ({ input }) => {
+          return await db.getDocumentoMedico(input.id);
+        }),
+      
+      create: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          evolucaoId: z.number().optional().nullable(),
+          tipo: z.enum(["Receita", "Receita Especial", "Solicitação de Exames", "Atestado Comparecimento", "Atestado Afastamento", "Laudo Médico", "Relatório Médico", "Protocolo Cirurgia", "Guia SADT", "Guia Internação", "Outro"]),
+          dataEmissao: z.date(),
+          conteudo: z.string().optional().nullable(),
+          medicamentos: z.string().optional().nullable(),
+          cid10: z.string().optional().nullable(),
+          diasAfastamento: z.number().optional().nullable(),
+          dataInicio: z.string().optional().nullable(),
+          dataFim: z.string().optional().nullable(),
+          examesSolicitados: z.string().optional().nullable(),
+          justificativa: z.string().optional().nullable(),
+          procedimentoProposto: z.string().optional().nullable(),
+          dataPrevista: z.string().optional().nullable(),
+          hospitalPrevisto: z.string().optional().nullable(),
+          crm: z.string().optional().nullable(),
+          arquivoUrl: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ input, ctx }) => {
+          return await db.createDocumentoMedico({
+            ...input,
+            profissionalId: ctx.user?.id,
+            profissionalNome: ctx.user?.name,
+          } as any);
+        }),
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE pacientes \nADD COLUMN responsavel_parentesco VARCHAR(100),\nADD COLUMN responsavel_telefone VARCHAR(20),\nADD COLUMN responsavel_email VARCHAR(320);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE pacientes \nADD COLUMN responsavel_parentesco VARCHAR(100),\nADD COLUMN responsavel_telefone VARCHAR(20),\nADD COLUMN responsavel_email VARCHAR(320);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1370
+}

@@ -715,3 +715,536 @@ export async function listAtendimentosWithDeleted(includeDeleted: boolean = fals
     } : null
   }));
 }
+
+
+// ===== PRONTUÁRIO MÉDICO ELETRÔNICO =====
+
+import { 
+  resumoClinico, InsertResumoClinico, ResumoClinico,
+  problemasAtivos, InsertProblemaAtivo, ProblemaAtivo,
+  alergias, InsertAlergia, Alergia,
+  medicamentosUso, InsertMedicamentoUso, MedicamentoUso,
+  evolucoes, InsertEvolucao, Evolucao,
+  internacoes, InsertInternacao, Internacao,
+  cirurgias, InsertCirurgia, Cirurgia,
+  examesLaboratoriais, InsertExameLaboratorial, ExameLaboratorial,
+  examesImagem, InsertExameImagem, ExameImagem,
+  endoscopias, InsertEndoscopia, Endoscopia,
+  cardiologia, InsertCardiologia, Cardiologia,
+  terapias, InsertTerapia, Terapia,
+  obstetricia, InsertObstetricia, Obstetricia,
+  documentosMedicos, InsertDocumentoMedico, DocumentoMedico
+} from "../drizzle/schema";
+
+// ===== RESUMO CLÍNICO =====
+
+export async function getResumoClinico(pacienteId: number): Promise<ResumoClinico | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select()
+    .from(resumoClinico)
+    .where(eq(resumoClinico.pacienteId, pacienteId))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function upsertResumoClinico(data: InsertResumoClinico): Promise<ResumoClinico> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Calcular IMC se peso e altura foram fornecidos
+  if (data.pesoAtual && data.altura) {
+    const peso = Number(data.pesoAtual);
+    const altura = Number(data.altura);
+    if (altura > 0) {
+      data.imc = String(Math.round((peso / (altura * altura)) * 10) / 10);
+    }
+  }
+  
+  const existing = await getResumoClinico(data.pacienteId);
+  
+  if (existing) {
+    await db
+      .update(resumoClinico)
+      .set(data)
+      .where(eq(resumoClinico.pacienteId, data.pacienteId));
+    return { ...existing, ...data } as ResumoClinico;
+  } else {
+    const [result] = await db.insert(resumoClinico).values(data);
+    return { id: result.insertId, ...data } as ResumoClinico;
+  }
+}
+
+// ===== PROBLEMAS ATIVOS =====
+
+export async function listProblemasAtivos(pacienteId: number): Promise<ProblemaAtivo[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(problemasAtivos)
+    .where(eq(problemasAtivos.pacienteId, pacienteId))
+    .orderBy(desc(problemasAtivos.dataInicio));
+}
+
+export async function createProblemaAtivo(data: InsertProblemaAtivo): Promise<ProblemaAtivo> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(problemasAtivos).values(data);
+  return { id: result.insertId, ...data } as ProblemaAtivo;
+}
+
+export async function updateProblemaAtivo(id: number, data: Partial<InsertProblemaAtivo>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(problemasAtivos).set(data).where(eq(problemasAtivos.id, id));
+}
+
+// ===== ALERGIAS =====
+
+export async function listAlergias(pacienteId: number): Promise<Alergia[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(alergias)
+    .where(eq(alergias.pacienteId, pacienteId))
+    .orderBy(desc(alergias.createdAt));
+}
+
+export async function createAlergia(data: InsertAlergia): Promise<Alergia> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(alergias).values(data);
+  return { id: result.insertId, ...data } as Alergia;
+}
+
+export async function deleteAlergia(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(alergias).where(eq(alergias.id, id));
+}
+
+// ===== MEDICAMENTOS EM USO =====
+
+export async function listMedicamentosUso(pacienteId: number, apenasAtivos = true): Promise<MedicamentoUso[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (apenasAtivos) {
+    return db
+      .select()
+      .from(medicamentosUso)
+      .where(and(
+        eq(medicamentosUso.pacienteId, pacienteId),
+        eq(medicamentosUso.ativo, true)
+      ))
+      .orderBy(desc(medicamentosUso.dataInicio));
+  }
+  
+  return db
+    .select()
+    .from(medicamentosUso)
+    .where(eq(medicamentosUso.pacienteId, pacienteId))
+    .orderBy(desc(medicamentosUso.dataInicio));
+}
+
+export async function createMedicamentoUso(data: InsertMedicamentoUso): Promise<MedicamentoUso> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(medicamentosUso).values(data);
+  return { id: result.insertId, ...data } as MedicamentoUso;
+}
+
+export async function updateMedicamentoUso(id: number, data: Partial<InsertMedicamentoUso>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(medicamentosUso).set(data).where(eq(medicamentosUso.id, id));
+}
+
+// ===== EVOLUÇÕES =====
+
+export async function listEvolucoes(pacienteId: number): Promise<Evolucao[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(evolucoes)
+    .where(eq(evolucoes.pacienteId, pacienteId))
+    .orderBy(desc(evolucoes.dataEvolucao));
+}
+
+export async function getEvolucao(id: number): Promise<Evolucao | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select()
+    .from(evolucoes)
+    .where(eq(evolucoes.id, id))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function createEvolucao(data: InsertEvolucao): Promise<Evolucao> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Calcular IMC se peso e altura foram fornecidos
+  if (data.peso && data.altura) {
+    const peso = Number(data.peso);
+    const altura = Number(data.altura);
+    if (altura > 0) {
+      data.imc = String(Math.round((peso / (altura * altura)) * 10) / 10);
+    }
+  }
+  
+  const [result] = await db.insert(evolucoes).values(data);
+  return { id: result.insertId, ...data } as Evolucao;
+}
+
+export async function updateEvolucao(id: number, data: Partial<InsertEvolucao>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Recalcular IMC se peso ou altura foram atualizados
+  if (data.peso || data.altura) {
+    const existing = await getEvolucao(id);
+    if (existing) {
+      const peso = Number(data.peso || existing.peso);
+      const altura = Number(data.altura || existing.altura);
+      if (altura > 0) {
+        data.imc = String(Math.round((peso / (altura * altura)) * 10) / 10);
+      }
+    }
+  }
+  
+  await db.update(evolucoes).set(data).where(eq(evolucoes.id, id));
+}
+
+// ===== INTERNAÇÕES =====
+
+export async function listInternacoes(pacienteId: number): Promise<Internacao[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(internacoes)
+    .where(eq(internacoes.pacienteId, pacienteId))
+    .orderBy(desc(internacoes.dataAdmissao));
+}
+
+export async function createInternacao(data: InsertInternacao): Promise<Internacao> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(internacoes).values(data);
+  return { id: result.insertId, ...data } as Internacao;
+}
+
+export async function updateInternacao(id: number, data: Partial<InsertInternacao>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(internacoes).set(data).where(eq(internacoes.id, id));
+}
+
+// ===== CIRURGIAS =====
+
+export async function listCirurgias(pacienteId: number): Promise<Cirurgia[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(cirurgias)
+    .where(eq(cirurgias.pacienteId, pacienteId))
+    .orderBy(desc(cirurgias.dataCirurgia));
+}
+
+export async function createCirurgia(data: InsertCirurgia): Promise<Cirurgia> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(cirurgias).values(data);
+  return { id: result.insertId, ...data } as Cirurgia;
+}
+
+export async function updateCirurgia(id: number, data: Partial<InsertCirurgia>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(cirurgias).set(data).where(eq(cirurgias.id, id));
+}
+
+// ===== EXAMES LABORATORIAIS =====
+
+export async function listExamesLaboratoriais(pacienteId: number): Promise<ExameLaboratorial[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(examesLaboratoriais)
+    .where(eq(examesLaboratoriais.pacienteId, pacienteId))
+    .orderBy(desc(examesLaboratoriais.dataColeta));
+}
+
+export async function createExameLaboratorial(data: InsertExameLaboratorial): Promise<ExameLaboratorial> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(examesLaboratoriais).values(data);
+  return { id: result.insertId, ...data } as ExameLaboratorial;
+}
+
+// ===== EXAMES DE IMAGEM =====
+
+export async function listExamesImagem(pacienteId: number): Promise<ExameImagem[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(examesImagem)
+    .where(eq(examesImagem.pacienteId, pacienteId))
+    .orderBy(desc(examesImagem.dataExame));
+}
+
+export async function createExameImagem(data: InsertExameImagem): Promise<ExameImagem> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(examesImagem).values(data);
+  return { id: result.insertId, ...data } as ExameImagem;
+}
+
+// ===== ENDOSCOPIAS =====
+
+export async function listEndoscopias(pacienteId: number): Promise<Endoscopia[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(endoscopias)
+    .where(eq(endoscopias.pacienteId, pacienteId))
+    .orderBy(desc(endoscopias.dataExame));
+}
+
+export async function createEndoscopia(data: InsertEndoscopia): Promise<Endoscopia> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(endoscopias).values(data);
+  return { id: result.insertId, ...data } as Endoscopia;
+}
+
+// ===== CARDIOLOGIA =====
+
+export async function listCardiologia(pacienteId: number): Promise<Cardiologia[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(cardiologia)
+    .where(eq(cardiologia.pacienteId, pacienteId))
+    .orderBy(desc(cardiologia.dataExame));
+}
+
+export async function createCardiologia(data: InsertCardiologia): Promise<Cardiologia> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(cardiologia).values(data);
+  return { id: result.insertId, ...data } as Cardiologia;
+}
+
+// ===== TERAPIAS =====
+
+export async function listTerapias(pacienteId: number): Promise<Terapia[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(terapias)
+    .where(eq(terapias.pacienteId, pacienteId))
+    .orderBy(desc(terapias.dataTerapia));
+}
+
+export async function createTerapia(data: InsertTerapia): Promise<Terapia> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(terapias).values(data);
+  return { id: result.insertId, ...data } as Terapia;
+}
+
+// ===== OBSTETRÍCIA =====
+
+export async function listObstetricia(pacienteId: number): Promise<Obstetricia[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(obstetricia)
+    .where(eq(obstetricia.pacienteId, pacienteId))
+    .orderBy(desc(obstetricia.dataRegistro));
+}
+
+export async function createObstetricia(data: InsertObstetricia): Promise<Obstetricia> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(obstetricia).values(data);
+  return { id: result.insertId, ...data } as Obstetricia;
+}
+
+// ===== DOCUMENTOS MÉDICOS =====
+
+export async function listDocumentosMedicos(pacienteId: number, tipo?: string): Promise<DocumentoMedico[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (tipo) {
+    return db
+      .select()
+      .from(documentosMedicos)
+      .where(and(
+        eq(documentosMedicos.pacienteId, pacienteId),
+        eq(documentosMedicos.tipo, tipo as any)
+      ))
+      .orderBy(desc(documentosMedicos.dataEmissao));
+  }
+  
+  return db
+    .select()
+    .from(documentosMedicos)
+    .where(eq(documentosMedicos.pacienteId, pacienteId))
+    .orderBy(desc(documentosMedicos.dataEmissao));
+}
+
+export async function createDocumentoMedico(data: InsertDocumentoMedico): Promise<DocumentoMedico> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(documentosMedicos).values(data);
+  return { id: result.insertId, ...data } as DocumentoMedico;
+}
+
+export async function getDocumentoMedico(id: number): Promise<DocumentoMedico | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select()
+    .from(documentosMedicos)
+    .where(eq(documentosMedicos.id, id))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+// ===== DADOS COMPLETOS DO PRONTUÁRIO =====
+
+export interface ProntuarioCompleto {
+  paciente: Paciente;
+  resumoClinico: ResumoClinico | null;
+  problemasAtivos: ProblemaAtivo[];
+  alergias: Alergia[];
+  medicamentosUso: MedicamentoUso[];
+  evolucoes: Evolucao[];
+  internacoes: Internacao[];
+  cirurgias: Cirurgia[];
+  examesLaboratoriais: ExameLaboratorial[];
+  examesImagem: ExameImagem[];
+  endoscopias: Endoscopia[];
+  cardiologia: Cardiologia[];
+  terapias: Terapia[];
+  obstetricia: Obstetricia[];
+  documentos: DocumentoMedico[];
+}
+
+export async function getProntuarioCompleto(pacienteId: number): Promise<ProntuarioCompleto | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar paciente
+  const pacienteResult = await db
+    .select()
+    .from(pacientes)
+    .where(eq(pacientes.id, pacienteId))
+    .limit(1);
+  
+  if (pacienteResult.length === 0) return null;
+  
+  const paciente = pacienteResult[0];
+  
+  // Buscar todos os dados do prontuário em paralelo
+  const [
+    resumo,
+    problemas,
+    alergiasData,
+    medicamentos,
+    evolucoesData,
+    internacoesData,
+    cirurgiasData,
+    examesLab,
+    examesImg,
+    endoscopiasData,
+    cardiologiaData,
+    terapiasData,
+    obstetriciaData,
+    documentosData
+  ] = await Promise.all([
+    getResumoClinico(pacienteId),
+    listProblemasAtivos(pacienteId),
+    listAlergias(pacienteId),
+    listMedicamentosUso(pacienteId),
+    listEvolucoes(pacienteId),
+    listInternacoes(pacienteId),
+    listCirurgias(pacienteId),
+    listExamesLaboratoriais(pacienteId),
+    listExamesImagem(pacienteId),
+    listEndoscopias(pacienteId),
+    listCardiologia(pacienteId),
+    listTerapias(pacienteId),
+    listObstetricia(pacienteId),
+    listDocumentosMedicos(pacienteId)
+  ]);
+  
+  return {
+    paciente,
+    resumoClinico: resumo,
+    problemasAtivos: problemas,
+    alergias: alergiasData,
+    medicamentosUso: medicamentos,
+    evolucoes: evolucoesData,
+    internacoes: internacoesData,
+    cirurgias: cirurgiasData,
+    examesLaboratoriais: examesLab,
+    examesImagem: examesImg,
+    endoscopias: endoscopiasData,
+    cardiologia: cardiologiaData,
+    terapias: terapiasData,
+    obstetricia: obstetriciaData,
+    documentos: documentosData
+  };
+}

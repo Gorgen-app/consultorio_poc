@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS internacoes (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  hospital VARCHAR(255) NOT NULL,\n  setor VARCHAR(100),\n  leito VARCHAR(50),\n  data_admissao TIMESTAMP NOT NULL,\n  data_alta TIMESTAMP,\n  motivo_internacao TEXT,\n  diagnostico_admissao VARCHAR(500),\n  cid10_admissao VARCHAR(20),\n  diagnostico_alta VARCHAR(500),\n  cid10_alta VARCHAR(20),\n  tipo_alta ENUM('Melhorado', 'Curado', 'Transferido', 'Óbito', 'Evasão', 'A pedido'),\n  resumo_internacao TEXT,\n  complicacoes TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS internacoes (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  hospital VARCHAR(255) NOT NULL,\n  setor VARCHAR(100),\n  leito VARCHAR(50),\n  data_admissao TIMESTAMP NOT NULL,\n  data_alta TIMESTAMP,\n  motivo_internacao TEXT,\n  diagnostico_admissao VARCHAR(500),\n  cid10_admissao VARCHAR(20),\n  diagnostico_alta VARCHAR(500),\n  cid10_alta VARCHAR(20),\n  tipo_alta ENUM('Melhorado', 'Curado', 'Transferido', 'Óbito', 'Evasão', 'A pedido'),\n  resumo_internacao TEXT,\n  complicacoes TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 579
+}

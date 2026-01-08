@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -445,7 +445,11 @@ export default function Pacientes() {
                     {pacientesPaginados.map((paciente) => (
                       <TableRow key={paciente.id}>
                         <TableCell className="font-medium">{paciente.idPaciente}</TableCell>
-                        <TableCell>{paciente.nome}</TableCell>
+                        <TableCell>
+                          <Link href={`/prontuario/${paciente.id}`} className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium">
+                            {paciente.nome}
+                          </Link>
+                        </TableCell>
                         <TableCell>{paciente.idade ?? "-"}</TableCell>
                         <TableCell>{paciente.cpf || "-"}</TableCell>
                         <TableCell>{paciente.telefone || "-"}</TableCell>
@@ -464,6 +468,15 @@ export default function Pacientes() {
                         <TableCell className="text-right">
                           {/* Ações: Editar + Novo Atendimento */}
                           <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setLocation(`/prontuario/${paciente.id}`)}
+                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              title="Abrir prontuário"
+                            >
+                              <ClipboardList className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
