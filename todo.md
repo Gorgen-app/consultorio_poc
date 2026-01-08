@@ -916,3 +916,8 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Implementar seletor de perfil para usuários com múltiplos perfis
 - [x] Criar página de Configurações com abas específicas por perfil
 - [x] Criar usuário de teste André Gorgen com todos os perfis
+- [x] Definir matriz de permissões por perfil
+- [x] Implementar controle de acesso no menu lateral (ocultar itens não autorizados)
+- [x] Implementar proteção de rotas no frontend
+- [x] Implementar verificação de permissões no backend (procedures)
+- [x] Testar acesso com diferentes perfis

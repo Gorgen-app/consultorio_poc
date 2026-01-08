@@ -29,6 +29,7 @@ import { Button } from "./ui/button";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { temPermissao, type PerfilType, type Funcionalidade } from "../../../shared/permissions";
 import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
@@ -46,14 +47,14 @@ const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: 
   visualizador: { label: "Visualizador", icon: <Eye className="h-4 w-4" />, color: "bg-gray-500" },
 };
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Calendar, label: "Agenda", path: "/agenda" },
-  { icon: Users, label: "Pacientes", path: "/pacientes" },
-  { icon: UserPlus, label: "Novo Paciente", path: "/pacientes/novo" },
-  { icon: Stethoscope, label: "Atendimentos", path: "/atendimentos" },
-  { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo" },
-  { icon: Settings, label: "Configurações", path: "/configuracoes" },
+const menuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade }[] = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", funcionalidade: "dashboard" },
+  { icon: Calendar, label: "Agenda", path: "/agenda", funcionalidade: "agenda" },
+  { icon: Users, label: "Pacientes", path: "/pacientes", funcionalidade: "pacientes" },
+  { icon: UserPlus, label: "Novo Paciente", path: "/pacientes/novo", funcionalidade: "pacientes.criar" },
+  { icon: Stethoscope, label: "Atendimentos", path: "/atendimentos", funcionalidade: "atendimentos" },
+  { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo", funcionalidade: "atendimentos.criar" },
+  { icon: Settings, label: "Configurações", path: "/configuracoes", funcionalidade: "configuracoes" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -224,24 +225,26 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
-                const isActive = location === item.path;
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
-                    >
-                      <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                      />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {menuItems
+                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
+                .map(item => {
+                  const isActive = location === item.path;
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => setLocation(item.path)}
+                        tooltip={item.label}
+                        className={`h-10 transition-all font-normal`}
+                      >
+                        <item.icon
+                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
             </SidebarMenu>
           </SidebarContent>
 

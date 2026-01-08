@@ -48,6 +48,24 @@ export default function Configuracoes() {
     },
   });
 
+  const setPerfilAtivo = trpc.perfil.setPerfilAtivo.useMutation({
+    onSuccess: () => {
+      toast.success("Perfil alterado com sucesso!");
+      refetch();
+      // Recarregar a página para atualizar o menu
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao trocar perfil: ${error.message}`);
+    },
+  });
+
+  const handleTrocarPerfil = (perfil: "admin_master" | "medico" | "secretaria" | "financeiro" | "visualizador") => {
+    if (perfil !== currentPerfil) {
+      setPerfilAtivo.mutate({ perfil });
+    }
+  };
+
   const [formData, setFormData] = useState({
     nomeCompleto: "",
     cpf: "",
@@ -118,7 +136,8 @@ export default function Configuracoes() {
                   <Badge
                     key={perfil}
                     variant={isActive ? "default" : "outline"}
-                    className={isActive ? info?.color + " text-white" : ""}
+                    className={`${isActive ? info?.color + " text-white" : "cursor-pointer hover:bg-accent"} transition-colors`}
+                    onClick={() => handleTrocarPerfil(perfil as "admin_master" | "medico" | "secretaria" | "financeiro" | "visualizador")}
                   >
                     {info?.icon}
                     <span className="ml-1">{info?.label}</span>
