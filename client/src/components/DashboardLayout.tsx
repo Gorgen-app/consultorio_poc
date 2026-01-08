@@ -21,11 +21,30 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { trpc } from "@/lib/trpc";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import {
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
+
+// Mapeamento de perfis
+const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  admin_master: { label: "Admin Master", icon: <Shield className="h-4 w-4" />, color: "bg-red-500" },
+  medico: { label: "Médico", icon: <Stethoscope className="h-4 w-4" />, color: "bg-blue-500" },
+  secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-green-500" },
+  financeiro: { label: "Financeiro", icon: <DollarSign className="h-4 w-4" />, color: "bg-yellow-500" },
+  visualizador: { label: "Visualizador", icon: <Eye className="h-4 w-4" />, color: "bg-gray-500" },
+};
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -34,6 +53,7 @@ const menuItems = [
   { icon: UserPlus, label: "Novo Paciente", path: "/pacientes/novo" },
   { icon: Stethoscope, label: "Atendimentos", path: "/atendimentos" },
   { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo" },
+  { icon: Settings, label: "Configurações", path: "/configuracoes" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -118,6 +138,26 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  
+  // Queries de perfil
+  const { data: profile, refetch: refetchProfile } = trpc.perfil.me.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const { data: availablePerfis } = trpc.perfil.getAvailablePerfis.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const setPerfilAtivo = trpc.perfil.setPerfilAtivo.useMutation({
+    onSuccess: () => {
+      toast.success("Perfil alterado com sucesso!");
+      refetchProfile();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao trocar perfil: ${error.message}`);
+    },
+  });
+  
+  const currentPerfil = profile?.perfilAtivo || "visualizador";
+  const currentPerfilInfo = perfilInfo[currentPerfil];
 
   useEffect(() => {
     if (isCollapsed) {
@@ -224,13 +264,60 @@ function DashboardLayoutContent({
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
+                {/* Perfil atual */}
+                <DropdownMenuLabel className="flex items-center gap-2">
+                  <Badge className={`${currentPerfilInfo?.color} text-white text-xs`}>
+                    {currentPerfilInfo?.icon}
+                    <span className="ml-1">{currentPerfilInfo?.label}</span>
+                  </Badge>
+                </DropdownMenuLabel>
+                
+                {/* Seletor de perfil - só mostra se tiver mais de um perfil */}
+                {availablePerfis && availablePerfis.length > 1 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Trocar Perfil</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {availablePerfis.map((perfil) => {
+                          const info = perfilInfo[perfil];
+                          const isActive = perfil === currentPerfil;
+                          return (
+                            <DropdownMenuItem
+                              key={perfil}
+                              onClick={() => !isActive && setPerfilAtivo.mutate({ perfil: perfil as any })}
+                              className={`cursor-pointer ${isActive ? 'bg-accent' : ''}`}
+                              disabled={isActive || setPerfilAtivo.isPending}
+                            >
+                              {info?.icon}
+                              <span className="ml-2">{info?.label}</span>
+                              {isActive && <span className="ml-auto text-xs text-muted-foreground">(Ativo)</span>}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </>
+                )}
+                
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setLocation('/configuracoes')}
+                  className="cursor-pointer"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Configurações</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

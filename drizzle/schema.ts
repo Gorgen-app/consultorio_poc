@@ -820,3 +820,58 @@ export const historicoAgendamentos = mysqlTable("historico_agendamentos", {
 
 export type HistoricoAgendamento = typeof historicoAgendamentos.$inferSelect;
 export type InsertHistoricoAgendamento = typeof historicoAgendamentos.$inferInsert;
+
+/**
+ * Perfis de Usuário - Sistema de Controle de Acesso
+ * Conforme Pilar 5: Controle de Acesso Baseado em Perfis
+ */
+export const userProfiles = mysqlTable("user_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull().unique(),
+  cpf: varchar("cpf", { length: 14 }).unique(),
+  nomeCompleto: varchar("nome_completo", { length: 255 }),
+  email: varchar("email", { length: 320 }),
+  
+  // Perfil atualmente ativo
+  perfilAtivo: mysqlEnum("perfil_ativo", [
+    "admin_master",
+    "medico",
+    "secretaria",
+    "financeiro",
+    "visualizador"
+  ]).default("visualizador").notNull(),
+  
+  // Flags de perfis disponíveis para o usuário
+  isAdminMaster: boolean("is_admin_master").default(false).notNull(),
+  isMedico: boolean("is_medico").default(false).notNull(),
+  isSecretaria: boolean("is_secretaria").default(false).notNull(),
+  isFinanceiro: boolean("is_financeiro").default(false).notNull(),
+  isVisualizador: boolean("is_visualizador").default(true).notNull(),
+  
+  // Dados específicos do médico
+  crm: varchar("crm", { length: 20 }),
+  especialidade: varchar("especialidade", { length: 100 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = typeof userProfiles.$inferInsert;
+
+/**
+ * Configurações do Usuário por Categoria
+ */
+export const userSettings = mysqlTable("user_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  categoria: varchar("categoria", { length: 50 }).notNull(),
+  chave: varchar("chave", { length: 100 }).notNull(),
+  valor: text("valor"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserSetting = typeof userSettings.$inferSelect;
+export type InsertUserSetting = typeof userSettings.$inferInsert;

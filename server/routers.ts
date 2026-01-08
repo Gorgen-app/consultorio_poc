@@ -1173,6 +1173,152 @@ export const appRouter = router({
         );
       }),
   }),
+
+  // ============================================
+  // PERFIS DE USUÁRIO
+  // ============================================
+  perfil: router({
+    // Obter perfil do usuário logado
+    me: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user?.id) return null;
+      const profile = await db.getUserProfile(ctx.user.id);
+      if (!profile) {
+        // Criar perfil padrão se não existir
+        return await db.ensureUserProfile(ctx.user.id, {
+          name: ctx.user.name || undefined,
+          email: ctx.user.email || undefined,
+        });
+      }
+      return profile;
+    }),
+
+    // Obter perfis disponíveis para o usuário
+    getAvailablePerfis: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user?.id) return [];
+      return await db.getAvailablePerfis(ctx.user.id);
+    }),
+
+    // Trocar perfil ativo
+    setPerfilAtivo: protectedProcedure
+      .input(z.object({
+        perfil: z.enum(["admin_master", "medico", "secretaria", "financeiro", "visualizador"]),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
+        return await db.setPerfilAtivo(ctx.user.id, input.perfil);
+      }),
+
+    // Atualizar perfil do usuário
+    update: protectedProcedure
+      .input(z.object({
+        nomeCompleto: z.string().optional(),
+        cpf: z.string().optional(),
+        email: z.string().email().optional(),
+        crm: z.string().optional(),
+        especialidade: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
+        return await db.updateUserProfile(ctx.user.id, input);
+      }),
+
+    // Listar todos os perfis (admin only)
+    list: protectedProcedure.query(async ({ ctx }) => {
+      // Verificar se é admin
+      const profile = await db.getUserProfile(ctx.user?.id || 0);
+      if (!profile?.isAdminMaster) {
+        throw new Error("Acesso negado: apenas administradores podem listar perfis");
+      }
+      return await db.listUserProfiles();
+    }),
+
+    // Criar ou atualizar perfil de outro usuário (admin only)
+    upsert: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        nomeCompleto: z.string(),
+        cpf: z.string(),
+        email: z.string().email(),
+        isAdminMaster: z.boolean().optional(),
+        isMedico: z.boolean().optional(),
+        isSecretaria: z.boolean().optional(),
+        isFinanceiro: z.boolean().optional(),
+        isVisualizador: z.boolean().optional(),
+        crm: z.string().optional(),
+        especialidade: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Verificar se é admin
+        const adminProfile = await db.getUserProfile(ctx.user?.id || 0);
+        if (!adminProfile?.isAdminMaster) {
+          throw new Error("Acesso negado: apenas administradores podem gerenciar perfis");
+        }
+        
+        const existing = await db.getUserProfile(input.userId);
+        if (existing) {
+          return await db.updateUserProfile(input.userId, input);
+        } else {
+          const { userId, ...profileData } = input;
+          return await db.createUserProfile({
+            userId,
+            ...profileData,
+          });
+        }
+      }),
+  }),
+
+  // ============================================
+  // CONFIGURAÇÕES DO USUÁRIO
+  // ============================================
+  configuracoes: router({
+    // Obter configurações do usuário
+    get: protectedProcedure
+      .input(z.object({
+        categoria: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        if (!ctx.user?.id) return [];
+        const profile = await db.getUserProfile(ctx.user.id);
+        if (!profile) return [];
+        return await db.getUserSettings(profile.id, input?.categoria);
+      }),
+
+    // Salvar configuração
+    set: protectedProcedure
+      .input(z.object({
+        categoria: z.string(),
+        chave: z.string(),
+        valor: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
+        const profile = await db.getUserProfile(ctx.user.id);
+        if (!profile) throw new Error("Perfil não encontrado");
+        
+        await db.upsertUserSetting({
+          userProfileId: profile.id,
+          categoria: input.categoria,
+          chave: input.chave,
+          valor: input.valor,
+        });
+        return { success: true };
+      }),
+
+    // Remover configuração
+    delete: protectedProcedure
+      .input(z.object({
+        categoria: z.string(),
+        chave: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
+        const profile = await db.getUserProfile(ctx.user.id);
+        if (!profile) throw new Error("Perfil não encontrado");
+        
+        await db.deleteUserSetting(profile.id, input.categoria, input.chave);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

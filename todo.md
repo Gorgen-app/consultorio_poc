@@ -911,3 +911,8 @@ A dashboard deve integrar **medicina e administração**:
 - [ ] Exame
 - [x] Melhorar estética da agenda - linhas mais compactas para caber em uma tela
 - [x] Adicionar indicação visual de feriados nacionais na agenda
+- [x] Criar sistema de perfis de usuário (Administrador Master, Médico, Secretária, Financeiro, Visualizador)
+- [x] Vincular perfis a nome, CPF e email do usuário
+- [x] Implementar seletor de perfil para usuários com múltiplos perfis
+- [x] Criar página de Configurações com abas específicas por perfil
+- [x] Criar usuário de teste André Gorgen com todos os perfis

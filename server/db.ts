@@ -1,6 +1,6 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1717,4 +1717,163 @@ export async function getHistoricoAgendamento(agendamentoId: number) {
     .from(historicoAgendamentos)
     .where(eq(historicoAgendamentos.agendamentoId, agendamentoId))
     .orderBy(desc(historicoAgendamentos.createdAt));
+}
+
+
+// ============================================
+// PERFIS DE USUÁRIO
+// ============================================
+
+export async function getUserProfile(userId: number): Promise<UserProfile | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).limit(1);
+  return result[0] || null;
+}
+
+export async function getUserProfileByCpf(cpf: string): Promise<UserProfile | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(userProfiles).where(eq(userProfiles.cpf, cpf)).limit(1);
+  return result[0] || null;
+}
+
+export async function createUserProfile(data: InsertUserProfile): Promise<UserProfile> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(userProfiles).values(data);
+  const insertId = result[0].insertId;
+  
+  const created = await db.select().from(userProfiles).where(eq(userProfiles.id, insertId)).limit(1);
+  return created[0];
+}
+
+export async function updateUserProfile(userId: number, data: Partial<InsertUserProfile>): Promise<UserProfile | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  await db.update(userProfiles).set(data).where(eq(userProfiles.userId, userId));
+  return getUserProfile(userId);
+}
+
+export async function setPerfilAtivo(userId: number, perfil: "admin_master" | "medico" | "secretaria" | "financeiro" | "visualizador"): Promise<UserProfile | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Verificar se o usuário tem o perfil solicitado
+  const profile = await getUserProfile(userId);
+  if (!profile) return null;
+  
+  const perfilMap = {
+    admin_master: profile.isAdminMaster,
+    medico: profile.isMedico,
+    secretaria: profile.isSecretaria,
+    financeiro: profile.isFinanceiro,
+    visualizador: profile.isVisualizador,
+  };
+  
+  if (!perfilMap[perfil]) {
+    throw new Error(`Usuário não possui o perfil ${perfil}`);
+  }
+  
+  await db.update(userProfiles).set({ perfilAtivo: perfil }).where(eq(userProfiles.userId, userId));
+  return getUserProfile(userId);
+}
+
+export async function listUserProfiles(): Promise<UserProfile[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select().from(userProfiles).orderBy(asc(userProfiles.nomeCompleto));
+}
+
+export async function getAvailablePerfis(userId: number): Promise<string[]> {
+  const profile = await getUserProfile(userId);
+  if (!profile) return [];
+  
+  const perfis: string[] = [];
+  if (profile.isAdminMaster) perfis.push("admin_master");
+  if (profile.isMedico) perfis.push("medico");
+  if (profile.isSecretaria) perfis.push("secretaria");
+  if (profile.isFinanceiro) perfis.push("financeiro");
+  if (profile.isVisualizador) perfis.push("visualizador");
+  
+  return perfis;
+}
+
+// ============================================
+// CONFIGURAÇÕES DO USUÁRIO
+// ============================================
+
+export async function getUserSettings(userProfileId: number, categoria?: string): Promise<UserSetting[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (categoria) {
+    return db.select().from(userSettings)
+      .where(and(
+        eq(userSettings.userProfileId, userProfileId),
+        eq(userSettings.categoria, categoria)
+      ));
+  }
+  
+  return db.select().from(userSettings).where(eq(userSettings.userProfileId, userProfileId));
+}
+
+export async function upsertUserSetting(data: { userProfileId: number; categoria: string; chave: string; valor: string }): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  // Verificar se já existe
+  const existing = await db.select().from(userSettings)
+    .where(and(
+      eq(userSettings.userProfileId, data.userProfileId),
+      eq(userSettings.categoria, data.categoria),
+      eq(userSettings.chave, data.chave)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    await db.update(userSettings)
+      .set({ valor: data.valor })
+      .where(eq(userSettings.id, existing[0].id));
+  } else {
+    await db.insert(userSettings).values(data);
+  }
+}
+
+export async function deleteUserSetting(userProfileId: number, categoria: string, chave: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.delete(userSettings).where(and(
+    eq(userSettings.userProfileId, userProfileId),
+    eq(userSettings.categoria, categoria),
+    eq(userSettings.chave, chave)
+  ));
+}
+
+// Função para criar ou vincular perfil ao usuário logado
+export async function ensureUserProfile(userId: number, userData: { name?: string; email?: string }): Promise<UserProfile> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se já existe perfil para este usuário
+  let profile = await getUserProfile(userId);
+  
+  if (!profile) {
+    // Criar perfil padrão
+    profile = await createUserProfile({
+      userId,
+      nomeCompleto: userData.name || null,
+      email: userData.email || null,
+      perfilAtivo: "visualizador",
+      isVisualizador: true,
+    });
+  }
+  
+  return profile;
 }

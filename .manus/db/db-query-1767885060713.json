@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, openId, name, email FROM users WHERE name LIKE '%André%' OR email LIKE '%andregorgen%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, openId, name, email FROM users WHERE name LIKE '%André%' OR email LIKE '%andregorgen%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "openId": "V7yv99nRvEDzjKeTqrSWBW",
+      "name": "Dr. André Gorgen",
+      "email": "contato@andregorgen.com.br"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\n1\tV7yv99nRvEDzjKeTqrSWBW\tDr. André Gorgen\tcontato@andregorgen.com.br\n",
+  "stderr": "",
+  "execution_time_ms": 390
+}
