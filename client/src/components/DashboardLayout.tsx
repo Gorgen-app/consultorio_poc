@@ -298,7 +298,7 @@ function DashboardLayoutContent({
                 .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
                 .map(item => {
                   const isActive = location === item.path || item.subitems.some(sub => location === sub.path);
-                  const isOpen = openMenus[item.path] || isActive;
+                  const isOpen = openMenus[item.path] ?? false;
                   const hasVisibleSubitems = item.subitems.some(sub => 
                     temPermissao(currentPerfil as PerfilType, sub.funcionalidade)
                   );
@@ -307,7 +307,6 @@ function DashboardLayoutContent({
                     <Collapsible
                       key={item.path}
                       open={isOpen && !isCollapsed}
-                      onOpenChange={() => toggleMenu(item.path)}
                     >
                       <SidebarMenuItem>
                         <div className="flex items-center w-full">
