@@ -48,6 +48,7 @@ import ProntuarioTerapias from "@/components/prontuario/ProntuarioTerapias";
 import ProntuarioObstetricia from "@/components/prontuario/ProntuarioObstetricia";
 import ProntuarioDocumentos from "@/components/prontuario/ProntuarioDocumentos";
 import ProntuarioResumoClinico from "@/components/prontuario/ProntuarioResumoClinico";
+import HistoricoMedidas from "@/components/prontuario/HistoricoMedidas";
 
 // Função para calcular idade
 function calcularIdade(dataNascimento: Date | string | null): number | null {
@@ -144,6 +145,7 @@ export default function Prontuario() {
   // Menu lateral
   const menuItems = [
     { id: "resumo", label: "Resumo Clínico", icon: ClipboardList },
+    { id: "medidas", label: "Medidas Antropométricas", icon: Scale },
     { id: "evolucoes", label: "Evoluções", icon: FileText },
     { id: "internacoes", label: "Internações", icon: Building2 },
     { id: "cirurgias", label: "Cirurgias", icon: Scissors },
@@ -379,6 +381,12 @@ export default function Prontuario() {
               problemasAtivos={problemasAtivos}
               alergias={alergias}
               medicamentosUso={medicamentosUso}
+              onUpdate={refetch}
+            />
+          )}
+          {secaoAtiva === "medidas" && (
+            <HistoricoMedidas 
+              pacienteId={pacienteId} 
               onUpdate={refetch}
             />
           )}

@@ -1,6 +1,6 @@
-import { eq, like, and, or, sql, desc, asc, getTableColumns } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1247,4 +1247,108 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
     obstetricia: obstetriciaData,
     documentos: documentosData
   };
+}
+
+
+// ==========================================
+// HISTÓRICO DE MEDIDAS ANTROPOMÉTRICAS
+// Pilar Fundamental: Imutabilidade e Preservação Histórica
+// ==========================================
+
+export async function registrarMedida(data: {
+  pacienteId: number;
+  peso?: number;
+  altura?: number;
+  pressaoSistolica?: number;
+  pressaoDiastolica?: number;
+  frequenciaCardiaca?: number;
+  temperatura?: number;
+  saturacao?: number;
+  observacoes?: string;
+  registradoPor: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Calcular IMC se peso e altura foram fornecidos
+  let imc: number | undefined;
+  if (data.peso && data.altura) {
+    imc = Number((data.peso / (data.altura * data.altura)).toFixed(1));
+  }
+
+  const result = await db.insert(historicoMedidas).values({
+    pacienteId: data.pacienteId,
+    dataMedicao: new Date(),
+    peso: data.peso ? String(data.peso) : null,
+    altura: data.altura ? String(data.altura) : null,
+    imc: imc ? String(imc) : null,
+    pressaoSistolica: data.pressaoSistolica,
+    pressaoDiastolica: data.pressaoDiastolica,
+    frequenciaCardiaca: data.frequenciaCardiaca,
+    temperatura: data.temperatura ? String(data.temperatura) : null,
+    saturacao: data.saturacao,
+    observacoes: data.observacoes,
+    registradoPor: data.registradoPor,
+  });
+
+  // Atualizar também o resumo clínico com os valores mais recentes
+  if (data.peso || data.altura) {
+    const dbUpdate = await getDb();
+    if (dbUpdate) {
+      await dbUpdate.update(resumoClinico)
+      .set({
+        pesoAtual: data.peso ? String(data.peso) : undefined,
+        altura: data.altura ? String(data.altura) : undefined,
+        imc: imc ? String(imc) : undefined,
+        updatedAt: new Date(),
+      })
+      .where(eq(resumoClinico.pacienteId, data.pacienteId));
+    }
+  }
+
+  return result;
+}
+
+export async function listarHistoricoMedidas(pacienteId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select()
+    .from(historicoMedidas)
+    .where(eq(historicoMedidas.pacienteId, pacienteId))
+    .orderBy(desc(historicoMedidas.dataMedicao))
+    .limit(limit);
+}
+
+export async function getUltimaMedida(pacienteId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select()
+    .from(historicoMedidas)
+    .where(eq(historicoMedidas.pacienteId, pacienteId))
+    .orderBy(desc(historicoMedidas.dataMedicao))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function getEvolucaoIMC(pacienteId: number, meses = 12) {
+  const db = await getDb();
+  if (!db) return [];
+  const dataInicio = new Date();
+  dataInicio.setMonth(dataInicio.getMonth() - meses);
+  
+  return await db.select({
+    data: historicoMedidas.dataMedicao,
+    peso: historicoMedidas.peso,
+    altura: historicoMedidas.altura,
+    imc: historicoMedidas.imc,
+  })
+    .from(historicoMedidas)
+    .where(
+      and(
+        eq(historicoMedidas.pacienteId, pacienteId),
+        gte(historicoMedidas.dataMedicao, dataInicio)
+      )
+    )
+    .orderBy(asc(historicoMedidas.dataMedicao));
 }

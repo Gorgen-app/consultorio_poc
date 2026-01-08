@@ -622,3 +622,26 @@ export const documentosMedicos = mysqlTable("documentos_medicos", {
 
 export type DocumentoMedico = typeof documentosMedicos.$inferSelect;
 export type InsertDocumentoMedico = typeof documentosMedicos.$inferInsert;
+
+
+// ==========================================
+// HISTÓRICO DE MEDIDAS ANTROPOMÉTRICAS
+// Pilar Fundamental: Imutabilidade e Preservação Histórica
+// ==========================================
+
+export const historicoMedidas = mysqlTable("historico_medidas", {
+  id: int("id").primaryKey().autoincrement(),
+  pacienteId: int("paciente_id").notNull(),
+  dataMedicao: timestamp("data_medicao").notNull(),
+  peso: decimal("peso", { precision: 5, scale: 2 }), // kg
+  altura: decimal("altura", { precision: 3, scale: 2 }), // metros
+  imc: decimal("imc", { precision: 4, scale: 1 }), // calculado
+  pressaoSistolica: int("pressao_sistolica"), // mmHg
+  pressaoDiastolica: int("pressao_diastolica"), // mmHg
+  frequenciaCardiaca: int("frequencia_cardiaca"), // bpm
+  temperatura: decimal("temperatura", { precision: 3, scale: 1 }), // °C
+  saturacao: int("saturacao"), // SpO2 %
+  observacoes: text("observacoes"),
+  registradoPor: varchar("registrado_por", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});

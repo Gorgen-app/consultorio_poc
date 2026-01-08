@@ -963,6 +963,53 @@ export const appRouter = router({
           } as any);
         }),
     }),
+
+    // Histórico de Medidas Antropométricas
+    // Pilar Fundamental: Imutabilidade e Preservação Histórica
+    historicoMedidas: router({
+      registrar: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          peso: z.number().optional(),
+          altura: z.number().optional(),
+          pressaoSistolica: z.number().optional(),
+          pressaoDiastolica: z.number().optional(),
+          frequenciaCardiaca: z.number().optional(),
+          temperatura: z.number().optional(),
+          saturacao: z.number().optional(),
+          observacoes: z.string().optional(),
+        }))
+        .mutation(async ({ input, ctx }) => {
+          return await db.registrarMedida({
+            ...input,
+            registradoPor: ctx.user?.name || "Sistema",
+          });
+        }),
+      
+      listar: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          limit: z.number().optional().default(50),
+        }))
+        .query(async ({ input }) => {
+          return await db.listarHistoricoMedidas(input.pacienteId, input.limit);
+        }),
+      
+      ultimaMedida: protectedProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ input }) => {
+          return await db.getUltimaMedida(input.pacienteId);
+        }),
+      
+      evolucaoIMC: protectedProcedure
+        .input(z.object({
+          pacienteId: z.number(),
+          meses: z.number().optional().default(12),
+        }))
+        .query(async ({ input }) => {
+          return await db.getEvolucaoIMC(input.pacienteId, input.meses);
+        }),
+    }),
   }),
 });
 

@@ -587,3 +587,108 @@
 ### Requisitos Adicionais (07/01/2026)
 - [ ] Adicionar campos peso, altura e IMC automático no cabeçalho do prontuário
 - [ ] Adicionar campo de contato de responsável/next of kin na tabela de pacientes
+
+
+---
+
+# 🏛️ PILARES FUNDAMENTAIS DO GORGEN
+
+## 1. IMUTABILIDADE E PRESERVAÇÃO HISTÓRICA DOS DADOS
+
+> **"Em saúde, a informação é o retrato do momento do paciente."**
+
+### Princípio
+Todo dado inserido no Gorgen é **perpétuo**. Não se apaga informação. Não se descarta dados. A única pessoa autorizada a deletar informações é o **Dr. André Gorgen** (Administrador Master).
+
+### Justificativa
+- **Análise Longitudinal**: A capacidade de analisar dados ao longo do tempo é a informação realmente útil na prática clínica
+- **Contexto Temporal**: Cada registro representa o estado do paciente naquele momento específico
+- **Evolução Clínica**: Comparar parâmetros passados com atuais permite avaliar eficácia de tratamentos
+- **Segurança Jurídica**: Registro completo e inalterado para fins legais e de auditoria
+
+### Exemplo Prático
+Se um paciente tinha **IMC 35 kg/m²** em 01/01/2025 e hoje apresenta **IMC 29 kg/m²**:
+- O valor anterior é preservado no histórico
+- Ambos os valores são acessíveis para comparação
+- A evolução pode ser visualizada em gráfico temporal
+- O médico pode avaliar a eficácia da intervenção
+
+### Implementação Técnica
+1. **Soft Delete**: Registros nunca são removidos fisicamente, apenas marcados como inativos
+2. **Histórico de Alterações**: Toda modificação cria um novo registro preservando o anterior
+3. **Tabelas de Histórico**: Dados que mudam ao longo do tempo (peso, altura, pressão, etc.) são armazenados em tabelas de série temporal
+4. **Audit Log**: Todas as ações são registradas com usuário, data/hora e valores anteriores/novos
+5. **Permissão de Exclusão**: Apenas o Administrador Master pode executar exclusões físicas
+
+### Dados com Histórico Obrigatório
+- [ ] Peso e Altura (IMC calculado)
+- [ ] Pressão Arterial
+- [ ] Glicemia
+- [ ] Medicamentos em Uso
+- [ ] Diagnósticos/Problemas Ativos
+- [ ] Alergias
+- [ ] Resultados de Exames
+
+---
+
+## 2. SIGILO E CONFIDENCIALIDADE ABSOLUTA
+
+> **"Dados de saúde são informações sensíveis protegidas por lei."**
+
+### Princípio
+Todos os dados inseridos no sistema são tratados como **informações confidenciais e sensíveis**, com proteção máxima contra divulgação não autorizada.
+
+### Implementação
+- Controle de acesso por perfil (Admin, Médico, Paciente)
+- Autorização explícita para acesso a prontuários
+- Criptografia de dados em repouso e em trânsito
+- Log de auditoria de todos os acessos
+- Conformidade com LGPD, CFM e CREMESP
+
+---
+
+## 3. RASTREABILIDADE COMPLETA
+
+> **"Toda ação no sistema deve ser auditável."**
+
+### Princípio
+Cada operação realizada no Gorgen é registrada com:
+- Quem executou (usuário)
+- Quando executou (timestamp)
+- O que foi feito (ação)
+- Valores anteriores e novos (diff)
+
+### Finalidade
+- Conformidade regulatória
+- Investigação de incidentes
+- Responsabilização
+- Melhoria contínua
+
+---
+
+## 📋 IMPLEMENTAÇÃO DOS PILARES
+
+### Histórico de Medidas Antropométricas
+- [ ] Criar tabela `historico_medidas` (paciente_id, data, peso, altura, imc, registrado_por)
+- [ ] Ao atualizar peso/altura, criar novo registro preservando histórico
+- [ ] Exibir gráfico de evolução no prontuário
+- [ ] Mostrar comparativo com última medição
+
+
+
+---
+
+## 🏛️ PILARES FUNDAMENTAIS DO GORGEN - IMPLEMENTAÇÃO (07/01/2026)
+
+### Pilar 1: Imutabilidade e Preservação Histórica ✅ IMPLEMENTADO
+- [x] Documentado como princípio fundamental do sistema
+- [x] Tabela `historico_medidas` criada para preservar todas as medições
+- [x] Funções de registro sem possibilidade de edição ou exclusão
+- [x] 12 testes automatizados validando o pilar de imutabilidade
+- [x] Interface de Medidas Antropométricas com gráfico de evolução do IMC
+- [x] Cálculo automático de IMC com classificação (Abaixo do peso, Normal, Sobrepeso, Obesidade)
+
+### Campos Adicionados
+- [x] Peso e Altura com cálculo automático de IMC
+- [x] Histórico de medidas preservado
+- [x] Contato de Responsável/Next of Kin (nome, parentesco, telefone, email)
