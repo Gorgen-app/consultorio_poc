@@ -935,3 +935,6 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Renomear perfil "Financeiro" para "Auditor"
 - [x] Adicionar seção de Assinatura nas Configurações (ajustes, mudanças, cancelamento)
 - [x] Adicionar título do mês na visualização da Agenda
+- [x] Reorganizar menu lateral - Novo Paciente como subitem de Pacientes com dropdown
+- [x] Reorganizar menu lateral - Novo Atendimento como subitem de Atendimentos com dropdown
+- [ ] Mover Configurações para baixo com apenas ícone de engrenagem

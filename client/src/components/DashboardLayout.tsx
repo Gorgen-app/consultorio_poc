@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -37,24 +37,53 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 // Mapeamento de perfis
 const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   admin_master: { label: "Admin Master", icon: <Shield className="h-4 w-4" />, color: "bg-red-500" },
   medico: { label: "Médico", icon: <Stethoscope className="h-4 w-4" />, color: "bg-blue-500" },
   secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-green-500" },
-  financeiro: { label: "Financeiro", icon: <DollarSign className="h-4 w-4" />, color: "bg-yellow-500" },
-  visualizador: { label: "Visualizador", icon: <Eye className="h-4 w-4" />, color: "bg-gray-500" },
+  auditor: { label: "Auditor", icon: <DollarSign className="h-4 w-4" />, color: "bg-yellow-500" },
+  paciente: { label: "Paciente", icon: <Eye className="h-4 w-4" />, color: "bg-gray-500" },
 };
 
-const menuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade }[] = [
+// Menu items principais (sem subitens)
+const mainMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade }[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", funcionalidade: "dashboard" },
   { icon: Calendar, label: "Agenda", path: "/agenda", funcionalidade: "agenda" },
-  { icon: Users, label: "Pacientes", path: "/pacientes", funcionalidade: "pacientes" },
-  { icon: UserPlus, label: "Novo Paciente", path: "/pacientes/novo", funcionalidade: "pacientes.criar" },
-  { icon: Stethoscope, label: "Atendimentos", path: "/atendimentos", funcionalidade: "atendimentos" },
-  { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo", funcionalidade: "atendimentos.criar" },
-  { icon: Settings, label: "Configurações", path: "/configuracoes", funcionalidade: "configuracoes" },
+];
+
+// Menu items com subitens
+const menuWithSubitems: {
+  icon: typeof Users;
+  label: string;
+  path: string;
+  funcionalidade: Funcionalidade;
+  subitems: { icon: typeof UserPlus; label: string; path: string; funcionalidade: Funcionalidade }[];
+}[] = [
+  {
+    icon: Users,
+    label: "Pacientes",
+    path: "/pacientes",
+    funcionalidade: "pacientes",
+    subitems: [
+      { icon: UserPlus, label: "Novo Paciente", path: "/pacientes/novo", funcionalidade: "pacientes.criar" },
+    ],
+  },
+  {
+    icon: Stethoscope,
+    label: "Atendimentos",
+    path: "/atendimentos",
+    funcionalidade: "atendimentos",
+    subitems: [
+      { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo", funcionalidade: "atendimentos.criar" },
+    ],
+  },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -137,8 +166,10 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  
+  // Estados para controlar os dropdowns abertos
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   
   // Queries de perfil
   const { data: profile, refetch: refetchProfile } = trpc.perfil.me.useQuery(undefined, {
@@ -157,8 +188,16 @@ function DashboardLayoutContent({
     },
   });
   
-  const currentPerfil = profile?.perfilAtivo || "visualizador";
+  const currentPerfil = profile?.perfilAtivo || "paciente";
   const currentPerfilInfo = perfilInfo[currentPerfil];
+  
+  // Encontrar item ativo para o título mobile
+  const allItems = [
+    ...mainMenuItems,
+    ...menuWithSubitems.map(m => ({ ...m })),
+    ...menuWithSubitems.flatMap(m => m.subitems),
+  ];
+  const activeMenuItem = allItems.find(item => item.path === location);
 
   useEffect(() => {
     if (isCollapsed) {
@@ -196,6 +235,13 @@ function DashboardLayoutContent({
     };
   }, [isResizing, setSidebarWidth]);
 
+  const toggleMenu = (menuPath: string) => {
+    setOpenMenus(prev => ({
+      ...prev,
+      [menuPath]: !prev[menuPath],
+    }));
+  };
+
   return (
     <>
       <div className="relative" ref={sidebarRef}>
@@ -225,7 +271,8 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems
+              {/* Menu items principais */}
+              {mainMenuItems
                 .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
                 .map(item => {
                   const isActive = location === item.path;
@@ -245,10 +292,98 @@ function DashboardLayoutContent({
                     </SidebarMenuItem>
                   );
                 })}
+              
+              {/* Menu items com subitens */}
+              {menuWithSubitems
+                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
+                .map(item => {
+                  const isActive = location === item.path || item.subitems.some(sub => location === sub.path);
+                  const isOpen = openMenus[item.path] || isActive;
+                  const hasVisibleSubitems = item.subitems.some(sub => 
+                    temPermissao(currentPerfil as PerfilType, sub.funcionalidade)
+                  );
+                  
+                  return (
+                    <Collapsible
+                      key={item.path}
+                      open={isOpen && !isCollapsed}
+                      onOpenChange={() => toggleMenu(item.path)}
+                    >
+                      <SidebarMenuItem>
+                        <div className="flex items-center w-full">
+                          <SidebarMenuButton
+                            isActive={location === item.path}
+                            onClick={() => setLocation(item.path)}
+                            tooltip={item.label}
+                            className={`h-10 transition-all font-normal flex-1`}
+                          >
+                            <item.icon
+                              className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                            />
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                          {hasVisibleSubitems && !isCollapsed && (
+                            <CollapsibleTrigger asChild>
+                              <button
+                                className="h-10 w-8 flex items-center justify-center hover:bg-accent rounded-r-lg transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleMenu(item.path);
+                                }}
+                              >
+                                <ChevronDown
+                                  className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                                />
+                              </button>
+                            </CollapsibleTrigger>
+                          )}
+                        </div>
+                      </SidebarMenuItem>
+                      
+                      <CollapsibleContent>
+                        {item.subitems
+                          .filter(sub => temPermissao(currentPerfil as PerfilType, sub.funcionalidade))
+                          .map(subitem => {
+                            const isSubActive = location === subitem.path;
+                            return (
+                              <SidebarMenuItem key={subitem.path}>
+                                <SidebarMenuButton
+                                  isActive={isSubActive}
+                                  onClick={() => setLocation(subitem.path)}
+                                  tooltip={subitem.label}
+                                  className={`h-9 transition-all font-normal ml-4 text-sm`}
+                                >
+                                  <subitem.icon
+                                    className={`h-3.5 w-3.5 ${isSubActive ? "text-primary" : ""}`}
+                                  />
+                                  <span>{subitem.label}</span>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  );
+                })}
             </SidebarMenu>
           </SidebarContent>
 
           <SidebarFooter className="p-3">
+            {/* Botão de Configurações - apenas ícone */}
+            {temPermissao(currentPerfil as PerfilType, "configuracoes") && (
+              <div className="mb-2">
+                <SidebarMenuButton
+                  isActive={location === "/configuracoes"}
+                  onClick={() => setLocation("/configuracoes")}
+                  tooltip="Configurações"
+                  className={`h-10 transition-all font-normal ${isCollapsed ? "justify-center" : ""}`}
+                >
+                  <Settings className={`h-4 w-4 ${location === "/configuracoes" ? "text-primary" : ""}`} />
+                  {!isCollapsed && <span>Configurações</span>}
+                </SidebarMenuButton>
+              </div>
+            )}
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -308,13 +443,6 @@ function DashboardLayoutContent({
                 )}
                 
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setLocation('/configuracoes')}
-                  className="cursor-pointer"
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
