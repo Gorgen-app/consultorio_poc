@@ -519,3 +519,13 @@
 - [x] Teste de edição de pacientes
 - [x] Teste de edição de atendimentos
 - [x] Teste de log de auditoria
+
+
+---
+
+## 🐛 BUG: ID de Pacientes Incorreto (07/01/2026) ✅ CORRIGIDO
+- [x] Corrigir geração de ID de pacientes (formato YYYY-NNNNNNN)
+- [x] ID "2026-0000NaN" corrigido para "2026-0000052"
+- [x] ID de atendimentos verificado - formato correto
+- [x] Função getNextPacienteId reescrita com regex para ignorar IDs inválidos
+- [x] Testes automatizados adicionados

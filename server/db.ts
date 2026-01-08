@@ -395,27 +395,36 @@ export async function getNextPacienteId(): Promise<string> {
     throw new Error("Database not available");
   }
 
+  const currentYear = new Date().getFullYear().toString();
+  
+  // Buscar todos os IDs de pacientes do ano atual no formato correto (YYYY-NNNNNNN)
   const result = await db
     .select({ idPaciente: pacientes.idPaciente })
     .from(pacientes)
-    .orderBy(desc(pacientes.id))
-    .limit(1);
+    .where(like(pacientes.idPaciente, `${currentYear}-%`));
 
   if (result.length === 0) {
-    return `${new Date().getFullYear()}-0000001`;
+    return `${currentYear}-0000001`;
   }
 
-  const lastId = result[0].idPaciente;
-  if (!lastId) {
-    return `${new Date().getFullYear()}-0000001`;
+  // Encontrar o maior número sequencial entre os IDs válidos
+  let maxNumber = 0;
+  for (const row of result) {
+    const idPaciente = row.idPaciente;
+    if (!idPaciente) continue;
+    
+    // Verificar se o ID está no formato YYYY-NNNNNNN (7 dígitos)
+    const match = idPaciente.match(/^\d{4}-(\d{7})$/);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (!isNaN(num) && num > maxNumber) {
+        maxNumber = num;
+      }
+    }
   }
 
-  const parts = lastId.split("-");
-  const year = new Date().getFullYear().toString();
-  const lastNumber = parseInt(parts[1] || "0");
-  const nextNumber = lastNumber + 1;
-
-  return `${year}-${String(nextNumber).padStart(7, "0")}`;
+  const nextNumber = maxNumber + 1;
+  return `${currentYear}-${String(nextNumber).padStart(7, "0")}`;
 }
 
 /**

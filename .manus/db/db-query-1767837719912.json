@@ -1,0 +1,13 @@
+{
+  "query": "SELECT id_paciente FROM pacientes WHERE id_paciente LIKE '2026-%' AND id_paciente REGEXP '^2026-[0-9]{7}$' ORDER BY id_paciente DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id_paciente FROM pacientes WHERE id_paciente LIKE '2026-%' AND id_paciente REGEXP '^2026-[0-9]{7}$' ORDER BY id_paciente DESC LIMIT 5;",
+  "rows": [
+    {
+      "id_paciente": "2026-0000051"
+    }
+  ],
+  "messages": [],
+  "stdout": "id_paciente\n2026-0000051\n",
+  "stderr": "",
+  "execution_time_ms": 381
+}
