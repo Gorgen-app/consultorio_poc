@@ -1352,3 +1352,369 @@ export async function getEvolucaoIMC(pacienteId: number, meses = 12) {
     )
     .orderBy(asc(historicoMedidas.dataMedicao));
 }
+
+
+// ===== AGENDA =====
+
+import { agendamentos, bloqueiosHorario, historicoAgendamentos, InsertAgendamento, InsertBloqueioHorario, InsertHistoricoAgendamento } from "../drizzle/schema";
+
+// Gerar próximo ID de agendamento (formato: AG-YYYY-NNNNN)
+export async function getNextAgendamentoId(): Promise<string> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const ano = new Date().getFullYear();
+  const prefix = `AG-${ano}-`;
+  
+  const result = await db.select({ idAgendamento: agendamentos.idAgendamento })
+    .from(agendamentos)
+    .where(like(agendamentos.idAgendamento, `${prefix}%`))
+    .orderBy(desc(agendamentos.idAgendamento))
+    .limit(1);
+  
+  let nextNum = 1;
+  if (result.length > 0 && result[0].idAgendamento) {
+    const match = result[0].idAgendamento.match(/AG-\d{4}-(\d+)/);
+    if (match) {
+      nextNum = parseInt(match[1], 10) + 1;
+    }
+  }
+  
+  return `${prefix}${String(nextNum).padStart(5, '0')}`;
+}
+
+// Gerar próximo ID de bloqueio (formato: BL-YYYY-NNNNN)
+export async function getNextBloqueioId(): Promise<string> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const ano = new Date().getFullYear();
+  const prefix = `BL-${ano}-`;
+  
+  const result = await db.select({ idBloqueio: bloqueiosHorario.idBloqueio })
+    .from(bloqueiosHorario)
+    .where(like(bloqueiosHorario.idBloqueio, `${prefix}%`))
+    .orderBy(desc(bloqueiosHorario.idBloqueio))
+    .limit(1);
+  
+  let nextNum = 1;
+  if (result.length > 0 && result[0].idBloqueio) {
+    const match = result[0].idBloqueio.match(/BL-\d{4}-(\d+)/);
+    if (match) {
+      nextNum = parseInt(match[1], 10) + 1;
+    }
+  }
+  
+  return `${prefix}${String(nextNum).padStart(5, '0')}`;
+}
+
+// Criar agendamento
+export async function createAgendamento(data: InsertAgendamento) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(agendamentos).values(data);
+  const insertedId = Number(result[0].insertId);
+  
+  // Registrar no histórico
+  await db.insert(historicoAgendamentos).values({
+    agendamentoId: insertedId,
+    tipoAlteracao: "Criação",
+    descricaoAlteracao: `Agendamento criado: ${data.tipoCompromisso} em ${data.dataHoraInicio}`,
+    valoresNovos: data as any,
+    realizadoPor: data.criadoPor || "Sistema",
+  });
+  
+  return getAgendamentoById(insertedId);
+}
+
+// Buscar agendamento por ID
+export async function getAgendamentoById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select()
+    .from(agendamentos)
+    .where(eq(agendamentos.id, id))
+    .limit(1);
+  
+  return result[0];
+}
+
+// Listar agendamentos por período
+export async function listAgendamentos(filters?: {
+  dataInicio?: Date;
+  dataFim?: Date;
+  pacienteId?: number;
+  tipo?: string;
+  status?: string;
+  incluirCancelados?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  
+  
+  // Buscar todos os agendamentos ordenados por data
+  const result = await db.select().from(agendamentos).orderBy(asc(agendamentos.dataHoraInicio));
+  
+  console.log('[listAgendamentos] Encontrados:', result.length, 'agendamentos');
+  
+  // Filtrar no JavaScript para garantir que funciona
+  let filtered = result;
+  
+  if (filters?.dataInicio) {
+    const inicio = new Date(filters.dataInicio).getTime();
+    filtered = filtered.filter(ag => new Date(ag.dataHoraInicio).getTime() >= inicio);
+  }
+  if (filters?.dataFim) {
+    const fim = new Date(filters.dataFim).getTime();
+    filtered = filtered.filter(ag => new Date(ag.dataHoraInicio).getTime() <= fim);
+  }
+  if (filters?.pacienteId) {
+    filtered = filtered.filter(ag => ag.pacienteId === filters.pacienteId);
+  }
+  if (filters?.tipo) {
+    filtered = filtered.filter(ag => ag.tipoCompromisso === filters.tipo);
+  }
+  if (filters?.status) {
+    filtered = filtered.filter(ag => ag.status === filters.status);
+  }
+  
+  console.log('[listAgendamentos] Após filtros:', filtered.length, 'agendamentos');
+  return filtered;
+}
+
+// Cancelar agendamento (não apaga, apenas marca como cancelado)
+export async function cancelarAgendamento(id: number, motivo: string, canceladoPor: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar dados anteriores
+  const anterior = await getAgendamentoById(id);
+  if (!anterior) throw new Error("Agendamento não encontrado");
+  
+  // Atualizar status
+  await db.update(agendamentos)
+    .set({
+      status: "Cancelado",
+      canceladoEm: new Date(),
+      canceladoPor,
+      motivoCancelamento: motivo,
+    })
+    .where(eq(agendamentos.id, id));
+  
+  // Registrar no histórico
+  await db.insert(historicoAgendamentos).values({
+    agendamentoId: id,
+    tipoAlteracao: "Cancelamento",
+    descricaoAlteracao: `Cancelado por ${canceladoPor}. Motivo: ${motivo}`,
+    valoresAnteriores: anterior as any,
+    realizadoPor: canceladoPor,
+  });
+  
+  return getAgendamentoById(id);
+}
+
+// Reagendar (cria novo agendamento vinculado ao original)
+export async function reagendarAgendamento(
+  idOriginal: number,
+  novaDataInicio: Date,
+  novaDataFim: Date,
+  reagendadoPor: string,
+  motivo?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar agendamento original
+  const original = await getAgendamentoById(idOriginal);
+  if (!original) throw new Error("Agendamento original não encontrado");
+  
+  // Marcar original como reagendado
+  await db.update(agendamentos)
+    .set({
+      status: "Reagendado",
+    })
+    .where(eq(agendamentos.id, idOriginal));
+  
+  // Registrar no histórico do original
+  await db.insert(historicoAgendamentos).values({
+    agendamentoId: idOriginal,
+    tipoAlteracao: "Reagendamento",
+    descricaoAlteracao: `Reagendado por ${reagendadoPor}. ${motivo || ''}`,
+    valoresAnteriores: original as any,
+    realizadoPor: reagendadoPor,
+  });
+  
+  // Criar novo agendamento
+  const novoId = await getNextAgendamentoId();
+  const novoAgendamento: InsertAgendamento = {
+    idAgendamento: novoId,
+    tipoCompromisso: original.tipoCompromisso,
+    pacienteId: original.pacienteId,
+    pacienteNome: original.pacienteNome,
+    dataHoraInicio: novaDataInicio,
+    dataHoraFim: novaDataFim,
+    local: original.local,
+    status: "Agendado",
+    titulo: original.titulo,
+    descricao: original.descricao,
+    reagendadoDe: idOriginal,
+    criadoPor: reagendadoPor,
+  };
+  
+  return createAgendamento(novoAgendamento);
+}
+
+// Confirmar agendamento
+export async function confirmarAgendamento(id: number, confirmadoPor: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(agendamentos)
+    .set({
+      status: "Confirmado",
+      confirmadoEm: new Date(),
+      confirmadoPor,
+    })
+    .where(eq(agendamentos.id, id));
+  
+  await db.insert(historicoAgendamentos).values({
+    agendamentoId: id,
+    tipoAlteracao: "Confirmação",
+    descricaoAlteracao: `Confirmado por ${confirmadoPor}`,
+    realizadoPor: confirmadoPor,
+  });
+  
+  return getAgendamentoById(id);
+}
+
+// Marcar como realizado
+export async function realizarAgendamento(id: number, realizadoPor: string, atendimentoId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(agendamentos)
+    .set({
+      status: "Realizado",
+      realizadoEm: new Date(),
+      realizadoPor,
+      atendimentoId,
+    })
+    .where(eq(agendamentos.id, id));
+  
+  await db.insert(historicoAgendamentos).values({
+    agendamentoId: id,
+    tipoAlteracao: "Realização",
+    descricaoAlteracao: `Realizado por ${realizadoPor}`,
+    realizadoPor,
+  });
+  
+  return getAgendamentoById(id);
+}
+
+// Marcar falta
+export async function marcarFaltaAgendamento(id: number, marcadoPor: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(agendamentos)
+    .set({
+      status: "Faltou",
+      marcadoFaltaEm: new Date(),
+      marcadoFaltaPor: marcadoPor,
+    })
+    .where(eq(agendamentos.id, id));
+  
+  await db.insert(historicoAgendamentos).values({
+    agendamentoId: id,
+    tipoAlteracao: "Falta",
+    descricaoAlteracao: `Falta registrada por ${marcadoPor}`,
+    realizadoPor: marcadoPor,
+  });
+  
+  return getAgendamentoById(id);
+}
+
+// ===== BLOQUEIOS DE HORÁRIO =====
+
+export async function createBloqueio(data: InsertBloqueioHorario) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(bloqueiosHorario).values(data);
+  const insertedId = Number(result[0].insertId);
+  
+  return getBloqueioById(insertedId);
+}
+
+export async function getBloqueioById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select()
+    .from(bloqueiosHorario)
+    .where(eq(bloqueiosHorario.id, id))
+    .limit(1);
+  
+  return result[0];
+}
+
+export async function listBloqueios(filters?: {
+  dataInicio?: Date;
+  dataFim?: Date;
+  incluirCancelados?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  
+  if (filters?.dataInicio) {
+    conditions.push(sql`${bloqueiosHorario.dataHoraInicio} >= ${filters.dataInicio}`);
+  }
+  if (filters?.dataFim) {
+    conditions.push(sql`${bloqueiosHorario.dataHoraInicio} <= ${filters.dataFim}`);
+  }
+  if (!filters?.incluirCancelados) {
+    conditions.push(eq(bloqueiosHorario.cancelado, false));
+  }
+  
+  let query = db.select().from(bloqueiosHorario);
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)!) as any;
+  }
+  
+  query = query.orderBy(asc(bloqueiosHorario.dataHoraInicio)) as any;
+  
+  return await query;
+}
+
+export async function cancelarBloqueio(id: number, motivo: string, canceladoPor: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(bloqueiosHorario)
+    .set({
+      cancelado: true,
+      canceladoEm: new Date(),
+      canceladoPor,
+      motivoCancelamento: motivo,
+    })
+    .where(eq(bloqueiosHorario.id, id));
+  
+  return getBloqueioById(id);
+}
+
+// Buscar histórico de um agendamento
+export async function getHistoricoAgendamento(agendamentoId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(historicoAgendamentos)
+    .where(eq(historicoAgendamentos.agendamentoId, agendamentoId))
+    .orderBy(desc(historicoAgendamentos.createdAt));
+}

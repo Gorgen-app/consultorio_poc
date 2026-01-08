@@ -1011,6 +1011,168 @@ export const appRouter = router({
         }),
     }),
   }),
+
+  // ===== AGENDA =====
+  agenda: router({
+    getNextId: protectedProcedure
+      .query(async () => {
+        return await db.getNextAgendamentoId();
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        idAgendamento: z.string(),
+        tipoCompromisso: z.enum(["Consulta", "Cirurgia", "Visita internado", "Procedimento em consultório", "Exame", "Reunião", "Bloqueio"]),
+        pacienteId: z.number().optional().nullable(),
+        pacienteNome: z.string().optional().nullable(),
+        dataHoraInicio: z.date(),
+        dataHoraFim: z.date(),
+        local: z.string().optional().nullable(),
+        titulo: z.string().optional().nullable(),
+        descricao: z.string().optional().nullable(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.createAgendamento({
+          ...input,
+          criadoPor: ctx.user?.name || "Sistema",
+        } as any);
+      }),
+
+    list: protectedProcedure
+      .input(z.object({
+        dataInicio: z.date().optional(),
+        dataFim: z.date().optional(),
+        pacienteId: z.number().optional(),
+        tipo: z.string().optional(),
+        status: z.string().optional(),
+        incluirCancelados: z.boolean().optional().default(true),
+      }))
+      .query(async ({ input }) => {
+        return await db.listAgendamentos(input);
+      }),
+
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getAgendamentoById(input.id);
+      }),
+
+    cancelar: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        motivo: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.cancelarAgendamento(
+          input.id,
+          input.motivo,
+          ctx.user?.name || "Sistema"
+        );
+      }),
+
+    reagendar: protectedProcedure
+      .input(z.object({
+        idOriginal: z.number(),
+        novaDataInicio: z.date(),
+        novaDataFim: z.date(),
+        motivo: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.reagendarAgendamento(
+          input.idOriginal,
+          input.novaDataInicio,
+          input.novaDataFim,
+          ctx.user?.name || "Sistema",
+          input.motivo
+        );
+      }),
+
+    confirmar: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.confirmarAgendamento(
+          input.id,
+          ctx.user?.name || "Sistema"
+        );
+      }),
+
+    realizar: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        atendimentoId: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.realizarAgendamento(
+          input.id,
+          ctx.user?.name || "Sistema",
+          input.atendimentoId
+        );
+      }),
+
+    marcarFalta: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.marcarFaltaAgendamento(
+          input.id,
+          ctx.user?.name || "Sistema"
+        );
+      }),
+
+    historico: protectedProcedure
+      .input(z.object({ agendamentoId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getHistoricoAgendamento(input.agendamentoId);
+      }),
+  }),
+
+  // ===== BLOQUEIOS DE HORÁRIO =====
+  bloqueios: router({
+    getNextId: protectedProcedure
+      .query(async () => {
+        return await db.getNextBloqueioId();
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        idBloqueio: z.string(),
+        dataHoraInicio: z.date(),
+        dataHoraFim: z.date(),
+        tipoBloqueio: z.enum(["Férias", "Feriado", "Reunião fixa", "Congresso", "Particular", "Outro"]),
+        titulo: z.string(),
+        descricao: z.string().optional().nullable(),
+        recorrente: z.boolean().optional().default(false),
+        padraoRecorrencia: z.string().optional().nullable(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.createBloqueio({
+          ...input,
+          criadoPor: ctx.user?.name || "Sistema",
+        } as any);
+      }),
+
+    list: protectedProcedure
+      .input(z.object({
+        dataInicio: z.date().optional(),
+        dataFim: z.date().optional(),
+        incluirCancelados: z.boolean().optional().default(false),
+      }))
+      .query(async ({ input }) => {
+        return await db.listBloqueios(input);
+      }),
+
+    cancelar: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        motivo: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.cancelarBloqueio(
+          input.id,
+          input.motivo,
+          ctx.user?.name || "Sistema"
+        );
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

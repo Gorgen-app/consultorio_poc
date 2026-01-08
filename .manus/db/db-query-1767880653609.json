@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, id_agendamento, data_hora_inicio, DATE(data_hora_inicio) as data_apenas FROM agendamentos;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, id_agendamento, data_hora_inicio, DATE(data_hora_inicio) as data_apenas FROM agendamentos;",
+  "rows": [
+    {
+      "id": "1",
+      "id_agendamento": "AG-2026-00001",
+      "data_hora_inicio": "2026-01-09 10:00:00",
+      "data_apenas": "2026-01-09"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tid_agendamento\tdata_hora_inicio\tdata_apenas\n1\tAG-2026-00001\t2026-01-09 10:00:00\t2026-01-09\n",
+  "stderr": "",
+  "execution_time_ms": 398
+}

@@ -11,6 +11,7 @@ import NovoPaciente from "./pages/NovoPaciente";
 import Atendimentos from "./pages/Atendimentos";
 import NovoAtendimento from "./pages/NovoAtendimento";
 import Prontuario from "./pages/Prontuario";
+import Agenda from "./pages/Agenda";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/atendimentos" component={Atendimentos} />
       <Route path="/atendimentos/novo" component={NovoAtendimento} />
       <Route path="/prontuario/:id" component={Prontuario} />
+      <Route path="/agenda" component={Agenda} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

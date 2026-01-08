@@ -882,3 +882,30 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Peso e Altura com cálculo automático de IMC
 - [x] Histórico de medidas preservado
 - [x] Contato de Responsável/Next of Kin (nome, parentesco, telefone, email)
+- [x] Atualizar título da aba do navegador para "Gorgen v2.5"
+
+## 🗓️ GORGEN 2.6 - Módulo de Agenda
+
+### Schema e Backend
+- [ ] Criar tabela `agendamentos` no schema
+- [ ] Criar tabela `bloqueios_horario` no schema
+- [x] Implementar procedures CRUD de agendamentos
+- [ ] Implementar procedure de cancelamento (soft)
+- [ ] Implementar procedure de reagendamento com histórico
+
+### Frontend
+- [x] Criar página de Agenda com calendário
+- [x] Adicionar Agenda na barra lateral
+- [ ] Modal de novo agendamento
+- [ ] Modal de cancelamento
+- [ ] Modal de reagendamento
+- [ ] Visualização de compromissos cancelados (transparente)
+- [ ] Gestão de bloqueios de horário
+
+### Tipos de Compromisso
+- [ ] Reunião
+- [ ] Consulta
+- [ ] Cirurgia
+- [ ] Visita internado
+- [ ] Procedimento em consultório
+- [ ] Exame

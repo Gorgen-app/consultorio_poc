@@ -1,0 +1,18 @@
+{
+  "query": "SHOW COLUMNS FROM agendamentos LIKE 'status%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SHOW COLUMNS FROM agendamentos LIKE 'status%';",
+  "rows": [
+    {
+      "Field": "status",
+      "Type": "enum('Agendado','Confirmado','Realizado','Cancelado','Reagendado','Faltou')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "Agendado",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nstatus\tenum('Agendado','Confirmado','Realizado','Cancelado','Reagendado','Faltou')\tNO\t\tAgendado\t\n",
+  "stderr": "",
+  "execution_time_ms": 384
+}

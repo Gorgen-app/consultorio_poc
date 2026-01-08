@@ -645,3 +645,178 @@ export const historicoMedidas = mysqlTable("historico_medidas", {
   registradoPor: varchar("registrado_por", { length: 255 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+
+// ==========================================
+// MÓDULO DE AGENDA
+// Pilar Fundamental: Imutabilidade - Nada é apagado, apenas marcado
+// ==========================================
+
+/**
+ * Tipos de Compromisso na Agenda
+ */
+export const tipoCompromissoEnum = mysqlEnum("tipo_compromisso", [
+  "Consulta",
+  "Cirurgia", 
+  "Visita internado",
+  "Procedimento em consultório",
+  "Exame",
+  "Reunião",
+  "Bloqueio"
+]);
+
+/**
+ * Status do Agendamento
+ */
+export const statusAgendamentoEnum = mysqlEnum("status", [
+  "Agendado",
+  "Confirmado",
+  "Realizado",
+  "Cancelado",
+  "Reagendado",
+  "Faltou"
+]);
+
+/**
+ * Tabela de Agendamentos
+ * Cada agendamento é imutável - cancelamentos e reagendamentos criam referências, não apagam
+ */
+export const agendamentos = mysqlTable("agendamentos", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identificador único do agendamento (formato: AG-YYYY-NNNNN)
+  idAgendamento: varchar("id_agendamento", { length: 20 }).notNull().unique(),
+  
+  // Tipo de compromisso
+  tipoCompromisso: tipoCompromissoEnum.notNull(),
+  
+  // Paciente (opcional para reuniões e bloqueios)
+  pacienteId: int("paciente_id").references(() => pacientes.id),
+  pacienteNome: varchar("paciente_nome", { length: 255 }),
+  
+  // Data e horário
+  dataHoraInicio: timestamp("data_hora_inicio").notNull(),
+  dataHoraFim: timestamp("data_hora_fim").notNull(),
+  
+  // Local
+  local: varchar("local", { length: 100 }),
+  
+  // Status
+  status: statusAgendamentoEnum.default("Agendado").notNull(),
+  
+  // Descrição/Observações
+  titulo: varchar("titulo", { length: 255 }),
+  descricao: text("descricao"),
+  
+  // Reagendamento - referência ao agendamento original
+  reagendadoDe: int("reagendado_de").references((): any => agendamentos.id),
+  
+  // Cancelamento
+  canceladoEm: timestamp("cancelado_em"),
+  canceladoPor: varchar("cancelado_por", { length: 255 }),
+  motivoCancelamento: text("motivo_cancelamento"),
+  
+  // Confirmação
+  confirmadoEm: timestamp("confirmado_em"),
+  confirmadoPor: varchar("confirmado_por", { length: 255 }),
+  
+  // Realização
+  realizadoEm: timestamp("realizado_em"),
+  realizadoPor: varchar("realizado_por", { length: 255 }),
+  
+  // Falta
+  marcadoFaltaEm: timestamp("marcado_falta_em"),
+  marcadoFaltaPor: varchar("marcado_falta_por", { length: 255 }),
+  
+  // Vínculo com atendimento (quando realizado)
+  atendimentoId: int("atendimento_id").references(() => atendimentos.id),
+  
+  // Metadados
+  criadoPor: varchar("criado_por", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Agendamento = typeof agendamentos.$inferSelect;
+export type InsertAgendamento = typeof agendamentos.$inferInsert;
+
+/**
+ * Tabela de Bloqueios de Horário
+ * Períodos em que não há atendimento (férias, feriados, reuniões fixas, etc.)
+ */
+export const bloqueiosHorario = mysqlTable("bloqueios_horario", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identificador único (formato: BL-YYYY-NNNNN)
+  idBloqueio: varchar("id_bloqueio", { length: 20 }).notNull().unique(),
+  
+  // Período do bloqueio
+  dataHoraInicio: timestamp("data_hora_inicio").notNull(),
+  dataHoraFim: timestamp("data_hora_fim").notNull(),
+  
+  // Tipo de bloqueio
+  tipoBloqueio: mysqlEnum("tipo_bloqueio", [
+    "Férias",
+    "Feriado",
+    "Reunião fixa",
+    "Congresso",
+    "Particular",
+    "Outro"
+  ]).notNull(),
+  
+  // Descrição
+  titulo: varchar("titulo", { length: 255 }).notNull(),
+  descricao: text("descricao"),
+  
+  // Recorrência (opcional)
+  recorrente: boolean("recorrente").default(false),
+  padraoRecorrencia: varchar("padrao_recorrencia", { length: 100 }), // Ex: "WEEKLY", "MONTHLY"
+  
+  // Cancelamento (bloqueios também não são apagados)
+  cancelado: boolean("cancelado").default(false),
+  canceladoEm: timestamp("cancelado_em"),
+  canceladoPor: varchar("cancelado_por", { length: 255 }),
+  motivoCancelamento: text("motivo_cancelamento"),
+  
+  // Metadados
+  criadoPor: varchar("criado_por", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BloqueioHorario = typeof bloqueiosHorario.$inferSelect;
+export type InsertBloqueioHorario = typeof bloqueiosHorario.$inferInsert;
+
+/**
+ * Histórico de Alterações de Agendamentos
+ * Registra todas as mudanças para rastreabilidade completa
+ */
+export const historicoAgendamentos = mysqlTable("historico_agendamentos", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  agendamentoId: int("agendamento_id").notNull().references(() => agendamentos.id),
+  
+  // Tipo de alteração
+  tipoAlteracao: mysqlEnum("tipo_alteracao", [
+    "Criação",
+    "Confirmação",
+    "Cancelamento",
+    "Reagendamento",
+    "Realização",
+    "Falta",
+    "Edição"
+  ]).notNull(),
+  
+  // Detalhes
+  descricaoAlteracao: text("descricao_alteracao"),
+  valoresAnteriores: json("valores_anteriores"),
+  valoresNovos: json("valores_novos"),
+  
+  // Quem fez
+  realizadoPor: varchar("realizado_por", { length: 255 }).notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type HistoricoAgendamento = typeof historicoAgendamentos.$inferSelect;
+export type InsertHistoricoAgendamento = typeof historicoAgendamentos.$inferInsert;

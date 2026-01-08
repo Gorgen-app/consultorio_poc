@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO agendamentos (id_agendamento, tipo_compromisso, paciente_id, paciente_nome, data_hora_inicio, data_hora_fim, local, status, criado_por) VALUES ('AG-2026-00001', 'Consulta', 30001, 'Maria Silva Teste', '2026-01-09 10:00:00', '2026-01-09 10:30:00', 'Consultório', 'Agendado', 'Dr. André Gorgen');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute INSERT INTO agendamentos (id_agendamento, tipo_compromisso, paciente_id, paciente_nome, data_hora_inicio, data_hora_fim, local, status, criado_por) VALUES ('AG-2026-00001', 'Consulta', 30001, 'Maria Silva Teste', '2026-01-09 10:00:00', '2026-01-09 10:30:00', 'Consultório', 'Agendado', 'Dr. André Gorgen');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 429
+}

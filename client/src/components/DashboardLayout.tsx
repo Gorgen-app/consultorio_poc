@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -29,10 +29,11 @@ import { Button } from "./ui/button";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: Calendar, label: "Agenda", path: "/agenda" },
   { icon: Users, label: "Pacientes", path: "/pacientes" },
-  { icon: LayoutDashboard, label: "Novo Paciente", path: "/pacientes/novo" },
-  { icon: LayoutDashboard, label: "Atendimentos", path: "/atendimentos" },
-  { icon: LayoutDashboard, label: "Novo Atendimento", path: "/atendimentos/novo" },
+  { icon: UserPlus, label: "Novo Paciente", path: "/pacientes/novo" },
+  { icon: Stethoscope, label: "Atendimentos", path: "/atendimentos" },
+  { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
