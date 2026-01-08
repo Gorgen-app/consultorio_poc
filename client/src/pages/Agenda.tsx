@@ -433,7 +433,7 @@ export default function Agenda() {
         key={ag.id}
         onClick={() => abrirDetalhes(ag)}
         className={`
-          p-2 mb-1 rounded cursor-pointer text-white text-xs
+          px-1 py-0.5 rounded cursor-pointer text-white text-[10px] leading-tight
           ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
           ${isCancelado ? "opacity-40 line-through" : "hover:opacity-90"}
           ${CORES_STATUS[ag.status]}
@@ -442,18 +442,18 @@ export default function Agenda() {
         <div className="font-medium truncate">
           {formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
         </div>
-        {ag.local && <div className="text-xs opacity-80">{ag.local}</div>}
+        {ag.local && <div className="text-[9px] opacity-80 truncate">{ag.local}</div>}
       </div>
     );
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Agenda</h1>
-          <p className="text-muted-foreground">Gerencie seus compromissos e horários</p>
+          <h1 className="text-2xl font-bold">Agenda</h1>
+          <p className="text-sm text-muted-foreground">Gerencie seus compromissos e horários</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setModalBloqueioAberto(true)}>
@@ -467,54 +467,69 @@ export default function Agenda() {
         </div>
       </div>
 
-      {/* Controles de navegação */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={() => navegarPeriodo(-1)}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" onClick={irParaHoje}>
-                Hoje
-              </Button>
-              <Button variant="outline" size="icon" onClick={() => navegarPeriodo(1)}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-              <span className="ml-4 text-lg font-medium capitalize">{getTituloPeriodo()}</span>
-            </div>
-            <div className="flex gap-1">
-              <Button 
-                variant={visualizacao === "dia" ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setVisualizacao("dia")}
-              >
-                Dia
-              </Button>
-              <Button 
-                variant={visualizacao === "semana" ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setVisualizacao("semana")}
-              >
-                Semana
-              </Button>
-              <Button 
-                variant={visualizacao === "mes" ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setVisualizacao("mes")}
-              >
-                Mês
-              </Button>
+      {/* Controles de navegação e Legenda */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => navegarPeriodo(-1)}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm" className="h-7 px-2" onClick={irParaHoje}>
+            Hoje
+          </Button>
+          <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => navegarPeriodo(1)}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          <span className="ml-2 text-sm font-medium capitalize">{getTituloPeriodo()}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Legenda compacta */}
+          <div className="hidden md:flex items-center gap-2 text-xs">
+            {Object.entries(CORES_TIPO).map(([tipo, cor]) => (
+              <div key={tipo} className="flex items-center gap-1" title={tipo}>
+                <div className={`w-2 h-2 rounded ${cor}`}></div>
+                <span className="hidden lg:inline">{tipo}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-1 ml-2" title="Cancelado/Reagendado">
+              <div className="w-2 h-2 rounded bg-gray-400 opacity-50"></div>
+              <span className="hidden lg:inline">Cancelado</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          {/* Botões de visualização */}
+          <div className="flex gap-0.5">
+            <Button 
+              variant={visualizacao === "dia" ? "default" : "outline"} 
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setVisualizacao("dia")}
+            >
+              Dia
+            </Button>
+            <Button 
+              variant={visualizacao === "semana" ? "default" : "outline"} 
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setVisualizacao("semana")}
+            >
+              Semana
+            </Button>
+            <Button 
+              variant={visualizacao === "mes" ? "default" : "outline"} 
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setVisualizacao("mes")}
+            >
+              Mês
+            </Button>
+          </div>
+        </div>
+      </div>
 
-      {/* Legenda */}
-      <div className="flex flex-wrap gap-4 text-sm">
+      {/* Legenda mobile */}
+      <div className="flex md:hidden flex-wrap gap-2 text-xs">
         {Object.entries(CORES_TIPO).map(([tipo, cor]) => (
-          <div key={tipo} className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded ${cor}`}></div>
+          <div key={tipo} className="flex items-center gap-1">
+            <div className={`w-2 h-2 rounded ${cor}`}></div>
             <span>{tipo}</span>
           </div>
         ))}
@@ -529,25 +544,25 @@ export default function Agenda() {
         <Card>
           <CardContent className="p-0">
             <div className="grid grid-cols-8 border-b">
-              <div className="p-2 text-center text-sm font-medium border-r bg-muted">
+              <div className="px-1 py-1 text-center text-xs font-medium border-r bg-muted">
                 Horário
               </div>
               {diasSemana.map((dia, i) => (
                 <div 
                   key={i} 
-                  className={`p-2 text-center text-sm font-medium border-r ${
+                  className={`px-1 py-1 text-center text-xs font-medium border-r ${
                     dia.toDateString() === new Date().toDateString() ? "bg-blue-50" : ""
                   }`}
                 >
-                  <div className="capitalize">{dia.toLocaleDateString("pt-BR", { weekday: "short" })}</div>
-                  <div className="text-lg">{dia.getDate()}</div>
+                  <div className="capitalize">{dia.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</div>
+                  <div className="text-sm font-bold">{dia.getDate()}</div>
                 </div>
               ))}
             </div>
-            <div className="max-h-[600px] overflow-y-auto">
+            <div>
               {horarios.map((hora) => (
-                <div key={hora} className="grid grid-cols-8 border-b min-h-[60px]">
-                  <div className="p-2 text-center text-sm text-muted-foreground border-r bg-muted">
+                <div key={hora} className="grid grid-cols-8 border-b h-10">
+                  <div className="px-1 py-0.5 text-center text-xs text-muted-foreground border-r bg-muted flex items-center justify-center">
                     {hora.toString().padStart(2, "0")}:00
                   </div>
                   {diasSemana.map((dia, i) => {
@@ -563,7 +578,7 @@ export default function Agenda() {
                     return (
                       <div 
                         key={i} 
-                        className={`p-1 border-r ${
+                        className={`px-0.5 py-0 border-r overflow-hidden ${
                           dia.toDateString() === new Date().toDateString() ? "bg-blue-50/50" : ""
                         }`}
                       >

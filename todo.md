@@ -909,3 +909,4 @@ A dashboard deve integrar **medicina e administração**:
 - [ ] Visita internado
 - [ ] Procedimento em consultório
 - [ ] Exame
+- [x] Melhorar estética da agenda - linhas mais compactas para caber em uma tela
