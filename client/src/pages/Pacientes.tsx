@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList } from "lucide-react";
-import { Link, useLocation } from "wouter";
-import { useState, useMemo } from "react";
+import { Link, useLocation, useSearch } from "wouter";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OPERADORAS } from "@/lib/operadoras";
 import { EditarPacienteModal } from "@/components/EditarPacienteModal";
@@ -17,8 +17,17 @@ type SortDirection = "asc" | "desc" | null;
 
 export default function Pacientes() {
   const [, setLocation] = useLocation();
+  const searchParams = useSearch();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Foco automático no campo de busca quando vem do menu "Buscar Paciente"
+  useEffect(() => {
+    if (searchParams.includes("buscar=true") && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchParams]);
   
   // Ordenação
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -276,6 +285,7 @@ export default function Pacientes() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
+                ref={searchInputRef}
                 placeholder="Digite nome, CPF ou ID do paciente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

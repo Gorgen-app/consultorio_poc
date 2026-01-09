@@ -939,3 +939,5 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Reorganizar menu lateral - Novo Atendimento como subitem de Atendimentos com dropdown
 - [ ] Mover Configurações para baixo com apenas ícone de engrenagem
 - [x] Ajustar sanfonas do menu: seta abre/fecha sem navegar, múltiplas abertas simultaneamente
+- [x] Adicionar subitem "Buscar Paciente" no menu lateral (direciona para página de pacientes com foco na busca)
+- [x] Adicionar subitem "Buscar Atendimento" no menu lateral (direciona para página de atendimentos com foco na busca)

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, Search } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -73,6 +73,7 @@ const menuWithSubitems: {
     funcionalidade: "pacientes",
     subitems: [
       { icon: UserPlus, label: "Novo Paciente", path: "/pacientes/novo", funcionalidade: "pacientes.criar" },
+      { icon: Search, label: "Buscar Paciente", path: "/pacientes?buscar=true", funcionalidade: "pacientes" },
     ],
   },
   {
@@ -82,6 +83,7 @@ const menuWithSubitems: {
     funcionalidade: "atendimentos",
     subitems: [
       { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo", funcionalidade: "atendimentos.criar" },
+      { icon: Search, label: "Buscar Atendimento", path: "/atendimentos?buscar=true", funcionalidade: "atendimentos" },
     ],
   },
 ];
