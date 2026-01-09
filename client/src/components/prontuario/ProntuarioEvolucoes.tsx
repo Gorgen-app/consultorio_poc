@@ -81,13 +81,18 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
           <h2 className="text-xl font-bold">Evoluções</h2>
           <p className="text-sm text-gray-500">Registro de consultas e atendimentos (SOAP)</p>
         </div>
-        <Dialog open={novaEvolucao} onOpenChange={setNovaEvolucao}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Evolução
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setEvolucaoIdParaUpload(null); setModalUploadAberto(true); }}>
+            <Upload className="h-4 w-4 mr-2" />
+            Upload de Documento
+          </Button>
+          <Dialog open={novaEvolucao} onOpenChange={setNovaEvolucao}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Evolução
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nova Evolução</DialogTitle>
@@ -251,6 +256,7 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       
       {/* Lista de Evoluções */}

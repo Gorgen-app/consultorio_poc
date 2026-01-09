@@ -52,10 +52,15 @@ export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdat
           <h2 className="text-xl font-bold">Internações</h2>
           <p className="text-sm text-gray-500">Histórico de internações hospitalares</p>
         </div>
-        <Dialog open={novaInternacao} onOpenChange={setNovaInternacao}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Nova Internação</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setInternacaoIdParaUpload(null); setModalUploadAberto(true); }}>
+            <Upload className="h-4 w-4 mr-2" />
+            Upload de Documento
+          </Button>
+          <Dialog open={novaInternacao} onOpenChange={setNovaInternacao}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-2" />Nova Internação</Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Registrar Internação</DialogTitle>
@@ -113,6 +118,7 @@ export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdat
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       
       {internacoes.length === 0 ? (

@@ -128,10 +128,15 @@ export default function ProntuarioPatologia({ pacienteId, onUpdate }: Prontuario
             Exames anatomopatológicos, citopatológicos e imunohistoquímica
           </p>
         </div>
-        <Button onClick={() => setModalAberto(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Exame
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setPatologiaIdParaUpload(null); setModalUploadAberto(true); }}>
+            <Upload className="h-4 w-4 mr-2" />Upload de Documento
+          </Button>
+          <Button onClick={() => setModalAberto(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Exame
+          </Button>
+        </div>
       </div>
 
       {/* Lista de exames */}

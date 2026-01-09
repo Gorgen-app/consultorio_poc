@@ -25,8 +25,12 @@ export default function ProntuarioEndoscopia({ pacienteId, exames, onUpdate }: P
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h2 className="text-xl font-bold">Endoscopia</h2><p className="text-sm text-gray-500">EDA, Colonoscopia, Broncoscopia, etc.</p></div>
-        <Dialog open={novoExame} onOpenChange={setNovoExame}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Novo Exame</Button></DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setExameIdParaUpload(null); setModalUploadAberto(true); }}>
+            <Upload className="h-4 w-4 mr-2" />Upload de Documento
+          </Button>
+          <Dialog open={novoExame} onOpenChange={setNovoExame}>
+            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Novo Exame</Button></DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Registrar Exame Endoscópico</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -64,6 +68,7 @@ export default function ProntuarioEndoscopia({ pacienteId, exames, onUpdate }: P
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       {exames.length === 0 ? (
         <Card><CardContent className="py-8 text-center"><Scan className="h-12 w-12 text-gray-300 mx-auto mb-4" /><p className="text-gray-500">Nenhum exame endoscópico registrado.</p></CardContent></Card>

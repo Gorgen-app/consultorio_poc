@@ -25,8 +25,12 @@ export default function ProntuarioExamesImagem({ pacienteId, exames, onUpdate }:
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h2 className="text-xl font-bold">Exames de Imagem</h2><p className="text-sm text-gray-500">Raio-X, Tomografia, Ressonância, Ultrassom</p></div>
-        <Dialog open={novoExame} onOpenChange={setNovoExame}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Novo Exame</Button></DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setExameIdParaUpload(null); setModalUploadAberto(true); }}>
+            <Upload className="h-4 w-4 mr-2" />Upload de Documento
+          </Button>
+          <Dialog open={novoExame} onOpenChange={setNovoExame}>
+            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Novo Exame</Button></DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Registrar Exame de Imagem</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -61,6 +65,7 @@ export default function ProntuarioExamesImagem({ pacienteId, exames, onUpdate }:
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       {exames.length === 0 ? (
         <Card><CardContent className="py-8 text-center"><Image className="h-12 w-12 text-gray-300 mx-auto mb-4" /><p className="text-gray-500">Nenhum exame de imagem registrado.</p></CardContent></Card>

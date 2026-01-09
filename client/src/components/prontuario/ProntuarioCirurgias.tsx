@@ -46,10 +46,15 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
           <h2 className="text-xl font-bold">Cirurgias</h2>
           <p className="text-sm text-gray-500">Histórico de procedimentos cirúrgicos</p>
         </div>
-        <Dialog open={novaCirurgia} onOpenChange={setNovaCirurgia}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Nova Cirurgia</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setCirurgiaIdParaUpload(null); setModalUploadAberto(true); }}>
+            <Upload className="h-4 w-4 mr-2" />
+            Upload de Documento
+          </Button>
+          <Dialog open={novaCirurgia} onOpenChange={setNovaCirurgia}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-2" />Nova Cirurgia</Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Registrar Cirurgia</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -68,6 +73,7 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       {cirurgias.length === 0 ? (
         <Card><CardContent className="py-8 text-center"><Scissors className="h-12 w-12 text-gray-300 mx-auto mb-4" /><p className="text-gray-500">Nenhuma cirurgia registrada.</p></CardContent></Card>
