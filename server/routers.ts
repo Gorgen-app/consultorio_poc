@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { invokeLLM } from "./_core/llm";
 
 // Schema de validação para Paciente
 const pacienteSchema = z.object({
@@ -1520,15 +1521,96 @@ export const appRouter = router({
           throw new Error("Documento não encontrado");
         }
 
-        // Simular extração OCR (em produção, usar serviço de OCR real)
-        // Por enquanto, salvar um placeholder indicando que OCR foi solicitado
-        const textoOcr = `[OCR Solicitado em ${new Date().toLocaleString("pt-BR")}]\n\nO texto será extraído do documento: ${documento.arquivoOriginalNome}\n\nAguardando processamento...`;
+        if (!documento.arquivoOriginalUrl) {
+          throw new Error("Documento não possui arquivo anexado");
+        }
 
+        // Marcar como processando
         await db.updateDocumentoExterno(input.documentoId, {
-          textoOcr,
+          textoOcr: `[Processando OCR...] Iniciado em ${new Date().toLocaleString("pt-BR")}`,
         });
 
-        return { success: true, textoOcr };
+        try {
+          // Determinar o tipo de conteúdo para o LLM
+          const tipoArquivo = documento.arquivoOriginalTipo || "";
+          const isImage = tipoArquivo.startsWith("image/");
+          const isPdf = tipoArquivo === "application/pdf";
+
+          let messageContent: any[];
+
+          if (isImage) {
+            // Para imagens, usar image_url
+            messageContent = [
+              {
+                type: "text",
+                text: "Extraia TODO o texto visível nesta imagem de documento médico. Transcreva exatamente como está escrito, mantendo a formatação original (parágrafos, listas, tabelas). Se houver valores de exames, mantenha os números e unidades. Não adicione interpretações, apenas transcreva o texto."
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: documento.arquivoOriginalUrl,
+                  detail: "high"
+                }
+              }
+            ];
+          } else if (isPdf) {
+            // Para PDFs, usar file_url
+            messageContent = [
+              {
+                type: "text",
+                text: "Extraia TODO o texto deste documento PDF médico. Transcreva exatamente como está escrito, mantendo a formatação original (parágrafos, listas, tabelas). Se houver valores de exames, mantenha os números e unidades. Não adicione interpretações, apenas transcreva o texto."
+              },
+              {
+                type: "file_url",
+                file_url: {
+                  url: documento.arquivoOriginalUrl,
+                  mime_type: "application/pdf"
+                }
+              }
+            ];
+          } else {
+            throw new Error(`Tipo de arquivo não suportado para OCR: ${tipoArquivo}`);
+          }
+
+          // Chamar o LLM para extrair o texto
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "Você é um assistente especializado em transcrição de documentos médicos. Sua tarefa é extrair e transcrever fielmente todo o texto visível em documentos, mantendo a formatação original. Não interprete, não resuma, apenas transcreva."
+              },
+              {
+                role: "user",
+                content: messageContent
+              }
+            ]
+          });
+
+          // Extrair o texto da resposta
+          const textoExtraido = response.choices[0]?.message?.content;
+          
+          if (!textoExtraido || typeof textoExtraido !== "string") {
+            throw new Error("Não foi possível extrair texto do documento");
+          }
+
+          // Salvar o texto extraído
+          const textoOcr = `[OCR Extraído em ${new Date().toLocaleString("pt-BR")}]\n\n${textoExtraido}`;
+
+          await db.updateDocumentoExterno(input.documentoId, {
+            textoOcr,
+          });
+
+          return { success: true, textoOcr };
+        } catch (error: any) {
+          // Em caso de erro, salvar mensagem de erro
+          const textoErro = `[Erro no OCR em ${new Date().toLocaleString("pt-BR")}]\n\nNão foi possível extrair o texto: ${error.message || "Erro desconhecido"}\n\nTente novamente mais tarde.`;
+          
+          await db.updateDocumentoExterno(input.documentoId, {
+            textoOcr: textoErro,
+          });
+
+          throw new Error(`Falha na extração de OCR: ${error.message}`);
+        }
       }),
   }),
 

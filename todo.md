@@ -1025,3 +1025,10 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Mensagem "Resumo não disponível para esse exame" quando não há OCR
 - [x] Componente DocumentosList reutilizável em todas as seções do prontuário
 
+
+### Extração de OCR Real
+- [x] Implementar extração de OCR real usando API de LLM com visão
+- [x] Processar imagens e PDFs automaticamente
+- [x] Tempo estimado de processamento: 5-15 segundos por documento
+- [x] Botão "Reprocessar OCR" para documentos já processados
+

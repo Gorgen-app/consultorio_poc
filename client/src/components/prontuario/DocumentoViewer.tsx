@@ -154,23 +154,43 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
                     <p className="text-sm text-gray-500">
                       Texto extraído via OCR
                     </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyText}
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="h-4 w-4 mr-2 text-green-500" />
-                          Copiado!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copiar Texto
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExtractOcr}
+                        disabled={isExtracting}
+                      >
+                        {isExtracting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Processando...
+                          </>
+                        ) : (
+                          <>
+                            <ScanText className="h-4 w-4 mr-2" />
+                            Reprocessar OCR
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyText}
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="h-4 w-4 mr-2 text-green-500" />
+                            Copiado!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copiar Texto
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-4 max-h-[400px] overflow-auto">
                     <pre className="whitespace-pre-wrap text-sm font-mono">
