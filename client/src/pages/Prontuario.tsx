@@ -35,7 +35,8 @@ import {
   UserPlus,
   ClipboardList,
   Pencil,
-  LineChart
+  LineChart,
+  CheckCircle
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -159,6 +160,11 @@ export default function Prontuario() {
   const [novoProblemaDataInicio, setNovoProblemaDataInicio] = useState("");
   const [novoProblemaCID, setNovoProblemaCID] = useState("");
   
+  // Estados para resolver problema
+  const [modalResolverProblema, setModalResolverProblema] = useState(false);
+  const [problemaParaResolver, setProblemaParaResolver] = useState<{id: number; descricao: string} | null>(null);
+  const [dataResolucaoProblema, setDataResolucaoProblema] = useState("");
+  
   // Estados para modais de Medicamentos
   const [modalNovoMedicamento, setModalNovoMedicamento] = useState(false);
   const [modalTimelineMedicamentos, setModalTimelineMedicamentos] = useState(false);
@@ -236,6 +242,20 @@ export default function Prontuario() {
     },
     onError: (err) => {
       toast.error("Erro ao registrar medicamento: " + err.message);
+    },
+  });
+  
+  // Mutation para resolver problema (marcar como inativo com data de resolução)
+  const resolverProblema = trpc.prontuario.problemas.update.useMutation({
+    onSuccess: () => {
+      toast.success("Problema marcado como resolvido!");
+      setModalResolverProblema(false);
+      setProblemaParaResolver(null);
+      setDataResolucaoProblema("");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error("Erro ao resolver problema: " + err.message);
     },
   });
   
@@ -1125,9 +1145,26 @@ export default function Prontuario() {
                       <div className="flex-1 bg-gray-50 rounded-lg p-3">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{p.descricao}</span>
-                          <Badge variant={p.ativo ? 'destructive' : 'outline'}>
-                            {p.ativo ? 'Ativo' : 'Resolvido'}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            {p.ativo && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                                onClick={() => {
+                                  setProblemaParaResolver({ id: p.id, descricao: p.descricao });
+                                  setDataResolucaoProblema(new Date().toISOString().split('T')[0]);
+                                  setModalResolverProblema(true);
+                                }}
+                              >
+                                <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                Resolver
+                              </Button>
+                            )}
+                            <Badge variant={p.ativo ? 'destructive' : 'outline'}>
+                              {p.ativo ? 'Ativo' : 'Resolvido'}
+                            </Badge>
+                          </div>
                         </div>
                         {p.cid10 && <p className="text-sm text-gray-600 mt-1">CID-10: {p.cid10}</p>}
                         <div className="text-xs text-gray-400 mt-1 flex gap-4">
@@ -1272,6 +1309,66 @@ export default function Prontuario() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal para resolver problema */}
+      <Dialog open={modalResolverProblema} onOpenChange={setModalResolverProblema}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              Resolver Problema
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-600">
+              Você está marcando o problema como resolvido:
+            </p>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="font-medium">{problemaParaResolver?.descricao}</p>
+            </div>
+            <p className="text-sm text-gray-500">
+              O problema será marcado como inativo e a data de resolução será registrada.
+              O histórico será preservado para consulta futura.
+            </p>
+            <div>
+              <Label htmlFor="dataResolucao">Data de Resolução *</Label>
+              <Input
+                id="dataResolucao"
+                type="date"
+                value={dataResolucaoProblema}
+                onChange={(e) => setDataResolucaoProblema(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setModalResolverProblema(false);
+              setProblemaParaResolver(null);
+              setDataResolucaoProblema("");
+            }}>
+              Cancelar
+            </Button>
+            <Button 
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => {
+                if (!dataResolucaoProblema) {
+                  toast.error("Informe a data de resolução");
+                  return;
+                }
+                if (!problemaParaResolver) return;
+                resolverProblema.mutate({
+                  id: problemaParaResolver.id,
+                  ativo: false,
+                  dataResolucao: dataResolucaoProblema,
+                });
+              }}
+              disabled={resolverProblema.isPending}
+            >
+              {resolverProblema.isPending ? "Salvando..." : "Confirmar Resolução"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

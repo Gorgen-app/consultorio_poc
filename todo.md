@@ -954,3 +954,9 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Adicionar botão de gráfico no box de Medicamentos para timeline de uso (início/fim)
 - [x] Adicionar botão de lápis no box de Problemas Ativos para inserir novos dados
 - [x] Adicionar botão de gráfico no box de Problemas Ativos para timeline de doença (início/fim)
+
+## 🏥 PRONTUÁRIO - Resolver Problemas
+
+- [x] Adicionar botão "Resolver" na timeline de problemas ativos
+- [x] Criar modal para registrar data de resolução
+- [x] Atualizar problema como inativo com data de resolução
