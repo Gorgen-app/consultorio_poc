@@ -1551,6 +1551,132 @@ export const appRouter = router({
               if (textoExtraido && typeof textoExtraido === "string") {
                 const textoOcr = `[OCR Extraído em ${new Date().toLocaleString("pt-BR")}]\n\n${textoExtraido}`;
                 await db.updateDocumentoExterno(documento.id, { textoOcr });
+                
+                // Se for exame laboratorial, extrair dados estruturados automaticamente
+                if (input.categoria === "Exame Laboratorial" && isPdf) {
+                  try {
+                    console.log(`Iniciando extração automática de dados laboratoriais para documento ${documento.id}`);
+                    
+                    const labResponse = await invokeLLM({
+                      messages: [
+                        {
+                          role: "system",
+                          content: `Você é um especialista em extração de dados de exames laboratoriais.
+Analise o documento e extraia TODOS os resultados de exames laboratoriais.
+Para cada exame, extraia:
+- nome_exame: nome do exame como aparece no laudo
+- resultado: valor do resultado (pode ser texto como ">90" ou "Não reagente")
+- resultado_numerico: valor numérico quando aplicável (apenas números)
+- unidade: unidade de medida
+- valor_referencia_texto: faixa de referência como aparece no laudo
+- valor_referencia_min: valor mínimo da referência (apenas números)
+- valor_referencia_max: valor máximo da referência (apenas números)
+- data_coleta: data da coleta no formato YYYY-MM-DD
+- laboratorio: nome do laboratório
+
+PRIORIZE a extração do "LAUDO EVOLUTIVO" ou "FLUXOGRAMA" se existir, pois contém histórico consolidado.
+
+Retorne um JSON válido com a estrutura:
+{
+  "exames": [
+    {
+      "nome_exame": "string",
+      "resultado": "string",
+      "resultado_numerico": number | null,
+      "unidade": "string",
+      "valor_referencia_texto": "string",
+      "valor_referencia_min": number | null,
+      "valor_referencia_max": number | null,
+      "data_coleta": "YYYY-MM-DD",
+      "laboratorio": "string"
+    }
+  ],
+  "laboratorio_principal": "string",
+  "data_principal": "YYYY-MM-DD"
+}`
+                        },
+                        {
+                          role: "user",
+                          content: [
+                            {
+                              type: "file_url" as const,
+                              file_url: {
+                                url: input.arquivoOriginalUrl,
+                                mime_type: "application/pdf" as const
+                              }
+                            },
+                            {
+                              type: "text" as const,
+                              text: "Extraia todos os resultados de exames laboratoriais deste documento. Retorne apenas o JSON, sem texto adicional."
+                            }
+                          ]
+                        }
+                      ],
+                      response_format: {
+                        type: "json_schema",
+                        json_schema: {
+                          name: "exames_laboratoriais",
+                          strict: true,
+                          schema: {
+                            type: "object",
+                            properties: {
+                              exames: {
+                                type: "array",
+                                items: {
+                                  type: "object",
+                                  properties: {
+                                    nome_exame: { type: "string" },
+                                    resultado: { type: "string" },
+                                    resultado_numerico: { type: ["number", "null"] },
+                                    unidade: { type: ["string", "null"] },
+                                    valor_referencia_texto: { type: ["string", "null"] },
+                                    valor_referencia_min: { type: ["number", "null"] },
+                                    valor_referencia_max: { type: ["number", "null"] },
+                                    data_coleta: { type: "string" },
+                                    laboratorio: { type: ["string", "null"] }
+                                  },
+                                  required: ["nome_exame", "resultado", "data_coleta"],
+                                  additionalProperties: false
+                                }
+                              },
+                              laboratorio_principal: { type: ["string", "null"] },
+                              data_principal: { type: ["string", "null"] }
+                            },
+                            required: ["exames"],
+                            additionalProperties: false
+                          }
+                        }
+                      }
+                    });
+
+                    const labContent = labResponse.choices[0]?.message?.content;
+                    if (labContent && typeof labContent === "string") {
+                      const dados = JSON.parse(labContent);
+                      if (dados.exames && Array.isArray(dados.exames) && dados.exames.length > 0) {
+                        const resultados = dados.exames.map((exame: any) => ({
+                          pacienteId: input.pacienteId,
+                          documentoExternoId: documento.id,
+                          nomeExameOriginal: exame.nome_exame || "Exame sem nome",
+                          dataColeta: exame.data_coleta || new Date().toISOString().split('T')[0],
+                          resultado: exame.resultado || "N/A",
+                          resultadoNumerico: exame.resultado_numerico != null ? String(exame.resultado_numerico) : null,
+                          unidade: exame.unidade || null,
+                          valorReferenciaTexto: exame.valor_referencia_texto || null,
+                          valorReferenciaMin: exame.valor_referencia_min != null ? String(exame.valor_referencia_min) : null,
+                          valorReferenciaMax: exame.valor_referencia_max != null ? String(exame.valor_referencia_max) : null,
+                          laboratorio: exame.laboratorio || dados.laboratorio_principal || null,
+                          extraidoPorIa: true,
+                        }));
+                        
+                        const count = await db.createManyResultadosLaboratoriais(resultados);
+                        console.log(`Extração automática concluída: ${count} resultados inseridos para documento ${documento.id}`);
+                      }
+                    }
+                  } catch (labError: any) {
+                    console.error("Erro na extração automática de dados laboratoriais:", labError.message);
+                    // Não falha o upload, apenas loga o erro
+                  }
+                }
               } else {
                 await db.updateDocumentoExterno(documento.id, {
                   textoOcr: `[Erro no OCR] Não foi possível extrair texto do documento.`
@@ -1878,37 +2004,54 @@ Retorne um JSON válido com a estrutura:
           }
         });
 
+        // Verificar se a resposta existe
+        if (!response || !response.choices || response.choices.length === 0) {
+          console.error("Resposta LLM vazia ou inválida:", JSON.stringify(response));
+          throw new Error("Não foi possível obter resposta do LLM");
+        }
+
         const content = response.choices[0]?.message?.content;
         if (!content || typeof content !== 'string') {
+          console.error("Conteúdo da resposta inválido:", content);
           throw new Error("Não foi possível extrair dados do PDF");
         }
+
+        console.log("Resposta LLM recebida, tamanho:", content.length);
 
         let dados;
         try {
           dados = JSON.parse(content);
-        } catch {
-          throw new Error("Resposta inválida do LLM");
+        } catch (parseError) {
+          console.error("Erro ao parsear JSON:", parseError, "Conteúdo:", content.substring(0, 500));
+          throw new Error("Resposta inválida do LLM - não é um JSON válido");
         }
 
         if (!dados.exames || !Array.isArray(dados.exames)) {
+          console.error("Estrutura de dados inválida:", JSON.stringify(dados));
           throw new Error("Nenhum exame encontrado no documento");
         }
+
+        console.log(`Encontrados ${dados.exames.length} exames para processar`);
 
         // Inserir resultados no banco
         const resultados = dados.exames.map((exame: any) => ({
           pacienteId: input.pacienteId,
           documentoExternoId: input.documentoExternoId,
-          nomeExameOriginal: exame.nome_exame,
-          dataColeta: exame.data_coleta,
-          resultado: exame.resultado,
-          resultadoNumerico: exame.resultado_numerico ? String(exame.resultado_numerico) : null,
-          unidade: exame.unidade,
-          valorReferenciaTexto: exame.valor_referencia_texto,
-          valorReferenciaMin: exame.valor_referencia_min ? String(exame.valor_referencia_min) : null,
-          valorReferenciaMax: exame.valor_referencia_max ? String(exame.valor_referencia_max) : null,
-          laboratorio: exame.laboratorio || dados.laboratorio_principal,
+          nomeExameOriginal: exame.nome_exame || "Exame sem nome",
+          dataColeta: exame.data_coleta || new Date().toISOString().split('T')[0],
+          resultado: exame.resultado || "N/A",
+          resultadoNumerico: exame.resultado_numerico != null ? String(exame.resultado_numerico) : null,
+          unidade: exame.unidade || null,
+          valorReferenciaTexto: exame.valor_referencia_texto || null,
+          valorReferenciaMin: exame.valor_referencia_min != null ? String(exame.valor_referencia_min) : null,
+          valorReferenciaMax: exame.valor_referencia_max != null ? String(exame.valor_referencia_max) : null,
+          laboratorio: exame.laboratorio || dados.laboratorio_principal || null,
           extraidoPorIa: true,
         }));
+
+        if (resultados.length === 0) {
+          throw new Error("Nenhum resultado válido para inserir");
+        }
 
         const count = await db.createManyResultadosLaboratoriais(resultados);
 

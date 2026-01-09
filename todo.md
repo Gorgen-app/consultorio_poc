@@ -1103,3 +1103,14 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Aba "Dados Estruturados" no visualizador de documentos
 - [x] Botão "Extrair Resultados de Exames" para documentos laboratoriais
 - [x] Fluxograma laboratorial na seção de Exames Laboratoriais do prontuário
+
+
+---
+
+## 🐛 CORREÇÕES EXAMES LABORATORIAIS (09/01/2026)
+
+### Bug a Corrigir
+- [x] Erro "Cannot read properties of undefined (reading '0')" ao extrair dados laboratoriais - adicionado tratamento de erro robusto
+
+### Melhoria
+- [x] Implementar extração automática de dados laboratoriais no upload (sem necessidade de clique manual)
