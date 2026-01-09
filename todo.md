@@ -941,3 +941,16 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Ajustar sanfonas do menu: seta abre/fecha sem navegar, múltiplas abertas simultaneamente
 - [x] Adicionar subitem "Buscar Paciente" no menu lateral (direciona para página de pacientes com foco na busca)
 - [x] Adicionar subitem "Buscar Atendimento" no menu lateral (direciona para página de atendimentos com foco na busca)
+
+## 🐛 BUGS - Prontuário
+
+- [x] Corrigir salvamento de medidas (peso/altura) não atualizando o box
+
+## 🏥 PRONTUÁRIO - Boxes de Alergias, Medicamentos e Problemas
+
+- [x] Adicionar botão de lápis no box de Alergias para inserir novos dados
+- [x] Adicionar botão de gráfico no box de Alergias para timeline de início/fim
+- [x] Adicionar botão de lápis no box de Medicamentos para inserir novos dados
+- [x] Adicionar botão de gráfico no box de Medicamentos para timeline de uso (início/fim)
+- [x] Adicionar botão de lápis no box de Problemas Ativos para inserir novos dados
+- [x] Adicionar botão de gráfico no box de Problemas Ativos para timeline de doença (início/fim)

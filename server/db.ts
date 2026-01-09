@@ -1180,6 +1180,7 @@ export interface ProntuarioCompleto {
   terapias: Terapia[];
   obstetricia: Obstetricia[];
   documentos: DocumentoMedico[];
+  totalAtendimentos: number;
 }
 
 export async function getProntuarioCompleto(pacienteId: number): Promise<ProntuarioCompleto | null> {
@@ -1212,7 +1213,8 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
     cardiologiaData,
     terapiasData,
     obstetriciaData,
-    documentosData
+    documentosData,
+    totalAtendimentosPaciente
   ] = await Promise.all([
     getResumoClinico(pacienteId),
     listProblemasAtivos(pacienteId),
@@ -1227,7 +1229,8 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
     listCardiologia(pacienteId),
     listTerapias(pacienteId),
     listObstetricia(pacienteId),
-    listDocumentosMedicos(pacienteId)
+    listDocumentosMedicos(pacienteId),
+    countAtendimentos({ pacienteId })
   ]);
   
   return {
@@ -1245,7 +1248,8 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
     cardiologia: cardiologiaData,
     terapias: terapiasData,
     obstetricia: obstetriciaData,
-    documentos: documentosData
+    documentos: documentosData,
+    totalAtendimentos: totalAtendimentosPaciente
   };
 }
 
@@ -1291,18 +1295,30 @@ export async function registrarMedida(data: {
     registradoPor: data.registradoPor,
   });
 
-  // Atualizar também o resumo clínico com os valores mais recentes
+  // Atualizar também o resumo clínico com os valores mais recentes (usando upsert)
   if (data.peso || data.altura) {
+    const existing = await getResumoClinico(data.pacienteId);
     const dbUpdate = await getDb();
     if (dbUpdate) {
-      await dbUpdate.update(resumoClinico)
-      .set({
-        pesoAtual: data.peso ? String(data.peso) : undefined,
-        altura: data.altura ? String(data.altura) : undefined,
-        imc: imc ? String(imc) : undefined,
-        updatedAt: new Date(),
-      })
-      .where(eq(resumoClinico.pacienteId, data.pacienteId));
+      if (existing) {
+        // Atualizar registro existente
+        await dbUpdate.update(resumoClinico)
+        .set({
+          pesoAtual: data.peso ? String(data.peso) : existing.pesoAtual,
+          altura: data.altura ? String(data.altura) : existing.altura,
+          imc: imc ? String(imc) : existing.imc,
+          updatedAt: new Date(),
+        })
+        .where(eq(resumoClinico.pacienteId, data.pacienteId));
+      } else {
+        // Criar novo registro de resumo clínico
+        await dbUpdate.insert(resumoClinico).values({
+          pacienteId: data.pacienteId,
+          pesoAtual: data.peso ? String(data.peso) : null,
+          altura: data.altura ? String(data.altura) : null,
+          imc: imc ? String(imc) : null,
+        });
+      }
     }
   }
 

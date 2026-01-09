@@ -40,6 +40,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 // Componentes das seções
@@ -144,6 +145,28 @@ export default function Prontuario() {
   // Estado para modal de gráfico
   const [modalGraficoAberto, setModalGraficoAberto] = useState(false);
   
+  // Estados para modais de Alergias
+  const [modalNovaAlergia, setModalNovaAlergia] = useState(false);
+  const [modalTimelineAlergias, setModalTimelineAlergias] = useState(false);
+  const [novaAlergiaSubstancia, setNovaAlergiaSubstancia] = useState("");
+  const [novaAlergiaGravidade, setNovaAlergiaGravidade] = useState<"Leve" | "Moderada" | "Grave">("Leve");
+  const [novaAlergiaReacao, setNovaAlergiaReacao] = useState("");
+  
+  // Estados para modais de Problemas
+  const [modalNovoProblema, setModalNovoProblema] = useState(false);
+  const [modalTimelineProblemas, setModalTimelineProblemas] = useState(false);
+  const [novoProblemaDescricao, setNovoProblemaDescricao] = useState("");
+  const [novoProblemaDataInicio, setNovoProblemaDataInicio] = useState("");
+  const [novoProblemaCID, setNovoProblemaCID] = useState("");
+  
+  // Estados para modais de Medicamentos
+  const [modalNovoMedicamento, setModalNovoMedicamento] = useState(false);
+  const [modalTimelineMedicamentos, setModalTimelineMedicamentos] = useState(false);
+  const [novoMedicamentoNome, setNovoMedicamentoNome] = useState("");
+  const [novoMedicamentoDose, setNovoMedicamentoDose] = useState("");
+  const [novoMedicamentoFrequencia, setNovoMedicamentoFrequencia] = useState("");
+  const [novoMedicamentoDataInicio, setNovoMedicamentoDataInicio] = useState("");
+  
   // Buscar prontuário completo
   const { data: prontuario, isLoading, error, refetch } = trpc.prontuario.completo.useQuery(
     { pacienteId },
@@ -167,6 +190,52 @@ export default function Prontuario() {
     },
     onError: (err) => {
       toast.error("Erro ao registrar medida: " + err.message);
+    },
+  });
+  
+  // Mutation para adicionar nova alergia
+  const criarAlergia = trpc.prontuario.alergias.create.useMutation({
+    onSuccess: () => {
+      toast.success("Alergia registrada com sucesso!");
+      setModalNovaAlergia(false);
+      setNovaAlergiaSubstancia("");
+      setNovaAlergiaGravidade("Leve");
+      setNovaAlergiaReacao("");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error("Erro ao registrar alergia: " + err.message);
+    },
+  });
+  
+  // Mutation para adicionar novo problema
+  const criarProblema = trpc.prontuario.problemas.create.useMutation({
+    onSuccess: () => {
+      toast.success("Problema registrado com sucesso!");
+      setModalNovoProblema(false);
+      setNovoProblemaDescricao("");
+      setNovoProblemaDataInicio("");
+      setNovoProblemaCID("");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error("Erro ao registrar problema: " + err.message);
+    },
+  });
+  
+  // Mutation para adicionar novo medicamento
+  const criarMedicamento = trpc.prontuario.medicamentos.create.useMutation({
+    onSuccess: () => {
+      toast.success("Medicamento registrado com sucesso!");
+      setModalNovoMedicamento(false);
+      setNovoMedicamentoNome("");
+      setNovoMedicamentoDose("");
+      setNovoMedicamentoFrequencia("");
+      setNovoMedicamentoDataInicio("");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error("Erro ao registrar medicamento: " + err.message);
     },
   });
   
@@ -428,10 +497,32 @@ export default function Prontuario() {
               <CardContent className="space-y-3">
                 {/* Alergias */}
                 <div>
-                  <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    Alergias
-                  </p>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Alergias
+                    </p>
+                    <div className="flex gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => setModalTimelineAlergias(true)}
+                        title="Ver timeline"
+                      >
+                        <LineChart className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => setModalNovaAlergia(true)}
+                        title="Adicionar alergia"
+                      >
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </Button>
+                    </div>
+                  </div>
                   {alergias.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {alergias.map((a) => (
@@ -453,10 +544,32 @@ export default function Prontuario() {
                 
                 {/* Problemas Ativos */}
                 <div>
-                  <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                    <Stethoscope className="h-3 w-3" />
-                    Problemas Ativos ({problemasAtivos.filter(p => p.ativo).length})
-                  </p>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <Stethoscope className="h-3 w-3" />
+                      Problemas Ativos ({problemasAtivos.filter(p => p.ativo).length})
+                    </p>
+                    <div className="flex gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => setModalTimelineProblemas(true)}
+                        title="Ver timeline"
+                      >
+                        <LineChart className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => setModalNovoProblema(true)}
+                        title="Adicionar problema"
+                      >
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </Button>
+                    </div>
+                  </div>
                   {problemasAtivos.filter(p => p.ativo).slice(0, 3).map((p) => (
                     <p key={p.id} className="text-xs truncate">{p.descricao}</p>
                   ))}
@@ -467,10 +580,32 @@ export default function Prontuario() {
                 
                 {/* Medicamentos */}
                 <div>
-                  <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                    <Pill className="h-3 w-3" />
-                    Medicamentos em Uso ({medicamentosUso.length})
-                  </p>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <Pill className="h-3 w-3" />
+                      Medicamentos em Uso ({medicamentosUso.length})
+                    </p>
+                    <div className="flex gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => setModalTimelineMedicamentos(true)}
+                        title="Ver timeline"
+                      >
+                        <LineChart className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => setModalNovoMedicamento(true)}
+                        title="Adicionar medicamento"
+                      >
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                      </Button>
+                    </div>
+                  </div>
                   {medicamentosUso.slice(0, 2).map((m) => (
                     <p key={m.id} className="text-xs truncate">{m.medicamento}</p>
                   ))}
@@ -767,6 +902,372 @@ export default function Prontuario() {
                       </tbody>
                     </table>
                   </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal para adicionar nova alergia */}
+      <Dialog open={modalNovaAlergia} onOpenChange={setModalNovaAlergia}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Registrar Nova Alergia
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-500">
+              Os dados anteriores serão preservados no histórico para consulta.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="substancia">Substância *</Label>
+                <Input
+                  id="substancia"
+                  value={novaAlergiaSubstancia}
+                  onChange={(e) => setNovaAlergiaSubstancia(e.target.value)}
+                  placeholder="Ex: Penicilina, Amendoim, Pólen"
+                />
+              </div>
+              <div>
+                <Label htmlFor="gravidade">Gravidade</Label>
+                <Select value={novaAlergiaGravidade} onValueChange={(v: "Leve" | "Moderada" | "Grave") => setNovaAlergiaGravidade(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Leve">Leve</SelectItem>
+                    <SelectItem value="Moderada">Moderada</SelectItem>
+                    <SelectItem value="Grave">Grave</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="reacao">Reação</Label>
+                <Input
+                  id="reacao"
+                  value={novaAlergiaReacao}
+                  onChange={(e) => setNovaAlergiaReacao(e.target.value)}
+                  placeholder="Ex: Urticária, Edema, Anafilaxia"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalNovaAlergia(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                if (!novaAlergiaSubstancia) {
+                  toast.error("Informe a substância");
+                  return;
+                }
+                criarAlergia.mutate({
+                  pacienteId,
+                  tipo: "Medicamento",
+                  substancia: novaAlergiaSubstancia,
+                  gravidade: novaAlergiaGravidade,
+                  reacao: novaAlergiaReacao || null,
+                });
+              }}
+              disabled={criarAlergia.isPending}
+            >
+              {criarAlergia.isPending ? "Salvando..." : "Registrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal Timeline de Alergias */}
+      <Dialog open={modalTimelineAlergias} onOpenChange={setModalTimelineAlergias}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Timeline de Alergias
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {alergias.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhuma alergia registrada.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Timeline visual */}
+                <div className="relative">
+                  {alergias.map((a, i) => (
+                    <div key={a.id} className="flex items-start gap-4 pb-4">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-3 h-3 rounded-full ${a.gravidade === 'Grave' ? 'bg-red-500' : a.gravidade === 'Moderada' ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                        {i < alergias.length - 1 && <div className="w-0.5 h-full bg-gray-200 mt-1" />}
+                      </div>
+                      <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{a.substancia}</span>
+                          <Badge variant={a.gravidade === 'Grave' ? 'destructive' : 'outline'}>
+                            {a.gravidade || 'Não especificada'}
+                          </Badge>
+                        </div>
+                        {a.reacao && <p className="text-sm text-gray-600 mt-1">Reação: {a.reacao}</p>}
+                        <p className="text-xs text-gray-400 mt-1">
+                          Tipo: {a.tipo} | Registrado em: {a.createdAt ? new Date(a.createdAt).toLocaleDateString('pt-BR') : '-'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal para adicionar novo problema */}
+      <Dialog open={modalNovoProblema} onOpenChange={setModalNovoProblema}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Stethoscope className="h-5 w-5 text-blue-500" />
+              Registrar Novo Problema
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-500">
+              Os dados anteriores serão preservados no histórico para consulta.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="descricaoProblema">Descrição *</Label>
+                <Input
+                  id="descricaoProblema"
+                  value={novoProblemaDescricao}
+                  onChange={(e) => setNovoProblemaDescricao(e.target.value)}
+                  placeholder="Ex: Hipertensão Arterial, Diabetes Mellitus"
+                />
+              </div>
+              <div>
+                <Label htmlFor="cidProblema">CID-10</Label>
+                <Input
+                  id="cidProblema"
+                  value={novoProblemaCID}
+                  onChange={(e) => setNovoProblemaCID(e.target.value)}
+                  placeholder="Ex: I10, E11"
+                />
+              </div>
+              <div>
+                <Label htmlFor="dataInicioProblema">Data de Início</Label>
+                <Input
+                  id="dataInicioProblema"
+                  type="date"
+                  value={novoProblemaDataInicio}
+                  onChange={(e) => setNovoProblemaDataInicio(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalNovoProblema(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                if (!novoProblemaDescricao) {
+                  toast.error("Informe a descrição do problema");
+                  return;
+                }
+                criarProblema.mutate({
+                  pacienteId,
+                  descricao: novoProblemaDescricao,
+                  cid10: novoProblemaCID || null,
+                  dataInicio: novoProblemaDataInicio || null,
+                  ativo: true,
+                });
+              }}
+              disabled={criarProblema.isPending}
+            >
+              {criarProblema.isPending ? "Salvando..." : "Registrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal Timeline de Problemas */}
+      <Dialog open={modalTimelineProblemas} onOpenChange={setModalTimelineProblemas}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Stethoscope className="h-5 w-5 text-blue-500" />
+              Timeline de Problemas de Saúde
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {problemasAtivos.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Stethoscope className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhum problema registrado.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Timeline visual */}
+                <div className="relative">
+                  {problemasAtivos.map((p, i) => (
+                    <div key={p.id} className="flex items-start gap-4 pb-4">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-3 h-3 rounded-full ${p.ativo ? 'bg-red-500' : 'bg-green-500'}`} />
+                        {i < problemasAtivos.length - 1 && <div className="w-0.5 h-full bg-gray-200 mt-1" />}
+                      </div>
+                      <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{p.descricao}</span>
+                          <Badge variant={p.ativo ? 'destructive' : 'outline'}>
+                            {p.ativo ? 'Ativo' : 'Resolvido'}
+                          </Badge>
+                        </div>
+                        {p.cid10 && <p className="text-sm text-gray-600 mt-1">CID-10: {p.cid10}</p>}
+                        <div className="text-xs text-gray-400 mt-1 flex gap-4">
+                          <span>Início: {p.dataInicio ? new Date(p.dataInicio).toLocaleDateString('pt-BR') : '-'}</span>
+                          {p.dataResolucao && <span>Resolução: {new Date(p.dataResolucao).toLocaleDateString('pt-BR')}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal para adicionar novo medicamento */}
+      <Dialog open={modalNovoMedicamento} onOpenChange={setModalNovoMedicamento}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5 text-purple-500" />
+              Registrar Novo Medicamento
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-500">
+              Os dados anteriores serão preservados no histórico para consulta.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="nomeMedicamento">Nome do Medicamento *</Label>
+                <Input
+                  id="nomeMedicamento"
+                  value={novoMedicamentoNome}
+                  onChange={(e) => setNovoMedicamentoNome(e.target.value)}
+                  placeholder="Ex: Losartana, Metformina"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="doseMedicamento">Dosagem</Label>
+                  <Input
+                    id="doseMedicamento"
+                    value={novoMedicamentoDose}
+                    onChange={(e) => setNovoMedicamentoDose(e.target.value)}
+                    placeholder="Ex: 50mg"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="frequenciaMedicamento">Frequência</Label>
+                  <Input
+                    id="frequenciaMedicamento"
+                    value={novoMedicamentoFrequencia}
+                    onChange={(e) => setNovoMedicamentoFrequencia(e.target.value)}
+                    placeholder="Ex: 12/12h"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="dataInicioMedicamento">Data de Início</Label>
+                <Input
+                  id="dataInicioMedicamento"
+                  type="date"
+                  value={novoMedicamentoDataInicio}
+                  onChange={(e) => setNovoMedicamentoDataInicio(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalNovoMedicamento(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                if (!novoMedicamentoNome) {
+                  toast.error("Informe o nome do medicamento");
+                  return;
+                }
+                criarMedicamento.mutate({
+                  pacienteId,
+                  medicamento: novoMedicamentoNome,
+                  dosagem: novoMedicamentoDose || null,
+                  posologia: novoMedicamentoFrequencia || null,
+                  dataInicio: novoMedicamentoDataInicio || null,
+                  ativo: true,
+                });
+              }}
+              disabled={criarMedicamento.isPending}
+            >
+              {criarMedicamento.isPending ? "Salvando..." : "Registrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal Timeline de Medicamentos */}
+      <Dialog open={modalTimelineMedicamentos} onOpenChange={setModalTimelineMedicamentos}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5 text-purple-500" />
+              Timeline de Medicamentos
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {medicamentosUso.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Pill className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhum medicamento registrado.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Timeline visual */}
+                <div className="relative">
+                  {medicamentosUso.map((m, i) => (
+                    <div key={m.id} className="flex items-start gap-4 pb-4">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-3 h-3 rounded-full ${m.ativo ? 'bg-purple-500' : 'bg-gray-400'}`} />
+                        {i < medicamentosUso.length - 1 && <div className="w-0.5 h-full bg-gray-200 mt-1" />}
+                      </div>
+                      <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{m.medicamento}</span>
+                          <Badge variant={m.ativo ? 'default' : 'outline'}>
+                            {m.ativo ? 'Em uso' : 'Suspenso'}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {m.dosagem && <span>{m.dosagem}</span>}
+                          {m.posologia && <span> - {m.posologia}</span>}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1 flex gap-4">
+                          <span>Início: {m.dataInicio ? new Date(m.dataInicio).toLocaleDateString('pt-BR') : '-'}</span>
+                          {m.dataFim && <span>Fim: {new Date(m.dataFim).toLocaleDateString('pt-BR')}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
