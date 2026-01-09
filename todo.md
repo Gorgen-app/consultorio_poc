@@ -987,3 +987,21 @@ A dashboard deve integrar **medicina e administração**:
 ## 🐛 BUG - Botões de Upload
 
 - [x] Botões de upload não aparecem nos componentes do prontuário (estava funcionando, botão é discreto ao lado do nome do médico)
+
+
+## 📄 PRONTUÁRIO - Visualizador e OCR
+
+- [ ] Criar modal de visualização de documentos (PDF e imagens) sem necessidade de download
+- [ ] Implementar conversão OCR opcional para extração de texto de imagens/PDFs
+- [ ] Armazenar texto extraído no banco para consulta rápida
+- [ ] Adicionar checkbox "Extrair texto (OCR)" no upload de documentos
+- [ ] Exibir texto extraído quando solicitado
+
+## 🔘 PRONTUÁRIO - Botões de Registro Inicial
+
+- [ ] Adicionar botão "Registrar Primeira Internação" no estado vazio
+- [ ] Adicionar botão "Registrar Primeira Cirurgia" no estado vazio
+- [ ] Adicionar botão "Registrar Primeiro Exame" em Exames Laboratoriais (estado vazio)
+- [ ] Adicionar botão "Registrar Primeiro Exame" em Exames de Imagem (estado vazio)
+- [ ] Adicionar botão "Registrar Primeiro Exame" em Endoscopia (estado vazio)
+- [ ] Adicionar botão "Registrar Primeiro Exame" em Cardiologia (estado vazio)

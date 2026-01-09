@@ -1510,6 +1510,26 @@ export const appRouter = router({
         });
         return { success: true };
       }),
+
+    extractOcr: protectedProcedure
+      .input(z.object({ documentoId: z.number() }))
+      .mutation(async ({ input }) => {
+        // Buscar o documento
+        const documento = await db.getDocumentoExterno(input.documentoId);
+        if (!documento) {
+          throw new Error("Documento não encontrado");
+        }
+
+        // Simular extração OCR (em produção, usar serviço de OCR real)
+        // Por enquanto, salvar um placeholder indicando que OCR foi solicitado
+        const textoOcr = `[OCR Solicitado em ${new Date().toLocaleString("pt-BR")}]\n\nO texto será extraído do documento: ${documento.arquivoOriginalNome}\n\nAguardando processamento...`;
+
+        await db.updateDocumentoExterno(input.documentoId, {
+          textoOcr,
+        });
+
+        return { success: true, textoOcr };
+      }),
   }),
 
   // ===== PATOLOGIA =====

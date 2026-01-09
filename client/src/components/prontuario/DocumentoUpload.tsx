@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -18,8 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, FileText, Image, Loader2, X, Eye } from "lucide-react";
+import { Upload, FileText, Image, Loader2, X, Eye, ScanText } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { DocumentoViewer } from "./DocumentoViewer";
 
 
 type CategoriaDocumento = 
@@ -57,6 +59,7 @@ export function DocumentoUpload({
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [extrairOcr, setExtrairOcr] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const utils = trpc.useUtils();
@@ -69,12 +72,19 @@ export function DocumentoUpload({
     },
   });
 
+  const extractOcrMutation = trpc.documentosExternos.extractOcr.useMutation({
+    onSuccess: () => {
+      utils.documentosExternos.list.invalidate({ pacienteId });
+    },
+  });
+
   const resetForm = () => {
     setTitulo("");
     setDescricao("");
     setDataDocumento(new Date().toISOString().split("T")[0]);
     setArquivo(null);
     setPreviewUrl(null);
+    setExtrairOcr(false);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,7 +171,7 @@ export function DocumentoUpload({
 
         // Criar registro no banco
         const registroIdField = getRegistroIdField(categoria);
-        await createDocumento.mutateAsync({
+        const novoDocumento = await createDocumento.mutateAsync({
           pacienteId,
           categoria,
           titulo,
@@ -173,6 +183,16 @@ export function DocumentoUpload({
           arquivoOriginalTamanho: arquivo.size,
           ...(registroId && registroIdField ? { [registroIdField]: registroId } : {}),
         });
+
+        // Se o usuário solicitou extração de OCR, iniciar o processo
+        if (extrairOcr && novoDocumento?.id) {
+          try {
+            await extractOcrMutation.mutateAsync({ documentoId: novoDocumento.id });
+          } catch (ocrError) {
+            console.error("Erro ao extrair OCR:", ocrError);
+            // Não falhar o upload se OCR falhar
+          }
+        }
 
         setIsUploading(false);
       };
@@ -303,6 +323,20 @@ export function DocumentoUpload({
                 rows={2}
               />
             </div>
+
+            <div className="flex items-center space-x-2 pt-2 border-t">
+              <Checkbox
+                id="extrairOcr"
+                checked={extrairOcr}
+                onCheckedChange={(checked) => setExtrairOcr(checked === true)}
+              />
+              <div className="flex items-center gap-2">
+                <ScanText className="h-4 w-4 text-blue-500" />
+                <Label htmlFor="extrairOcr" className="text-sm font-normal cursor-pointer">
+                  Extrair texto (OCR) - O texto será armazenado para consulta rápida
+                </Label>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -336,6 +370,7 @@ interface DocumentosListProps {
 }
 
 export function DocumentosList({ pacienteId, categoria }: DocumentosListProps) {
+  const [documentoSelecionado, setDocumentoSelecionado] = useState<any | null>(null);
   const { data: documentos, isLoading } = trpc.documentosExternos.list.useQuery({
     pacienteId,
     categoria,
@@ -358,36 +393,55 @@ export function DocumentosList({ pacienteId, categoria }: DocumentosListProps) {
   }
 
   return (
-    <div className="space-y-2">
-      {documentos.map((doc) => (
-        <div
-          key={doc.id}
-          className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-        >
-          <div className="flex items-center gap-2">
-            {doc.arquivoOriginalTipo?.startsWith("image/") ? (
-              <Image className="h-4 w-4 text-blue-500" />
-            ) : (
-              <FileText className="h-4 w-4 text-red-500" />
-            )}
-            <div>
-              <p className="text-sm font-medium">{doc.titulo}</p>
-              <p className="text-xs text-gray-500">
-                {doc.dataDocumento
-                  ? new Date(doc.dataDocumento).toLocaleDateString("pt-BR")
-                  : "Data não informada"}
-              </p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => window.open(doc.arquivoOriginalUrl, "_blank")}
+    <>
+      <div className="space-y-2">
+        {documentos.map((doc) => (
+          <div
+            key={doc.id}
+            className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+            onClick={() => setDocumentoSelecionado(doc)}
           >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
-      ))}
-    </div>
+            <div className="flex items-center gap-2">
+              {doc.arquivoOriginalTipo?.startsWith("image/") ? (
+                <Image className="h-4 w-4 text-blue-500" />
+              ) : (
+                <FileText className="h-4 w-4 text-red-500" />
+              )}
+              <div>
+                <p className="text-sm font-medium">{doc.titulo}</p>
+                <p className="text-xs text-gray-500">
+                  {doc.dataDocumento
+                    ? new Date(doc.dataDocumento).toLocaleDateString("pt-BR")
+                    : "Data não informada"}
+                  {doc.textoOcr && (
+                    <span className="ml-2 text-blue-500">
+                      <ScanText className="h-3 w-3 inline" /> OCR
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDocumentoSelecionado(doc);
+              }}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {documentoSelecionado && (
+        <DocumentoViewer
+          documento={documentoSelecionado}
+          isOpen={!!documentoSelecionado}
+          onClose={() => setDocumentoSelecionado(null)}
+        />
+      )}
+    </>
   );
 }

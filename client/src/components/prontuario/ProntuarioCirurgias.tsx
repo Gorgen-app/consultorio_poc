@@ -76,7 +76,16 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
         </div>
       </div>
       {cirurgias.length === 0 ? (
-        <Card><CardContent className="py-8 text-center"><Scissors className="h-12 w-12 text-gray-300 mx-auto mb-4" /><p className="text-gray-500">Nenhuma cirurgia registrada.</p></CardContent></Card>
+        <Card>
+          <CardContent className="py-8 text-center">
+            <Scissors className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">Nenhuma cirurgia registrada.</p>
+            <Button className="mt-4" onClick={() => setNovaCirurgia(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Registrar Primeira Cirurgia
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-4">
           {cirurgias.map((cir) => (

@@ -74,7 +74,16 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
         </div>
       </div>
       {exames.length === 0 ? (
-        <Card><CardContent className="py-8 text-center"><TestTube className="h-12 w-12 text-gray-300 mx-auto mb-4" /><p className="text-gray-500">Nenhum exame laboratorial registrado.</p></CardContent></Card>
+        <Card>
+          <CardContent className="py-8 text-center">
+            <TestTube className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">Nenhum exame laboratorial registrado.</p>
+            <Button className="mt-4" onClick={() => setNovoExame(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Registrar Primeiro Exame
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-4">
           {exames.map((ex) => (

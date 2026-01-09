@@ -126,6 +126,10 @@ export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdat
           <CardContent className="py-8 text-center">
             <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">Nenhuma internação registrada.</p>
+            <Button className="mt-4" onClick={() => setNovaInternacao(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Registrar Primeira Internação
+            </Button>
           </CardContent>
         </Card>
       ) : (
