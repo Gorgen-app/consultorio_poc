@@ -1154,3 +1154,16 @@ export const resultadosLaboratoriais = mysqlTable("resultados_laboratoriais", {
 
 export type ResultadoLaboratorial = typeof resultadosLaboratoriais.$inferSelect;
 export type InsertResultadoLaboratorial = typeof resultadosLaboratoriais.$inferInsert;
+
+
+// Tabela de Exames Favoritos - exames que o usuário quer acompanhar no fluxograma
+export const examesFavoritos = mysqlTable("exames_favoritos", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: varchar("user_id", { length: 255 }).notNull(),
+  nomeExame: varchar("nome_exame", { length: 255 }).notNull(),
+  categoria: varchar("categoria", { length: 100 }).default("Geral"),
+  ordem: int("ordem").default(0),
+  ativo: boolean("ativo").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});

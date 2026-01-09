@@ -1553,9 +1553,9 @@ export const appRouter = router({
                 await db.updateDocumentoExterno(documento.id, { textoOcr });
                 
                 // Se for exame laboratorial, extrair dados estruturados automaticamente
-                if (input.categoria === "Exame Laboratorial" && isPdf) {
+                if (input.categoria === "Exame Laboratorial") {
                   try {
-                    console.log(`Iniciando extração automática de dados laboratoriais para documento ${documento.id}`);
+                    console.log(`[LAB-EXTRACT] Iniciando extração automática de dados laboratoriais para documento ${documento.id}, tipo: ${tipoArquivo}`);
                     
                     const labResponse = await invokeLLM({
                       messages: [
@@ -1649,9 +1649,12 @@ Retorne um JSON válido com a estrutura:
                       }
                     });
 
+                    console.log(`[LAB-EXTRACT] Resposta LLM recebida para documento ${documento.id}`);
                     const labContent = labResponse.choices[0]?.message?.content;
+                    console.log(`[LAB-EXTRACT] Conteúdo: ${labContent && typeof labContent === 'string' ? labContent.substring(0, 200) + '...' : 'NULL'}`);
                     if (labContent && typeof labContent === "string") {
                       const dados = JSON.parse(labContent);
+                      console.log(`[LAB-EXTRACT] Exames encontrados: ${dados.exames?.length || 0}`);
                       if (dados.exames && Array.isArray(dados.exames) && dados.exames.length > 0) {
                         const resultados = dados.exames.map((exame: any) => ({
                           pacienteId: input.pacienteId,
@@ -1669,11 +1672,11 @@ Retorne um JSON válido com a estrutura:
                         }));
                         
                         const count = await db.createManyResultadosLaboratoriais(resultados);
-                        console.log(`Extração automática concluída: ${count} resultados inseridos para documento ${documento.id}`);
+                        console.log(`[LAB-EXTRACT] Extração automática concluída: ${count} resultados inseridos para documento ${documento.id}`);
                       }
                     }
                   } catch (labError: any) {
-                    console.error("Erro na extração automática de dados laboratoriais:", labError.message);
+                    console.error(`[LAB-EXTRACT] ERRO na extração automática de dados laboratoriais para documento ${documento.id}:`, labError.message, labError.stack);
                     // Não falha o upload, apenas loga o erro
                   }
                 }
@@ -1911,13 +1914,31 @@ Retorne um JSON válido com a estrutura:
         pdfUrl: z.string(),
       }))
       .mutation(async ({ input }) => {
-        // Usar LLM para extrair dados estruturados do PDF
-        const response = await invokeLLM({
+        console.log(`[LAB-EXTRACT] Iniciando extração de dados laboratoriais para documento ${input.documentoExternoId}`);
+        
+        // Buscar o documento para obter o texto OCR já extraído
+        const documento = await db.getDocumentoExterno(input.documentoExternoId);
+        if (!documento) {
+          throw new Error("Documento não encontrado");
+        }
+        
+        // Verificar se tem texto OCR
+        const textoOcr = documento.textoOcr;
+        if (!textoOcr || textoOcr.includes("[OCR em processamento")||textoOcr.includes("[Erro no OCR")) {
+          throw new Error("Texto OCR ainda não foi extraído. Aguarde o processamento ou clique em Reprocessar OCR.");
+        }
+        
+        console.log(`[LAB-EXTRACT] Usando texto OCR já extraído (${textoOcr.length} caracteres)`);
+        
+        // Usar LLM para extrair dados estruturados do texto OCR
+        let response;
+        try {
+          response = await invokeLLM({
           messages: [
             {
               role: "system",
               content: `Você é um especialista em extração de dados de exames laboratoriais.
-Analise o documento e extraia TODOS os resultados de exames laboratoriais.
+Analise o texto de um laudo de exames e extraia TODOS os resultados de exames laboratoriais.
 Para cada exame, extraia:
 - nome_exame: nome do exame como aparece no laudo
 - resultado: valor do resultado (pode ser texto como ">90" ou "Não reagente")
@@ -1952,19 +1973,7 @@ Retorne um JSON válido com a estrutura:
             },
             {
               role: "user",
-              content: [
-                {
-                  type: "file_url" as const,
-                  file_url: {
-                    url: input.pdfUrl,
-                    mime_type: "application/pdf" as const
-                  }
-                },
-                {
-                  type: "text" as const,
-                  text: "Extraia todos os resultados de exames laboratoriais deste documento. Retorne apenas o JSON, sem texto adicional."
-                }
-              ]
+              content: `Extraia todos os resultados de exames laboratoriais do seguinte texto de laudo. Retorne apenas o JSON, sem texto adicional.\n\nTEXTO DO LAUDO:\n${textoOcr}`
             }
           ],
           response_format: {
@@ -2003,11 +2012,17 @@ Retorne um JSON válido com a estrutura:
             }
           }
         });
+        } catch (llmError: any) {
+          console.error("Erro ao chamar LLM:", llmError.message);
+          throw new Error(`Erro ao processar documento: ${llmError.message}`);
+        }
+
+        console.log("Resposta LLM recebida:", response ? "OK" : "NULL", "choices:", response?.choices?.length || 0);
 
         // Verificar se a resposta existe
         if (!response || !response.choices || response.choices.length === 0) {
-          console.error("Resposta LLM vazia ou inválida:", JSON.stringify(response));
-          throw new Error("Não foi possível obter resposta do LLM");
+          console.error("Resposta LLM vazia ou inválida:", JSON.stringify(response).substring(0, 500));
+          throw new Error("Não foi possível obter resposta do LLM - resposta vazia");
         }
 
         const content = response.choices[0]?.message?.content;
@@ -2087,6 +2102,154 @@ Retorne um JSON válido com a estrutura:
       }))
       .mutation(async ({ input }) => {
         return await db.createExamePadronizado(input as any);
+      }),
+  }),
+
+  // ===== EXAMES FAVORITOS =====
+  examesFavoritos: router({
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.listExamesFavoritos(ctx.user.openId);
+      }),
+
+    add: protectedProcedure
+      .input(z.object({
+        nomeExame: z.string(),
+        categoria: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.addExameFavorito(ctx.user.openId, input.nomeExame, input.categoria);
+      }),
+
+    remove: protectedProcedure
+      .input(z.object({ nomeExame: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.removeExameFavorito(ctx.user.openId, input.nomeExame);
+        return { success: true };
+      }),
+
+    updateOrdem: protectedProcedure
+      .input(z.object({
+        exames: z.array(z.object({
+          nomeExame: z.string(),
+          ordem: z.number(),
+        })),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateOrdemExamesFavoritos(ctx.user.openId, input.exames);
+        return { success: true };
+      }),
+
+    // Extrair apenas os exames favoritos de um documento
+    extrairDoDocumento: protectedProcedure
+      .input(z.object({
+        pacienteId: z.number(),
+        documentoExternoId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        console.log(`[EXAMES-FAV] Iniciando extração de exames favoritos para documento ${input.documentoExternoId}`);
+        
+        // Buscar exames favoritos do usuário
+        const favoritos = await db.listExamesFavoritos(ctx.user.openId);
+        if (favoritos.length === 0) {
+          throw new Error("Nenhum exame favorito configurado. Vá em Configurações > Exames Favoritos para selecionar os exames que deseja acompanhar.");
+        }
+        
+        const nomesFavoritos = favoritos.map(f => f.nomeExame);
+        console.log(`[EXAMES-FAV] Exames favoritos: ${nomesFavoritos.join(", ")}`);
+        
+        // Buscar o documento para obter o texto OCR
+        const documento = await db.getDocumentoExterno(input.documentoExternoId);
+        if (!documento) {
+          throw new Error("Documento não encontrado");
+        }
+        
+        const textoOcr = documento.textoOcr;
+        if (!textoOcr || textoOcr.includes("[OCR em processamento") || textoOcr.includes("[Erro no OCR")) {
+          throw new Error("Texto OCR ainda não foi extraído. Aguarde o processamento.");
+        }
+        
+        console.log(`[EXAMES-FAV] Texto OCR: ${textoOcr.length} caracteres`);
+        
+        // Usar LLM para extrair apenas os exames favoritos
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `Você é um especialista em extração de dados de exames laboratoriais.
+Você deve extrair APENAS os seguintes exames do texto: ${nomesFavoritos.join(", ")}.
+
+Para cada exame encontrado, extraia:
+- nome_exame: nome exato como listado acima
+- resultado: valor do resultado
+- resultado_numerico: valor numérico (apenas números)
+- unidade: unidade de medida
+- valor_referencia_texto: faixa de referência
+- valor_referencia_min: valor mínimo (apenas números)
+- valor_referencia_max: valor máximo (apenas números)
+- data_coleta: data no formato YYYY-MM-DD
+
+Retorne um JSON válido com a estrutura:
+{
+  "exames": [...],
+  "laboratorio": "nome do laboratório",
+  "data_principal": "YYYY-MM-DD"
+}`
+            },
+            {
+              role: "user",
+              content: `Extraia os resultados dos exames: ${nomesFavoritos.join(", ")}\n\nTEXTO DO LAUDO:\n${textoOcr.substring(0, 15000)}`
+            }
+          ]
+        });
+        
+        const content = response.choices[0]?.message?.content;
+        if (!content || typeof content !== 'string') {
+          throw new Error("Não foi possível extrair dados do documento");
+        }
+        
+        console.log(`[EXAMES-FAV] Resposta LLM: ${content.substring(0, 200)}...`);
+        
+        // Limpar o conteúdo (remover markdown se presente)
+        let jsonContent = content;
+        if (content.includes("```json")) {
+          jsonContent = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        } else if (content.includes("```")) {
+          jsonContent = content.replace(/```\n?/g, "").trim();
+        }
+        
+        const dados = JSON.parse(jsonContent);
+        
+        if (!dados.exames || !Array.isArray(dados.exames) || dados.exames.length === 0) {
+          throw new Error("Nenhum dos exames favoritos foi encontrado no documento");
+        }
+        
+        console.log(`[EXAMES-FAV] Encontrados ${dados.exames.length} exames`);
+        
+        // Inserir resultados
+        const resultados = dados.exames.map((exame: any) => ({
+          pacienteId: input.pacienteId,
+          documentoExternoId: input.documentoExternoId,
+          nomeExame: exame.nome_exame,
+          resultado: exame.resultado,
+          resultadoNumerico: exame.resultado_numerico?.toString() || null,
+          unidade: exame.unidade || null,
+          valorReferenciaTexto: exame.valor_referencia_texto || null,
+          valorReferenciaMin: exame.valor_referencia_min?.toString() || null,
+          valorReferenciaMax: exame.valor_referencia_max?.toString() || null,
+          dataColeta: exame.data_coleta || dados.data_principal || new Date().toISOString().split("T")[0],
+          laboratorio: exame.laboratorio || dados.laboratorio || null,
+          extraidoPorIa: true,
+        }));
+        
+        const count = await db.createManyResultadosLaboratoriais(resultados);
+        console.log(`[EXAMES-FAV] Inseridos ${count} resultados`);
+        
+        return {
+          success: true,
+          count,
+          examesEncontrados: dados.exames.map((e: any) => e.nome_exame),
+        };
       }),
   }),
 });

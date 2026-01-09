@@ -27,7 +27,9 @@ import {
   CreditCard,
   Crown,
   AlertCircle,
+  FlaskConical,
 } from "lucide-react";
+import { Link } from "wouter";
 import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especialidadesMedicas";
 
 // Mapeamento de perfis para labels e ícones
@@ -329,6 +331,18 @@ export default function Configuracoes() {
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Assinatura</span>
           </Button>
+          
+          {/* Botão para Exames Favoritos */}
+          <Link href="/configuracoes/exames-favoritos">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <FlaskConical className="h-4 w-4" />
+              <span className="hidden sm:inline">Exames Favoritos</span>
+            </Button>
+          </Link>
         </div>
 
         {/* Conteúdo das abas */}

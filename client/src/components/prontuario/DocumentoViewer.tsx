@@ -57,11 +57,12 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
     },
   });
 
-  const extractLabMutation = trpc.resultadosLaboratoriais.extrairDePdf.useMutation({
+  // Usar extração de exames favoritos ao invés da extração genérica
+  const extractLabMutation = trpc.examesFavoritos.extrairDoDocumento.useMutation({
     onSuccess: (data) => {
       utils.resultadosLaboratoriais.fluxograma.invalidate();
       utils.resultadosLaboratoriais.list.invalidate();
-      toast.success(`${data.count} resultados extraídos com sucesso!`);
+      toast.success(`${data.count} exames extraídos: ${data.examesEncontrados?.join(", ")}`);
     },
     onError: (error) => {
       toast.error(`Erro ao extrair dados: ${error.message}`);
@@ -93,7 +94,6 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
       await extractLabMutation.mutateAsync({
         pacienteId: documento.pacienteId,
         documentoExternoId: documento.id,
-        pdfUrl: documento.arquivoOriginalUrl,
       });
     } catch (error) {
       console.error("Erro ao extrair dados laboratoriais:", error);
@@ -278,7 +278,7 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
                   <FlaskConical className="h-16 w-16 mx-auto mb-4 text-purple-300" />
                   <h3 className="font-medium text-lg mb-2">Extrair Dados Laboratoriais</h3>
                   <p className="text-gray-500 mb-4 max-w-md mx-auto">
-                    Use inteligência artificial para extrair automaticamente os resultados dos exames deste documento e popular o fluxograma laboratorial.
+                    Extrai automaticamente os resultados dos seus <strong>Exames Favoritos</strong> deste documento. Configure seus exames favoritos em Configurações.
                   </p>
                   <Button
                     onClick={handleExtractLabData}
@@ -298,7 +298,7 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
                     )}
                   </Button>
                   <p className="text-xs text-gray-400 mt-2">
-                    O processo analisa o PDF e extrai nome, resultado, unidade e valores de referência de cada exame.
+                    Apenas os exames configurados como favoritos serão extraídos.
                   </p>
                 </div>
               </div>

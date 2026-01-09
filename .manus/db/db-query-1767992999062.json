@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, titulo, exame_laboratorial_id, arquivo_original_url FROM documentos_externos WHERE paciente_id = 51 ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, titulo, exame_laboratorial_id, arquivo_original_url FROM documentos_externos WHERE paciente_id = 51 ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "90004",
+      "titulo": "2752141913_Ocultado",
+      "exame_laboratorial_id": "NULL",
+      "arquivo_original_url": "https://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767992889179-htnknc.pdf"
+    },
+    {
+      "id": "90003",
+      "titulo": "Exames Outubro 26_Ocultado",
+      "exame_laboratorial_id": "NULL",
+      "arquivo_original_url": "https://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767992669614-f69j28.pdf"
+    },
+    {
+      "id": "90002",
+      "titulo": "2752141913_Ocultado",
+      "exame_laboratorial_id": "NULL",
+      "arquivo_original_url": "https://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767992102106-xkcsz3.pdf"
+    },
+    {
+      "id": "90001",
+      "titulo": "2752141913_Ocultado",
+      "exame_laboratorial_id": "NULL",
+      "arquivo_original_url": "https://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767991822385-dngobc.pdf"
+    },
+    {
+      "id": "60001",
+      "titulo": "2760514757_Redacted",
+      "exame_laboratorial_id": "NULL",
+      "arquivo_original_url": "https://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767984363567-6w1nxk.pdf"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitulo\texame_laboratorial_id\tarquivo_original_url\n90004\t2752141913_Ocultado\tNULL\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767992889179-htnknc.pdf\n90003\tExames Outubro 26_Ocultado\tNULL\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767992669614-f69j28.pdf\n90002\t2752141913_Ocultado\tNULL\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767992102106-xkcsz3.pdf\n90001\t2752141913_Ocultado\tNULL\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767991822385-dngobc.pdf\n60001\t2760514757_Redacted\tNULL\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767984363567-6w1nxk.pdf\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

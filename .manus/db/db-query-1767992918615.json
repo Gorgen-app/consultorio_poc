@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, titulo, paciente_id FROM documentos_externos ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, titulo, paciente_id FROM documentos_externos ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "90004",
+      "titulo": "2752141913_Ocultado",
+      "paciente_id": "51"
+    },
+    {
+      "id": "90003",
+      "titulo": "Exames Outubro 26_Ocultado",
+      "paciente_id": "51"
+    },
+    {
+      "id": "90002",
+      "titulo": "2752141913_Ocultado",
+      "paciente_id": "51"
+    },
+    {
+      "id": "90001",
+      "titulo": "2752141913_Ocultado",
+      "paciente_id": "51"
+    },
+    {
+      "id": "60001",
+      "titulo": "2760514757_Redacted",
+      "paciente_id": "51"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitulo\tpaciente_id\n90004\t2752141913_Ocultado\t51\n90003\tExames Outubro 26_Ocultado\t51\n90002\t2752141913_Ocultado\t51\n90001\t2752141913_Ocultado\t51\n60001\t2760514757_Redacted\t51\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}

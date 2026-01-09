@@ -1,6 +1,6 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -2460,4 +2460,99 @@ export async function createExamePadronizado(data: InsertExamePadronizado): Prom
   
   const [result] = await db.insert(examesPadronizados).values(data);
   return { id: result.insertId, ...data } as ExamePadronizado;
+}
+
+
+// ===== EXAMES FAVORITOS =====
+
+export interface ExameFavorito {
+  id: number;
+  userId: string;
+  nomeExame: string;
+  categoria: string | null;
+  ordem: number | null;
+  ativo: boolean | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+}
+
+export async function listExamesFavoritos(userId: string): Promise<ExameFavorito[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(examesFavoritos)
+    .where(and(
+      eq(examesFavoritos.userId, userId),
+      eq(examesFavoritos.ativo, true)
+    ))
+    .orderBy(examesFavoritos.ordem) as any;
+}
+
+export async function addExameFavorito(userId: string, nomeExame: string, categoria?: string): Promise<ExameFavorito> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se já existe
+  const existing = await db
+    .select()
+    .from(examesFavoritos)
+    .where(and(
+      eq(examesFavoritos.userId, userId),
+      eq(examesFavoritos.nomeExame, nomeExame)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    // Reativar se estava inativo
+    await db.update(examesFavoritos)
+      .set({ ativo: true })
+      .where(eq(examesFavoritos.id, existing[0].id));
+    return existing[0] as ExameFavorito;
+  }
+  
+  // Obter próxima ordem
+  const maxOrdem = await db
+    .select({ maxOrdem: sql<number>`MAX(ordem)` })
+    .from(examesFavoritos)
+    .where(eq(examesFavoritos.userId, userId));
+  
+  const ordem = (maxOrdem[0]?.maxOrdem || 0) + 1;
+  
+  const [result] = await db.insert(examesFavoritos).values({
+    userId,
+    nomeExame,
+    categoria: categoria || "Geral",
+    ordem,
+    ativo: true,
+  });
+  
+  return { id: result.insertId, userId, nomeExame, categoria: categoria || "Geral", ordem, ativo: true, createdAt: new Date(), updatedAt: new Date() };
+}
+
+export async function removeExameFavorito(userId: string, nomeExame: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(examesFavoritos)
+    .set({ ativo: false })
+    .where(and(
+      eq(examesFavoritos.userId, userId),
+      eq(examesFavoritos.nomeExame, nomeExame)
+    ));
+}
+
+export async function updateOrdemExamesFavoritos(userId: string, exames: { nomeExame: string; ordem: number }[]): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  for (const exame of exames) {
+    await db.update(examesFavoritos)
+      .set({ ordem: exame.ordem })
+      .where(and(
+        eq(examesFavoritos.userId, userId),
+        eq(examesFavoritos.nomeExame, exame.nomeExame)
+      ));
+  }
 }

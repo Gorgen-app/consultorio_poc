@@ -1114,3 +1114,23 @@ A dashboard deve integrar **medicina e administração**:
 
 ### Melhoria
 - [x] Implementar extração automática de dados laboratoriais no upload (sem necessidade de clique manual)
+
+
+---
+
+## 🔬 EXAMES FAVORITOS (v2.0.3)
+
+### Configuração de Exames Favoritos
+- [x] Criar tabela exames_favoritos no banco de dados
+- [x] Criar interface em Configurações para selecionar exames favoritos
+- [x] Lista pré-definida de exames comuns (Hemograma, TGP, TGO, Creatinina, etc.)
+
+### Extração Focada
+- [x] Modificar extração para buscar apenas exames favoritos
+- [x] Prompt simplificado e focado nos exames selecionados
+- [x] Maior confiabilidade e velocidade
+
+### Fluxograma Personalizado
+- [x] Mostrar apenas exames favoritos no fluxograma
+- [x] Filtro por exame específico
+- [x] Gráficos de tendência por exame
