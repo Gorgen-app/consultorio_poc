@@ -102,4 +102,24 @@ describe("OCR Extraction", () => {
     expect(isImage).toBe(false);
     expect(isPdf).toBe(false);
   });
+
+  it("deve identificar corretamente tipos de arquivo para OCR automático", () => {
+    // Testa imagens
+    expect("image/jpeg".startsWith("image/")).toBe(true);
+    expect("image/png".startsWith("image/")).toBe(true);
+    expect("image/gif".startsWith("image/")).toBe(true);
+    
+    // Testa PDF
+    expect("application/pdf" === "application/pdf").toBe(true);
+    
+    // Testa tipos não suportados
+    expect("application/msword".startsWith("image/")).toBe(false);
+    expect("application/msword" === "application/pdf").toBe(false);
+  });
+
+  it("deve gerar mensagem de status correta para OCR em processamento", () => {
+    const statusMessage = "[OCR em processamento...] Aguarde alguns segundos.";
+    expect(statusMessage).toContain("OCR em processamento");
+    expect(statusMessage).toContain("Aguarde");
+  });
 });

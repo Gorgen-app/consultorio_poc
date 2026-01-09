@@ -1032,3 +1032,11 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Tempo estimado de processamento: 5-15 segundos por documento
 - [x] Botão "Reprocessar OCR" para documentos já processados
 
+
+### OCR Automático em Background
+- [x] Disparar extração de OCR automaticamente após upload de documento
+- [x] Processar em segundo plano sem bloquear a interface
+- [x] Atualizar status do documento quando OCR for concluído
+- [x] Remover checkbox manual de OCR da interface (agora é automático)
+- [x] Atualizar mensagem do modal de upload para indicar OCR automático
+

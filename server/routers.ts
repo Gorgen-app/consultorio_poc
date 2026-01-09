@@ -1483,11 +1483,89 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const username = ctx.user?.name || ctx.user?.email || "Sistema";
-        return await db.createDocumentoExterno({
+        
+        // Criar o documento com status de OCR pendente
+        const documento = await db.createDocumentoExterno({
           ...input,
           dataDocumento: input.dataDocumento || null,
           uploadPor: username,
+          textoOcr: "[OCR em processamento...] Aguarde alguns segundos.",
         } as any);
+
+        // Disparar extração de OCR em background (não bloqueia a resposta)
+        const tipoArquivo = input.arquivoOriginalTipo || "";
+        const isImage = tipoArquivo.startsWith("image/");
+        const isPdf = tipoArquivo === "application/pdf";
+
+        if (isImage || isPdf) {
+          // Processar OCR em background usando setImmediate para não bloquear
+          setImmediate(async () => {
+            try {
+              let messageContent: any[];
+
+              if (isImage) {
+                messageContent = [
+                  {
+                    type: "text",
+                    text: "Extraia TODO o texto visível nesta imagem de documento médico. Transcreva exatamente como está escrito, mantendo a formatação original (parágrafos, listas, tabelas). Se houver valores de exames, mantenha os números e unidades. Não adicione interpretações, apenas transcreva o texto."
+                  },
+                  {
+                    type: "image_url",
+                    image_url: {
+                      url: input.arquivoOriginalUrl,
+                      detail: "high"
+                    }
+                  }
+                ];
+              } else {
+                messageContent = [
+                  {
+                    type: "text",
+                    text: "Extraia TODO o texto deste documento PDF médico. Transcreva exatamente como está escrito, mantendo a formatação original (parágrafos, listas, tabelas). Se houver valores de exames, mantenha os números e unidades. Não adicione interpretações, apenas transcreva o texto."
+                  },
+                  {
+                    type: "file_url",
+                    file_url: {
+                      url: input.arquivoOriginalUrl,
+                      mime_type: "application/pdf"
+                    }
+                  }
+                ];
+              }
+
+              const response = await invokeLLM({
+                messages: [
+                  {
+                    role: "system",
+                    content: "Você é um assistente especializado em transcrição de documentos médicos. Sua tarefa é extrair e transcrever fielmente todo o texto visível em documentos, mantendo a formatação original. Não interprete, não resuma, apenas transcreva."
+                  },
+                  {
+                    role: "user",
+                    content: messageContent
+                  }
+                ]
+              });
+
+              const textoExtraido = response.choices[0]?.message?.content;
+              
+              if (textoExtraido && typeof textoExtraido === "string") {
+                const textoOcr = `[OCR Extraído em ${new Date().toLocaleString("pt-BR")}]\n\n${textoExtraido}`;
+                await db.updateDocumentoExterno(documento.id, { textoOcr });
+              } else {
+                await db.updateDocumentoExterno(documento.id, {
+                  textoOcr: `[Erro no OCR] Não foi possível extrair texto do documento.`
+                });
+              }
+            } catch (error: any) {
+              console.error("Erro no OCR em background:", error);
+              await db.updateDocumentoExterno(documento.id, {
+                textoOcr: `[Erro no OCR em ${new Date().toLocaleString("pt-BR")}]\n\nNão foi possível extrair o texto: ${error.message || "Erro desconhecido"}\n\nClique em "Reprocessar OCR" para tentar novamente.`
+              });
+            }
+          });
+        }
+
+        return documento;
       }),
 
     get: protectedProcedure

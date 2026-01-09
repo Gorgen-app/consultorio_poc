@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+// Checkbox removido - OCR agora é automático
 import {
   Dialog,
   DialogContent,
@@ -59,7 +59,7 @@ export function DocumentoUpload({
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [extrairOcr, setExtrairOcr] = useState(false);
+  // OCR agora é automático - removido estado extrairOcr
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const utils = trpc.useUtils();
@@ -72,11 +72,7 @@ export function DocumentoUpload({
     },
   });
 
-  const extractOcrMutation = trpc.documentosExternos.extractOcr.useMutation({
-    onSuccess: () => {
-      utils.documentosExternos.list.invalidate({ pacienteId });
-    },
-  });
+  // OCR agora é processado automaticamente no backend após upload
 
   const resetForm = () => {
     setTitulo("");
@@ -84,7 +80,7 @@ export function DocumentoUpload({
     setDataDocumento(new Date().toISOString().split("T")[0]);
     setArquivo(null);
     setPreviewUrl(null);
-    setExtrairOcr(false);
+    // OCR agora é automático
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,16 +180,7 @@ export function DocumentoUpload({
           ...(registroId && registroIdField ? { [registroIdField]: registroId } : {}),
         });
 
-        // Se o usuário solicitou extração de OCR, iniciar o processo
-        if (extrairOcr && novoDocumento?.id) {
-          try {
-            await extractOcrMutation.mutateAsync({ documentoId: novoDocumento.id });
-          } catch (ocrError) {
-            console.error("Erro ao extrair OCR:", ocrError);
-            // Não falhar o upload se OCR falhar
-          }
-        }
-
+        // OCR é processado automaticamente em background pelo servidor
         setIsUploading(false);
       };
 
@@ -225,8 +212,8 @@ export function DocumentoUpload({
         <DialogHeader>
           <DialogTitle>Upload de Documento - {categoria}</DialogTitle>
           <DialogDescription>
-            Faça upload de um documento externo (imagem ou PDF). O documento será
-            armazenado e poderá ser processado com OCR futuramente.
+            Faça upload de um documento externo (imagem ou PDF). O texto será
+            extraído automaticamente para consulta rápida.
           </DialogDescription>
         </DialogHeader>
 
@@ -324,18 +311,10 @@ export function DocumentoUpload({
               />
             </div>
 
-            <div className="flex items-center space-x-2 pt-2 border-t">
-              <Checkbox
-                id="extrairOcr"
-                checked={extrairOcr}
-                onCheckedChange={(checked) => setExtrairOcr(checked === true)}
-              />
-              <div className="flex items-center gap-2">
-                <ScanText className="h-4 w-4 text-blue-500" />
-                <Label htmlFor="extrairOcr" className="text-sm font-normal cursor-pointer">
-                  Extrair texto (OCR) - O texto será armazenado para consulta rápida
-                </Label>
-              </div>
+            {/* Indicador de OCR automático */}
+            <div className="flex items-center gap-2 pt-2 border-t text-sm text-muted-foreground">
+              <ScanText className="h-4 w-4 text-blue-500" />
+              <span>O texto será extraído automaticamente após o upload (OCR)</span>
             </div>
           </div>
         </div>
