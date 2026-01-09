@@ -33,8 +33,14 @@ import {
   Scale,
   Ruler,
   UserPlus,
-  ClipboardList
+  ClipboardList,
+  Pencil,
+  LineChart
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 // Componentes das seções
 import ProntuarioEvolucoes from "@/components/prontuario/ProntuarioEvolucoes";
@@ -87,6 +93,42 @@ function classificarIMC(imc: number): { texto: string; cor: string } {
   return { texto: "Obesidade III", cor: "text-red-700" };
 }
 
+// Função para calcular tempo de seguimento
+function calcularTempoSeguimento(dataInclusao: Date | string | null): string {
+  if (!dataInclusao) return "-";
+  const inicio = typeof dataInclusao === 'string' ? new Date(dataInclusao) : dataInclusao;
+  const hoje = new Date();
+  
+  let anos = hoje.getFullYear() - inicio.getFullYear();
+  let meses = hoje.getMonth() - inicio.getMonth();
+  let dias = hoje.getDate() - inicio.getDate();
+  
+  if (dias < 0) {
+    meses--;
+    const ultimoDiaMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate();
+    dias += ultimoDiaMesAnterior;
+  }
+  
+  if (meses < 0) {
+    anos--;
+    meses += 12;
+  }
+  
+  const partes: string[] = [];
+  if (anos > 0) partes.push(`${anos} ano${anos > 1 ? 's' : ''}`);
+  if (meses > 0) partes.push(`${meses} mês${meses > 1 ? 'es' : ''}`);
+  if (dias > 0 && anos === 0) partes.push(`${dias} dia${dias > 1 ? 's' : ''}`);
+  
+  return partes.length > 0 ? partes.join(', ') : 'Hoje';
+}
+
+// Função para determinar se paciente está ativo
+function isPacienteAtivo(obitoPerda: string | null | undefined): boolean {
+  if (!obitoPerda) return true;
+  const statusInativos = ['obito', 'óbito', 'perda', 'inativo', 'não', 'nao', 'falecido'];
+  return !statusInativos.some(s => obitoPerda.toLowerCase().includes(s));
+}
+
 export default function Prontuario() {
   const params = useParams();
   const [, setLocation] = useLocation();
@@ -94,11 +136,39 @@ export default function Prontuario() {
   
   const [secaoAtiva, setSecaoAtiva] = useState("resumo");
   
+  // Estados para modal de nova medida
+  const [modalMedidaAberto, setModalMedidaAberto] = useState(false);
+  const [novoPeso, setNovoPeso] = useState("");
+  const [novaAltura, setNovaAltura] = useState("");
+  
+  // Estado para modal de gráfico
+  const [modalGraficoAberto, setModalGraficoAberto] = useState(false);
+  
   // Buscar prontuário completo
   const { data: prontuario, isLoading, error, refetch } = trpc.prontuario.completo.useQuery(
     { pacienteId },
     { enabled: pacienteId > 0 }
   );
+  
+  // Query para histórico de medidas (para o gráfico) - DEVE estar antes dos early returns
+  const { data: historicoMedidas } = trpc.prontuario.historicoMedidas.listar.useQuery(
+    { pacienteId, limit: 50 },
+    { enabled: pacienteId > 0 }
+  );
+  
+  // Mutation para registrar nova medida - DEVE estar antes dos early returns
+  const registrarMedida = trpc.prontuario.historicoMedidas.registrar.useMutation({
+    onSuccess: () => {
+      toast.success("Medida registrada com sucesso!");
+      setModalMedidaAberto(false);
+      setNovoPeso("");
+      setNovaAltura("");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error("Erro ao registrar medida: " + err.message);
+    },
+  });
   
   if (isLoading) {
     return (
@@ -132,15 +202,42 @@ export default function Prontuario() {
     );
   }
   
-  const { paciente, resumoClinico, problemasAtivos, alergias, medicamentosUso } = prontuario;
+  const { paciente, resumoClinico, problemasAtivos, alergias, medicamentosUso, totalAtendimentos } = prontuario;
   const idade = calcularIdade(paciente.dataNascimento);
   const isMulher = paciente.sexo === "F";
+  
+  // Status do paciente
+  const pacienteAtivo = isPacienteAtivo(paciente.obitoPerda);
+  const tempoSeguimento = calcularTempoSeguimento(paciente.dataInclusao);
   
   // Calcular IMC
   const peso = resumoClinico?.pesoAtual ? Number(resumoClinico.pesoAtual) : null;
   const altura = resumoClinico?.altura ? Number(resumoClinico.altura) : null;
   const imcValor = peso && altura ? peso / (altura * altura) : null;
   const imcClassificacao = imcValor ? classificarIMC(imcValor) : null;
+  
+  // Função para salvar nova medida
+  const handleSalvarMedida = () => {
+    if (!novoPeso && !novaAltura) {
+      toast.error("Preencha pelo menos um campo");
+      return;
+    }
+    registrarMedida.mutate({
+      pacienteId,
+      peso: novoPeso ? parseFloat(novoPeso) : undefined,
+      altura: novaAltura ? parseFloat(novaAltura) : undefined,
+    });
+  };
+  
+  // Formatar dados para o gráfico
+  const dadosGrafico = historicoMedidas?.map(m => ({
+    data: new Date(m.dataMedicao).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+    dataCompleta: new Date(m.dataMedicao).toLocaleDateString('pt-BR'),
+    peso: m.peso ? Number(m.peso) : null,
+    altura: m.altura ? Number(m.altura) : null,
+    imc: m.imc ? Number(m.imc) : null,
+    registradoPor: m.registradoPor,
+  })).reverse() || [];
   
   // Menu lateral
   const menuItems = [
@@ -177,9 +274,25 @@ export default function Prontuario() {
               <h1 className="text-2xl font-bold text-gray-900">Prontuário Médico</h1>
               <p className="text-sm text-gray-500">ID: {paciente.idPaciente}</p>
             </div>
-            <Badge variant={paciente.obitoPerda === "Ativo" ? "default" : "destructive"}>
-              {paciente.obitoPerda || "Ativo"}
-            </Badge>
+{/* Card de Status do Paciente */}
+            <div className="bg-white border rounded-lg p-3 shadow-sm min-w-[180px]">
+              <div className="space-y-1.5 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Status:</span>
+                  <Badge variant={pacienteAtivo ? "default" : "destructive"} className="font-semibold">
+                    {pacienteAtivo ? "ATIVO" : "INATIVO"}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Tempo de seguimento:</span>
+                  <span className="font-medium text-gray-700">{tempoSeguimento}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Nº de atendimentos:</span>
+                  <span className="font-medium text-blue-600">{totalAtendimentos ?? 0}</span>
+                </div>
+              </div>
+            </div>
           </div>
           
           {/* Dados do paciente */}
@@ -248,10 +361,34 @@ export default function Prontuario() {
             {/* Coluna 3: Dados Antropométricos */}
             <Card className="lg:col-span-1">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                  <Scale className="h-4 w-4" />
-                  Dados Antropométricos
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                    <Scale className="h-4 w-4" />
+                    Dados Antropométricos
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    {/* Botão de Gráfico */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setModalGraficoAberto(true)}
+                      title="Ver evolução"
+                    >
+                      <LineChart className="h-3.5 w-3.5 text-gray-500 hover:text-blue-600" />
+                    </Button>
+                    {/* Botão de Edição (inserir novo dado) */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setModalMedidaAberto(true)}
+                      title="Registrar nova medida"
+                    >
+                      <Pencil className="h-3.5 w-3.5 text-gray-500 hover:text-blue-600" />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-4 text-center">
@@ -463,6 +600,179 @@ export default function Prontuario() {
           )}
         </div>
       </div>
+      
+      {/* Modal para registrar nova medida */}
+      <Dialog open={modalMedidaAberto} onOpenChange={setModalMedidaAberto}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5" />
+              Registrar Nova Medida
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-500">
+              Os dados anteriores serão preservados no histórico para consulta.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="novoPeso">Peso (kg)</Label>
+                <Input
+                  id="novoPeso"
+                  type="number"
+                  step="0.1"
+                  value={novoPeso}
+                  onChange={(e) => setNovoPeso(e.target.value)}
+                  placeholder={peso ? `Atual: ${peso}` : "Ex: 75.5"}
+                />
+              </div>
+              <div>
+                <Label htmlFor="novaAltura">Altura (m)</Label>
+                <Input
+                  id="novaAltura"
+                  type="number"
+                  step="0.01"
+                  value={novaAltura}
+                  onChange={(e) => setNovaAltura(e.target.value)}
+                  placeholder={altura ? `Atual: ${altura}` : "Ex: 1.75"}
+                />
+              </div>
+            </div>
+            {(novoPeso || novaAltura) && (
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>IMC Calculado:</strong>{" "}
+                  {novoPeso && (novaAltura || altura) 
+                    ? (parseFloat(novoPeso) / Math.pow(parseFloat(novaAltura || String(altura)), 2)).toFixed(1)
+                    : "-"
+                  } kg/m²
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalMedidaAberto(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSalvarMedida} disabled={registrarMedida.isPending}>
+              {registrarMedida.isPending ? "Salvando..." : "Registrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal de Gráfico de Evolução */}
+      <Dialog open={modalGraficoAberto} onOpenChange={setModalGraficoAberto}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LineChart className="h-5 w-5" />
+              Evolução das Medidas Antropométricas
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {dadosGrafico.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <LineChart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhum histórico de medidas encontrado.</p>
+                <p className="text-sm">Registre a primeira medida para visualizar a evolução.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Gráfico de Peso */}
+                <div>
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Scale className="h-4 w-4 text-blue-600" />
+                    Evolução do Peso (kg)
+                  </h4>
+                  <div className="h-48 bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-end justify-between h-full gap-2">
+                      {dadosGrafico.filter(d => d.peso).slice(-12).map((d, i) => {
+                        const pesos = dadosGrafico.filter(x => x.peso).map(x => x.peso!);
+                        const maxPeso = Math.max(...pesos);
+                        const minPeso = Math.min(...pesos);
+                        const range = maxPeso - minPeso || 1;
+                        const heightPercent = ((d.peso! - minPeso) / range) * 70 + 20;
+                        return (
+                          <div key={i} className="flex flex-col items-center flex-1 min-w-0">
+                            <span className="text-xs font-medium text-blue-600 mb-1">{d.peso}</span>
+                            <div 
+                              className="w-full bg-blue-500 rounded-t transition-all hover:bg-blue-600 cursor-pointer"
+                              style={{ height: `${heightPercent}%` }}
+                              title={`${d.dataCompleta}\nPeso: ${d.peso} kg\nRegistrado por: ${d.registradoPor}`}
+                            />
+                            <span className="text-[10px] text-gray-500 mt-1 truncate w-full text-center">{d.data}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Gráfico de IMC */}
+                <div>
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-green-600" />
+                    Evolução do IMC
+                  </h4>
+                  <div className="h-48 bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-end justify-between h-full gap-2">
+                      {dadosGrafico.filter(d => d.imc).slice(-12).map((d, i) => {
+                        const imcs = dadosGrafico.filter(x => x.imc).map(x => x.imc!);
+                        const maxIMC = Math.max(...imcs);
+                        const minIMC = Math.min(...imcs);
+                        const range = maxIMC - minIMC || 1;
+                        const heightPercent = ((d.imc! - minIMC) / range) * 70 + 20;
+                        const cor = d.imc! < 18.5 ? 'bg-yellow-500' : d.imc! < 25 ? 'bg-green-500' : d.imc! < 30 ? 'bg-yellow-500' : 'bg-red-500';
+                        return (
+                          <div key={i} className="flex flex-col items-center flex-1 min-w-0">
+                            <span className="text-xs font-medium text-green-600 mb-1">{d.imc}</span>
+                            <div 
+                              className={`w-full ${cor} rounded-t transition-all hover:opacity-80 cursor-pointer`}
+                              style={{ height: `${heightPercent}%` }}
+                              title={`${d.dataCompleta}\nIMC: ${d.imc}\nRegistrado por: ${d.registradoPor}`}
+                            />
+                            <span className="text-[10px] text-gray-500 mt-1 truncate w-full text-center">{d.data}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Tabela de Histórico */}
+                <div>
+                  <h4 className="font-medium mb-3">Histórico Completo</h4>
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-3 py-2 text-left">Data</th>
+                          <th className="px-3 py-2 text-right">Peso (kg)</th>
+                          <th className="px-3 py-2 text-right">Altura (m)</th>
+                          <th className="px-3 py-2 text-right">IMC</th>
+                          <th className="px-3 py-2 text-left">Registrado por</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dadosGrafico.slice().reverse().map((d, i) => (
+                          <tr key={i} className="border-t hover:bg-gray-50">
+                            <td className="px-3 py-2">{d.dataCompleta}</td>
+                            <td className="px-3 py-2 text-right font-medium text-blue-600">{d.peso || "-"}</td>
+                            <td className="px-3 py-2 text-right">{d.altura || "-"}</td>
+                            <td className="px-3 py-2 text-right font-medium text-green-600">{d.imc || "-"}</td>
+                            <td className="px-3 py-2 text-gray-500 text-xs">{d.registradoPor}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
