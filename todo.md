@@ -982,3 +982,8 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Implementar upload de documentos em Patologia
 - [x] Componente de upload (aceita imagem e PDF)
 - [x] Preparar estrutura para futura interpretação de laudos por IA
+
+
+## 🐛 BUG - Botões de Upload
+
+- [x] Botões de upload não aparecem nos componentes do prontuário (estava funcionando, botão é discreto ao lado do nome do médico)
