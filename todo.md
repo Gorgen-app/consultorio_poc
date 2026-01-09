@@ -960,3 +960,7 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Adicionar botão "Resolver" na timeline de problemas ativos
 - [x] Criar modal para registrar data de resolução
 - [x] Atualizar problema como inativo com data de resolução
+
+## 🎨 BRANDING
+
+- [x] Alterar título da aba do navegador para "Gorgen v2.0"
