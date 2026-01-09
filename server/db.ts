@@ -2415,39 +2415,93 @@ function normalizarNumero(valor: string | number | null | undefined): string | n
   return String(num);
 }
 
-export async function createManyResultadosLaboratoriais(dados: InsertResultadoLaboratorial[]): Promise<number> {
+export async function createManyResultadosLaboratoriais(dados: any[]): Promise<number> {
+  console.log('[DB-FUNC] createManyResultadosLaboratoriais CHAMADA com', dados.length, 'itens');
+  console.log('[DB-FUNC] Primeiro item:', JSON.stringify(dados[0], null, 2));
+  
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  if (dados.length === 0) return 0;
   
   // Processar cada resultado para normalizar números e determinar se está fora da referência
   const processados = dados.map(data => {
     // Normalizar valores numéricos
-    data.resultadoNumerico = normalizarNumero(data.resultadoNumerico);
-    data.valorReferenciaMin = normalizarNumero(data.valorReferenciaMin);
-    data.valorReferenciaMax = normalizarNumero(data.valorReferenciaMax);
+    const resultadoNumerico = normalizarNumero(data.resultadoNumerico);
+    const valorReferenciaMin = normalizarNumero(data.valorReferenciaMin);
+    const valorReferenciaMax = normalizarNumero(data.valorReferenciaMax);
     
-    if (data.resultadoNumerico && (data.valorReferenciaMin || data.valorReferenciaMax)) {
-      const valor = Number(data.resultadoNumerico);
-      const min = data.valorReferenciaMin ? Number(data.valorReferenciaMin) : null;
-      const max = data.valorReferenciaMax ? Number(data.valorReferenciaMax) : null;
+    let foraReferencia = false;
+    let tipoAlteracao = 'Normal';
+    
+    if (resultadoNumerico && (valorReferenciaMin || valorReferenciaMax)) {
+      const valor = Number(resultadoNumerico);
+      const min = valorReferenciaMin ? Number(valorReferenciaMin) : null;
+      const max = valorReferenciaMax ? Number(valorReferenciaMax) : null;
       
       if (min !== null && valor < min) {
-        data.foraReferencia = true;
-        data.tipoAlteracao = 'Diminuído';
+        foraReferencia = true;
+        tipoAlteracao = 'Diminuído';
       } else if (max !== null && valor > max) {
-        data.foraReferencia = true;
-        data.tipoAlteracao = 'Aumentado';
-      } else {
-        data.foraReferencia = false;
-        data.tipoAlteracao = 'Normal';
+        foraReferencia = true;
+        tipoAlteracao = 'Aumentado';
       }
     }
-    return data;
+    
+    return {
+      pacienteId: data.pacienteId,
+      documentoExternoId: data.documentoExternoId || null,
+      nomeExameOriginal: String(data.nomeExameOriginal || 'Exame'),
+      dataColeta: String(data.dataColeta),
+      resultado: String(data.resultado || 'N/A'),
+      resultadoNumerico,
+      unidade: data.unidade || null,
+      valorReferenciaTexto: data.valorReferenciaTexto || null,
+      valorReferenciaMin,
+      valorReferenciaMax,
+      foraReferencia,
+      tipoAlteracao,
+      laboratorio: data.laboratorio || null,
+      extraidoPorIa: data.extraidoPorIa !== false,
+    };
   });
   
-  if (processados.length === 0) return 0;
+  // Construir SQL direto para evitar problemas com o Drizzle ORM
+  const escapeStr = (s: string | null | undefined): string => {
+    if (s == null) return 'NULL';
+    return `'${String(s).replace(/'/g, "''")}'`;
+  };
   
-  await db.insert(resultadosLaboratoriais).values(processados);
+  const escapeNum = (n: string | number | null | undefined): string => {
+    if (n == null) return 'NULL';
+    return String(n);
+  };
+  
+  const valuesStr = processados.map(p => `(
+    ${p.pacienteId},
+    ${escapeNum(p.documentoExternoId)},
+    ${escapeStr(p.nomeExameOriginal)},
+    ${escapeStr(p.dataColeta)},
+    ${escapeStr(p.resultado)},
+    ${escapeNum(p.resultadoNumerico)},
+    ${escapeStr(p.unidade)},
+    ${escapeStr(p.valorReferenciaTexto)},
+    ${escapeNum(p.valorReferenciaMin)},
+    ${escapeNum(p.valorReferenciaMax)},
+    ${p.foraReferencia ? 1 : 0},
+    ${escapeStr(p.tipoAlteracao)},
+    ${escapeStr(p.laboratorio)},
+    ${p.extraidoPorIa ? 1 : 0}
+  )`).join(',\n');
+  
+  const sqlQuery = `INSERT INTO resultados_laboratoriais 
+    (paciente_id, documento_externo_id, nome_exame_original, data_coleta, resultado, 
+     resultado_numerico, unidade, valor_referencia_texto, valor_referencia_min, 
+     valor_referencia_max, fora_referencia, tipo_alteracao, laboratorio, extraido_por_ia) 
+    VALUES ${valuesStr}`;
+  
+  console.log('[DB] Executando SQL direto para inserir resultados laboratoriais');
+  await db.execute(sql.raw(sqlQuery));
   return processados.length;
 }
 

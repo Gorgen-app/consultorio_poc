@@ -2225,23 +2225,29 @@ Retorne um JSON válido com a estrutura:
         }
         
         console.log(`[EXAMES-FAV] Encontrados ${dados.exames.length} exames`);
+        console.log(`[EXAMES-FAV] Dados brutos do LLM:`, JSON.stringify(dados, null, 2));
         
         // Inserir resultados
-        const resultados = dados.exames.map((exame: any) => ({
-          pacienteId: input.pacienteId,
-          documentoExternoId: input.documentoExternoId,
-          nomeExame: exame.nome_exame,
-          resultado: exame.resultado,
-          resultadoNumerico: exame.resultado_numerico?.toString() || null,
-          unidade: exame.unidade || null,
-          valorReferenciaTexto: exame.valor_referencia_texto || null,
-          valorReferenciaMin: exame.valor_referencia_min?.toString() || null,
-          valorReferenciaMax: exame.valor_referencia_max?.toString() || null,
-          dataColeta: exame.data_coleta || dados.data_principal || new Date().toISOString().split("T")[0],
-          laboratorio: exame.laboratorio || dados.laboratorio || null,
-          extraidoPorIa: true,
-        }));
+        const resultados = dados.exames.map((exame: any) => {
+          const resultado = {
+            pacienteId: input.pacienteId,
+            documentoExternoId: input.documentoExternoId,
+            nomeExameOriginal: String(exame.nome_exame || "Exame sem nome"),
+            resultado: String(exame.resultado || "N/A"),
+            resultadoNumerico: exame.resultado_numerico != null ? String(exame.resultado_numerico) : null,
+            unidade: exame.unidade ? String(exame.unidade) : null,
+            valorReferenciaTexto: exame.valor_referencia_texto ? String(exame.valor_referencia_texto) : null,
+            valorReferenciaMin: exame.valor_referencia_min != null ? String(exame.valor_referencia_min) : null,
+            valorReferenciaMax: exame.valor_referencia_max != null ? String(exame.valor_referencia_max) : null,
+            dataColeta: String(exame.data_coleta || dados.data_principal || new Date().toISOString().split("T")[0]),
+            laboratorio: exame.laboratorio ? String(exame.laboratorio) : (dados.laboratorio ? String(dados.laboratorio) : null),
+            extraidoPorIa: true,
+          };
+          console.log(`[EXAMES-FAV] Resultado mapeado:`, JSON.stringify(resultado, null, 2));
+          return resultado;
+        });
         
+        console.log(`[EXAMES-FAV] Total de resultados a inserir: ${resultados.length}`);
         const count = await db.createManyResultadosLaboratoriais(resultados);
         console.log(`[EXAMES-FAV] Inseridos ${count} resultados`);
         

@@ -1143,3 +1143,28 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Corrigir conversão de números no formato brasileiro (vírgula) para internacional (ponto)
 - [x] Tratar valores como "14,2" → 14.2 e "7.110" → 7110
 - [x] Função normalizarNumero() adicionada ao db.ts
+
+
+---
+
+## 🔴 PROBLEMA PENDENTE - Extração de Exames Laboratoriais (09/01/2026)
+
+### Status
+- [x] Funciona para paciente 47 (único documento)
+- [ ] Falha para pacientes 50 e 51 (múltiplos documentos)
+
+### Investigação realizada
+- Código SQL direto implementado em `createManyResultadosLaboratoriais`
+- Logs de debug adicionados
+- Cache dist/ removido
+- Servidor reiniciado múltiplas vezes
+
+### Hipóteses
+- Possível conflito quando há múltiplos documentos
+- Pode haver código antigo em cache em algum lugar não identificado
+- O erro mostra query Drizzle ORM mas função usa SQL direto
+
+### Próximos passos
+- Investigar mais a fundo o fluxo de execução
+- Verificar se há algum middleware interceptando
+- Testar com paciente novo sem documentos anteriores
