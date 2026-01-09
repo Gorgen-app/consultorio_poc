@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { toast } from "sonner";
 import { Plus, TestTube, FileText, Download, Upload } from "lucide-react";
 import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
+import { FluxogramaLaboratorial } from "./FluxogramaLaboratorial";
 
 interface Props {
   pacienteId: number;
@@ -116,6 +117,11 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
           ))}
         </div>
       )}
+
+      {/* Fluxograma Laboratorial */}
+      <div className="mt-6">
+        <FluxogramaLaboratorial pacienteId={pacienteId} />
+      </div>
 
       {/* Lista de documentos anexados */}
       <Card className="mt-6">

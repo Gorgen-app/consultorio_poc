@@ -1040,3 +1040,66 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Remover checkbox manual de OCR da interface (agora é automático)
 - [x] Atualizar mensagem do modal de upload para indicar OCR automático
 
+
+---
+
+## 💡 BANCO DE IDEIAS
+
+### Validação de Documentos
+- [ ] **Checagem de nome do paciente**: Comparar automaticamente o nome do paciente em atendimento com o nome que consta no cabeçalho do documento (via OCR). Alertar caso haja divergência para evitar anexar documentos no prontuário errado.
+
+
+---
+
+## 🧪 EXAMES LABORATORIAIS - Extração Estruturada
+
+### Fase 1: Banco de Dados
+- [ ] Criar tabela `resultados_laboratoriais` (paciente, exame, data, resultado, referência)
+- [ ] Criar tabela `exames_padronizados` (catálogo de exames com sinônimos)
+- [ ] Criar tabela `categorias_exames` (Hemograma, Bioquímica, etc.)
+
+### Fase 2: Extração Inteligente
+- [ ] Implementar extração de exames com LLM a partir do PDF
+- [ ] Priorizar extração do fluxograma (páginas finais)
+- [ ] Parsear resultados e vincular ao paciente
+
+### Fase 3: Visualização
+- [ ] Criar componente de fluxograma no prontuário
+- [ ] Destacar valores fora da referência em vermelho
+- [ ] Filtro por período (6 meses, 1 ano, todo histórico)
+- [ ] Agrupamento por categoria de exame
+
+### Fase 4: Gráficos
+- [ ] Gráfico de linha do tempo por exame
+- [ ] Visualização de tendências
+- [ ] Comparação entre datas selecionadas
+
+
+
+---
+
+## 🧪 EXAMES LABORATORIAIS ESTRUTURADOS - Implementado (09/01/2026)
+
+### Tabelas no Banco de Dados
+- [x] Criar tabela exames_padronizados (nome, categoria, unidade, referências)
+- [x] Criar tabela resultados_laboratoriais (paciente, exame, data, resultado, referência)
+
+### Extração Inteligente com LLM
+- [x] Analisar PDF e extrair dados estruturados
+- [x] Priorizar extração do "Laudo Evolutivo" / "Fluxograma"
+- [x] Identificar: nome do exame, resultado, unidade, referência, data
+
+### Visualização de Fluxograma
+- [x] Tabela com exames nas linhas e datas nas colunas
+- [x] Destacar valores fora da referência (vermelho/azul)
+- [x] Indicadores de tendência (setas)
+
+### Gráficos de Tendência
+- [x] Gráfico de linha por exame selecionado
+- [x] Linhas de referência (mínimo/máximo)
+- [x] Histórico temporal
+
+### Interface
+- [x] Aba "Dados Estruturados" no visualizador de documentos
+- [x] Botão "Extrair Resultados de Exames" para documentos laboratoriais
+- [x] Fluxograma laboratorial na seção de Exames Laboratoriais do prontuário

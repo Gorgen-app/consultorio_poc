@@ -445,7 +445,7 @@ export function DocumentosList({ pacienteId, categoria }: DocumentosListProps) {
 
       {documentoSelecionado && (
         <DocumentoViewer
-          documento={documentoSelecionado}
+          documento={{ ...documentoSelecionado, pacienteId, categoria }}
           isOpen={!!documentoSelecionado}
           onClose={() => setDocumentoSelecionado(null)}
         />

@@ -2278,3 +2278,186 @@ export async function updatePatologia(id: number, data: Partial<InsertPatologia>
   
   await db.update(patologias).set(data).where(eq(patologias.id, id));
 }
+
+
+// ===== RESULTADOS LABORATORIAIS ESTRUTURADOS =====
+
+import { examesPadronizados, resultadosLaboratoriais, InsertResultadoLaboratorial, ResultadoLaboratorial, ExamePadronizado, InsertExamePadronizado } from "../drizzle/schema";
+
+export async function listResultadosLaboratoriais(pacienteId: number): Promise<ResultadoLaboratorial[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(resultadosLaboratoriais)
+    .where(eq(resultadosLaboratoriais.pacienteId, pacienteId))
+    .orderBy(desc(resultadosLaboratoriais.dataColeta));
+}
+
+export async function listResultadosPorExame(pacienteId: number, nomeExame: string): Promise<ResultadoLaboratorial[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(resultadosLaboratoriais)
+    .where(and(
+      eq(resultadosLaboratoriais.pacienteId, pacienteId),
+      eq(resultadosLaboratoriais.nomeExameOriginal, nomeExame)
+    )!)
+    .orderBy(desc(resultadosLaboratoriais.dataColeta));
+}
+
+export async function getFluxogramaLaboratorial(pacienteId: number): Promise<{
+  exames: string[];
+  datas: string[];
+  resultados: Record<string, Record<string, { valor: string; foraRef: boolean; tipo: string }>>;
+}> {
+  const db = await getDb();
+  if (!db) return { exames: [], datas: [], resultados: {} };
+  
+  const todos = await listResultadosLaboratoriais(pacienteId);
+  
+  // Agrupar por exame e data
+  const examesSet = new Set<string>();
+  const datasSet = new Set<string>();
+  const resultados: Record<string, Record<string, { valor: string; foraRef: boolean; tipo: string }>> = {};
+  
+  for (const r of todos) {
+    const exame = r.nomeExameOriginal;
+    // dataColeta pode ser Date ou string dependendo do driver
+    const dataStr = r.dataColeta instanceof Date 
+      ? r.dataColeta.toISOString().split('T')[0] 
+      : String(r.dataColeta);
+    
+    examesSet.add(exame);
+    datasSet.add(dataStr);
+    
+    if (!resultados[exame]) resultados[exame] = {};
+    resultados[exame][dataStr] = {
+      valor: r.resultado,
+      foraRef: r.foraReferencia || false,
+      tipo: r.tipoAlteracao || 'Normal'
+    };
+  }
+  
+  // Ordenar datas (mais recente primeiro)
+  const datas = Array.from(datasSet).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  const exames = Array.from(examesSet).sort();
+  
+  return { exames, datas, resultados };
+}
+
+export async function createResultadoLaboratorial(data: InsertResultadoLaboratorial): Promise<ResultadoLaboratorial> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Determinar se está fora da referência
+  if (data.resultadoNumerico && (data.valorReferenciaMin || data.valorReferenciaMax)) {
+    const valor = Number(data.resultadoNumerico);
+    const min = data.valorReferenciaMin ? Number(data.valorReferenciaMin) : null;
+    const max = data.valorReferenciaMax ? Number(data.valorReferenciaMax) : null;
+    
+    if (min !== null && valor < min) {
+      data.foraReferencia = true;
+      data.tipoAlteracao = 'Diminuído';
+    } else if (max !== null && valor > max) {
+      data.foraReferencia = true;
+      data.tipoAlteracao = 'Aumentado';
+    } else {
+      data.foraReferencia = false;
+      data.tipoAlteracao = 'Normal';
+    }
+  }
+  
+  const [result] = await db.insert(resultadosLaboratoriais).values(data);
+  return { id: result.insertId, ...data } as ResultadoLaboratorial;
+}
+
+export async function createManyResultadosLaboratoriais(dados: InsertResultadoLaboratorial[]): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Processar cada resultado para determinar se está fora da referência
+  const processados = dados.map(data => {
+    if (data.resultadoNumerico && (data.valorReferenciaMin || data.valorReferenciaMax)) {
+      const valor = Number(data.resultadoNumerico);
+      const min = data.valorReferenciaMin ? Number(data.valorReferenciaMin) : null;
+      const max = data.valorReferenciaMax ? Number(data.valorReferenciaMax) : null;
+      
+      if (min !== null && valor < min) {
+        data.foraReferencia = true;
+        data.tipoAlteracao = 'Diminuído';
+      } else if (max !== null && valor > max) {
+        data.foraReferencia = true;
+        data.tipoAlteracao = 'Aumentado';
+      } else {
+        data.foraReferencia = false;
+        data.tipoAlteracao = 'Normal';
+      }
+    }
+    return data;
+  });
+  
+  if (processados.length === 0) return 0;
+  
+  await db.insert(resultadosLaboratoriais).values(processados);
+  return processados.length;
+}
+
+export async function deleteResultadosLaboratoriaisPorDocumento(documentoExternoId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(resultadosLaboratoriais).where(eq(resultadosLaboratoriais.documentoExternoId, documentoExternoId));
+}
+
+// ===== EXAMES PADRONIZADOS =====
+
+export async function listExamesPadronizados(): Promise<ExamePadronizado[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select().from(examesPadronizados).orderBy(examesPadronizados.nome);
+}
+
+export async function getExamePadronizado(id: number): Promise<ExamePadronizado | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(examesPadronizados).where(eq(examesPadronizados.id, id)).limit(1);
+  return result[0] || null;
+}
+
+export async function findExamePadronizadoPorNome(nome: string): Promise<ExamePadronizado | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar por nome exato primeiro
+  let result = await db.select().from(examesPadronizados).where(eq(examesPadronizados.nome, nome)).limit(1);
+  if (result[0]) return result[0];
+  
+  // Buscar por sinônimos (JSON array)
+  const todos = await db.select().from(examesPadronizados);
+  for (const exame of todos) {
+    if (exame.sinonimos) {
+      try {
+        const sinonimos = JSON.parse(exame.sinonimos);
+        if (Array.isArray(sinonimos) && sinonimos.some(s => s.toLowerCase() === nome.toLowerCase())) {
+          return exame;
+        }
+      } catch {}
+    }
+  }
+  
+  return null;
+}
+
+export async function createExamePadronizado(data: InsertExamePadronizado): Promise<ExamePadronizado> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(examesPadronizados).values(data);
+  return { id: result.insertId, ...data } as ExamePadronizado;
+}

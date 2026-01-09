@@ -1049,3 +1049,108 @@ export const patologias = mysqlTable("patologias", {
 
 export type Patologia = typeof patologias.$inferSelect;
 export type InsertPatologia = typeof patologias.$inferInsert;
+
+
+// ==========================================
+// RESULTADOS LABORATORIAIS ESTRUTURADOS
+// Pilar Fundamental: Imutabilidade e Preservação Histórica
+// ==========================================
+
+/**
+ * Catálogo de Exames Padronizados
+ * Permite normalizar nomes de exames de diferentes laboratórios
+ */
+export const examesPadronizados = mysqlTable("exames_padronizados", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Nome padronizado do exame
+  nome: varchar("nome", { length: 255 }).notNull().unique(),
+  
+  // Categoria do exame
+  categoria: mysqlEnum("categoria", [
+    "Hemograma",
+    "Bioquímica",
+    "Função Renal",
+    "Função Hepática",
+    "Perfil Lipídico",
+    "Coagulação",
+    "Hormônios",
+    "Marcadores Tumorais",
+    "Eletrólitos",
+    "Urinálise",
+    "Sorologias",
+    "Metabolismo do Ferro",
+    "Vitaminas",
+    "Outros"
+  ]).notNull(),
+  
+  // Unidade padrão
+  unidadePadrao: varchar("unidade_padrao", { length: 50 }),
+  
+  // Valores de referência padrão (podem variar por sexo/idade)
+  valorReferenciaMinMasculino: decimal("valor_ref_min_masculino", { precision: 10, scale: 4 }),
+  valorReferenciaMaxMasculino: decimal("valor_ref_max_masculino", { precision: 10, scale: 4 }),
+  valorReferenciaMinFeminino: decimal("valor_ref_min_feminino", { precision: 10, scale: 4 }),
+  valorReferenciaMaxFeminino: decimal("valor_ref_max_feminino", { precision: 10, scale: 4 }),
+  
+  // Sinônimos (nomes alternativos usados por diferentes laboratórios)
+  sinonimos: text("sinonimos"), // JSON array: ["TGP", "ALT", "Alanina aminotransferase"]
+  
+  // Descrição e notas
+  descricao: text("descricao"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ExamePadronizado = typeof examesPadronizados.$inferSelect;
+export type InsertExamePadronizado = typeof examesPadronizados.$inferInsert;
+
+/**
+ * Resultados Laboratoriais Estruturados
+ * Armazena cada resultado individual extraído dos PDFs
+ */
+export const resultadosLaboratoriais = mysqlTable("resultados_laboratoriais", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Vínculos
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  documentoExternoId: int("documento_externo_id").references(() => documentosExternos.id), // PDF original
+  examePadronizadoId: int("exame_padronizado_id").references(() => examesPadronizados.id), // Exame normalizado
+  
+  // Nome do exame (como aparece no laudo)
+  nomeExameOriginal: varchar("nome_exame_original", { length: 255 }).notNull(),
+  
+  // Data da coleta
+  dataColeta: date("data_coleta").notNull(),
+  
+  // Resultado (texto para suportar ">90", "<0.1", "Não reagente", etc.)
+  resultado: varchar("resultado", { length: 100 }).notNull(),
+  resultadoNumerico: decimal("resultado_numerico", { precision: 15, scale: 6 }), // Valor numérico quando aplicável
+  
+  // Unidade
+  unidade: varchar("unidade", { length: 50 }),
+  
+  // Valores de referência (como aparecem no laudo)
+  valorReferenciaTexto: varchar("valor_referencia_texto", { length: 255 }),
+  valorReferenciaMin: decimal("valor_referencia_min", { precision: 15, scale: 6 }),
+  valorReferenciaMax: decimal("valor_referencia_max", { precision: 15, scale: 6 }),
+  
+  // Indicador de valor fora da referência
+  foraReferencia: boolean("fora_referencia").default(false),
+  tipoAlteracao: mysqlEnum("tipo_alteracao", ["Normal", "Aumentado", "Diminuído"]).default("Normal"),
+  
+  // Laboratório
+  laboratorio: varchar("laboratorio", { length: 255 }),
+  
+  // Metadados de extração
+  extraidoPorIa: boolean("extraido_por_ia").default(true),
+  confiancaExtracao: decimal("confianca_extracao", { precision: 3, scale: 2 }), // 0.00 a 1.00
+  revisadoManualmente: boolean("revisado_manualmente").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ResultadoLaboratorial = typeof resultadosLaboratoriais.$inferSelect;
+export type InsertResultadoLaboratorial = typeof resultadosLaboratoriais.$inferInsert;

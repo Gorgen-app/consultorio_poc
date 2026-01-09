@@ -17,13 +17,17 @@ import {
   X, 
   ScanText,
   Copy,
-  Check
+  Check,
+  FlaskConical,
+  Table2
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 interface DocumentoViewerProps {
   documento: {
     id: number;
+    pacienteId?: number;
     titulo: string;
     descricao?: string | null;
     dataDocumento?: string | null;
@@ -34,6 +38,7 @@ interface DocumentoViewerProps {
     textoOcr?: string | null;
     uploadPor: string;
     uploadEm: Date | string;
+    categoria?: string | null;
   };
   isOpen: boolean;
   onClose: () => void;
@@ -43,6 +48,7 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
   const [activeTab, setActiveTab] = useState("visualizar");
   const [copied, setCopied] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [isExtractingLab, setIsExtractingLab] = useState(false);
 
   const utils = trpc.useUtils();
   const extractOcrMutation = trpc.documentosExternos.extractOcr.useMutation({
@@ -51,8 +57,20 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
     },
   });
 
+  const extractLabMutation = trpc.resultadosLaboratoriais.extrairDePdf.useMutation({
+    onSuccess: (data) => {
+      utils.resultadosLaboratoriais.fluxograma.invalidate();
+      utils.resultadosLaboratoriais.list.invalidate();
+      toast.success(`${data.count} resultados extraídos com sucesso!`);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao extrair dados: ${error.message}`);
+    },
+  });
+
   const isImage = documento.arquivoOriginalTipo?.startsWith("image/");
   const isPdf = documento.arquivoOriginalTipo === "application/pdf";
+  const isLabDocument = documento.categoria === "Exame Laboratorial";
 
   const handleExtractOcr = async () => {
     setIsExtracting(true);
@@ -62,6 +80,25 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
       console.error("Erro ao extrair OCR:", error);
     } finally {
       setIsExtracting(false);
+    }
+  };
+
+  const handleExtractLabData = async () => {
+    if (!documento.pacienteId) {
+      toast.error("ID do paciente não encontrado");
+      return;
+    }
+    setIsExtractingLab(true);
+    try {
+      await extractLabMutation.mutateAsync({
+        pacienteId: documento.pacienteId,
+        documentoExternoId: documento.id,
+        pdfUrl: documento.arquivoOriginalUrl,
+      });
+    } catch (error) {
+      console.error("Erro ao extrair dados laboratoriais:", error);
+    } finally {
+      setIsExtractingLab(false);
     }
   };
 
@@ -104,7 +141,7 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={`grid w-full ${isLabDocument ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="visualizar" className="flex items-center gap-2">
               <Eye className="h-4 w-4" />
               Visualizar
@@ -113,6 +150,12 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
               <ScanText className="h-4 w-4" />
               Texto OCR
             </TabsTrigger>
+            {isLabDocument && (
+              <TabsTrigger value="dados" className="flex items-center gap-2">
+                <Table2 className="h-4 w-4" />
+                Dados Estruturados
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="visualizar" className="flex-1 overflow-auto mt-4">
@@ -227,6 +270,40 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
               )}
             </div>
           </TabsContent>
+
+          {isLabDocument && (
+            <TabsContent value="dados" className="flex-1 overflow-auto mt-4">
+              <div className="space-y-4">
+                <div className="text-center py-8">
+                  <FlaskConical className="h-16 w-16 mx-auto mb-4 text-purple-300" />
+                  <h3 className="font-medium text-lg mb-2">Extrair Dados Laboratoriais</h3>
+                  <p className="text-gray-500 mb-4 max-w-md mx-auto">
+                    Use inteligência artificial para extrair automaticamente os resultados dos exames deste documento e popular o fluxograma laboratorial.
+                  </p>
+                  <Button
+                    onClick={handleExtractLabData}
+                    disabled={isExtractingLab}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {isExtractingLab ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Extraindo dados...
+                      </>
+                    ) : (
+                      <>
+                        <FlaskConical className="h-4 w-4 mr-2" />
+                        Extrair Resultados de Exames
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-gray-400 mt-2">
+                    O processo analisa o PDF e extrai nome, resultado, unidade e valores de referência de cada exame.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
 
         <div className="flex justify-between items-center pt-4 border-t mt-4">
