@@ -1180,6 +1180,7 @@ export interface ProntuarioCompleto {
   terapias: Terapia[];
   obstetricia: Obstetricia[];
   documentos: DocumentoMedico[];
+  totalAtendimentos: number;
 }
 
 export async function getProntuarioCompleto(pacienteId: number): Promise<ProntuarioCompleto | null> {
@@ -1212,7 +1213,8 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
     cardiologiaData,
     terapiasData,
     obstetriciaData,
-    documentosData
+    documentosData,
+    totalAtendimentos
   ] = await Promise.all([
     getResumoClinico(pacienteId),
     listProblemasAtivos(pacienteId),
@@ -1227,7 +1229,8 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
     listCardiologia(pacienteId),
     listTerapias(pacienteId),
     listObstetricia(pacienteId),
-    listDocumentosMedicos(pacienteId)
+    listDocumentosMedicos(pacienteId),
+    countAtendimentos({ pacienteId })
   ]);
   
   return {
@@ -1245,7 +1248,8 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
     cardiologia: cardiologiaData,
     terapias: terapiasData,
     obstetricia: obstetriciaData,
-    documentos: documentosData
+    documentos: documentosData,
+    totalAtendimentos
   };
 }
 

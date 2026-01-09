@@ -941,3 +941,16 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Ajustar sanfonas do menu: seta abre/fecha sem navegar, múltiplas abertas simultaneamente
 - [x] Adicionar subitem "Buscar Paciente" no menu lateral (direciona para página de pacientes com foco na busca)
 - [x] Adicionar subitem "Buscar Atendimento" no menu lateral (direciona para página de atendimentos com foco na busca)
+
+## 🏥 PRONTUÁRIO - Melhorias de Edição e Histórico
+
+- [x] Adicionar botão de lápis nos boxes do prontuário para inserir novo dado
+- [x] Implementar inserção de novo dado preservando histórico anterior (imutabilidade)
+- [x] Adicionar botão de gráfico nos boxes para visualizar evolução temporal
+- [x] Criar popup com gráfico de evolução (eixo X = tempo em anos/meses)
+- [x] Registrar data/hora de cada inserção de dado
+- [x] Registrar username do usuário que fez a alteração (auditoria)
+- [x] Investigar e documentar o que é o "NÃO" em vermelho no prontuário (era o campo obitoPerda)
+- [x] Corrigir badge de status: "Status: ATIVO" ou "Status: INATIVO"
+- [x] Adicionar "Tempo de Seguimento" (diferença entre data atual e data de cadastro)
+- [x] Adicionar "Número de Atendimentos" do paciente
