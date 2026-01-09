@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Scissors, Calendar, Upload } from "lucide-react";
+import { Plus, Scissors, Calendar, Upload, FileText } from "lucide-react";
 import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props {
@@ -119,6 +119,19 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
           ))}
         </div>
       )}
+
+      {/* Lista de documentos anexados */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Documentos Anexados
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DocumentosList pacienteId={pacienteId} categoria="Cirurgia" />
+        </CardContent>
+      </Card>
 
       {/* Modal de upload */}
       <DocumentoUpload

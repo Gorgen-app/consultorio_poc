@@ -397,6 +397,19 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
         </div>
       )}
 
+      {/* Lista de documentos anexados */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Documentos Anexados
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DocumentosList pacienteId={pacienteId} categoria="Evolução" />
+        </CardContent>
+      </Card>
+
       {/* Modal de upload */}
       <DocumentoUpload
         pacienteId={pacienteId}

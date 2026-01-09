@@ -369,8 +369,17 @@ interface DocumentosListProps {
   categoria: CategoriaDocumento;
 }
 
+// Função para truncar texto OCR em 300 palavras
+function truncarResumoOcr(texto: string | null | undefined, maxPalavras: number = 300): string {
+  if (!texto) return "";
+  const palavras = texto.trim().split(/\s+/);
+  if (palavras.length <= maxPalavras) return texto;
+  return palavras.slice(0, maxPalavras).join(" ") + "...";
+}
+
 export function DocumentosList({ pacienteId, categoria }: DocumentosListProps) {
   const [documentoSelecionado, setDocumentoSelecionado] = useState<any | null>(null);
+  const [tooltipDoc, setTooltipDoc] = useState<number | null>(null);
   const { data: documentos, isLoading } = trpc.documentosExternos.list.useQuery({
     pacienteId,
     categoria,
@@ -398,8 +407,10 @@ export function DocumentosList({ pacienteId, categoria }: DocumentosListProps) {
         {documentos.map((doc) => (
           <div
             key={doc.id}
-            className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+            className="relative flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
             onClick={() => setDocumentoSelecionado(doc)}
+            onMouseEnter={() => setTooltipDoc(doc.id)}
+            onMouseLeave={() => setTooltipDoc(null)}
           >
             <div className="flex items-center gap-2">
               {doc.arquivoOriginalTipo?.startsWith("image/") ? (
@@ -431,6 +442,24 @@ export function DocumentosList({ pacienteId, categoria }: DocumentosListProps) {
             >
               <Eye className="h-4 w-4" />
             </Button>
+
+            {/* Tooltip com resumo OCR */}
+            {tooltipDoc === doc.id && (
+              <div className="absolute left-0 top-full mt-1 z-50 w-80 p-3 bg-white border border-gray-200 rounded-lg shadow-lg">
+                {doc.textoOcr ? (
+                  <div>
+                    <p className="text-xs font-bold text-gray-700 mb-1">Resumo do exame:</p>
+                    <p className="text-xs text-gray-600 whitespace-pre-wrap max-h-40 overflow-y-auto">
+                      {truncarResumoOcr(doc.textoOcr, 300)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 italic">
+                    Resumo não disponível para esse exame.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -1005,3 +1005,23 @@ A dashboard deve integrar **medicina e administração**:
 - [ ] Adicionar botão "Registrar Primeiro Exame" em Exames de Imagem (estado vazio)
 - [ ] Adicionar botão "Registrar Primeiro Exame" em Endoscopia (estado vazio)
 - [ ] Adicionar botão "Registrar Primeiro Exame" em Cardiologia (estado vazio)
+
+
+## 📄 PRONTUÁRIO - Documentos Anexados
+
+- [ ] Investigar onde os documentos uploadados estão sendo salvos
+- [ ] Exibir lista de documentos anexados ao abrir cada seção
+- [ ] Implementar tooltip com resumo OCR ao passar o mouse (max 300 palavras)
+- [ ] Exibir "Resumo não disponível para esse exame" quando não houver OCR
+- [ ] Formato do resumo: "**Resumo do exame:**" seguido do texto
+
+
+---
+
+## 📋 GORGEN 2.0.1 - Melhorias de Documentos (09/01/2026)
+
+### Lista de Documentos Anexados
+- [x] Tooltip com resumo OCR ao passar o mouse sobre documentos (máximo 300 palavras)
+- [x] Mensagem "Resumo não disponível para esse exame" quando não há OCR
+- [x] Componente DocumentosList reutilizável em todas as seções do prontuário
+
