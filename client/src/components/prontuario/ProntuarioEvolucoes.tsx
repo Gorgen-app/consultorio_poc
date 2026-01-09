@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload } from "lucide-react";
+import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props {
   pacienteId: number;
@@ -22,6 +23,8 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
   
   const [novaEvolucao, setNovaEvolucao] = useState(false);
   const [expandido, setExpandido] = useState<number | null>(null);
+  const [modalUploadAberto, setModalUploadAberto] = useState(false);
+  const [evolucaoIdParaUpload, setEvolucaoIdParaUpload] = useState<number | null>(null);
   
   const [form, setForm] = useState({
     dataEvolucao: new Date().toISOString().split("T")[0],
@@ -286,6 +289,18 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
                         {ev.profissionalNome}
                       </span>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEvolucaoIdParaUpload(ev.id);
+                        setModalUploadAberto(true);
+                      }}
+                      title="Anexar documento"
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
                     {expandido === ev.id ? (
                       <ChevronUp className="h-5 w-5 text-gray-400" />
                     ) : (
@@ -375,6 +390,21 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
           ))}
         </div>
       )}
+
+      {/* Modal de upload */}
+      <DocumentoUpload
+        pacienteId={pacienteId}
+        categoria="Evolução"
+        registroId={evolucaoIdParaUpload || undefined}
+        isOpen={modalUploadAberto}
+        onClose={() => {
+          setModalUploadAberto(false);
+          setEvolucaoIdParaUpload(null);
+        }}
+        onSuccess={() => {
+          onUpdate();
+        }}
+      />
     </div>
   );
 }

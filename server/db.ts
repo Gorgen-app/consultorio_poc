@@ -2182,3 +2182,99 @@ export async function getEspecialidadesMedico(userId: string): Promise<{
     areaAtuacao: rows[0].area_atuacao,
   };
 }
+
+
+// ===== DOCUMENTOS EXTERNOS =====
+
+import { documentosExternos, InsertDocumentoExterno, DocumentoExterno, patologias, InsertPatologia, Patologia } from "../drizzle/schema";
+
+export async function listDocumentosExternos(pacienteId: number, categoria?: string): Promise<DocumentoExterno[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (categoria) {
+    return db
+      .select()
+      .from(documentosExternos)
+      .where(and(
+        eq(documentosExternos.pacienteId, pacienteId),
+        eq(documentosExternos.categoria, categoria as any)
+      ))
+      .orderBy(desc(documentosExternos.dataDocumento));
+  }
+  
+  return db
+    .select()
+    .from(documentosExternos)
+    .where(eq(documentosExternos.pacienteId, pacienteId))
+    .orderBy(desc(documentosExternos.dataDocumento));
+}
+
+export async function createDocumentoExterno(data: InsertDocumentoExterno): Promise<DocumentoExterno> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(documentosExternos).values(data);
+  return { id: result.insertId, ...data } as DocumentoExterno;
+}
+
+export async function getDocumentoExterno(id: number): Promise<DocumentoExterno | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select()
+    .from(documentosExternos)
+    .where(eq(documentosExternos.id, id))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function updateDocumentoExterno(id: number, data: Partial<InsertDocumentoExterno>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(documentosExternos).set(data).where(eq(documentosExternos.id, id));
+}
+
+// ===== PATOLOGIA =====
+
+export async function listPatologias(pacienteId: number): Promise<Patologia[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db
+    .select()
+    .from(patologias)
+    .where(eq(patologias.pacienteId, pacienteId))
+    .orderBy(desc(patologias.dataColeta));
+}
+
+export async function createPatologia(data: InsertPatologia): Promise<Patologia> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const [result] = await db.insert(patologias).values(data);
+  return { id: result.insertId, ...data } as Patologia;
+}
+
+export async function getPatologia(id: number): Promise<Patologia | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select()
+    .from(patologias)
+    .where(eq(patologias.id, id))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function updatePatologia(id: number, data: Partial<InsertPatologia>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(patologias).set(data).where(eq(patologias.id, id));
+}

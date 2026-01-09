@@ -964,3 +964,21 @@ A dashboard deve integrar **medicina e administração**:
 ## 🎨 BRANDING
 
 - [x] Alterar título da aba do navegador para "Gorgen v2.0"
+
+
+## 📄 PRONTUÁRIO - Upload de Documentos Externos ✅ CONCLUÍDO
+
+- [x] Criar tabela de documentos no schema (documentos_externos)
+- [x] Criar tabela de patologias no schema
+- [x] Criar procedures de upload e listagem de documentos
+- [x] Adicionar item "Patologia" no prontuário
+- [x] Implementar upload de documentos em Evoluções
+- [x] Implementar upload de documentos em Internações
+- [x] Implementar upload de documentos em Cirurgias
+- [x] Implementar upload de documentos em Exames Laboratoriais
+- [x] Implementar upload de documentos em Exames de Imagem
+- [x] Implementar upload de documentos em Endoscopia
+- [x] Implementar upload de documentos em Cardiologia
+- [x] Implementar upload de documentos em Patologia
+- [x] Componente de upload (aceita imagem e PDF)
+- [x] Preparar estrutura para futura interpretação de laudos por IA

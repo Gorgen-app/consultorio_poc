@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Scissors, Calendar } from "lucide-react";
+import { Plus, Scissors, Calendar, Upload } from "lucide-react";
+import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props {
   pacienteId: number;
@@ -19,6 +20,8 @@ interface Props {
 export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }: Props) {
   
   const [novaCirurgia, setNovaCirurgia] = useState(false);
+  const [modalUploadAberto, setModalUploadAberto] = useState(false);
+  const [cirurgiaIdParaUpload, setCirurgiaIdParaUpload] = useState<number | null>(null);
   const [form, setForm] = useState({
     dataCirurgia: new Date().toISOString().split("T")[0],
     procedimento: "",
@@ -75,7 +78,20 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">{cir.procedimento}</CardTitle>
-                  <Badge variant={cir.status === "Realizada" ? "default" : "secondary"}>{cir.status}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setCirurgiaIdParaUpload(cir.id);
+                        setModalUploadAberto(true);
+                      }}
+                      title="Anexar documento"
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                    <Badge variant={cir.status === "Realizada" ? "default" : "secondary"}>{cir.status}</Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="text-sm space-y-2">
@@ -88,6 +104,21 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
           ))}
         </div>
       )}
+
+      {/* Modal de upload */}
+      <DocumentoUpload
+        pacienteId={pacienteId}
+        categoria="Cirurgia"
+        registroId={cirurgiaIdParaUpload || undefined}
+        isOpen={modalUploadAberto}
+        onClose={() => {
+          setModalUploadAberto(false);
+          setCirurgiaIdParaUpload(null);
+        }}
+        onSuccess={() => {
+          onUpdate();
+        }}
+      />
     </div>
   );
 }

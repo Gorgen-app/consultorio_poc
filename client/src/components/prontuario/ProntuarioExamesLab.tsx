@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, TestTube, FileText, Download } from "lucide-react";
+import { Plus, TestTube, FileText, Download, Upload } from "lucide-react";
+import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props {
   pacienteId: number;
@@ -19,6 +20,8 @@ interface Props {
 export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Props) {
   
   const [novoExame, setNovoExame] = useState(false);
+  const [modalUploadAberto, setModalUploadAberto] = useState(false);
+  const [exameIdParaUpload, setExameIdParaUpload] = useState<number | null>(null);
   const [form, setForm] = useState({
     dataColeta: new Date().toISOString().split("T")[0],
     laboratorio: "",
@@ -73,7 +76,20 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base flex items-center gap-2"><TestTube className="h-4 w-4" />{ex.tipoExame}</CardTitle>
-                  <span className="text-sm text-gray-500">{new Date(ex.dataColeta).toLocaleDateString("pt-BR")}</span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setExameIdParaUpload(ex.id);
+                        setModalUploadAberto(true);
+                      }}
+                      title="Anexar documento"
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-gray-500">{new Date(ex.dataColeta).toLocaleDateString("pt-BR")}</span>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="text-sm">
@@ -85,6 +101,21 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
           ))}
         </div>
       )}
+
+      {/* Modal de upload */}
+      <DocumentoUpload
+        pacienteId={pacienteId}
+        categoria="Exame Laboratorial"
+        registroId={exameIdParaUpload || undefined}
+        isOpen={modalUploadAberto}
+        onClose={() => {
+          setModalUploadAberto(false);
+          setExameIdParaUpload(null);
+        }}
+        onSuccess={() => {
+          onUpdate();
+        }}
+      />
     </div>
   );
 }

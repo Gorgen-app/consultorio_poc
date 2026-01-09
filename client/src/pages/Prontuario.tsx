@@ -36,7 +36,9 @@ import {
   ClipboardList,
   Pencil,
   LineChart,
-  CheckCircle
+  CheckCircle,
+  Upload,
+  Microscope
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -56,7 +58,9 @@ import ProntuarioTerapias from "@/components/prontuario/ProntuarioTerapias";
 import ProntuarioObstetricia from "@/components/prontuario/ProntuarioObstetricia";
 import ProntuarioDocumentos from "@/components/prontuario/ProntuarioDocumentos";
 import ProntuarioResumoClinico from "@/components/prontuario/ProntuarioResumoClinico";
+import ProntuarioPatologia from "@/components/prontuario/ProntuarioPatologia";
 import HistoricoMedidas from "@/components/prontuario/HistoricoMedidas";
+import { DocumentoUpload, DocumentosList } from "@/components/prontuario/DocumentoUpload";
 
 // Função para calcular idade
 function calcularIdade(dataNascimento: Date | string | null): number | null {
@@ -339,6 +343,7 @@ export default function Prontuario() {
     { id: "exames-imagem", label: "Exames de Imagem", icon: Image },
     { id: "endoscopia", label: "Endoscopia", icon: Stethoscope },
     { id: "cardiologia", label: "Cardiologia", icon: Heart },
+    { id: "patologia", label: "Patologia", icon: Microscope },
     { id: "terapias", label: "Terapias e Infusões", icon: Syringe },
     ...(isMulher ? [{ id: "obstetricia", label: "Obstetrícia", icon: Baby }] : []),
     { id: "documentos", label: "Documentos", icon: FileOutput },
@@ -750,6 +755,12 @@ export default function Prontuario() {
               pacienteId={pacienteId}
               pacienteNome={paciente.nome}
               documentos={prontuario.documentos}
+              onUpdate={refetch}
+            />
+          )}
+          {secaoAtiva === "patologia" && (
+            <ProntuarioPatologia 
+              pacienteId={pacienteId}
               onUpdate={refetch}
             />
           )}

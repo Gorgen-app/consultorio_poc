@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Building2, Calendar } from "lucide-react";
+import { Plus, Building2, Calendar, Upload } from "lucide-react";
+import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props {
   pacienteId: number;
@@ -20,6 +21,8 @@ interface Props {
 export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdate }: Props) {
   
   const [novaInternacao, setNovaInternacao] = useState(false);
+  const [modalUploadAberto, setModalUploadAberto] = useState(false);
+  const [internacaoIdParaUpload, setInternacaoIdParaUpload] = useState<number | null>(null);
   
   const [form, setForm] = useState({
     hospital: "",
@@ -129,9 +132,22 @@ export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdat
                     <Building2 className="h-4 w-4" />
                     {int.hospital}
                   </CardTitle>
-                  <Badge variant={int.dataAlta ? "secondary" : "default"}>
-                    {int.dataAlta ? "Alta" : "Internado"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setInternacaoIdParaUpload(int.id);
+                        setModalUploadAberto(true);
+                      }}
+                      title="Anexar documento"
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                    <Badge variant={int.dataAlta ? "secondary" : "default"}>
+                      {int.dataAlta ? "Alta" : "Internado"}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -155,6 +171,21 @@ export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdat
           ))}
         </div>
       )}
+
+      {/* Modal de upload */}
+      <DocumentoUpload
+        pacienteId={pacienteId}
+        categoria="Internação"
+        registroId={internacaoIdParaUpload || undefined}
+        isOpen={modalUploadAberto}
+        onClose={() => {
+          setModalUploadAberto(false);
+          setInternacaoIdParaUpload(null);
+        }}
+        onSuccess={() => {
+          onUpdate();
+        }}
+      />
     </div>
   );
 }

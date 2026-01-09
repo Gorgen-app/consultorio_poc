@@ -915,3 +915,137 @@ export const historicoVinculo = mysqlTable("historico_vinculo", {
   dataAcao: datetime("data_acao").default(sql`CURRENT_TIMESTAMP`),
   observacao: text("observacao"),
 });
+
+
+// ==========================================
+// DOCUMENTOS EXTERNOS DO PRONTUÁRIO
+// Pilar Fundamental: Imutabilidade e Preservação Histórica
+// ==========================================
+
+/**
+ * Categorias de documentos externos
+ */
+export const categoriaDocumentoEnum = mysqlEnum("categoria_documento", [
+  "Evolução",
+  "Internação",
+  "Cirurgia",
+  "Exame Laboratorial",
+  "Exame de Imagem",
+  "Endoscopia",
+  "Cardiologia",
+  "Patologia"
+]);
+
+/**
+ * Documentos Externos do Prontuário
+ * Armazena referências a documentos externos (laudos, exames, etc.)
+ * que foram digitalizados e convertidos para PDF com OCR
+ */
+export const documentosExternos = mysqlTable("documentos_externos", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  // Categoria do documento
+  categoria: categoriaDocumentoEnum.notNull(),
+  
+  // Referência ao registro específico (opcional)
+  evolucaoId: int("evolucao_id").references(() => evolucoes.id),
+  internacaoId: int("internacao_id").references(() => internacoes.id),
+  cirurgiaId: int("cirurgia_id").references(() => cirurgias.id),
+  exameLaboratorialId: int("exame_laboratorial_id").references(() => examesLaboratoriais.id),
+  exameImagemId: int("exame_imagem_id").references(() => examesImagem.id),
+  endoscopiaId: int("endoscopia_id").references(() => endoscopias.id),
+  cardiologiaId: int("cardiologia_id").references(() => cardiologia.id),
+  patologiaId: int("patologia_id"),
+  
+  // Informações do documento
+  titulo: varchar("titulo", { length: 255 }).notNull(),
+  descricao: text("descricao"),
+  dataDocumento: date("data_documento"), // Data do documento original
+  
+  // Arquivo original (antes da conversão)
+  arquivoOriginalUrl: varchar("arquivo_original_url", { length: 500 }).notNull(),
+  arquivoOriginalNome: varchar("arquivo_original_nome", { length: 255 }).notNull(),
+  arquivoOriginalTipo: varchar("arquivo_original_tipo", { length: 50 }), // image/jpeg, application/pdf, etc.
+  arquivoOriginalTamanho: int("arquivo_original_tamanho"), // bytes
+  
+  // Arquivo PDF convertido (com OCR)
+  arquivoPdfUrl: varchar("arquivo_pdf_url", { length: 500 }),
+  arquivoPdfNome: varchar("arquivo_pdf_nome", { length: 255 }),
+  
+  // OCR e IA
+  textoOcr: text("texto_ocr"), // Texto extraído via OCR
+  interpretacaoIa: text("interpretacao_ia"), // Futura interpretação por IA
+  dataInterpretacao: timestamp("data_interpretacao"),
+  
+  // Metadados de auditoria
+  uploadPor: varchar("upload_por", { length: 255 }).notNull(),
+  uploadEm: timestamp("upload_em").defaultNow().notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DocumentoExterno = typeof documentosExternos.$inferSelect;
+export type InsertDocumentoExterno = typeof documentosExternos.$inferInsert;
+
+/**
+ * Exames de Patologia (Anatomopatológico, Citopatológico, Imunohistoquímica)
+ */
+export const patologias = mysqlTable("patologias", {
+  id: int("id").autoincrement().primaryKey(),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  dataColeta: date("data_coleta").notNull(),
+  dataResultado: date("data_resultado"),
+  
+  tipoExame: mysqlEnum("tipo_exame", [
+    "Anatomopatológico",
+    "Citopatológico", 
+    "Imunohistoquímica",
+    "Hibridização in situ",
+    "Biópsia Líquida",
+    "Outro"
+  ]).notNull(),
+  
+  // Origem do material
+  origemMaterial: varchar("origem_material", { length: 255 }), // Ex: Mama direita, Cólon, Pele
+  tipoProcedimento: varchar("tipo_procedimento", { length: 255 }), // Biópsia, Ressecção, Punção
+  
+  // Laboratório
+  laboratorio: varchar("laboratorio", { length: 255 }),
+  patologistaResponsavel: varchar("patologista_responsavel", { length: 255 }),
+  
+  // Laudo
+  descricaoMacroscopica: text("descricao_macroscopica"),
+  descricaoMicroscopica: text("descricao_microscopica"),
+  diagnostico: text("diagnostico"),
+  conclusao: text("conclusao"),
+  
+  // Classificações específicas (oncologia)
+  estadiamentoTnm: varchar("estadiamento_tnm", { length: 50 }),
+  grauHistologico: varchar("grau_histologico", { length: 50 }),
+  margemCirurgica: varchar("margem_cirurgica", { length: 100 }),
+  invasaoLinfovascular: boolean("invasao_linfovascular"),
+  invasaoPerineural: boolean("invasao_perineural"),
+  
+  // Imunohistoquímica (marcadores comuns)
+  ki67: varchar("ki67", { length: 20 }),
+  receptorEstrogeno: varchar("receptor_estrogeno", { length: 50 }),
+  receptorProgesterona: varchar("receptor_progesterona", { length: 50 }),
+  her2: varchar("her2", { length: 50 }),
+  pdl1: varchar("pdl1", { length: 50 }),
+  outrosMarcadores: text("outros_marcadores"), // JSON com outros marcadores
+  
+  // Arquivos
+  arquivoLaudoUrl: varchar("arquivo_laudo_url", { length: 500 }),
+  arquivoLaminasUrl: varchar("arquivo_laminas_url", { length: 500 }),
+  
+  observacoes: text("observacoes"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Patologia = typeof patologias.$inferSelect;
+export type InsertPatologia = typeof patologias.$inferInsert;

@@ -8,13 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Image, Download } from "lucide-react";
+import { Plus, Image, Download, Upload } from "lucide-react";
+import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props { pacienteId: number; exames: any[]; onUpdate: () => void; }
 
 export default function ProntuarioExamesImagem({ pacienteId, exames, onUpdate }: Props) {
   
   const [novoExame, setNovoExame] = useState(false);
+  const [modalUploadAberto, setModalUploadAberto] = useState(false);
+  const [exameIdParaUpload, setExameIdParaUpload] = useState<number | null>(null);
   const [form, setForm] = useState({ dataExame: new Date().toISOString().split("T")[0], tipoExame: "", regiao: "", clinica: "", laudo: "", conclusao: "" });
   const createExame = trpc.prontuario.examesImagem.create.useMutation({ onSuccess: () => { toast.success("Exame registrado!"); setNovoExame(false); onUpdate(); } });
   
@@ -65,7 +68,7 @@ export default function ProntuarioExamesImagem({ pacienteId, exames, onUpdate }:
         <div className="space-y-4">
           {exames.map((ex) => (
             <Card key={ex.id}>
-              <CardHeader><div className="flex items-center justify-between"><CardTitle className="text-base">{ex.tipoExame} - {ex.regiao || "Região não especificada"}</CardTitle><span className="text-sm text-gray-500">{new Date(ex.dataExame).toLocaleDateString("pt-BR")}</span></div></CardHeader>
+              <CardHeader><div className="flex items-center justify-between"><CardTitle className="text-base">{ex.tipoExame} - {ex.regiao || "Região não especificada"}</CardTitle><div className="flex items-center gap-2"><Button variant="ghost" size="sm" onClick={() => { setExameIdParaUpload(ex.id); setModalUploadAberto(true); }} title="Anexar documento"><Upload className="h-4 w-4" /></Button><span className="text-sm text-gray-500">{new Date(ex.dataExame).toLocaleDateString("pt-BR")}</span></div></div></CardHeader>
               <CardContent className="text-sm">
                 {ex.clinica && <p className="text-gray-500 mb-2">Clínica: {ex.clinica}</p>}
                 {ex.conclusao && <p className="font-medium mb-2">Conclusão: {ex.conclusao}</p>}
@@ -75,6 +78,21 @@ export default function ProntuarioExamesImagem({ pacienteId, exames, onUpdate }:
           ))}
         </div>
       )}
+
+      {/* Modal de upload */}
+      <DocumentoUpload
+        pacienteId={pacienteId}
+        categoria="Exame de Imagem"
+        registroId={exameIdParaUpload || undefined}
+        isOpen={modalUploadAberto}
+        onClose={() => {
+          setModalUploadAberto(false);
+          setExameIdParaUpload(null);
+        }}
+        onSuccess={() => {
+          onUpdate();
+        }}
+      />
     </div>
   );
 }

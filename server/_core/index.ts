@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { storagePut } from "../storage";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -35,6 +36,29 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+
+  // Endpoint de upload de arquivos
+  app.post("/api/upload", async (req, res) => {
+    try {
+      const { fileKey, fileData, contentType } = req.body;
+      
+      if (!fileKey || !fileData) {
+        return res.status(400).json({ error: "fileKey e fileData são obrigatórios" });
+      }
+
+      // Converter base64 para buffer
+      const base64Data = fileData.replace(/^data:[^;]+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+
+      // Fazer upload para S3
+      const { url } = await storagePut(fileKey, buffer, contentType || "application/octet-stream");
+
+      res.json({ url });
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      res.status(500).json({ error: "Erro ao fazer upload do arquivo" });
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",

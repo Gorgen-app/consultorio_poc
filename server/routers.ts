@@ -1445,6 +1445,135 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  // ===== DOCUMENTOS EXTERNOS =====
+  documentosExternos: router({
+    list: protectedProcedure
+      .input(z.object({
+        pacienteId: z.number(),
+        categoria: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.listDocumentosExternos(input.pacienteId, input.categoria);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        pacienteId: z.number(),
+        categoria: z.enum(["Evolução", "Internação", "Cirurgia", "Exame Laboratorial", "Exame de Imagem", "Endoscopia", "Cardiologia", "Patologia"]),
+        titulo: z.string().min(1),
+        descricao: z.string().optional(),
+        dataDocumento: z.string().optional(),
+        arquivoOriginalUrl: z.string(),
+        arquivoOriginalNome: z.string(),
+        arquivoOriginalTipo: z.string().optional(),
+        arquivoOriginalTamanho: z.number().optional(),
+        arquivoPdfUrl: z.string().optional(),
+        arquivoPdfNome: z.string().optional(),
+        textoOcr: z.string().optional(),
+        evolucaoId: z.number().optional(),
+        internacaoId: z.number().optional(),
+        cirurgiaId: z.number().optional(),
+        exameLaboratorialId: z.number().optional(),
+        exameImagemId: z.number().optional(),
+        endoscopiaId: z.number().optional(),
+        cardiologiaId: z.number().optional(),
+        patologiaId: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const username = ctx.user?.name || ctx.user?.email || "Sistema";
+        return await db.createDocumentoExterno({
+          ...input,
+          dataDocumento: input.dataDocumento || null,
+          uploadPor: username,
+        } as any);
+      }),
+
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getDocumentoExterno(input.id);
+      }),
+
+    updateOcr: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        textoOcr: z.string(),
+        arquivoPdfUrl: z.string().optional(),
+        arquivoPdfNome: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateDocumentoExterno(input.id, {
+          textoOcr: input.textoOcr,
+          arquivoPdfUrl: input.arquivoPdfUrl,
+          arquivoPdfNome: input.arquivoPdfNome,
+        });
+        return { success: true };
+      }),
+  }),
+
+  // ===== PATOLOGIA =====
+  patologia: router({
+    list: protectedProcedure
+      .input(z.object({ pacienteId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.listPatologias(input.pacienteId);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        pacienteId: z.number(),
+        dataColeta: z.string(),
+        dataResultado: z.string().optional(),
+        tipoExame: z.enum(["Anatomopatológico", "Citopatológico", "Imunohistoquímica", "Hibridização in situ", "Biópsia Líquida", "Outro"]),
+        origemMaterial: z.string().optional(),
+        tipoProcedimento: z.string().optional(),
+        laboratorio: z.string().optional(),
+        patologistaResponsavel: z.string().optional(),
+        descricaoMacroscopica: z.string().optional(),
+        descricaoMicroscopica: z.string().optional(),
+        diagnostico: z.string().optional(),
+        conclusao: z.string().optional(),
+        estadiamentoTnm: z.string().optional(),
+        grauHistologico: z.string().optional(),
+        margemCirurgica: z.string().optional(),
+        invasaoLinfovascular: z.boolean().optional(),
+        invasaoPerineural: z.boolean().optional(),
+        ki67: z.string().optional(),
+        receptorEstrogeno: z.string().optional(),
+        receptorProgesterona: z.string().optional(),
+        her2: z.string().optional(),
+        pdl1: z.string().optional(),
+        outrosMarcadores: z.string().optional(),
+        arquivoLaudoUrl: z.string().optional(),
+        arquivoLaminasUrl: z.string().optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createPatologia(input as any);
+      }),
+
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getPatologia(input.id);
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        dataResultado: z.string().optional(),
+        diagnostico: z.string().optional(),
+        conclusao: z.string().optional(),
+        arquivoLaudoUrl: z.string().optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await db.updatePatologia(id, data as any);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
