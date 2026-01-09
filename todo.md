@@ -1134,3 +1134,12 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Mostrar apenas exames favoritos no fluxograma
 - [x] Filtro por exame específico
 - [x] Gráficos de tendência por exame
+
+
+---
+
+## 🐛 CORREÇÃO FORMATO NUMÉRICO (v2.0.4)
+
+- [x] Corrigir conversão de números no formato brasileiro (vírgula) para internacional (ponto)
+- [x] Tratar valores como "14,2" → 14.2 e "7.110" → 7110
+- [x] Função normalizarNumero() adicionada ao db.ts

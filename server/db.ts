@@ -2375,12 +2375,57 @@ export async function createResultadoLaboratorial(data: InsertResultadoLaborator
   return { id: result.insertId, ...data } as ResultadoLaboratorial;
 }
 
+// Função para normalizar números do formato brasileiro para internacional
+function normalizarNumero(valor: string | number | null | undefined): string | null {
+  if (valor === null || valor === undefined) return null;
+  
+  let str = String(valor).trim();
+  
+  // Remover caracteres não numéricos exceto vírgula, ponto e sinal negativo
+  // Manter apenas o primeiro sinal negativo se existir
+  const isNegative = str.startsWith('-');
+  str = str.replace(/[^0-9.,]/g, '');
+  
+  // Detectar formato brasileiro: "14,2" ou "7.110" (milhar) ou "7.110,50"
+  // Formato brasileiro usa ponto como separador de milhar e vírgula como decimal
+  // Formato internacional usa vírgula como separador de milhar e ponto como decimal
+  
+  // Se tem vírgula e ponto, verificar qual vem por último (esse é o decimal)
+  const lastComma = str.lastIndexOf(',');
+  const lastDot = str.lastIndexOf('.');
+  
+  if (lastComma > lastDot) {
+    // Formato brasileiro: 1.234,56 -> 1234.56
+    str = str.replace(/\./g, '').replace(',', '.');
+  } else if (lastDot > lastComma) {
+    // Formato internacional: 1,234.56 -> 1234.56
+    str = str.replace(/,/g, '');
+  } else if (lastComma !== -1 && lastDot === -1) {
+    // Só tem vírgula: 14,2 -> 14.2
+    str = str.replace(',', '.');
+  }
+  // Se só tem ponto, manter como está (já é formato internacional)
+  
+  if (isNegative) str = '-' + str;
+  
+  // Validar se é um número válido
+  const num = parseFloat(str);
+  if (isNaN(num)) return null;
+  
+  return String(num);
+}
+
 export async function createManyResultadosLaboratoriais(dados: InsertResultadoLaboratorial[]): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Processar cada resultado para determinar se está fora da referência
+  // Processar cada resultado para normalizar números e determinar se está fora da referência
   const processados = dados.map(data => {
+    // Normalizar valores numéricos
+    data.resultadoNumerico = normalizarNumero(data.resultadoNumerico);
+    data.valorReferenciaMin = normalizarNumero(data.valorReferenciaMin);
+    data.valorReferenciaMax = normalizarNumero(data.valorReferenciaMax);
+    
     if (data.resultadoNumerico && (data.valorReferenciaMin || data.valorReferenciaMax)) {
       const valor = Number(data.resultadoNumerico);
       const min = data.valorReferenciaMin ? Number(data.valorReferenciaMin) : null;
