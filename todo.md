@@ -1348,3 +1348,30 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Buscar tenant ativo no dashboard
 - [x] Mostrar nome da clínica no título do dashboard
 - [x] Atualizar subtítulo com informações do tenant (plano + badge de teste)
+
+
+## 🔧 FUNCIONALIDADES FINAIS MULTI-TENANT (10/01/2026)
+
+### Fase 1: Teste de Troca de Tenant
+- [x] Testar troca de tenant na interface via browser
+- [x] Validar que dados mudam de 53 para 3 pacientes (CORRIGIDO tenantContext.ts)
+- [x] Verificar toast de confirmação
+
+### Fase 2: Atalho de Teclado
+- [x] Implementar Ctrl+T para abrir seletor de tenant
+- [x] Adicionar listener global de teclado
+- [x] Adicionar dica de atalho no modal
+- [ ] Testar atalho em diferentes páginas
+
+### Fase 3: Página de Administração de Tenants
+- [x] Criar rota /admin/tenants
+- [x] Listar todos os tenants do sistema
+- [x] Mostrar limites de plano por tenant
+- [x] Implementar convite de usuários para clínicas
+
+### Fase 4: Avaliação Minuciosa da Arquitetura
+- [x] Resposta inicial sobre robustez para 1000 usuários
+- [x] Criar 3-5 perguntas de verificação
+- [x] Responder cada pergunta independentemente
+- [ ] Criar resposta final ajustada
+- [ ] Documentar processo completo

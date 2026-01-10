@@ -2349,6 +2349,61 @@ Retorne um JSON válido com a estrutura:
         return { success, error: success ? null : 'Acesso negado a este tenant' };
       }),
   }),
+
+  // Procedures de administração de tenants (apenas admin)
+  admin: router({
+    listTenants: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user?.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        return await db.listAllTenants();
+      }),
+    
+    getTenantStats: protectedProcedure
+      .input(z.object({ tenantId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user?.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        return await db.getTenantStats(input.tenantId);
+      }),
+    
+    listTenantUsers: protectedProcedure
+      .input(z.object({ tenantId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user?.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        return await db.listTenantUsers(input.tenantId);
+      }),
+    
+    createTenant: protectedProcedure
+      .input(z.object({
+        nome: z.string().min(1),
+        slug: z.string().min(1),
+        plano: z.enum(['free', 'basic', 'professional', 'enterprise']).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user?.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        return await db.createTenant(input);
+      }),
+    
+    updateTenantStatus: protectedProcedure
+      .input(z.object({
+        tenantId: z.number(),
+        status: z.enum(['ativo', 'inativo', 'suspenso']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user?.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        await db.toggleTenantStatus(input.tenantId, input.status);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -2,7 +2,8 @@
  * Tenant Context Middleware - Gorgen Multi-tenant Architecture
  * 
  * Este módulo fornece o contexto de tenant para todas as operações do sistema.
- * O tenant é determinado a partir do user_profile do usuário autenticado.
+ * O tenant é determinado a partir do tenant ativo do usuário (configuração) ou
+ * do user_profile do usuário autenticado como fallback.
  * 
  * Conforme Pilar 2: Sigilo e Confidencialidade Absoluta
  * - Cada tenant tem seus dados completamente isolados
@@ -10,9 +11,9 @@
  */
 
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { eq, and, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { tenants, userProfiles } from "../../drizzle/schema";
+import { tenants, userProfiles, userSettings, vinculoSecretariaMedico } from "../../drizzle/schema";
 
 // Tipo do contexto de tenant
 export type TenantContext = {
@@ -31,6 +32,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 /**
  * Obtém o contexto de tenant a partir do userId
+ * Prioriza o tenant ativo configurado pelo usuário, se existir e for válido
  * 
  * @param userId - ID do usuário autenticado
  * @returns TenantContext com informações do tenant
@@ -39,9 +41,12 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 export async function getTenantFromUser(userId: number): Promise<TenantContext> {
   const db = drizzle(process.env.DATABASE_URL!);
   
-  // Buscar o perfil do usuário para obter o tenantId
+  // Buscar o perfil do usuário para obter o tenantId principal
   const profileResult = await db
-    .select({ tenantId: userProfiles.tenantId })
+    .select({ 
+      id: userProfiles.id,
+      tenantId: userProfiles.tenantId 
+    })
     .from(userProfiles)
     .where(eq(userProfiles.userId, userId))
     .limit(1);
@@ -53,10 +58,40 @@ export async function getTenantFromUser(userId: number): Promise<TenantContext> 
     });
   }
   
-  const tenantId = profileResult[0].tenantId;
+  const profileId = profileResult[0].id;
+  const defaultTenantId = profileResult[0].tenantId;
+  
+  // Verificar se há um tenant ativo configurado nas preferências do usuário
+  const activeTenantSetting = await db
+    .select({ valor: userSettings.valor })
+    .from(userSettings)
+    .where(
+      and(
+        eq(userSettings.userProfileId, profileId),
+        eq(userSettings.categoria, "tenant"),
+        eq(userSettings.chave, "active_tenant_id")
+      )
+    )
+    .limit(1);
+  
+  let tenantIdToUse = defaultTenantId;
+  
+  if (activeTenantSetting.length > 0 && activeTenantSetting[0].valor) {
+    const requestedTenantId = parseInt(activeTenantSetting[0].valor, 10);
+    
+    if (!isNaN(requestedTenantId) && requestedTenantId !== defaultTenantId) {
+      // Verificar se o usuário tem acesso a este tenant via vínculo
+      const hasAccess = await validateUserTenantAccess(userId, requestedTenantId, db);
+      
+      if (hasAccess) {
+        tenantIdToUse = requestedTenantId;
+      }
+      // Se não tem acesso, usa o tenant padrão (não lança erro)
+    }
+  }
   
   // Verificar cache
-  const cached = tenantCache.get(tenantId);
+  const cached = tenantCache.get(tenantIdToUse);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
   }
@@ -65,7 +100,7 @@ export async function getTenantFromUser(userId: number): Promise<TenantContext> 
   const tenantResult = await db
     .select()
     .from(tenants)
-    .where(eq(tenants.id, tenantId))
+    .where(eq(tenants.id, tenantIdToUse))
     .limit(1);
   
   if (tenantResult.length === 0) {
@@ -103,9 +138,49 @@ export async function getTenantFromUser(userId: number): Promise<TenantContext> 
   };
   
   // Atualizar cache
-  tenantCache.set(tenantId, { data: tenantContext, timestamp: Date.now() });
+  tenantCache.set(tenantIdToUse, { data: tenantContext, timestamp: Date.now() });
   
   return tenantContext;
+}
+
+/**
+ * Valida se um usuário tem acesso a um tenant específico
+ * Acesso é permitido se:
+ * 1. É o tenant principal do usuário (via userProfiles.tenantId)
+ * 2. Tem um vínculo ativo com o tenant (via vinculoSecretariaMedico)
+ */
+async function validateUserTenantAccess(
+  userId: number,
+  tenantId: number,
+  db: ReturnType<typeof drizzle>
+): Promise<boolean> {
+  // Verificar se é o tenant principal
+  const profileResult = await db
+    .select({ tenantId: userProfiles.tenantId })
+    .from(userProfiles)
+    .where(eq(userProfiles.userId, userId))
+    .limit(1);
+  
+  if (profileResult.length > 0 && profileResult[0].tenantId === tenantId) {
+    return true;
+  }
+  
+  // Verificar se tem vínculo ativo com o tenant
+  const now = new Date();
+  const vinculoResult = await db
+    .select({ id: vinculoSecretariaMedico.id })
+    .from(vinculoSecretariaMedico)
+    .where(
+      and(
+        eq(vinculoSecretariaMedico.secretariaUserId, String(userId)),
+        eq(vinculoSecretariaMedico.tenantId, tenantId),
+        eq(vinculoSecretariaMedico.status, "ativo"),
+        gte(vinculoSecretariaMedico.dataValidade, now)
+      )
+    )
+    .limit(1);
+  
+  return vinculoResult.length > 0;
 }
 
 /**
@@ -168,9 +243,10 @@ export async function validateTenantAccess(
   userId: number,
   requestedTenantId: number
 ): Promise<boolean> {
-  const userTenant = await getTenantFromUser(userId);
+  const db = drizzle(process.env.DATABASE_URL!);
+  const hasAccess = await validateUserTenantAccess(userId, requestedTenantId, db);
   
-  if (userTenant.tenantId !== requestedTenantId) {
+  if (!hasAccess) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Acesso negado. Você não tem permissão para acessar dados de outro tenant.",

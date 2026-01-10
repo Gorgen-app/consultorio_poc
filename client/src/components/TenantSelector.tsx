@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Building2, Check, ChevronDown, Loader2 } from "lucide-react";
+import { Building2, Check, ChevronDown, Loader2, Keyboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -25,6 +25,28 @@ export function TenantSelector({ onTenantChange, className }: TenantSelectorProp
   const { data: activeTenant, isLoading: loadingActive } = trpc.tenants.getActiveTenant.useQuery();
   
   const utils = trpc.useUtils();
+  
+  // Atalho de teclado Ctrl+T para abrir o seletor
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // Ctrl+T ou Cmd+T (Mac)
+    if ((event.ctrlKey || event.metaKey) && event.key === "t") {
+      // Só ativar se o usuário tiver múltiplos tenants
+      if (tenants && tenants.length > 1) {
+        event.preventDefault();
+        setOpen(prev => !prev);
+      }
+    }
+    
+    // Escape para fechar
+    if (event.key === "Escape" && open) {
+      setOpen(false);
+    }
+  }, [tenants, open]);
+  
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
   
   const setActiveTenant = trpc.tenants.setActiveTenant.useMutation({
     onSuccess: (data, variables) => {
@@ -125,6 +147,12 @@ export function TenantSelector({ onTenantChange, className }: TenantSelectorProp
               )}
             </button>
           ))}
+        </div>
+        
+        {/* Dica de atalho de teclado */}
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground border-t pt-3">
+          <Keyboard className="h-3 w-3" />
+          <span>Pressione <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">Ctrl+T</kbd> para abrir rapidamente</span>
         </div>
       </DialogContent>
     </Dialog>

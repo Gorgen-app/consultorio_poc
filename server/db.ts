@@ -3014,3 +3014,107 @@ export async function getUserActiveTenant(userId: number) {
   
   return getTenantById(userResult[0].tenantId);
 }
+
+
+// ============================================
+// ADMINISTRAÇÃO DE TENANTS
+// ============================================
+
+/**
+ * Lista todos os tenants (apenas para administradores)
+ */
+export async function listAllTenants() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select()
+    .from(tenants)
+    .orderBy(desc(tenants.createdAt));
+  
+  return result;
+}
+
+/**
+ * Busca estatísticas de um tenant
+ */
+export async function getTenantStats(tenantId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const totalPacientes = await countPacientes(tenantId);
+  const pacientesAtivos = await countPacientes(tenantId, { status: "Ativo" });
+  const totalAtendimentos = await countAtendimentos(tenantId);
+  
+  // Contar usuários do tenant
+  const usuariosResult = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(userProfiles)
+    .where(eq(userProfiles.tenantId, tenantId));
+  
+  const totalUsuarios = Number(usuariosResult[0]?.count || 0);
+  
+  return {
+    totalPacientes,
+    pacientesAtivos,
+    totalAtendimentos,
+    totalUsuarios,
+  };
+}
+
+// updateTenant já existe na linha 2814
+
+// createTenant já existe na linha 2784
+
+/**
+ * Lista usuários de um tenant
+ */
+export async function listTenantUsers(tenantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select({
+      id: userProfiles.id,
+      userId: userProfiles.userId,
+      nomeCompleto: userProfiles.nomeCompleto,
+      email: userProfiles.email,
+      perfilAtivo: userProfiles.perfilAtivo,
+      crm: userProfiles.crm,
+      especialidade: userProfiles.especialidade,
+      createdAt: userProfiles.createdAt,
+    })
+    .from(userProfiles)
+    .where(eq(userProfiles.tenantId, tenantId))
+    .orderBy(userProfiles.nomeCompleto);
+  
+  return result;
+}
+
+/**
+ * Convida um usuário para um tenant
+ */
+export async function inviteUserToTenant(
+  tenantId: number,
+  medicoUserId: string,
+  secretariaUserId: string,
+  dataValidade: Date
+) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Criar vínculo de secretária-médico
+  const result = await db.insert(vinculoSecretariaMedico).values({
+    tenantId,
+    medicoUserId,
+    secretariaUserId,
+    dataInicio: new Date(),
+    dataValidade,
+    status: "ativo",
+    notificacaoEnviada: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  
+  return result[0].insertId;
+}
