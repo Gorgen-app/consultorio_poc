@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Save, Plus, Trash2, FileText, Upload, GraduationCap, Briefcase, Link as LinkIcon } from "lucide-react";
+import { Save, Plus, Trash2, FileText, Upload, GraduationCap, Briefcase, Link as LinkIcon, Loader2, Search } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
@@ -196,6 +196,81 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
     registroConselho: false,
     rqe: "",
   });
+
+  // Estado para loading da busca de CEP
+  const [buscandoCep, setBuscandoCep] = useState(false);
+
+  // Função para buscar endereço por CEP (API ViaCEP)
+  const buscarCep = async (cep: string) => {
+    // Remove caracteres não numéricos
+    const cepLimpo = cep.replace(/\D/g, "");
+    
+    if (cepLimpo.length !== 8) {
+      return;
+    }
+
+    setBuscandoCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await response.json();
+      
+      if (data.erro) {
+        toast.error("CEP não encontrado");
+        return;
+      }
+
+      // Mapear tipo de logradouro
+      let tipoLogradouro = "Rua";
+      const logradouroLower = data.logradouro?.toLowerCase() || "";
+      if (logradouroLower.startsWith("avenida") || logradouroLower.startsWith("av.") || logradouroLower.startsWith("av ")) {
+        tipoLogradouro = "Avenida";
+      } else if (logradouroLower.startsWith("alameda")) {
+        tipoLogradouro = "Alameda";
+      } else if (logradouroLower.startsWith("travessa")) {
+        tipoLogradouro = "Travessa";
+      } else if (logradouroLower.startsWith("praça")) {
+        tipoLogradouro = "Praça";
+      } else if (logradouroLower.startsWith("estrada")) {
+        tipoLogradouro = "Estrada";
+      } else if (logradouroLower.startsWith("rodovia")) {
+        tipoLogradouro = "Rodovia";
+      }
+
+      // Remover o tipo do início do logradouro
+      let enderecoLimpo = data.logradouro || "";
+      const prefixos = ["Rua ", "Avenida ", "Av. ", "Av ", "Alameda ", "Travessa ", "Praça ", "Estrada ", "Rodovia "];
+      for (const prefixo of prefixos) {
+        if (enderecoLimpo.toLowerCase().startsWith(prefixo.toLowerCase())) {
+          enderecoLimpo = enderecoLimpo.substring(prefixo.length);
+          break;
+        }
+      }
+
+      setEnderecoForm(prev => ({
+        ...prev,
+        logradouro: tipoLogradouro,
+        enderecoResidencial: enderecoLimpo,
+        bairro: data.bairro || "",
+        cidade: data.localidade || "",
+        uf: data.uf || "",
+      }));
+
+      toast.success("Endereço encontrado!");
+    } catch (error) {
+      toast.error("Erro ao buscar CEP. Tente novamente.");
+    } finally {
+      setBuscandoCep(false);
+    }
+  };
+
+  // Formatar CEP enquanto digita
+  const formatarCep = (valor: string) => {
+    const numeros = valor.replace(/\D/g, "");
+    if (numeros.length <= 5) {
+      return numeros;
+    }
+    return `${numeros.slice(0, 5)}-${numeros.slice(5, 8)}`;
+  };
 
   // Carregar dados quando cadastroCompleto mudar
   useEffect(() => {
@@ -654,12 +729,37 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="cep">CEP</Label>
-                <Input
-                  id="cep"
-                  value={enderecoForm.cep}
-                  onChange={(e) => setEnderecoForm({ ...enderecoForm, cep: e.target.value })}
-                  placeholder="00.000-000"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="cep"
+                    value={enderecoForm.cep}
+                    onChange={(e) => {
+                      const formatted = formatarCep(e.target.value);
+                      setEnderecoForm({ ...enderecoForm, cep: formatted });
+                      // Buscar automaticamente quando o CEP estiver completo
+                      if (formatted.replace(/\D/g, "").length === 8) {
+                        buscarCep(formatted);
+                      }
+                    }}
+                    placeholder="00000-000"
+                    maxLength={9}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => buscarCep(enderecoForm.cep)}
+                    disabled={buscandoCep || enderecoForm.cep.replace(/\D/g, "").length !== 8}
+                    title="Buscar endereço"
+                  >
+                    {buscandoCep ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Digite o CEP para preencher automaticamente</p>
               </div>
             </div>
 

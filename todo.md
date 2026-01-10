@@ -1295,3 +1295,12 @@ A dashboard deve integrar **medicina e administração**:
 
 ### Limpeza
 - [x] Eliminar aba "Profissional" das Configurações (dados já estão em Cadastro)
+
+
+---
+
+## 📍 GORGEN v3.0 - Busca de Endereço por CEP (10/01/2026)
+
+- [x] Implementar busca automática de endereço por CEP (API ViaCEP)
+- [x] Preencher automaticamente: logradouro, bairro, cidade, UF
+- [x] Adicionar feedback visual durante a busca (loading)
