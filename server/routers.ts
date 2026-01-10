@@ -2330,6 +2330,24 @@ Retorne um JSON válido com a estrutura:
         await db.toggleTenantStatus(input.id, input.status);
         return { success: true };
       }),
+    // Funções de seleção de tenant para usuários
+    getUserTenants: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (!ctx.user?.id) return [];
+        return await db.getUserTenants(ctx.user.id);
+      }),
+    getActiveTenant: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (!ctx.user?.id) return null;
+        return await db.getUserActiveTenant(ctx.user.id);
+      }),
+    setActiveTenant: protectedProcedure
+      .input(z.object({ tenantId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user?.id) return { success: false, error: 'Usuário não autenticado' };
+        const success = await db.setUserActiveTenant(ctx.user.id, input.tenantId);
+        return { success, error: success ? null : 'Acesso negado a este tenant' };
+      }),
   }),
 });
 

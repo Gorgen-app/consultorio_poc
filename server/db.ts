@@ -1,4 +1,4 @@
-import { eq, like, and, or, sql, desc, asc, getTableColumns, gte } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -2890,4 +2890,127 @@ export async function listPacienteAutorizacoes(pacienteId: number) {
       eq(pacienteAutorizacoes.status, "ativo")
     ));
   return result;
+}
+
+
+// ============================================
+// FUNÇÕES DE SELEÇÃO DE TENANT
+// ============================================
+
+/**
+ * Busca todos os tenants aos quais um usuário tem acesso
+ * Um usuário pode ter acesso a múltiplos tenants através de:
+ * 1. Seu tenant principal (tenant_id na tabela users)
+ * 2. Vínculos como secretária de médicos em outros tenants
+ */
+export async function getUserTenants(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Buscar o tenant principal do usuário
+  const userResult = await db.select({
+    tenantId: users.tenantId,
+  }).from(users).where(eq(users.id, userId));
+  
+  if (userResult.length === 0) return [];
+  
+  const primaryTenantId = userResult[0].tenantId;
+  
+  // Buscar tenants através de vínculos ativos
+  // Nota: secretariaUserId é varchar, então convertemos userId para string
+  const vinculosResult = await db.select({
+    tenantId: vinculoSecretariaMedico.tenantId,
+  }).from(vinculoSecretariaMedico)
+    .where(
+      and(
+        eq(vinculoSecretariaMedico.secretariaUserId, String(userId)),
+        eq(vinculoSecretariaMedico.status, 'ativo')
+      )
+    );
+  
+  // Combinar IDs únicos
+  const tenantIds = new Set<number>([primaryTenantId]);
+  vinculosResult.forEach(v => tenantIds.add(v.tenantId));
+  
+  // Buscar informações completas dos tenants
+  const tenantsResult = await db.select().from(tenants)
+    .where(inArray(tenants.id, Array.from(tenantIds)))
+    .orderBy(asc(tenants.nome));
+  
+  // Marcar qual é o tenant principal
+  return tenantsResult.map(t => ({
+    ...t,
+    isPrimary: t.id === primaryTenantId,
+  }));
+}
+
+/**
+ * Atualiza o tenant ativo do usuário na sessão
+ * Verifica se o usuário tem permissão para acessar o tenant
+ */
+export async function setUserActiveTenant(userId: number, tenantId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  // Verificar se o usuário tem acesso a este tenant
+  const userTenants = await getUserTenants(userId);
+  const hasAccess = userTenants.some(t => t.id === tenantId);
+  
+  if (!hasAccess) {
+    return false;
+  }
+  
+  // Buscar o perfil do usuário para salvar a configuração
+  const profileResult = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
+  
+  if (profileResult.length === 0) {
+    return false;
+  }
+  
+  // Atualizar o tenant ativo nas configurações do usuário
+  await upsertUserSetting(tenantId, {
+    userProfileId: profileResult[0].id,
+    categoria: 'tenant',
+    chave: 'active_tenant_id',
+    valor: String(tenantId),
+  });
+  
+  return true;
+}
+
+/**
+ * Busca o tenant ativo do usuário
+ * Retorna o tenant principal se nenhum estiver definido
+ */
+export async function getUserActiveTenant(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar o perfil do usuário
+  const profileResult = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
+  
+  if (profileResult.length > 0) {
+    const profileId = profileResult[0].id;
+    
+    // Verificar se há um tenant ativo nas configurações
+    const settings = await getUserSettings(profileId, 'tenant');
+    const activeTenantSetting = settings.find(s => s.chave === 'active_tenant_id');
+    
+    if (activeTenantSetting && activeTenantSetting.valor) {
+      const tenantId = parseInt(activeTenantSetting.valor, 10);
+      if (!isNaN(tenantId)) {
+        const tenant = await getTenantById(tenantId);
+        if (tenant) return tenant;
+      }
+    }
+  }
+  
+  // Retornar o tenant principal do usuário
+  const userResult = await db.select({
+    tenantId: users.tenantId,
+  }).from(users).where(eq(users.id, userId));
+  
+  if (userResult.length === 0) return null;
+  
+  return getTenantById(userResult[0].tenantId);
 }

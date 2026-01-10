@@ -30,6 +30,7 @@ import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { temPermissao, type PerfilType, type Funcionalidade } from "../../../shared/permissions";
+import { TenantSelector } from "./TenantSelector";
 import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
@@ -370,6 +371,11 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3">
+            {/* Seletor de Tenant - apenas para usuários com acesso a múltiplos tenants */}
+            <div className="mb-2">
+              <TenantSelector className={`w-full ${isCollapsed ? "px-0" : ""}`} />
+            </div>
+            
             {/* Botão de Configurações - apenas ícone */}
             {temPermissao(currentPerfil as PerfilType, "configuracoes") && (
               <div className="mb-2">

@@ -1314,3 +1314,21 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Executar script e validar criação
 - [x] Criar teste de isolamento entre tenants (14 testes)
 - [x] Documentar tenant de teste
+
+
+## 🧪 VALIDAÇÃO MULTI-TENANT COMPLETA (10/01/2026)
+
+### Fase 1: Usuário de Teste
+- [x] Criar usuário de teste no tenant 30002 (ID: 1530139)
+- [x] Criar perfil de usuário vinculado ao tenant 30002 (ID: 30001)
+
+### Fase 2: Dados de Teste
+- [x] Inserir pacientes de teste no tenant 30002 (3 pacientes)
+- [x] Inserir atendimentos de teste no tenant 30002 (3 atendimentos)
+- [x] Validar que dados não aparecem no tenant 1 (53 vs 3 pacientes)
+
+### Fase 3: Tela de Seleção de Tenant
+- [x] Criar componente TenantSelector
+- [x] Implementar lógica de troca de tenant
+- [x] Integrar TenantSelector no DashboardLayout (SidebarFooter)
+- [x] Adicionar procedures getUserTenants, getActiveTenant, setActiveTenant
