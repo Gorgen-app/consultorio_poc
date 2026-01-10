@@ -1297,3 +1297,12 @@ A dashboard deve integrar **medicina e administração**:
 
 ### Procedures a atualizar no routers.ts
 - [x] Atualizar procedures que chamam as funções acima para passar ctx.tenant.tenantId
+
+
+## 🗄️ MIGRAÇÃO TENANT_ID (10/01/2026)
+
+- [x] Verificar estado atual das tabelas historico_medidas e exames_favoritos
+- [x] Criar script de migração para adicionar tenant_id
+- [x] Executar migração no banco de dados
+- [x] Migrar dados existentes para tenant_id = 1
+- [x] Validar migração (historico_medidas: 2 registros, exames_favoritos: 4 registros)
