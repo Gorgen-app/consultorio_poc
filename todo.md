@@ -1306,3 +1306,11 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Executar migração no banco de dados
 - [x] Migrar dados existentes para tenant_id = 1
 - [x] Validar migração (historico_medidas: 2 registros, exames_favoritos: 4 registros)
+
+
+## 🏢 TENANT DE TESTE (10/01/2026)
+
+- [x] Criar script para inserir tenant de teste (ID = 30002)
+- [x] Executar script e validar criação
+- [x] Criar teste de isolamento entre tenants (14 testes)
+- [x] Documentar tenant de teste
