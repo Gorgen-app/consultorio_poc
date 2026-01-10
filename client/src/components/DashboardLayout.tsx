@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, Search } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, Search, Receipt, Megaphone, UserCircle, Clock } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -86,6 +86,13 @@ const menuWithSubitems: {
       { icon: Search, label: "Buscar Atendimento", path: "/atendimentos?buscar=true", funcionalidade: "atendimentos" },
     ],
   },
+];
+
+// Menu items para módulos futuros (Em breve)
+const futureMenuItems: { icon: typeof Receipt; label: string; funcionalidade: Funcionalidade }[] = [
+  { icon: Receipt, label: "Faturamento e Gestão", funcionalidade: "faturamento" },
+  { icon: Megaphone, label: "Leads e Marketing", funcionalidade: "leads" },
+  { icon: UserCircle, label: "Portal do Paciente", funcionalidade: "portal_paciente" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -366,6 +373,29 @@ function DashboardLayoutContent({
                     </Collapsible>
                   );
                 })}
+              {/* Módulos futuros - Em breve */}
+              {futureMenuItems
+                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
+                .map(item => (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
+                      onClick={() => toast.info(`${item.label} - Em breve!`, {
+                        description: "Este módulo está em desenvolvimento e estará disponível em breve.",
+                        icon: <Clock className="h-4 w-4" />,
+                      })}
+                      tooltip={`${item.label} (Em breve)`}
+                      className="h-10 transition-all font-normal opacity-60 hover:opacity-80"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                      {!isCollapsed && (
+                        <span className="ml-auto text-xs bg-amber-500/20 text-amber-600 px-1.5 py-0.5 rounded-full">
+                          Em breve
+                        </span>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
             </SidebarMenu>
           </SidebarContent>
 

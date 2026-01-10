@@ -1168,3 +1168,34 @@ A dashboard deve integrar **medicina e administração**:
 - Investigar mais a fundo o fluxo de execução
 - Verificar se há algum middleware interceptando
 - Testar com paciente novo sem documentos anteriores
+
+
+---
+
+## 🧭 NAVEGAÇÃO - Módulos Futuros (10/01/2026)
+
+### Adicionar na Sidebar
+- [ ] Faturamento e Gestão (sanfona com "Em breve")
+- [ ] Leads e Marketing (sanfona com "Em breve")
+- [ ] Portal do Paciente (sanfona com "Em breve")
+
+
+---
+
+## 🧭 NAVEGAÇÃO - Módulos Futuros (10/01/2026)
+
+### Adicionar na Sidebar ✅ CONCLUÍDO
+- [x] Faturamento e Gestão (sanfona com "Em breve")
+- [x] Leads e Marketing (sanfona com "Em breve")
+- [x] Portal do Paciente (sanfona com "Em breve")
+
+**Implementação:**
+- Novos itens adicionados no DashboardLayout.tsx
+- Badge "Em breve" em cor âmbar
+- Toast informativo ao clicar
+- Permissões configuradas por perfil:
+  - Admin Master: vê todos os 3 módulos
+  - Médico: vê apenas Leads e Marketing
+  - Secretária: vê apenas Leads e Marketing
+  - Auditor: vê apenas Leads e Marketing
+  - Paciente: vê apenas Portal do Paciente

@@ -31,6 +31,10 @@ export type Funcionalidade =
   | 'faturamento'
   | 'faturamento.criar'
   | 'faturamento.editar'
+  | 'leads'
+  | 'leads.criar'
+  | 'leads.editar'
+  | 'portal_paciente'
   | 'relatorios'
   | 'relatorios.financeiro'
   | 'configuracoes'
@@ -58,6 +62,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: true,
     'faturamento.criar': true,
     'faturamento.editar': true,
+    leads: true,
+    'leads.criar': true,
+    'leads.editar': true,
+    portal_paciente: true,
     relatorios: true,
     'relatorios.financeiro': true,
     configuracoes: true,
@@ -83,6 +91,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: false, // Médico não acessa faturamento
     'faturamento.criar': false,
     'faturamento.editar': false,
+    leads: true, // Médico pode ver leads
+    'leads.criar': true,
+    'leads.editar': true,
+    portal_paciente: false, // Portal do paciente não é para médico
     relatorios: true,
     'relatorios.financeiro': false, // Médico não vê relatórios financeiros
     configuracoes: true,
@@ -108,6 +120,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: false, // Secretária não acessa faturamento
     'faturamento.criar': false,
     'faturamento.editar': false,
+    leads: true, // Secretária pode gerenciar leads
+    'leads.criar': true,
+    'leads.editar': true,
+    portal_paciente: false, // Portal do paciente não é para secretária
     relatorios: true,
     'relatorios.financeiro': false,
     configuracoes: true,
@@ -133,6 +149,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: true, // Pode ver faturamento para auditoria
     'faturamento.criar': false,
     'faturamento.editar': false,
+    leads: true, // Auditor pode ver leads para auditoria
+    'leads.criar': false,
+    'leads.editar': false,
+    portal_paciente: false, // Portal do paciente não é para auditor
     relatorios: true,
     'relatorios.financeiro': true, // Pode ver relatórios financeiros
     configuracoes: true,
@@ -158,6 +178,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: true, // Pode ver suas próprias faturas
     'faturamento.criar': false,
     'faturamento.editar': false,
+    leads: false, // Paciente não vê leads
+    'leads.criar': false,
+    'leads.editar': false,
+    portal_paciente: true, // Paciente acessa seu portal
     relatorios: false,
     'relatorios.financeiro': false,
     configuracoes: true, // Pode acessar suas configurações
