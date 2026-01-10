@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, Search, Receipt, Megaphone, UserCircle, Clock } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, ChevronLeft, Search, Receipt, Megaphone, UserCircle, Clock } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -260,21 +260,31 @@ function DashboardLayoutContent({
           disableTransition={isResizing}
         >
           <SidebarHeader className="h-16 justify-center">
-            <div className="flex items-center gap-3 px-2 transition-all w-full">
-              <button
-                onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
-                aria-label="Toggle navigation"
-              >
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
-              </button>
+            <div className="flex items-center justify-between px-2 transition-all w-full">
               {!isCollapsed ? (
-                <div className="flex items-center gap-2 min-w-0">
+                <>
                   <span className="font-semibold tracking-tight truncate">
-                    Navigation
+                    Menu
                   </span>
-                </div>
-              ) : null}
+                  <button
+                    onClick={toggleSidebar}
+                    className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded transition-colors focus:outline-none text-muted-foreground hover:text-foreground"
+                    aria-label="Recolher menu"
+                    title="Recolher menu"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={toggleSidebar}
+                  className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none mx-auto text-muted-foreground hover:text-foreground"
+                  aria-label="Expandir menu"
+                  title="Expandir menu"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </SidebarHeader>
 
@@ -400,24 +410,6 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3">
-            {/* Botão discreto para recolher/expandir sidebar */}
-            <div className="mb-2">
-              <button
-                onClick={toggleSidebar}
-                className="w-full h-8 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
-                title={isCollapsed ? "Expandir menu" : "Recolher menu"}
-              >
-                {isCollapsed ? (
-                  <ChevronRight className="h-4 w-4" />
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4 -rotate-90" />
-                    <span>Recolher menu</span>
-                  </>
-                )}
-              </button>
-            </div>
-            
             {/* Botão de Configurações - apenas ícone */}
             {temPermissao(currentPerfil as PerfilType, "configuracoes") && (
               <div className="mb-2">

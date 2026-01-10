@@ -1208,3 +1208,9 @@ A dashboard deve integrar **medicina e administração**:
 ### Atualizações
 - [x] Renomear versão para Gorgen v3.0
 - [x] Adicionar botão discreto para recolher/expandir a barra de navegação
+
+
+### Melhorias Estéticas v3.0
+- [x] Trocar "Navigation" por "Menu" no título da sidebar
+- [x] Mover botão de recolhimento para ao lado do título (seta discreta à direita)
+- [x] Remover botão "Recolher menu" do rodapé
