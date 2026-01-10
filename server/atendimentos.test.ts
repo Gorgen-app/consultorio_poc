@@ -1,9 +1,12 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { listAtendimentos } from './db';
+
+// Tenant ID padrão para testes (Dr. André Gorgen)
+const TENANT_ID = 1;
 
 describe('listAtendimentos', () => {
   it('deve retornar atendimentos com estrutura flat (campos no nível raiz)', async () => {
-    const result = await listAtendimentos({ limit: 2 });
+    const result = await listAtendimentos(TENANT_ID, { limit: 2 });
     
     expect(result).toBeDefined();
     expect(Array.isArray(result)).toBe(true);
@@ -46,7 +49,7 @@ describe('listAtendimentos', () => {
   });
   
   it('deve retornar nome do paciente vinculado via LEFT JOIN', async () => {
-    const result = await listAtendimentos({ limit: 10 });
+    const result = await listAtendimentos(TENANT_ID, { limit: 10 });
     
     if (result.length > 0) {
       const comPaciente = result.find(atd => atd.pacienteId && atd.pacientes?.nome);
@@ -60,7 +63,7 @@ describe('listAtendimentos', () => {
   });
   
   it('deve filtrar por tipo de atendimento', async () => {
-    const result = await listAtendimentos({ tipo: 'consulta', limit: 5 });
+    const result = await listAtendimentos(TENANT_ID, { tipo: 'consulta', limit: 5 });
     
     if (result.length > 0) {
       result.forEach(atd => {

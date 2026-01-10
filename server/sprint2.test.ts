@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { appRouter } from './routers';
 import type { TrpcContext } from './_core/context';
 
-// Criar contexto autenticado para testes
+// Criar contexto autenticado para testes (com tenant)
 function createAuthContext(): TrpcContext {
   return {
     user: {
@@ -15,6 +15,15 @@ function createAuthContext(): TrpcContext {
       createdAt: new Date(),
       updatedAt: new Date(),
       lastSignedIn: new Date(),
+    },
+    tenant: {
+      tenantId: 1,
+      tenantSlug: "dr-andre-gorgen",
+      tenantNome: "Consultório Dr. André Gorgen",
+      tenantPlano: "enterprise" as const,
+      tenantStatus: "ativo" as const,
+      maxUsuarios: 100,
+      maxPacientes: 50000,
     },
     req: {
       protocol: "https",

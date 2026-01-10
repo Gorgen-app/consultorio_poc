@@ -90,34 +90,40 @@ export async function getUserByOpenId(openId: string) {
 
 // ===== PACIENTES =====
 
-export async function createPaciente(data: InsertPaciente): Promise<Paciente> {
+export async function createPaciente(tenantId: number, data: Omit<InsertPaciente, 'tenantId'>): Promise<Paciente> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(pacientes).values(data);
+  // Garantir que o tenantId seja definido
+  const dataWithTenant = { ...data, tenantId };
+  const result = await db.insert(pacientes).values(dataWithTenant);
   const insertedId = Number(result[0].insertId);
   
   const inserted = await db.select().from(pacientes).where(eq(pacientes.id, insertedId)).limit(1);
   return inserted[0]!;
 }
 
-export async function getPacienteById(id: number): Promise<Paciente | undefined> {
+export async function getPacienteById(tenantId: number, id: number): Promise<Paciente | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.select().from(pacientes).where(eq(pacientes.id, id)).limit(1);
+  const result = await db.select().from(pacientes)
+    .where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)))
+    .limit(1);
   return result[0];
 }
 
-export async function getPacienteByIdPaciente(idPaciente: string): Promise<Paciente | undefined> {
+export async function getPacienteByIdPaciente(tenantId: number, idPaciente: string): Promise<Paciente | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.select().from(pacientes).where(eq(pacientes.idPaciente, idPaciente)).limit(1);
+  const result = await db.select().from(pacientes)
+    .where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.idPaciente, idPaciente)))
+    .limit(1);
   return result[0];
 }
 
-export async function listPacientes(filters?: {
+export async function listPacientes(tenantId: number, filters?: {
   nome?: string;
   cpf?: string;
   convenio?: string;
@@ -131,7 +137,8 @@ export async function listPacientes(filters?: {
 
   let query = db.select().from(pacientes);
   
-  const conditions = [];
+  // Filtro obrigatório por tenant
+  const conditions = [eq(pacientes.tenantId, tenantId)];
   
   if (filters?.nome) {
     conditions.push(like(pacientes.nome, `%${filters.nome}%`));
@@ -179,33 +186,44 @@ export async function listPacientes(filters?: {
   return adicionarIdadeAosPacientes(result);
 }
 
-export async function updatePaciente(id: number, data: Partial<InsertPaciente>): Promise<Paciente | undefined> {
+export async function updatePaciente(tenantId: number, id: number, data: Partial<Omit<InsertPaciente, 'tenantId'>>): Promise<Paciente | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
-  await db.update(pacientes).set(data).where(eq(pacientes.id, id));
-  return getPacienteById(id);
+  // Verificar se o paciente pertence ao tenant antes de atualizar
+  const existing = await getPacienteById(tenantId, id);
+  if (!existing) return undefined;
+
+  await db.update(pacientes).set(data).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
+  return getPacienteById(tenantId, id);
 }
 
-export async function deletePaciente(id: number): Promise<boolean> {
+export async function deletePaciente(tenantId: number, id: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
 
-  await db.delete(pacientes).where(eq(pacientes.id, id));
+  // Verificar se o paciente pertence ao tenant antes de deletar
+  const existing = await getPacienteById(tenantId, id);
+  if (!existing) return false;
+
+  await db.delete(pacientes).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   return true;
 }
 
-export async function countPacientes(filters?: {
+export async function countPacientes(tenantId: number, filters?: {
   status?: string;
 }): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
 
-  let query = db.select({ count: sql<number>`count(*)` }).from(pacientes);
+  const conditions = [eq(pacientes.tenantId, tenantId)];
 
   if (filters?.status) {
-    query = query.where(eq(pacientes.statusCaso, filters.status)) as any;
+    conditions.push(eq(pacientes.statusCaso, filters.status));
   }
+
+  const query = db.select({ count: sql<number>`count(*)` }).from(pacientes)
+    .where(and(...conditions));
 
   const result = await query;
   return Number(result[0]?.count || 0);
@@ -213,26 +231,30 @@ export async function countPacientes(filters?: {
 
 // ===== ATENDIMENTOS =====
 
-export async function createAtendimento(data: InsertAtendimento): Promise<Atendimento> {
+export async function createAtendimento(tenantId: number, data: Omit<InsertAtendimento, 'tenantId'>): Promise<Atendimento> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(atendimentos).values(data);
+  // Garantir que o tenantId seja definido
+  const dataWithTenant = { ...data, tenantId };
+  const result = await db.insert(atendimentos).values(dataWithTenant);
   const insertedId = Number(result[0].insertId);
   
   const inserted = await db.select().from(atendimentos).where(eq(atendimentos.id, insertedId)).limit(1);
   return inserted[0]!;
 }
 
-export async function getAtendimentoById(id: number): Promise<Atendimento | undefined> {
+export async function getAtendimentoById(tenantId: number, id: number): Promise<Atendimento | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.select().from(atendimentos).where(eq(atendimentos.id, id)).limit(1);
+  const result = await db.select().from(atendimentos)
+    .where(and(eq(atendimentos.tenantId, tenantId), eq(atendimentos.id, id)))
+    .limit(1);
   return result[0];
 }
 
-export async function listAtendimentos(filters?: {
+export async function listAtendimentos(tenantId: number, filters?: {
   pacienteId?: number;
   dataInicio?: Date;
   dataFim?: Date;
@@ -260,7 +282,8 @@ export async function listAtendimentos(filters?: {
     .from(atendimentos)
     .leftJoin(pacientes, eq(atendimentos.pacienteId, pacientes.id));
   
-  const conditions = [];
+  // Filtro obrigatório por tenant
+  const conditions = [eq(atendimentos.tenantId, tenantId)];
   
   if (filters?.pacienteId) {
     conditions.push(eq(atendimentos.pacienteId, filters.pacienteId));
@@ -304,23 +327,31 @@ export async function listAtendimentos(filters?: {
   }));
 }
 
-export async function updateAtendimento(id: number, data: Partial<InsertAtendimento>): Promise<Atendimento | undefined> {
+export async function updateAtendimento(tenantId: number, id: number, data: Partial<Omit<InsertAtendimento, 'tenantId'>>): Promise<Atendimento | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
-  await db.update(atendimentos).set(data).where(eq(atendimentos.id, id));
-  return getAtendimentoById(id);
+  // Verificar se o atendimento pertence ao tenant antes de atualizar
+  const existing = await getAtendimentoById(tenantId, id);
+  if (!existing) return undefined;
+
+  await db.update(atendimentos).set(data).where(and(eq(atendimentos.tenantId, tenantId), eq(atendimentos.id, id)));
+  return getAtendimentoById(tenantId, id);
 }
 
-export async function deleteAtendimento(id: number): Promise<boolean> {
+export async function deleteAtendimento(tenantId: number, id: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
 
-  await db.delete(atendimentos).where(eq(atendimentos.id, id));
+  // Verificar se o atendimento pertence ao tenant antes de deletar
+  const existing = await getAtendimentoById(tenantId, id);
+  if (!existing) return false;
+
+  await db.delete(atendimentos).where(and(eq(atendimentos.tenantId, tenantId), eq(atendimentos.id, id)));
   return true;
 }
 
-export async function countAtendimentos(filters?: {
+export async function countAtendimentos(tenantId: number, filters?: {
   pacienteId?: number;
   dataInicio?: Date;
   dataFim?: Date;
@@ -328,9 +359,9 @@ export async function countAtendimentos(filters?: {
   const db = await getDb();
   if (!db) return 0;
 
-  let query = db.select({ count: sql<number>`count(*)` }).from(atendimentos);
-
-  const conditions = [];
+  // Filtro obrigatório por tenant
+  const conditions = [eq(atendimentos.tenantId, tenantId)];
+  
   if (filters?.pacienteId) {
     conditions.push(eq(atendimentos.pacienteId, filters.pacienteId));
   }
@@ -341,37 +372,38 @@ export async function countAtendimentos(filters?: {
     conditions.push(sql`${atendimentos.dataAtendimento} <= ${filters.dataFim}`);
   }
 
-  if (conditions.length > 0) {
-    query = query.where(and(...conditions)!) as any;
-  }
+  const query = db.select({ count: sql<number>`count(*)` }).from(atendimentos)
+    .where(and(...conditions));
 
   const result = await query;
   return Number(result[0]?.count || 0);
 }
 
-export async function getDashboardStats() {
+export async function getDashboardStats(tenantId: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const totalPacientes = await countPacientes();
-  const pacientesAtivos = await countPacientes({ status: "Ativo" });
-  const totalAtendimentos = await countAtendimentos();
+  const totalPacientes = await countPacientes(tenantId);
+  const pacientesAtivos = await countPacientes(tenantId, { status: "Ativo" });
+  const totalAtendimentos = await countAtendimentos(tenantId);
 
-  // Faturamento total previsto e realizado
+  // Faturamento total previsto e realizado (filtrado por tenant)
   const faturamento = await db
     .select({
       previsto: sql<number>`SUM(${atendimentos.faturamentoPrevistoFinal})`,
       realizado: sql<number>`SUM(CASE WHEN ${atendimentos.pagamentoEfetivado} = 1 THEN ${atendimentos.faturamentoPrevistoFinal} ELSE 0 END)`,
     })
-    .from(atendimentos);
+    .from(atendimentos)
+    .where(eq(atendimentos.tenantId, tenantId));
 
-  // Distribuição por convênio
+  // Distribuição por convênio (filtrado por tenant)
   const distribuicaoConvenio = await db
     .select({
       convenio: atendimentos.convenio,
       total: sql<number>`COUNT(*)`,
     })
     .from(atendimentos)
+    .where(eq(atendimentos.tenantId, tenantId))
     .groupBy(atendimentos.convenio)
     .orderBy(desc(sql<number>`COUNT(*)`))
     .limit(10);
@@ -389,7 +421,7 @@ export async function getDashboardStats() {
   };
 }
 
-export async function getNextPacienteId(): Promise<string> {
+export async function getNextPacienteId(tenantId: number): Promise<string> {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
@@ -397,11 +429,14 @@ export async function getNextPacienteId(): Promise<string> {
 
   const currentYear = new Date().getFullYear().toString();
   
-  // Buscar todos os IDs de pacientes do ano atual no formato correto (YYYY-NNNNNNN)
+  // Buscar todos os IDs de pacientes do ano atual no formato correto (YYYY-NNNNNNN) para este tenant
   const result = await db
     .select({ idPaciente: pacientes.idPaciente })
     .from(pacientes)
-    .where(like(pacientes.idPaciente, `${currentYear}-%`));
+    .where(and(
+      eq(pacientes.tenantId, tenantId),
+      like(pacientes.idPaciente, `${currentYear}-%`)
+    ));
 
   if (result.length === 0) {
     return `${currentYear}-0000001`;
@@ -435,17 +470,20 @@ export async function getNextPacienteId(): Promise<string> {
  * - YYYY: Ano do atendimento (ex: 2026)
  * - NNNN: Número sequencial do atendimento no ano para aquele paciente (4 dígitos, começa em 0001)
  */
-export async function getNextAtendimentoId(pacienteId: number, dataAtendimento: Date): Promise<string> {
+export async function getNextAtendimentoId(tenantId: number, pacienteId: number, dataAtendimento: Date): Promise<string> {
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
 
-  // Buscar o ID do paciente (formato: 2025-0000009)
+  // Buscar o ID do paciente (formato: 2025-0000009) - validando tenant
   const paciente = await db
     .select({ idPaciente: pacientes.idPaciente })
     .from(pacientes)
-    .where(eq(pacientes.id, pacienteId))
+    .where(and(
+      eq(pacientes.tenantId, tenantId),
+      eq(pacientes.id, pacienteId)
+    ))
     .limit(1);
 
   if (paciente.length === 0) {
@@ -499,6 +537,7 @@ export interface AuditContext {
   userEmail?: string;
   ipAddress?: string;
   userAgent?: string;
+  tenantId?: number;
 }
 
 /**
@@ -597,14 +636,18 @@ export async function listAuditLogs(filters?: {
 /**
  * Soft delete de paciente
  */
-export async function softDeletePaciente(id: number, deletedBy: number): Promise<boolean> {
+export async function softDeletePaciente(tenantId: number, id: number, deletedBy: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
+
+  // Verificar se o paciente pertence ao tenant
+  const existing = await getPacienteById(tenantId, id);
+  if (!existing) return false;
 
   await db.update(pacientes).set({
     deletedAt: new Date(),
     deletedBy,
-  } as any).where(eq(pacientes.id, id));
+  } as any).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   
   return true;
 }
@@ -612,14 +655,14 @@ export async function softDeletePaciente(id: number, deletedBy: number): Promise
 /**
  * Restaurar paciente excluído
  */
-export async function restorePaciente(id: number): Promise<boolean> {
+export async function restorePaciente(tenantId: number, id: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
 
   await db.update(pacientes).set({
     deletedAt: null,
     deletedBy: null,
-  } as any).where(eq(pacientes.id, id));
+  } as any).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   
   return true;
 }
@@ -627,14 +670,18 @@ export async function restorePaciente(id: number): Promise<boolean> {
 /**
  * Soft delete de atendimento
  */
-export async function softDeleteAtendimento(id: number, deletedBy: number): Promise<boolean> {
+export async function softDeleteAtendimento(tenantId: number, id: number, deletedBy: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
+
+  // Verificar se o atendimento pertence ao tenant
+  const existing = await getAtendimentoById(tenantId, id);
+  if (!existing) return false;
 
   await db.update(atendimentos).set({
     deletedAt: new Date(),
     deletedBy,
-  } as any).where(eq(atendimentos.id, id));
+  } as any).where(and(eq(atendimentos.tenantId, tenantId), eq(atendimentos.id, id)));
   
   return true;
 }
@@ -642,14 +689,14 @@ export async function softDeleteAtendimento(id: number, deletedBy: number): Prom
 /**
  * Restaurar atendimento excluído
  */
-export async function restoreAtendimento(id: number): Promise<boolean> {
+export async function restoreAtendimento(tenantId: number, id: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
 
   await db.update(atendimentos).set({
     deletedAt: null,
     deletedBy: null,
-  } as any).where(eq(atendimentos.id, id));
+  } as any).where(and(eq(atendimentos.tenantId, tenantId), eq(atendimentos.id, id)));
   
   return true;
 }
@@ -657,16 +704,18 @@ export async function restoreAtendimento(id: number): Promise<boolean> {
 /**
  * Lista pacientes incluindo ou excluindo deletados
  */
-export async function listPacientesWithDeleted(includeDeleted: boolean = false): Promise<any[]> {
+export async function listPacientesWithDeleted(tenantId: number, includeDeleted: boolean = false): Promise<any[]> {
   const db = await getDb();
   if (!db) return [];
 
   let query = db.select().from(pacientes);
   
+  const conditions = [eq(pacientes.tenantId, tenantId)];
   if (!includeDeleted) {
-    query = query.where(sql`${pacientes.deletedAt} IS NULL`) as any;
+    conditions.push(sql`${pacientes.deletedAt} IS NULL`);
   }
-
+  
+  query = query.where(and(...conditions)) as any;
   query = query.orderBy(desc(pacientes.createdAt)) as any;
 
   const result = await query;
@@ -678,7 +727,7 @@ export async function listPacientesWithDeleted(includeDeleted: boolean = false):
 /**
  * Lista atendimentos incluindo ou excluindo deletados
  */
-export async function listAtendimentosWithDeleted(includeDeleted: boolean = false): Promise<any[]> {
+export async function listAtendimentosWithDeleted(tenantId: number, includeDeleted: boolean = false): Promise<any[]> {
   const db = await getDb();
   if (!db) return [];
 
@@ -698,10 +747,12 @@ export async function listAtendimentosWithDeleted(includeDeleted: boolean = fals
     .from(atendimentos)
     .leftJoin(pacientes, eq(atendimentos.pacienteId, pacientes.id));
 
+  const conditions = [eq(atendimentos.tenantId, tenantId)];
   if (!includeDeleted) {
-    query = query.where(sql`${atendimentos.deletedAt} IS NULL`) as any;
+    conditions.push(sql`${atendimentos.deletedAt} IS NULL`);
   }
 
+  query = query.where(and(...conditions)) as any;
   query = query.orderBy(desc(atendimentos.dataAtendimento)) as any;
 
   const result = await query;
@@ -1230,7 +1281,9 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
     listTerapias(pacienteId),
     listObstetricia(pacienteId),
     listDocumentosMedicos(pacienteId),
-    countAtendimentos({ pacienteId })
+    // TODO: Esta função precisa ser atualizada para receber tenantId
+    // Por enquanto, usar tenant 1 como padrão
+    countAtendimentos(1, { pacienteId })
   ]);
   
   return {
@@ -1280,7 +1333,9 @@ export async function registrarMedida(data: {
     imc = Number((data.peso / (data.altura * data.altura)).toFixed(1));
   }
 
+  // TODO: Esta função precisa ser atualizada para receber tenantId
   const result = await db.insert(historicoMedidas).values({
+    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
     pacienteId: data.pacienteId,
     dataMedicao: new Date(),
     peso: data.peso ? String(data.peso) : null,
@@ -1312,7 +1367,9 @@ export async function registrarMedida(data: {
         .where(eq(resumoClinico.pacienteId, data.pacienteId));
       } else {
         // Criar novo registro de resumo clínico
+        // TODO: Esta função precisa ser atualizada para receber tenantId
         await dbUpdate.insert(resumoClinico).values({
+          tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
           pacienteId: data.pacienteId,
           pesoAtual: data.peso ? String(data.peso) : null,
           altura: data.altura ? String(data.altura) : null,
@@ -1433,7 +1490,9 @@ export async function createAgendamento(data: InsertAgendamento) {
   const insertedId = Number(result[0].insertId);
   
   // Registrar no histórico
+  // TODO: Esta função precisa ser atualizada para multi-tenant
   await db.insert(historicoAgendamentos).values({
+    tenantId: data.tenantId, // Usar o tenantId do agendamento
     agendamentoId: insertedId,
     tipoAlteracao: "Criação",
     descricaoAlteracao: `Agendamento criado: ${data.tipoCompromisso} em ${data.dataHoraInicio}`,
@@ -1521,7 +1580,9 @@ export async function cancelarAgendamento(id: number, motivo: string, canceladoP
     .where(eq(agendamentos.id, id));
   
   // Registrar no histórico
+  // TODO: Precisa buscar tenantId do agendamento
   await db.insert(historicoAgendamentos).values({
+    tenantId: anterior.tenantId, // Usar tenantId do agendamento original
     agendamentoId: id,
     tipoAlteracao: "Cancelamento",
     descricaoAlteracao: `Cancelado por ${canceladoPor}. Motivo: ${motivo}`,
@@ -1556,6 +1617,7 @@ export async function reagendarAgendamento(
   
   // Registrar no histórico do original
   await db.insert(historicoAgendamentos).values({
+    tenantId: original.tenantId, // Usar tenantId do agendamento original
     agendamentoId: idOriginal,
     tipoAlteracao: "Reagendamento",
     descricaoAlteracao: `Reagendado por ${reagendadoPor}. ${motivo || ''}`,
@@ -1566,6 +1628,7 @@ export async function reagendarAgendamento(
   // Criar novo agendamento
   const novoId = await getNextAgendamentoId();
   const novoAgendamento: InsertAgendamento = {
+    tenantId: original.tenantId, // Manter o mesmo tenant do original
     idAgendamento: novoId,
     tipoCompromisso: original.tipoCompromisso,
     pacienteId: original.pacienteId,
@@ -1588,6 +1651,10 @@ export async function confirmarAgendamento(id: number, confirmadoPor: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Buscar agendamento para obter tenantId
+  const agendamento = await getAgendamentoById(id);
+  if (!agendamento) throw new Error("Agendamento não encontrado");
+  
   await db.update(agendamentos)
     .set({
       status: "Confirmado",
@@ -1597,6 +1664,7 @@ export async function confirmarAgendamento(id: number, confirmadoPor: string) {
     .where(eq(agendamentos.id, id));
   
   await db.insert(historicoAgendamentos).values({
+    tenantId: agendamento.tenantId,
     agendamentoId: id,
     tipoAlteracao: "Confirmação",
     descricaoAlteracao: `Confirmado por ${confirmadoPor}`,
@@ -1611,6 +1679,10 @@ export async function realizarAgendamento(id: number, realizadoPor: string, aten
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Buscar agendamento para obter tenantId
+  const agendamento = await getAgendamentoById(id);
+  if (!agendamento) throw new Error("Agendamento não encontrado");
+  
   await db.update(agendamentos)
     .set({
       status: "Realizado",
@@ -1621,6 +1693,7 @@ export async function realizarAgendamento(id: number, realizadoPor: string, aten
     .where(eq(agendamentos.id, id));
   
   await db.insert(historicoAgendamentos).values({
+    tenantId: agendamento.tenantId,
     agendamentoId: id,
     tipoAlteracao: "Realização",
     descricaoAlteracao: `Realizado por ${realizadoPor}`,
@@ -1635,6 +1708,10 @@ export async function marcarFaltaAgendamento(id: number, marcadoPor: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Buscar agendamento para obter tenantId
+  const agendamento = await getAgendamentoById(id);
+  if (!agendamento) throw new Error("Agendamento não encontrado");
+  
   await db.update(agendamentos)
     .set({
       status: "Faltou",
@@ -1644,6 +1721,7 @@ export async function marcarFaltaAgendamento(id: number, marcadoPor: string) {
     .where(eq(agendamentos.id, id));
   
   await db.insert(historicoAgendamentos).values({
+    tenantId: agendamento.tenantId,
     agendamentoId: id,
     tipoAlteracao: "Falta",
     descricaoAlteracao: `Falta registrada por ${marcadoPor}`,
@@ -1839,6 +1917,7 @@ export async function getUserSettings(userProfileId: number, categoria?: string)
   return db.select().from(userSettings).where(eq(userSettings.userProfileId, userProfileId));
 }
 
+// TODO: Esta função precisa ser atualizada para receber tenantId
 export async function upsertUserSetting(data: { userProfileId: number; categoria: string; chave: string; valor: string }): Promise<void> {
   const db = await getDb();
   if (!db) return;
@@ -1857,7 +1936,10 @@ export async function upsertUserSetting(data: { userProfileId: number; categoria
       .set({ valor: data.valor })
       .where(eq(userSettings.id, existing[0].id));
   } else {
-    await db.insert(userSettings).values(data);
+    await db.insert(userSettings).values({
+      tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
+      ...data
+    });
   }
 }
 
@@ -1927,7 +2009,9 @@ export async function criarVinculo(
   const dataValidade = new Date(dataInicio);
   dataValidade.setFullYear(dataValidade.getFullYear() + 1);
 
+  // TODO: Esta função precisa ser atualizada para receber tenantId
   const result = await db.insert(vinculoSecretariaMedico).values({
+    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
     secretariaUserId,
     medicoUserId,
     dataInicio,
@@ -1940,6 +2024,7 @@ export async function criarVinculo(
 
   // Registrar no histórico
   await db.insert(historicoVinculo).values({
+    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
     vinculoId,
     acao: "criado",
     observacao: `Vínculo criado com validade até ${dataValidade.toLocaleDateString("pt-BR")}`,
@@ -2072,7 +2157,9 @@ export async function renovarVinculo(vinculoId: number): Promise<void> {
     .where(eq(vinculoSecretariaMedico.id, vinculoId));
 
   // Registrar no histórico
+  // TODO: Precisa buscar tenantId do vínculo
   await db.insert(historicoVinculo).values({
+    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
     vinculoId,
     acao: "renovado",
     observacao: `Vínculo renovado até ${novaDataValidade.toLocaleDateString("pt-BR")}`,
@@ -2092,7 +2179,9 @@ export async function cancelarVinculo(vinculoId: number, motivo?: string): Promi
     .where(eq(vinculoSecretariaMedico.id, vinculoId));
 
   // Registrar no histórico
+  // TODO: Precisa buscar tenantId do vínculo
   await db.insert(historicoVinculo).values({
+    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
     vinculoId,
     acao: "cancelado",
     observacao: motivo || "Vínculo cancelado pelo usuário",
@@ -2619,7 +2708,9 @@ export async function addExameFavorito(userId: string, nomeExame: string, catego
   
   const ordem = (maxOrdem[0]?.maxOrdem || 0) + 1;
   
+  // TODO: Esta função precisa ser atualizada para receber tenantId
   const [result] = await db.insert(examesFavoritos).values({
+    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
     userId,
     nomeExame,
     categoria: categoria || "Geral",

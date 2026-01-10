@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, date, boolean, json, datetime } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, date, boolean, json, datetime, index } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
 
 /**
@@ -51,6 +51,7 @@ export type InsertPacienteAutorizacao = typeof pacienteAutorizacoes.$inferInsert
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().default(1).references(() => tenants.id),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -69,7 +70,8 @@ export type InsertUser = typeof users.$inferInsert;
  */
 export const pacientes = mysqlTable("pacientes", {
   id: int("id").autoincrement().primaryKey(),
-  idPaciente: varchar("id_paciente", { length: 64 }).notNull().unique(), // ex: 2025-0000001
+  tenantId: int("tenant_id").notNull().default(1).references(() => tenants.id),
+  idPaciente: varchar("id_paciente", { length: 64 }).notNull(), // ex: 2025-0000001
   dataInclusao: date("data_inclusao"),
   pastaPaciente: varchar("pasta_paciente", { length: 255 }),
   nome: varchar("nome", { length: 255 }).notNull(),
@@ -121,7 +123,13 @@ export const pacientes = mysqlTable("pacientes", {
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  // Índices para multi-tenant
+  tenantIdx: index("idx_pacientes_tenant").on(table.tenantId),
+  tenantIdPacienteIdx: index("idx_pacientes_tenant_id_paciente").on(table.tenantId, table.idPaciente),
+  tenantNomeIdx: index("idx_pacientes_tenant_nome").on(table.tenantId, table.nome),
+  tenantCpfIdx: index("idx_pacientes_tenant_cpf").on(table.tenantId, table.cpf),
+}));
 
 export type Paciente = typeof pacientes.$inferSelect;
 export type InsertPaciente = typeof pacientes.$inferInsert;
@@ -131,7 +139,8 @@ export type InsertPaciente = typeof pacientes.$inferInsert;
  */
 export const atendimentos = mysqlTable("atendimentos", {
   id: int("id").autoincrement().primaryKey(),
-  atendimento: varchar("atendimento", { length: 64 }).notNull().unique(), // ex: 20260001
+  tenantId: int("tenant_id").notNull().default(1).references(() => tenants.id),
+  atendimento: varchar("atendimento", { length: 64 }).notNull(), // ex: 20260001
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id), // Relacionamento via ID
   dataAtendimento: timestamp("data_atendimento").notNull(),
   semana: int("semana"),
@@ -171,7 +180,13 @@ export const atendimentos = mysqlTable("atendimentos", {
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  // Índices para multi-tenant
+  tenantIdx: index("idx_atendimentos_tenant").on(table.tenantId),
+  tenantAtendimentoIdx: index("idx_atendimentos_tenant_atendimento").on(table.tenantId, table.atendimento),
+  tenantPacienteIdx: index("idx_atendimentos_tenant_paciente").on(table.tenantId, table.pacienteId),
+  tenantDataIdx: index("idx_atendimentos_tenant_data").on(table.tenantId, table.dataAtendimento),
+}));
 
 export type Atendimento = typeof atendimentos.$inferSelect;
 export type InsertAtendimento = typeof atendimentos.$inferInsert;
@@ -217,6 +232,7 @@ export type InsertAuditLog = typeof auditLog.$inferInsert;
  */
 export const resumoClinico = mysqlTable("resumo_clinico", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id).unique(),
   
   // História clínica resumida
@@ -250,6 +266,7 @@ export type InsertResumoClinico = typeof resumoClinico.$inferInsert;
  */
 export const problemasAtivos = mysqlTable("problemas_ativos", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   descricao: varchar("descricao", { length: 500 }).notNull(),
@@ -271,6 +288,7 @@ export type InsertProblemaAtivo = typeof problemasAtivos.$inferInsert;
  */
 export const alergias = mysqlTable("alergias", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   tipo: mysqlEnum("tipo", ["Medicamento", "Alimento", "Ambiental", "Outro"]).notNull(),
@@ -291,6 +309,7 @@ export type InsertAlergia = typeof alergias.$inferInsert;
  */
 export const medicamentosUso = mysqlTable("medicamentos_uso", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   medicamento: varchar("medicamento", { length: 255 }).notNull(),
@@ -316,6 +335,7 @@ export type InsertMedicamentoUso = typeof medicamentosUso.$inferInsert;
  */
 export const evolucoes = mysqlTable("evolucoes", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   atendimentoId: int("atendimento_id").references(() => atendimentos.id),
   
@@ -354,6 +374,7 @@ export type InsertEvolucao = typeof evolucoes.$inferInsert;
  */
 export const internacoes = mysqlTable("internacoes", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   hospital: varchar("hospital", { length: 255 }).notNull(),
@@ -385,6 +406,7 @@ export type InsertInternacao = typeof internacoes.$inferInsert;
  */
 export const cirurgias = mysqlTable("cirurgias", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   internacaoId: int("internacao_id").references(() => internacoes.id),
   
@@ -423,6 +445,7 @@ export type InsertCirurgia = typeof cirurgias.$inferInsert;
  */
 export const examesLaboratoriais = mysqlTable("exames_laboratoriais", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   dataColeta: date("data_coleta").notNull(),
@@ -454,6 +477,7 @@ export type InsertExameLaboratorial = typeof examesLaboratoriais.$inferInsert;
  */
 export const examesImagem = mysqlTable("exames_imagem", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   dataExame: date("data_exame").notNull(),
@@ -484,6 +508,7 @@ export type InsertExameImagem = typeof examesImagem.$inferInsert;
  */
 export const endoscopias = mysqlTable("endoscopias", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   dataExame: date("data_exame").notNull(),
@@ -518,6 +543,7 @@ export type InsertEndoscopia = typeof endoscopias.$inferInsert;
  */
 export const cardiologia = mysqlTable("cardiologia", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   dataExame: date("data_exame").notNull(),
@@ -552,6 +578,7 @@ export type InsertCardiologia = typeof cardiologia.$inferInsert;
  */
 export const terapias = mysqlTable("terapias", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   dataTerapia: timestamp("data_terapia").notNull(),
@@ -580,6 +607,7 @@ export type InsertTerapia = typeof terapias.$inferInsert;
  */
 export const obstetricia = mysqlTable("obstetricia", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   tipoRegistro: mysqlEnum("tipo_registro", ["Pré-natal", "Parto", "Puerpério", "Aborto"]).notNull(),
@@ -615,6 +643,7 @@ export type InsertObstetricia = typeof obstetricia.$inferInsert;
  */
 export const documentosMedicos = mysqlTable("documentos_medicos", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   evolucaoId: int("evolucao_id").references(() => evolucoes.id),
   
@@ -678,6 +707,7 @@ export type InsertDocumentoMedico = typeof documentosMedicos.$inferInsert;
 
 export const historicoMedidas = mysqlTable("historico_medidas", {
   id: int("id").primaryKey().autoincrement(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull(),
   dataMedicao: timestamp("data_medicao").notNull(),
   peso: decimal("peso", { precision: 5, scale: 2 }), // kg
@@ -730,6 +760,7 @@ export const statusAgendamentoEnum = mysqlEnum("status", [
  */
 export const agendamentos = mysqlTable("agendamentos", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   
   // Identificador único do agendamento (formato: AG-YYYY-NNNNN)
   idAgendamento: varchar("id_agendamento", { length: 20 }).notNull().unique(),
@@ -793,6 +824,7 @@ export type InsertAgendamento = typeof agendamentos.$inferInsert;
  */
 export const bloqueiosHorario = mysqlTable("bloqueios_horario", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   
   // Identificador único (formato: BL-YYYY-NNNNN)
   idBloqueio: varchar("id_bloqueio", { length: 20 }).notNull().unique(),
@@ -840,6 +872,7 @@ export type InsertBloqueioHorario = typeof bloqueiosHorario.$inferInsert;
  */
 export const historicoAgendamentos = mysqlTable("historico_agendamentos", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   
   agendamentoId: int("agendamento_id").notNull().references(() => agendamentos.id),
   
@@ -874,6 +907,7 @@ export type InsertHistoricoAgendamento = typeof historicoAgendamentos.$inferInse
  */
 export const userProfiles = mysqlTable("user_profiles", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().default(1).references(() => tenants.id),
   userId: int("user_id").notNull().unique(),
   cpf: varchar("cpf", { length: 14 }).unique(),
   nomeCompleto: varchar("nome_completo", { length: 255 }),
@@ -911,6 +945,7 @@ export type InsertUserProfile = typeof userProfiles.$inferInsert;
  */
 export const userSettings = mysqlTable("user_settings", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   userProfileId: int("user_profile_id").notNull(),
   categoria: varchar("categoria", { length: 50 }).notNull(),
   chave: varchar("chave", { length: 100 }).notNull(),
@@ -937,6 +972,7 @@ export const statusVinculoEnum = mysqlEnum("status", [
 
 export const vinculoSecretariaMedico = mysqlTable("vinculo_secretaria_medico", {
   id: int("id").primaryKey().autoincrement(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   secretariaUserId: varchar("secretaria_user_id", { length: 255 }).notNull(),
   medicoUserId: varchar("medico_user_id", { length: 255 }).notNull(),
   dataInicio: datetime("data_inicio").notNull(),
@@ -956,6 +992,7 @@ export const acaoVinculoEnum = mysqlEnum("acao", [
 
 export const historicoVinculo = mysqlTable("historico_vinculo", {
   id: int("id").primaryKey().autoincrement(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   vinculoId: int("vinculo_id").notNull(),
   acao: mysqlEnum("acao", ["criado", "renovado", "expirado", "cancelado"]).notNull(),
   dataAcao: datetime("data_acao").default(sql`CURRENT_TIMESTAMP`),
@@ -989,6 +1026,7 @@ export const categoriaDocumentoEnum = mysqlEnum("categoria_documento", [
  */
 export const documentosExternos = mysqlTable("documentos_externos", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   // Categoria do documento
@@ -1040,6 +1078,7 @@ export type InsertDocumentoExterno = typeof documentosExternos.$inferInsert;
  */
 export const patologias = mysqlTable("patologias", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   
   dataColeta: date("data_coleta").notNull(),
@@ -1108,6 +1147,7 @@ export type InsertPatologia = typeof patologias.$inferInsert;
  */
 export const examesPadronizados = mysqlTable("exames_padronizados", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   
   // Nome padronizado do exame
   nome: varchar("nome", { length: 255 }).notNull().unique(),
@@ -1158,6 +1198,7 @@ export type InsertExamePadronizado = typeof examesPadronizados.$inferInsert;
  */
 export const resultadosLaboratoriais = mysqlTable("resultados_laboratoriais", {
   id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   
   // Vínculos
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
@@ -1205,6 +1246,7 @@ export type InsertResultadoLaboratorial = typeof resultadosLaboratoriais.$inferI
 // Tabela de Exames Favoritos - exames que o usuário quer acompanhar no fluxograma
 export const examesFavoritos = mysqlTable("exames_favoritos", {
   id: int("id").primaryKey().autoincrement(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
   userId: varchar("user_id", { length: 255 }).notNull(),
   nomeExame: varchar("nome_exame", { length: 255 }).notNull(),
   categoria: varchar("categoria", { length: 100 }).default("Geral"),

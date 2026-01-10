@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, tenantProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
@@ -87,15 +87,15 @@ export const appRouter = router({
   }),
 
   pacientes: router({
-    getNextId: protectedProcedure
-      .query(async () => {
-        return await db.getNextPacienteId();
+    getNextId: tenantProcedure
+      .query(async ({ ctx }) => {
+        return await db.getNextPacienteId(ctx.tenant.tenantId);
       }),
 
-    create: protectedProcedure
+    create: tenantProcedure
       .input(pacienteSchema)
       .mutation(async ({ input, ctx }) => {
-        const result = await db.createPaciente(input as any);
+        const result = await db.createPaciente(ctx.tenant.tenantId, input as any);
         
         // Registrar auditoria
         await db.createAuditLog(
@@ -109,19 +109,20 @@ export const appRouter = router({
             userId: ctx.user?.id,
             userName: ctx.user?.name || undefined,
             userEmail: ctx.user?.email || undefined,
+            tenantId: ctx.tenant.tenantId,
           }
         );
         
         return result;
       }),
 
-    getById: protectedProcedure
+    getById: tenantProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getPacienteById(input.id);
+      .query(async ({ input, ctx }) => {
+        return await db.getPacienteById(ctx.tenant.tenantId, input.id);
       }),
 
-    list: protectedProcedure
+    list: tenantProcedure
       .input(
         z.object({
           nome: z.string().optional(),
@@ -134,14 +135,14 @@ export const appRouter = router({
           includeDeleted: z.boolean().optional(),
         })
       )
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         if (input.includeDeleted) {
-          return await db.listPacientesWithDeleted(true);
+          return await db.listPacientesWithDeleted(ctx.tenant.tenantId, true);
         }
-        return await db.listPacientes(input);
+        return await db.listPacientes(ctx.tenant.tenantId, input);
       }),
 
-    update: protectedProcedure
+    update: tenantProcedure
       .input(
         z.object({
           id: z.number(),
@@ -150,9 +151,9 @@ export const appRouter = router({
       )
       .mutation(async ({ input, ctx }) => {
         // Buscar valores antigos para auditoria
-        const oldPaciente = await db.getPacienteById(input.id);
+        const oldPaciente = await db.getPacienteById(ctx.tenant.tenantId, input.id);
         
-        const result = await db.updatePaciente(input.id, input.data as any);
+        const result = await db.updatePaciente(ctx.tenant.tenantId, input.id, input.data as any);
         
         // Registrar auditoria
         if (oldPaciente) {
@@ -167,6 +168,7 @@ export const appRouter = router({
               userId: ctx.user?.id,
               userName: ctx.user?.name || undefined,
               userEmail: ctx.user?.email || undefined,
+              tenantId: ctx.tenant.tenantId,
             }
           );
         }
@@ -174,14 +176,14 @@ export const appRouter = router({
         return result;
       }),
 
-    delete: protectedProcedure
+    delete: tenantProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         // Buscar paciente para auditoria
-        const paciente = await db.getPacienteById(input.id);
+        const paciente = await db.getPacienteById(ctx.tenant.tenantId, input.id);
         
         // Soft delete
-        const result = await db.softDeletePaciente(input.id, ctx.user?.id || 0);
+        const result = await db.softDeletePaciente(ctx.tenant.tenantId, input.id, ctx.user?.id || 0);
         
         // Registrar auditoria
         if (paciente) {
@@ -196,6 +198,7 @@ export const appRouter = router({
               userId: ctx.user?.id,
               userName: ctx.user?.name || undefined,
               userEmail: ctx.user?.email || undefined,
+              tenantId: ctx.tenant.tenantId,
             }
           );
         }
@@ -203,13 +206,13 @@ export const appRouter = router({
         return result;
       }),
 
-    restore: protectedProcedure
+    restore: tenantProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        const result = await db.restorePaciente(input.id);
+        const result = await db.restorePaciente(ctx.tenant.tenantId, input.id);
         
         // Buscar paciente restaurado para auditoria
-        const paciente = await db.getPacienteById(input.id);
+        const paciente = await db.getPacienteById(ctx.tenant.tenantId, input.id);
         
         if (paciente) {
           await db.createAuditLog(
@@ -223,6 +226,7 @@ export const appRouter = router({
               userId: ctx.user?.id,
               userName: ctx.user?.name || undefined,
               userEmail: ctx.user?.email || undefined,
+              tenantId: ctx.tenant.tenantId,
             }
           );
         }
@@ -230,33 +234,33 @@ export const appRouter = router({
         return result;
       }),
 
-    count: protectedProcedure
+    count: tenantProcedure
       .input(
         z.object({
           status: z.string().optional(),
         })
       )
-      .query(async ({ input }) => {
-        return await db.countPacientes(input);
+      .query(async ({ input, ctx }) => {
+        return await db.countPacientes(ctx.tenant.tenantId, input);
       }),
   }),
 
   atendimentos: router({
-    getNextId: protectedProcedure
+    getNextId: tenantProcedure
       .input(
         z.object({
           pacienteId: z.number(),
           dataAtendimento: z.date(),
         })
       )
-      .query(async ({ input }) => {
-        return await db.getNextAtendimentoId(input.pacienteId, input.dataAtendimento);
+      .query(async ({ input, ctx }) => {
+        return await db.getNextAtendimentoId(ctx.tenant.tenantId, input.pacienteId, input.dataAtendimento);
       }),
 
-    create: protectedProcedure
+    create: tenantProcedure
       .input(atendimentoSchema)
       .mutation(async ({ input, ctx }) => {
-        const result = await db.createAtendimento(input as any);
+        const result = await db.createAtendimento(ctx.tenant.tenantId, input as any);
         
         // Registrar auditoria
         await db.createAuditLog(
@@ -270,19 +274,20 @@ export const appRouter = router({
             userId: ctx.user?.id,
             userName: ctx.user?.name || undefined,
             userEmail: ctx.user?.email || undefined,
+            tenantId: ctx.tenant.tenantId,
           }
         );
         
         return result;
       }),
 
-    getById: protectedProcedure
+    getById: tenantProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getAtendimentoById(input.id);
+      .query(async ({ input, ctx }) => {
+        return await db.getAtendimentoById(ctx.tenant.tenantId, input.id);
       }),
 
-    list: protectedProcedure
+    list: tenantProcedure
       .input(
         z.object({
           pacienteId: z.number().optional(),
@@ -295,14 +300,14 @@ export const appRouter = router({
           includeDeleted: z.boolean().optional(),
         })
       )
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         if (input.includeDeleted) {
-          return await db.listAtendimentosWithDeleted(true);
+          return await db.listAtendimentosWithDeleted(ctx.tenant.tenantId, true);
         }
-        return await db.listAtendimentos(input);
+        return await db.listAtendimentos(ctx.tenant.tenantId, input);
       }),
 
-    update: protectedProcedure
+    update: tenantProcedure
       .input(
         z.object({
           id: z.number(),
@@ -311,9 +316,9 @@ export const appRouter = router({
       )
       .mutation(async ({ input, ctx }) => {
         // Buscar valores antigos para auditoria
-        const oldAtendimento = await db.getAtendimentoById(input.id);
+        const oldAtendimento = await db.getAtendimentoById(ctx.tenant.tenantId, input.id);
         
-        const result = await db.updateAtendimento(input.id, input.data as any);
+        const result = await db.updateAtendimento(ctx.tenant.tenantId, input.id, input.data as any);
         
         // Registrar auditoria
         if (oldAtendimento) {
@@ -328,6 +333,7 @@ export const appRouter = router({
               userId: ctx.user?.id,
               userName: ctx.user?.name || undefined,
               userEmail: ctx.user?.email || undefined,
+              tenantId: ctx.tenant.tenantId,
             }
           );
         }
@@ -335,14 +341,14 @@ export const appRouter = router({
         return result;
       }),
 
-    delete: protectedProcedure
+    delete: tenantProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         // Buscar atendimento para auditoria
-        const atendimento = await db.getAtendimentoById(input.id);
+        const atendimento = await db.getAtendimentoById(ctx.tenant.tenantId, input.id);
         
         // Soft delete
-        const result = await db.softDeleteAtendimento(input.id, ctx.user?.id || 0);
+        const result = await db.softDeleteAtendimento(ctx.tenant.tenantId, input.id, ctx.user?.id || 0);
         
         // Registrar auditoria
         if (atendimento) {
@@ -357,6 +363,7 @@ export const appRouter = router({
               userId: ctx.user?.id,
               userName: ctx.user?.name || undefined,
               userEmail: ctx.user?.email || undefined,
+              tenantId: ctx.tenant.tenantId,
             }
           );
         }
@@ -364,13 +371,13 @@ export const appRouter = router({
         return result;
       }),
 
-    restore: protectedProcedure
+    restore: tenantProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        const result = await db.restoreAtendimento(input.id);
+        const result = await db.restoreAtendimento(ctx.tenant.tenantId, input.id);
         
         // Buscar atendimento restaurado para auditoria
-        const atendimento = await db.getAtendimentoById(input.id);
+        const atendimento = await db.getAtendimentoById(ctx.tenant.tenantId, input.id);
         
         if (atendimento) {
           await db.createAuditLog(
@@ -384,6 +391,7 @@ export const appRouter = router({
               userId: ctx.user?.id,
               userName: ctx.user?.name || undefined,
               userEmail: ctx.user?.email || undefined,
+              tenantId: ctx.tenant.tenantId,
             }
           );
         }
@@ -391,7 +399,7 @@ export const appRouter = router({
         return result;
       }),
 
-    count: protectedProcedure
+    count: tenantProcedure
       .input(
         z.object({
           pacienteId: z.number().optional(),
@@ -399,14 +407,14 @@ export const appRouter = router({
           dataFim: z.date().optional(),
         })
       )
-      .query(async ({ input }) => {
-        return await db.countAtendimentos(input);
+      .query(async ({ input, ctx }) => {
+        return await db.countAtendimentos(ctx.tenant.tenantId, input);
       }),
   }),
 
   dashboard: router({
-    stats: protectedProcedure.query(async () => {
-      return await db.getDashboardStats();
+    stats: tenantProcedure.query(async ({ ctx }) => {
+      return await db.getDashboardStats(ctx.tenant.tenantId);
     }),
   }),
 

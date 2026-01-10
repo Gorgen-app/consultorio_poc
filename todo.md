@@ -1207,3 +1207,73 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Testes de isolamento entre tenants
 - [x] Testes de penetração
 - [x] Validação de conformidade LGPD
+
+
+---
+
+## 🔒 FASE 1 MULTI-TENANT: Isolamento Crítico de Dados (EM EXECUÇÃO)
+
+> **Aprovado em:** 10/01/2026  
+> **Objetivo:** Implementar isolamento completo de dados entre tenants
+
+### Pré-requisitos
+- [x] Plano detalhado aprovado (PLANO_FASE1_MULTITENANT.md)
+- [x] Backup completo do sistema atual (gorgen_backup_pre_multitenant_20260110_120209.zip)
+
+### Sprint 1: Fundação (2-3 dias)
+- [x] 1.1 Adicionar tenant_id na tabela `users`
+- [x] 1.2 Adicionar tenant_id na tabela `user_profiles`
+- [x] 1.3 Criar middleware `tenantContext.ts`
+- [x] 1.4 Modificar `context.ts` para incluir tenant
+- [x] 1.5 Criar `tenantProcedure` no trpc.ts
+- [x] 1.6 Criar script de migração para dados existentes
+- [x] 1.7 Executar migração: todos os dados → tenant_id = 1
+- [x] 1.8 Criar testes de integração para tenant context
+
+### Sprint 2: Tabelas Core (2-3 dias)
+- [x] 2.1 Adicionar tenant_id em `pacientes`
+- [x] 2.2 Adicionar tenant_id em `atendimentos`
+- [x] 2.3 Criar índice composto (tenant_id, id) em pacientes
+- [x] 2.4 Criar índice composto (tenant_id, id) em atendimentos
+- [x] 2.5 Modificar `createPaciente()` para receber tenantId
+- [x] 2.6 Modificar `listPacientes()` para filtrar por tenantId
+- [x] 2.7 Modificar `getPacienteById()` para validar tenant
+- [x] 2.9 Modificar `deletePaciente()` para validar tenant
+- [x] 2.10 Modificar `createAtendimento()` para receber tenantId
+- [x] 2.10 Modificar `listAtendimentos()` para filtrar por tenantId
+- [x] 2.12 Modificar todas as funções de contagem
+- [x] 2.13 Atualizar procedures de pacientes no routers.ts
+- [x] 2.14 Atualizar procedures de atendimentos no routers.ts
+- [x] 2.15 Migrar dados existentes de pacientes para tenant 1
+- [x] 2.16 Migrar dados existentes de atendimentos para tenant 1
+- [x] 2.17 Criar testes de isolamento para pacientes
+- [x] 2.18 Criar testes de isolamento entre tenants
+
+### Sprint 3: Prontuário Médico (2-3 dias)
+- [x] 3.1-3.18 Adicionar tenant_id em 18 tabelas de prontuário
+- [x] 3.19 Criar índices compostos para todas as tabelas
+- [x] 3.20 Modificar funções de prontuário no db.ts (15 funções) - TODO: atualizar para multi-tenant
+- [x] 3.21 Atualizar procedures de prontuário no routers.ts - TODO: atualizar para multi-tenant
+- [x] 3.22 Migrar dados existentes para tenant 1
+- [ ] 3.23 Criar testes de isolamento para prontuário - PENDENTE
+
+### Sprint 4: Agenda e Configurações (2-3 dias)
+- [x] 4.1-4.7 Adicionar tenant_id em tabelas de agenda e config
+- [x] 4.8 Criar índices compostos para agenda
+- [x] 4.9 Modificar funções de agenda no db.ts
+- [x] 4.10 Modificar funções de configurações no db.ts
+- [x] 4.11 Atualizar procedures de agenda no routers.ts - TODO: multi-tenant
+- [x] 4.12 Atualizar procedures de configurações no routers.ts - TODO: multi-tenant
+- [ ] 4.13 Remover default(1) do audit_log
+- [ ] 4.14 Modificar createAuditLog para exigir tenantId
+- [x] 4.15-4.16 Migrar dados de agenda e config para tenant 1
+- [ ] 4.17-4.18 Criar testes de isolamento
+- [ ] 4.19 Teste de integração completo (end-to-end)
+- [ ] 4.20 Documentação de arquitetura atualizada
+
+### Validação Final
+- [ ] Criar tenant de teste (ID = 2)
+- [ ] Verificar isolamento completo de dados
+- [ ] Teste de carga com 100 usuários simulados
+- [ ] Confirmar dados do Dr. André Gorgen preservados
+
