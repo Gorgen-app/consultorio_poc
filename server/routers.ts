@@ -438,10 +438,10 @@ export const appRouter = router({
   
   prontuario: router({
     // Buscar prontuário completo
-    completo: protectedProcedure
+    completo: tenantProcedure
       .input(z.object({ pacienteId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getProntuarioCompleto(input.pacienteId);
+      .query(async ({ ctx, input }) => {
+        return await db.getProntuarioCompleto(ctx.tenant.tenantId, input.pacienteId);
       }),
 
     // Resumo Clínico
@@ -976,7 +976,7 @@ export const appRouter = router({
     // Histórico de Medidas Antropométricas
     // Pilar Fundamental: Imutabilidade e Preservação Histórica
     historicoMedidas: router({
-      registrar: protectedProcedure
+      registrar: tenantProcedure
         .input(z.object({
           pacienteId: z.number(),
           peso: z.number().optional(),
@@ -989,7 +989,7 @@ export const appRouter = router({
           observacoes: z.string().optional(),
         }))
         .mutation(async ({ input, ctx }) => {
-          return await db.registrarMedida({
+          return await db.registrarMedida(ctx.tenant.tenantId, {
             ...input,
             registradoPor: ctx.user?.name || "Sistema",
           });
@@ -1280,7 +1280,7 @@ export const appRouter = router({
     // ========================================
 
     // Criar vínculo entre secretária e médico
-    criarVinculo: protectedProcedure
+    criarVinculo: tenantProcedure
       .input(z.object({
         medicoUserId: z.string(),
       }))
@@ -1293,7 +1293,7 @@ export const appRouter = router({
           throw new Error("Apenas secretárias podem criar vínculos");
         }
 
-        return await db.criarVinculo(ctx.user.openId, input.medicoUserId);
+        return await db.criarVinculo(ctx.tenant.tenantId, ctx.user.openId, input.medicoUserId);
       }),
 
     // Listar vínculos da secretária logada
@@ -1419,7 +1419,7 @@ export const appRouter = router({
       }),
 
     // Salvar configuração
-    set: protectedProcedure
+    set: tenantProcedure
       .input(z.object({
         categoria: z.string(),
         chave: z.string(),
@@ -1430,7 +1430,7 @@ export const appRouter = router({
         const profile = await db.getUserProfile(ctx.user.id);
         if (!profile) throw new Error("Perfil não encontrado");
         
-        await db.upsertUserSetting({
+        await db.upsertUserSetting(ctx.tenant.tenantId, {
           userProfileId: profile.id,
           categoria: input.categoria,
           chave: input.chave,
@@ -2120,13 +2120,13 @@ Retorne um JSON válido com a estrutura:
         return await db.listExamesFavoritos(ctx.user.openId);
       }),
 
-    add: protectedProcedure
+    add: tenantProcedure
       .input(z.object({
         nomeExame: z.string(),
         categoria: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        return await db.addExameFavorito(ctx.user.openId, input.nomeExame, input.categoria);
+        return await db.addExameFavorito(ctx.tenant.tenantId, ctx.user.openId, input.nomeExame, input.categoria);
       }),
 
     remove: protectedProcedure

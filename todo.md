@@ -1277,3 +1277,23 @@ A dashboard deve integrar **medicina e administração**:
 - [ ] Teste de carga com 100 usuários simulados
 - [ ] Confirmar dados do Dr. André Gorgen preservados
 
+
+
+---
+
+## 🔧 ATUALIZAÇÃO FUNÇÕES MULTI-TENANT (10/01/2026)
+
+### Funções a atualizar no db.ts
+- [x] getProntuarioCompleto - atualizado para receber tenantId
+- [x] registrarMedidas - atualizado para receber tenantId
+- [x] registrarMedidas - resumoClinico insert - usa tenantId do parâmetro
+- [x] createAgendamento - historicoAgendamentos - usa data.tenantId
+- [x] cancelarAgendamento - historicoAgendamentos - usa anterior.tenantId
+- [x] upsertUserSetting - atualizado para receber tenantId
+- [x] criarVinculo - atualizado para receber tenantId
+- [x] renovarVinculo - busca tenantId do vínculo automaticamente
+- [x] cancelarVinculo - busca tenantId do vínculo automaticamente
+- [x] addExameFavorito - atualizado para receber tenantId
+
+### Procedures a atualizar no routers.ts
+- [x] Atualizar procedures que chamam as funções acima para passar ctx.tenant.tenantId

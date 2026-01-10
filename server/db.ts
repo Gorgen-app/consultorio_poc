@@ -1234,15 +1234,18 @@ export interface ProntuarioCompleto {
   totalAtendimentos: number;
 }
 
-export async function getProntuarioCompleto(pacienteId: number): Promise<ProntuarioCompleto | null> {
+export async function getProntuarioCompleto(tenantId: number, pacienteId: number): Promise<ProntuarioCompleto | null> {
   const db = await getDb();
   if (!db) return null;
   
-  // Buscar paciente
+  // Buscar paciente com validação de tenant
   const pacienteResult = await db
     .select()
     .from(pacientes)
-    .where(eq(pacientes.id, pacienteId))
+    .where(and(
+      eq(pacientes.id, pacienteId),
+      eq(pacientes.tenantId, tenantId)
+    ))
     .limit(1);
   
   if (pacienteResult.length === 0) return null;
@@ -1281,9 +1284,7 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
     listTerapias(pacienteId),
     listObstetricia(pacienteId),
     listDocumentosMedicos(pacienteId),
-    // TODO: Esta função precisa ser atualizada para receber tenantId
-    // Por enquanto, usar tenant 1 como padrão
-    countAtendimentos(1, { pacienteId })
+    countAtendimentos(tenantId, { pacienteId })
   ]);
   
   return {
@@ -1312,7 +1313,7 @@ export async function getProntuarioCompleto(pacienteId: number): Promise<Prontua
 // Pilar Fundamental: Imutabilidade e Preservação Histórica
 // ==========================================
 
-export async function registrarMedida(data: {
+export async function registrarMedida(tenantId: number, data: {
   pacienteId: number;
   peso?: number;
   altura?: number;
@@ -1333,9 +1334,8 @@ export async function registrarMedida(data: {
     imc = Number((data.peso / (data.altura * data.altura)).toFixed(1));
   }
 
-  // TODO: Esta função precisa ser atualizada para receber tenantId
   const result = await db.insert(historicoMedidas).values({
-    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
+    tenantId,
     pacienteId: data.pacienteId,
     dataMedicao: new Date(),
     peso: data.peso ? String(data.peso) : null,
@@ -1367,9 +1367,8 @@ export async function registrarMedida(data: {
         .where(eq(resumoClinico.pacienteId, data.pacienteId));
       } else {
         // Criar novo registro de resumo clínico
-        // TODO: Esta função precisa ser atualizada para receber tenantId
         await dbUpdate.insert(resumoClinico).values({
-          tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
+          tenantId,
           pacienteId: data.pacienteId,
           pesoAtual: data.peso ? String(data.peso) : null,
           altura: data.altura ? String(data.altura) : null,
@@ -1490,9 +1489,8 @@ export async function createAgendamento(data: InsertAgendamento) {
   const insertedId = Number(result[0].insertId);
   
   // Registrar no histórico
-  // TODO: Esta função precisa ser atualizada para multi-tenant
   await db.insert(historicoAgendamentos).values({
-    tenantId: data.tenantId, // Usar o tenantId do agendamento
+    tenantId: data.tenantId,
     agendamentoId: insertedId,
     tipoAlteracao: "Criação",
     descricaoAlteracao: `Agendamento criado: ${data.tipoCompromisso} em ${data.dataHoraInicio}`,
@@ -1580,9 +1578,8 @@ export async function cancelarAgendamento(id: number, motivo: string, canceladoP
     .where(eq(agendamentos.id, id));
   
   // Registrar no histórico
-  // TODO: Precisa buscar tenantId do agendamento
   await db.insert(historicoAgendamentos).values({
-    tenantId: anterior.tenantId, // Usar tenantId do agendamento original
+    tenantId: anterior.tenantId,
     agendamentoId: id,
     tipoAlteracao: "Cancelamento",
     descricaoAlteracao: `Cancelado por ${canceladoPor}. Motivo: ${motivo}`,
@@ -1917,8 +1914,7 @@ export async function getUserSettings(userProfileId: number, categoria?: string)
   return db.select().from(userSettings).where(eq(userSettings.userProfileId, userProfileId));
 }
 
-// TODO: Esta função precisa ser atualizada para receber tenantId
-export async function upsertUserSetting(data: { userProfileId: number; categoria: string; chave: string; valor: string }): Promise<void> {
+export async function upsertUserSetting(tenantId: number, data: { userProfileId: number; categoria: string; chave: string; valor: string }): Promise<void> {
   const db = await getDb();
   if (!db) return;
   
@@ -1937,7 +1933,7 @@ export async function upsertUserSetting(data: { userProfileId: number; categoria
       .where(eq(userSettings.id, existing[0].id));
   } else {
     await db.insert(userSettings).values({
-      tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
+      tenantId,
       ...data
     });
   }
@@ -1998,6 +1994,7 @@ export interface VinculoSecretariaMedico {
  * Validade padrão: 1 ano a partir da data de início
  */
 export async function criarVinculo(
+  tenantId: number,
   secretariaUserId: string,
   medicoUserId: string,
   dataInicio: Date = new Date()
@@ -2009,9 +2006,8 @@ export async function criarVinculo(
   const dataValidade = new Date(dataInicio);
   dataValidade.setFullYear(dataValidade.getFullYear() + 1);
 
-  // TODO: Esta função precisa ser atualizada para receber tenantId
   const result = await db.insert(vinculoSecretariaMedico).values({
-    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
+    tenantId,
     secretariaUserId,
     medicoUserId,
     dataInicio,
@@ -2024,7 +2020,7 @@ export async function criarVinculo(
 
   // Registrar no histórico
   await db.insert(historicoVinculo).values({
-    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
+    tenantId,
     vinculoId,
     acao: "criado",
     observacao: `Vínculo criado com validade até ${dataValidade.toLocaleDateString("pt-BR")}`,
@@ -2156,10 +2152,9 @@ export async function renovarVinculo(vinculoId: number): Promise<void> {
     })
     .where(eq(vinculoSecretariaMedico.id, vinculoId));
 
-  // Registrar no histórico
-  // TODO: Precisa buscar tenantId do vínculo
+  // Registrar no histórico usando tenantId do vínculo
   await db.insert(historicoVinculo).values({
-    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
+    tenantId: vinculoAtual[0].tenantId,
     vinculoId,
     acao: "renovado",
     observacao: `Vínculo renovado até ${novaDataValidade.toLocaleDateString("pt-BR")}`,
@@ -2173,15 +2168,25 @@ export async function cancelarVinculo(vinculoId: number, motivo?: string): Promi
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Buscar vínculo para obter tenantId
+  const vinculoAtual = await db
+    .select()
+    .from(vinculoSecretariaMedico)
+    .where(eq(vinculoSecretariaMedico.id, vinculoId))
+    .limit(1);
+
+  if (vinculoAtual.length === 0) {
+    throw new Error("Vínculo não encontrado");
+  }
+
   await db
     .update(vinculoSecretariaMedico)
     .set({ status: "cancelado" })
     .where(eq(vinculoSecretariaMedico.id, vinculoId));
 
-  // Registrar no histórico
-  // TODO: Precisa buscar tenantId do vínculo
+  // Registrar no histórico usando tenantId do vínculo
   await db.insert(historicoVinculo).values({
-    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
+    tenantId: vinculoAtual[0].tenantId,
     vinculoId,
     acao: "cancelado",
     observacao: motivo || "Vínculo cancelado pelo usuário",
@@ -2655,6 +2660,7 @@ export async function createExamePadronizado(data: InsertExamePadronizado): Prom
 
 export interface ExameFavorito {
   id: number;
+  tenantId: number;
   userId: string;
   nomeExame: string;
   categoria: string | null;
@@ -2678,7 +2684,7 @@ export async function listExamesFavoritos(userId: string): Promise<ExameFavorito
     .orderBy(examesFavoritos.ordem) as any;
 }
 
-export async function addExameFavorito(userId: string, nomeExame: string, categoria?: string): Promise<ExameFavorito> {
+export async function addExameFavorito(tenantId: number, userId: string, nomeExame: string, categoria?: string): Promise<ExameFavorito> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -2708,9 +2714,8 @@ export async function addExameFavorito(userId: string, nomeExame: string, catego
   
   const ordem = (maxOrdem[0]?.maxOrdem || 0) + 1;
   
-  // TODO: Esta função precisa ser atualizada para receber tenantId
   const [result] = await db.insert(examesFavoritos).values({
-    tenantId: 1, // Placeholder - precisa ser atualizado para multi-tenant
+    tenantId,
     userId,
     nomeExame,
     categoria: categoria || "Geral",
@@ -2718,7 +2723,7 @@ export async function addExameFavorito(userId: string, nomeExame: string, catego
     ativo: true,
   });
   
-  return { id: result.insertId, userId, nomeExame, categoria: categoria || "Geral", ordem, ativo: true, createdAt: new Date(), updatedAt: new Date() };
+  return { id: result.insertId, tenantId, userId, nomeExame, categoria: categoria || "Geral", ordem, ativo: true, createdAt: new Date(), updatedAt: new Date() };
 }
 
 export async function removeExameFavorito(userId: string, nomeExame: string): Promise<void> {
