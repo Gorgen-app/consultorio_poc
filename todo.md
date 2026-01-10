@@ -1375,3 +1375,34 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Responder cada pergunta independentemente
 - [ ] Criar resposta final ajustada
 - [ ] Documentar processo completo
+
+
+## 🚀 FASE 1 INFRAESTRUTURA - Otimização para 500+ Usuários (10/01/2026)
+
+### 1.1 Connection Pooling
+- [x] Instalar mysql2 com suporte a pool de conexões (já instalado)
+- [x] Configurar pool com min/max connections (50 conexões max)
+- [x] Atualizar Drizzle para usar pool em vez de conexão única
+- [x] Testar com múltiplas requisições simultâneas (160 testes passando)
+
+### 1.2 Redis Cache
+- [x] Instalar ioredis para conexão com Redis
+- [x] Criar helper de cache com TTL configurável (cache.ts)
+- [x] Migrar cache de tenant de Map para Redis/memória
+- [x] Implementar cache-aside pattern para queries frequentes
+
+### 1.3 Rate Limiting
+- [x] Instalar express-rate-limit
+- [x] Configurar limite por IP (100 req/min)
+- [x] Configurar limite por usuário (300 req/min)
+- [x] Configurar limite por tenant (1000 req/min)
+- [x] Configurar limite para operações de escrita (50 req/min)
+- [x] Adicionar headers de rate limit nas respostas### 1.4 Script de Migração de Dados
+- [x] Criar script de validação de dados CSV (validate-migration-data.mjs)
+- [x] Implementar validação de CPF, datas, telefones, emails
+- [x] Gerar relatório de erros e avisos
+- [x] Testar com arquivo de amostra (5 registros, 2 válidos)
+### 1.5 Análise Portal do Paciente
+- [x] Documentar análise de priorização (ANALISE_PORTAL_PACIENTE.md)
+- [x] Recomendar sequência: manter na Fase 5 (Semanas 11-14)
+

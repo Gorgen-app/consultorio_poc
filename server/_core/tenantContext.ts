@@ -14,6 +14,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, and, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { tenants, userProfiles, userSettings, vinculoSecretariaMedico } from "../../drizzle/schema";
+import { cacheGet, cacheSet, cacheDelete, CACHE_TTL, CACHE_PREFIX } from "./cache";
 
 // Tipo do contexto de tenant
 export type TenantContext = {
@@ -25,10 +26,6 @@ export type TenantContext = {
   maxUsuarios: number;
   maxPacientes: number;
 };
-
-// Cache simples para evitar queries repetidas
-const tenantCache = new Map<number, { data: TenantContext; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 /**
  * Obtém o contexto de tenant a partir do userId
@@ -90,10 +87,11 @@ export async function getTenantFromUser(userId: number): Promise<TenantContext> 
     }
   }
   
-  // Verificar cache
-  const cached = tenantCache.get(tenantIdToUse);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.data;
+  // Verificar cache Redis/memória
+  const cacheKey = `${CACHE_PREFIX.TENANT}${tenantIdToUse}`;
+  const cached = await cacheGet<TenantContext>(cacheKey);
+  if (cached) {
+    return cached;
   }
   
   // Buscar informações do tenant
@@ -137,8 +135,8 @@ export async function getTenantFromUser(userId: number): Promise<TenantContext> 
     maxPacientes: tenant.maxPacientes || 100,
   };
   
-  // Atualizar cache
-  tenantCache.set(tenantIdToUse, { data: tenantContext, timestamp: Date.now() });
+  // Atualizar cache Redis/memória
+  await cacheSet(cacheKey, tenantContext, CACHE_TTL.TENANT);
   
   return tenantContext;
 }
@@ -191,10 +189,11 @@ async function validateUserTenantAccess(
  * @returns TenantContext com informações do tenant
  */
 export async function getTenantById(tenantId: number): Promise<TenantContext> {
-  // Verificar cache
-  const cached = tenantCache.get(tenantId);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.data;
+  // Verificar cache Redis/memória
+  const cacheKey = `${CACHE_PREFIX.TENANT}${tenantId}`;
+  const cached = await cacheGet<TenantContext>(cacheKey);
+  if (cached) {
+    return cached;
   }
   
   const db = drizzle(process.env.DATABASE_URL!);
@@ -224,8 +223,8 @@ export async function getTenantById(tenantId: number): Promise<TenantContext> {
     maxPacientes: tenant.maxPacientes || 100,
   };
   
-  // Atualizar cache
-  tenantCache.set(tenantId, { data: tenantContext, timestamp: Date.now() });
+  // Atualizar cache Redis/memória
+  await cacheSet(cacheKey, tenantContext, CACHE_TTL.TENANT);
   
   return tenantContext;
 }
@@ -261,12 +260,12 @@ export async function validateTenantAccess(
  * 
  * @param tenantId - ID do tenant para limpar do cache (opcional, limpa todos se não especificado)
  */
-export function clearTenantCache(tenantId?: number): void {
+export async function clearTenantCache(tenantId?: number): Promise<void> {
   if (tenantId) {
-    tenantCache.delete(tenantId);
-  } else {
-    tenantCache.clear();
+    await cacheDelete(`${CACHE_PREFIX.TENANT}${tenantId}`);
   }
+  // Não podemos limpar todo o cache facilmente sem Redis
+  // Para limpeza total, usar cacheDeletePattern se Redis estiver disponível
 }
 
 /**

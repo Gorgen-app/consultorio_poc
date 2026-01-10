@@ -1,20 +1,14 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, inArray } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { getPooledDb } from "./_core/database";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
-let _db: ReturnType<typeof drizzle> | null = null;
-
+/**
+ * Retorna a instância do banco de dados com connection pooling
+ * @returns Instância do Drizzle ORM ou null se não disponível
+ */
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
-  }
-  return _db;
+  return await getPooledDb();
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
