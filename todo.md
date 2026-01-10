@@ -1332,3 +1332,19 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Implementar lógica de troca de tenant
 - [x] Integrar TenantSelector no DashboardLayout (SidebarFooter)
 - [x] Adicionar procedures getUserTenants, getActiveTenant, setActiveTenant
+
+
+## 🎨 MELHORIAS UX MULTI-TENANT (10/01/2026)
+
+### Fase 1: Vincular Usuário Real
+- [x] Criar vínculo do Dr. André Gorgen com tenant de teste (30002)
+- [x] Validar que usuário pode ver ambos tenants no seletor (2 tenants)
+
+### Fase 2: Notificação de Troca
+- [x] Adicionar toast de confirmação ao trocar de tenant
+- [x] Mostrar nome da clínica selecionada no toast
+
+### Fase 3: Dashboard Personalizado
+- [x] Buscar tenant ativo no dashboard
+- [x] Mostrar nome da clínica no título do dashboard
+- [x] Atualizar subtítulo com informações do tenant (plano + badge de teste)

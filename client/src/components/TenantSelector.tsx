@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Building2, Check, ChevronDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface TenantSelectorProps {
   onTenantChange?: () => void;
@@ -26,11 +27,27 @@ export function TenantSelector({ onTenantChange, className }: TenantSelectorProp
   const utils = trpc.useUtils();
   
   const setActiveTenant = trpc.tenants.setActiveTenant.useMutation({
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Encontrar o nome do tenant selecionado
+      const selectedTenant = tenants?.find(t => t.id === variables.tenantId);
+      const tenantName = selectedTenant?.nome || "Clínica";
+      
+      // Mostrar toast de confirmação
+      toast.success(`Clínica alterada`, {
+        description: `Você está agora acessando: ${tenantName}`,
+        duration: 4000,
+      });
+      
       // Invalidar todas as queries para recarregar dados do novo tenant
       utils.invalidate();
       setOpen(false);
       onTenantChange?.();
+    },
+    onError: (error) => {
+      toast.error("Erro ao trocar de clínica", {
+        description: error.message || "Não foi possível alterar a clínica. Tente novamente.",
+        duration: 5000,
+      });
     },
   });
   
