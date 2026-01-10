@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -185,6 +185,10 @@ function DashboardLayoutContent({
     enabled: !!user,
   });
   const { data: availablePerfis } = trpc.perfil.getAvailablePerfis.useQuery(undefined, {
+    enabled: !!user,
+  });
+  // Query de foto de perfil
+  const { data: profilePhoto } = trpc.profilePhoto.get.useQuery(undefined, {
     enabled: !!user,
   });
   const setPerfilAtivo = trpc.perfil.setPerfilAtivo.useMutation({
@@ -429,7 +433,8 @@ function DashboardLayoutContent({
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarFallback className="text-xs font-medium">
+                    <AvatarImage src={profilePhoto?.fotoUrl || undefined} alt={user?.name || "Foto de perfil"} />
+                    <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
                       {user?.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

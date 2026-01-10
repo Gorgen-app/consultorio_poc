@@ -1,6 +1,6 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, userPasswords, passwordResetTokens, medicoDocumentos, userProfilePhotos } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -84,6 +84,18 @@ export async function getUserByOpenId(openId: string) {
   }
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
@@ -3172,4 +3184,302 @@ export async function getMedicoCadastroCompleto(userProfileId: number) {
     especializacoes,
     links,
   };
+}
+
+
+// ============================================
+// GERENCIAMENTO DE SENHAS
+// ============================================
+
+import crypto from "crypto";
+
+// Política de senha: mínimo 16 caracteres, maiúsculas, minúsculas, números e caracteres especiais
+export function validatePasswordPolicy(password: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  if (password.length < 16) {
+    errors.push("A senha deve ter no mínimo 16 caracteres");
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push("A senha deve conter pelo menos uma letra maiúscula");
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push("A senha deve conter pelo menos uma letra minúscula");
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push("A senha deve conter pelo menos um número");
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    errors.push("A senha deve conter pelo menos um caractere especial (!@#$%^&*()_+-=[]{};\':\"\\|,.<>/?)");
+  }
+  
+  return { valid: errors.length === 0, errors };
+}
+
+// Gerar hash de senha com salt
+function hashPassword(password: string, salt: string): string {
+  return crypto.pbkdf2Sync(password, salt, 100000, 64, "sha512").toString("hex");
+}
+
+// Criar ou atualizar senha do usuário
+export async function setUserPassword(userId: number, password: string): Promise<{ success: boolean; error?: string }> {
+  const validation = validatePasswordPolicy(password);
+  if (!validation.valid) {
+    return { success: false, error: validation.errors.join("; ") };
+  }
+  
+  const db = await getDb();
+  if (!db) return { success: false, error: "Banco de dados não disponível" };
+  
+  const salt = crypto.randomBytes(32).toString("hex");
+  const passwordHash = hashPassword(password, salt);
+  
+  try {
+    // Verificar se já existe senha para o usuário
+    const existing = await db.select().from(userPasswords).where(eq(userPasswords.userId, userId)).limit(1);
+    
+    if (existing.length > 0) {
+      // Atualizar senha existente
+      await db.update(userPasswords)
+        .set({ 
+          passwordHash, 
+          salt, 
+          lastChangedAt: new Date(),
+          mustChangeOnLogin: false 
+        })
+        .where(eq(userPasswords.userId, userId));
+    } else {
+      // Criar nova senha
+      await db.insert(userPasswords).values({
+        userId,
+        passwordHash,
+        salt,
+        lastChangedAt: new Date(),
+        mustChangeOnLogin: false,
+      });
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error("[Password] Erro ao salvar senha:", error);
+    return { success: false, error: "Erro ao salvar senha" };
+  }
+}
+
+// Verificar senha do usuário
+export async function verifyUserPassword(userId: number, password: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  try {
+    const [userPassword] = await db.select().from(userPasswords).where(eq(userPasswords.userId, userId)).limit(1);
+    
+    if (!userPassword) return false;
+    
+    const hash = hashPassword(password, userPassword.salt);
+    return hash === userPassword.passwordHash;
+  } catch (error) {
+    console.error("[Password] Erro ao verificar senha:", error);
+    return false;
+  }
+}
+
+// Verificar se usuário tem senha cadastrada
+export async function hasUserPassword(userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  try {
+    const [userPassword] = await db.select().from(userPasswords).where(eq(userPasswords.userId, userId)).limit(1);
+    return !!userPassword;
+  } catch (error) {
+    return false;
+  }
+}
+
+// Criar token de recuperação de senha
+export async function createPasswordResetToken(userId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+  
+  try {
+    await db.insert(passwordResetTokens).values({
+      userId,
+      token,
+      expiresAt,
+    });
+    
+    return token;
+  } catch (error) {
+    console.error("[Password] Erro ao criar token de recuperação:", error);
+    return null;
+  }
+}
+
+// Validar e usar token de recuperação
+export async function usePasswordResetToken(token: string): Promise<{ valid: boolean; userId?: number }> {
+  const db = await getDb();
+  if (!db) return { valid: false };
+  
+  try {
+    const [resetToken] = await db.select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token))
+      .limit(1);
+    
+    if (!resetToken) return { valid: false };
+    if (resetToken.usedAt) return { valid: false };
+    if (new Date() > resetToken.expiresAt) return { valid: false };
+    
+    // Marcar como usado
+    await db.update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetTokens.id, resetToken.id));
+    
+    return { valid: true, userId: resetToken.userId };
+  } catch (error) {
+    console.error("[Password] Erro ao validar token:", error);
+    return { valid: false };
+  }
+}
+
+// ============================================
+// DOCUMENTOS DO MÉDICO
+// ============================================
+
+export async function saveMedicoDocumento(data: {
+  userProfileId: number;
+  tipo: "diploma_graduacao" | "carteira_conselho" | "certificado_especializacao" | "certificado_residencia" | "certificado_mestrado" | "certificado_doutorado" | "certificado_curso" | "outro";
+  titulo: string;
+  descricao?: string;
+  arquivoUrl: string;
+  arquivoKey: string;
+  arquivoNome: string;
+  arquivoTamanho?: number;
+  formacaoId?: number;
+  especializacaoId?: number;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  try {
+    const [result] = await db.insert(medicoDocumentos).values(data).$returningId();
+    return result.id;
+  } catch (error) {
+    console.error("[Documentos] Erro ao salvar documento:", error);
+    return null;
+  }
+}
+
+export async function getMedicoDocumentos(userProfileId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    return await db.select()
+      .from(medicoDocumentos)
+      .where(and(
+        eq(medicoDocumentos.userProfileId, userProfileId),
+        sql`${medicoDocumentos.deletedAt} IS NULL`
+      ))
+      .orderBy(desc(medicoDocumentos.createdAt));
+  } catch (error) {
+    console.error("[Documentos] Erro ao buscar documentos:", error);
+    return [];
+  }
+}
+
+export async function deleteMedicoDocumento(id: number, userProfileId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  
+  try {
+    await db.update(medicoDocumentos)
+      .set({ deletedAt: new Date() })
+      .where(and(
+        eq(medicoDocumentos.id, id),
+        eq(medicoDocumentos.userProfileId, userProfileId)
+      ));
+    return true;
+  } catch (error) {
+    console.error("[Documentos] Erro ao excluir documento:", error);
+    return false;
+  }
+}
+
+// Verificar se tem documentos obrigatórios
+export async function verificarDocumentosObrigatorios(userProfileId: number): Promise<{ completo: boolean; faltando: string[] }> {
+  const documentos = await getMedicoDocumentos(userProfileId);
+  const faltando: string[] = [];
+  
+  const temDiplomaGraduacao = documentos.some(d => d.tipo === "diploma_graduacao");
+  const temCarteiraConselho = documentos.some(d => d.tipo === "carteira_conselho");
+  
+  if (!temDiplomaGraduacao) faltando.push("Diploma de Graduação");
+  if (!temCarteiraConselho) faltando.push("Carteira do Conselho");
+  
+  return { completo: faltando.length === 0, faltando };
+}
+
+// ============================================
+// FOTO DE PERFIL
+// ============================================
+
+export async function saveUserProfilePhoto(userId: number, data: {
+  fotoUrl: string;
+  fotoKey: string;
+  fotoNome?: string;
+}) {
+  const db = await getDb();
+  if (!db) return false;
+  
+  try {
+    // Verificar se já existe foto
+    const [existing] = await db.select().from(userProfilePhotos).where(eq(userProfilePhotos.userId, userId)).limit(1);
+    
+    if (existing) {
+      await db.update(userProfilePhotos)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(userProfilePhotos.userId, userId));
+    } else {
+      await db.insert(userProfilePhotos).values({
+        userId,
+        ...data,
+      });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("[ProfilePhoto] Erro ao salvar foto:", error);
+    return false;
+  }
+}
+
+export async function getUserProfilePhoto(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  try {
+    const [photo] = await db.select().from(userProfilePhotos).where(eq(userProfilePhotos.userId, userId)).limit(1);
+    return photo || null;
+  } catch (error) {
+    console.error("[ProfilePhoto] Erro ao buscar foto:", error);
+    return null;
+  }
+}
+
+export async function deleteUserProfilePhoto(userId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  
+  try {
+    await db.delete(userProfilePhotos).where(eq(userProfilePhotos.userId, userId));
+    return true;
+  } catch (error) {
+    console.error("[ProfilePhoto] Erro ao excluir foto:", error);
+    return false;
+  }
 }

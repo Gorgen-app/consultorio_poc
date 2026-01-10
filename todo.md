@@ -1304,3 +1304,32 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Implementar busca automática de endereço por CEP (API ViaCEP)
 - [x] Preencher automaticamente: logradouro, bairro, cidade, UF
 - [x] Adicionar feedback visual durante a busca (loading)
+
+
+---
+
+## 🔐 GORGEN v3.0 - Sistema de Segurança e Cadastro Completo (10/01/2026)
+
+### Sistema de Senhas
+- [ ] Criar tabela de senhas no banco de dados
+- [ ] Implementar política de senha: mínimo 16 caracteres, maiúsculas, minúsculas, números e caracteres especiais
+- [ ] Criar tela de alteração de senha
+- [ ] Implementar serviço "Esqueci minha senha" com envio de e-mail
+
+### Banco de Dados
+- [x] Adicionar novos campos de cadastro (redes sociais, etc.)
+- [x] Remover campos de RG e correlatos
+
+### Máscaras de Formatação
+- [x] Máscara para CPF (000.000.000-00)
+- [x] Máscara para datas (dd/mm/aaaa ao invés de dd/mm/yyyy)
+
+### Upload de Documentos
+- [x] Implementar upload de PDFs para diplomas e certificados
+- [x] Tornar obrigatório: diploma de graduação e carteira do conselho
+- [x] Armazenar arquivos no S3
+
+### Foto de Perfil
+- [x] Implementar upload de foto de perfil
+- [x] Exibir foto na barra de navegação (sidebar)
+- [x] Fallback para iniciais do nome quando sem foto

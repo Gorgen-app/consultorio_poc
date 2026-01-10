@@ -1248,20 +1248,12 @@ export const medicoDocumentacao = mysqlTable("medico_documentacao", {
   id: int("id").autoincrement().primaryKey(),
   userProfileId: int("user_profile_id").notNull().unique(),
   
-  // RG
-  rg: varchar("rg", { length: 20 }),
-  rgUf: varchar("rg_uf", { length: 2 }),
-  rgOrgaoEmissor: varchar("rg_orgao_emissor", { length: 50 }),
-  rgDataEmissao: date("rg_data_emissao"),
-  rgDigitalizadoUrl: varchar("rg_digitalizado_url", { length: 500 }),
-  
   // PIS e CNS
   numeroPis: varchar("numero_pis", { length: 20 }),
   numeroCns: varchar("numero_cns", { length: 20 }), // Cartão Nacional de Saúde
   
   // CPF
   cpf: varchar("cpf", { length: 14 }),
-  cpfDigitalizadoUrl: varchar("cpf_digitalizado_url", { length: 500 }),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
@@ -1510,10 +1502,17 @@ export const medicoLinks = mysqlTable("medico_links", {
   id: int("id").autoincrement().primaryKey(),
   userProfileId: int("user_profile_id").notNull().unique(),
   
+  // Links Profissionais
   curriculoLattes: varchar("curriculo_lattes", { length: 500 }),
   linkedin: varchar("linkedin", { length: 500 }),
   orcid: varchar("orcid", { length: 100 }),
   researchGate: varchar("research_gate", { length: 500 }),
+  
+  // Redes Sociais
+  instagram: varchar("instagram", { length: 200 }),
+  facebook: varchar("facebook", { length: 500 }),
+  twitter: varchar("twitter", { length: 200 }), // X
+  tiktok: varchar("tiktok", { length: 200 }),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
@@ -1521,3 +1520,101 @@ export const medicoLinks = mysqlTable("medico_links", {
 
 export type MedicoLinks = typeof medicoLinks.$inferSelect;
 export type InsertMedicoLinks = typeof medicoLinks.$inferInsert;
+
+/**
+ * Senhas dos Usuários
+ * Política: mínimo 16 caracteres, maiúsculas, minúsculas, números e caracteres especiais
+ */
+export const userPasswords = mysqlTable("user_passwords", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id).unique(),
+  
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  salt: varchar("salt", { length: 64 }).notNull(),
+  
+  // Controle de alterações
+  lastChangedAt: timestamp("last_changed_at").defaultNow().notNull(),
+  mustChangeOnLogin: boolean("must_change_on_login").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserPassword = typeof userPasswords.$inferSelect;
+export type InsertUserPassword = typeof userPasswords.$inferInsert;
+
+/**
+ * Tokens de Recuperação de Senha
+ */
+export const passwordResetTokens = mysqlTable("password_reset_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id),
+  
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+
+/**
+ * Documentos do Médico (Diplomas, Certificados, Carteira do Conselho)
+ */
+export const medicoDocumentos = mysqlTable("medico_documentos", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  tipo: mysqlEnum("tipo", [
+    "diploma_graduacao",
+    "carteira_conselho",
+    "certificado_especializacao",
+    "certificado_residencia",
+    "certificado_mestrado",
+    "certificado_doutorado",
+    "certificado_curso",
+    "outro"
+  ]).notNull(),
+  
+  titulo: varchar("titulo", { length: 255 }).notNull(), // Nome do documento
+  descricao: text("descricao"), // Descrição opcional
+  
+  // Arquivo
+  arquivoUrl: varchar("arquivo_url", { length: 500 }).notNull(),
+  arquivoKey: varchar("arquivo_key", { length: 255 }).notNull(), // Key no S3
+  arquivoNome: varchar("arquivo_nome", { length: 255 }).notNull(), // Nome original do arquivo
+  arquivoTamanho: int("arquivo_tamanho"), // Tamanho em bytes
+  
+  // Relacionamento com formação/especialização (opcional)
+  formacaoId: int("formacao_id"),
+  especializacaoId: int("especializacao_id"),
+  
+  // Soft delete
+  deletedAt: timestamp("deleted_at"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoDocumento = typeof medicoDocumentos.$inferSelect;
+export type InsertMedicoDocumento = typeof medicoDocumentos.$inferInsert;
+
+/**
+ * Foto de Perfil do Usuário
+ */
+export const userProfilePhotos = mysqlTable("user_profile_photos", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id).unique(),
+  
+  fotoUrl: varchar("foto_url", { length: 500 }).notNull(),
+  fotoKey: varchar("foto_key", { length: 255 }).notNull(), // Key no S3
+  fotoNome: varchar("foto_nome", { length: 255 }), // Nome original
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserProfilePhoto = typeof userProfilePhotos.$inferSelect;
+export type InsertUserProfilePhoto = typeof userProfilePhotos.$inferInsert;

@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Save, Plus, Trash2, FileText, Upload, GraduationCap, Briefcase, Link as LinkIcon, Loader2, Search } from "lucide-react";
+import DocumentUpload from "./DocumentUpload";
+import ProfilePhotoUpload from "./ProfilePhotoUpload";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
@@ -16,21 +18,43 @@ const ESTADOS_BR = [
   "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
 ];
 
-// Órgãos emissores de RG
-const ORGAOS_EMISSORES = [
-  "SSP - Secretaria de Segurança Pública",
-  "SJS - Secretaria da Justiça e Segurança",
-  "PM - Polícia Militar",
-  "PC - Polícia Civil",
-  "CNT - Carteira Nacional de Trânsito",
-  "DIC - Diretoria de Identificação Civil",
-  "CTPS - Carteira de Trabalho e Previdência Social",
-  "FGTS - Fundo de Garantia do Tempo de Serviço",
-  "IFP - Instituto Félix Pacheco",
-  "IPF - Instituto Pereira Faustino",
-  "MTE - Ministério do Trabalho e Emprego",
-  "Outro"
-];
+// Funções de máscara
+function formatCPF(value: string): string {
+  // Remove tudo que não é número
+  const numbers = value.replace(/\D/g, "");
+  // Aplica a máscara 000.000.000-00
+  if (numbers.length <= 3) return numbers;
+  if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+  if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+  return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
+}
+
+function formatDate(value: string): string {
+  // Remove tudo que não é número
+  const numbers = value.replace(/\D/g, "");
+  // Aplica a máscara dd/mm/aaaa
+  if (numbers.length <= 2) return numbers;
+  if (numbers.length <= 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+  return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+}
+
+function parseDateToISO(dateStr: string): string | null {
+  // Converte dd/mm/aaaa para yyyy-mm-dd
+  const parts = dateStr.split("/");
+  if (parts.length !== 3) return null;
+  const [day, month, year] = parts;
+  if (day.length !== 2 || month.length !== 2 || year.length !== 4) return null;
+  return `${year}-${month}-${day}`;
+}
+
+function parseISOToDate(isoStr: string | null | undefined): string {
+  // Converte yyyy-mm-dd para dd/mm/aaaa
+  if (!isoStr) return "";
+  const parts = isoStr.split("-");
+  if (parts.length !== 3) return "";
+  const [year, month, day] = parts;
+  return `${day}/${month}/${year}`;
+}
 
 // Tipos de logradouro
 const TIPOS_LOGRADOURO = ["Rua", "Avenida", "Alameda", "Travessa", "Praça", "Estrada", "Rodovia", "Outro"];
@@ -156,10 +180,6 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
   });
 
   const [documentacaoForm, setDocumentacaoForm] = useState({
-    rg: "",
-    rgUf: "",
-    rgOrgaoEmissor: "",
-    rgDataEmissao: "",
     numeroPis: "",
     numeroCns: "",
     cpf: "",
@@ -280,7 +300,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
           nomeCompleto: cadastroCompleto.pessoal.nomeCompleto || "",
           nomeSocial: cadastroCompleto.pessoal.nomeSocial || "",
           sexo: cadastroCompleto.pessoal.sexo || "",
-          dataNascimento: cadastroCompleto.pessoal.dataNascimento || "",
+          dataNascimento: parseISOToDate(cadastroCompleto.pessoal.dataNascimento),
           nacionalidade: cadastroCompleto.pessoal.nacionalidade || "Brasileira",
           ufNascimento: cadastroCompleto.pessoal.ufNascimento || "",
           cidadeNascimento: cadastroCompleto.pessoal.cidadeNascimento || "",
@@ -310,13 +330,9 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
       }
       if (cadastroCompleto.documentacao) {
         setDocumentacaoForm({
-          rg: cadastroCompleto.documentacao.rg || "",
-          rgUf: cadastroCompleto.documentacao.rgUf || "",
-          rgOrgaoEmissor: cadastroCompleto.documentacao.rgOrgaoEmissor || "",
-          rgDataEmissao: cadastroCompleto.documentacao.rgDataEmissao || "",
           numeroPis: cadastroCompleto.documentacao.numeroPis || "",
           numeroCns: cadastroCompleto.documentacao.numeroCns || "",
-          cpf: cadastroCompleto.documentacao.cpf || "",
+          cpf: formatCPF(cadastroCompleto.documentacao.cpf || ""),
         });
       }
       if (cadastroCompleto.conselho) {
@@ -343,9 +359,13 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
   }, [cadastroCompleto]);
 
   const handleSavePessoal = () => {
+    // Converter data de dd/mm/aaaa para yyyy-mm-dd
+    const dataNascimentoISO = parseDateToISO(pessoalForm.dataNascimento);
+    
     savePessoal.mutate({
       userProfileId,
       ...pessoalForm,
+      dataNascimento: dataNascimentoISO || pessoalForm.dataNascimento,
       sexo: pessoalForm.sexo as "Masculino" | "Feminino" | "Outro" | null || null,
     });
   };
@@ -459,6 +479,15 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
             <CardDescription>Dados de identificação do profissional</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Foto de Perfil */}
+            <div className="flex items-center gap-6 pb-4 border-b">
+              <ProfilePhotoUpload size="lg" />
+              <div>
+                <p className="text-sm font-medium">Foto de Perfil</p>
+                <p className="text-xs text-muted-foreground">Clique na imagem para alterar</p>
+              </div>
+            </div>
+            
             {/* Nome e dados básicos */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -483,9 +512,10 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 <Label htmlFor="dataNascimento">Data de nascimento *</Label>
                 <Input
                   id="dataNascimento"
-                  type="date"
                   value={pessoalForm.dataNascimento}
-                  onChange={(e) => setPessoalForm({ ...pessoalForm, dataNascimento: e.target.value })}
+                  onChange={(e) => setPessoalForm({ ...pessoalForm, dataNascimento: formatDate(e.target.value) })}
+                  placeholder="dd/mm/aaaa"
+                  maxLength={10}
                 />
               </div>
             </div>
@@ -775,68 +805,25 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
 
       {/* Seção 3: Documentação */}
       {activeSection === "documentacao" && (
+        <div className="space-y-4">
         <Card>
           <CardHeader>
             <CardTitle>Documentos Pessoais</CardTitle>
             <CardDescription>Documentação de identificação</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* RG */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {/* CPF, PIS, CNS */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="rg">RG</Label>
+                <Label htmlFor="cpf">CPF *</Label>
                 <Input
-                  id="rg"
-                  value={documentacaoForm.rg}
-                  onChange={(e) => setDocumentacaoForm({ ...documentacaoForm, rg: e.target.value })}
+                  id="cpf"
+                  value={documentacaoForm.cpf}
+                  onChange={(e) => setDocumentacaoForm({ ...documentacaoForm, cpf: formatCPF(e.target.value) })}
+                  placeholder="000.000.000-00"
+                  maxLength={14}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="rgUf">UF</Label>
-                <Select value={documentacaoForm.rgUf} onValueChange={(v) => setDocumentacaoForm({ ...documentacaoForm, rgUf: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ESTADOS_BR.map((uf) => (
-                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rgOrgaoEmissor">Órgão emissor</Label>
-                <Select value={documentacaoForm.rgOrgaoEmissor} onValueChange={(v) => setDocumentacaoForm({ ...documentacaoForm, rgOrgaoEmissor: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ORGAOS_EMISSORES.map((org) => (
-                      <SelectItem key={org} value={org}>{org}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rgDataEmissao">Data de emissão</Label>
-                <Input
-                  id="rgDataEmissao"
-                  type="date"
-                  value={documentacaoForm.rgDataEmissao}
-                  onChange={(e) => setDocumentacaoForm({ ...documentacaoForm, rgDataEmissao: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>RG digitalizado</Label>
-                <Button variant="outline" className="w-full" disabled>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Identidade
-                </Button>
-              </div>
-            </div>
-
-            {/* PIS, CNS, CPF */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="numeroPis">Nº do PIS</Label>
                 <Input
@@ -855,22 +842,6 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                   placeholder="Não sei meu número"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cpf">CPF *</Label>
-                <Input
-                  id="cpf"
-                  value={documentacaoForm.cpf}
-                  onChange={(e) => setDocumentacaoForm({ ...documentacaoForm, cpf: e.target.value })}
-                  placeholder="000.000.000-00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>CPF digitalizado</Label>
-                <Button variant="outline" className="w-full" disabled>
-                  <FileText className="h-4 w-4 mr-2" />
-                  CPF
-                </Button>
-              </div>
             </div>
 
             <div className="flex justify-end">
@@ -881,6 +852,10 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
             </div>
           </CardContent>
         </Card>
+
+        {/* Upload de Documentos */}
+        <DocumentUpload userProfileId={userProfileId} />
+        </div>
       )}
 
       {/* Seção 4: Profissional */}

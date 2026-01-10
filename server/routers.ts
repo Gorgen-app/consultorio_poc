@@ -2455,9 +2455,206 @@ Retorne um JSON válido com a estrutura:
         linkedin: z.string().nullable().optional(),
         orcid: z.string().nullable().optional(),
         researchGate: z.string().nullable().optional(),
+        instagram: z.string().nullable().optional(),
+        facebook: z.string().nullable().optional(),
+        twitter: z.string().nullable().optional(),
+        tiktok: z.string().nullable().optional(),
       }))
       .mutation(async ({ input }) => {
         return await db.upsertMedicoLinks(input);
+      }),
+  }),
+
+  // ============================================
+  // GERENCIAMENTO DE SENHAS
+  // ============================================
+  password: router({
+    // Verificar se usuário tem senha cadastrada
+    hasPassword: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.hasUserPassword(ctx.user.id);
+      }),
+
+    // Validar política de senha (sem salvar)
+    validatePolicy: publicProcedure
+      .input(z.object({ password: z.string() }))
+      .query(({ input }) => {
+        return db.validatePasswordPolicy(input.password);
+      }),
+
+    // Criar ou alterar senha
+    setPassword: protectedProcedure
+      .input(z.object({
+        currentPassword: z.string().optional(), // Obrigatório se já tiver senha
+        newPassword: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Se já tem senha, verificar a senha atual
+        const hasPassword = await db.hasUserPassword(ctx.user.id);
+        if (hasPassword) {
+          if (!input.currentPassword) {
+            return { success: false, error: "Senha atual é obrigatória" };
+          }
+          const isValid = await db.verifyUserPassword(ctx.user.id, input.currentPassword);
+          if (!isValid) {
+            return { success: false, error: "Senha atual incorreta" };
+          }
+        }
+
+        return await db.setUserPassword(ctx.user.id, input.newPassword);
+      }),
+
+    // Verificar senha (para operações sensíveis)
+    verify: protectedProcedure
+      .input(z.object({ password: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.verifyUserPassword(ctx.user.id, input.password);
+      }),
+
+    // Solicitar recuperação de senha
+    requestReset: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        // Buscar usuário pelo email
+        const user = await db.getUserByEmail(input.email);
+        if (!user) {
+          // Não revelar se o email existe ou não
+          return { success: true, message: "Se o email estiver cadastrado, você receberá um link de recuperação." };
+        }
+
+        const token = await db.createPasswordResetToken(user.id);
+        if (!token) {
+          return { success: false, error: "Erro ao gerar token de recuperação" };
+        }
+
+        // TODO: Enviar email com o link de recuperação
+        // Por enquanto, apenas retorna sucesso
+        console.log(`[Password Reset] Token gerado para ${input.email}: ${token}`);
+
+        return { success: true, message: "Se o email estiver cadastrado, você receberá um link de recuperação." };
+      }),
+
+    // Redefinir senha com token
+    resetWithToken: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        newPassword: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await db.usePasswordResetToken(input.token);
+        if (!result.valid || !result.userId) {
+          return { success: false, error: "Token inválido ou expirado" };
+        }
+
+        return await db.setUserPassword(result.userId, input.newPassword);
+      }),
+  }),
+
+  // ============================================
+  // DOCUMENTOS DO MÉDICO
+  // ============================================
+  documentos: router({
+    // Listar documentos do médico
+    list: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoDocumentos(input.userProfileId);
+      }),
+
+    // Salvar documento
+    save: protectedProcedure
+      .input(z.object({
+        userProfileId: z.number(),
+        tipo: z.enum(["diploma_graduacao", "carteira_conselho", "certificado_especializacao", "certificado_residencia", "certificado_mestrado", "certificado_doutorado", "certificado_curso", "outro"]),
+        titulo: z.string(),
+        descricao: z.string().optional(),
+        arquivoUrl: z.string(),
+        arquivoKey: z.string(),
+        arquivoNome: z.string(),
+        arquivoTamanho: z.number().optional(),
+        formacaoId: z.number().optional(),
+        especializacaoId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const id = await db.saveMedicoDocumento(input);
+        return { success: !!id, id };
+      }),
+
+    // Excluir documento
+    delete: protectedProcedure
+      .input(z.object({ id: z.number(), userProfileId: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteMedicoDocumento(input.id, input.userProfileId);
+      }),
+
+    // Verificar documentos obrigatórios
+    verificarObrigatorios: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.verificarDocumentosObrigatorios(input.userProfileId);
+      }),
+  }),
+
+  // ============================================
+  // FOTO DE PERFIL
+  // ============================================
+  profilePhoto: router({
+    // Obter foto de perfil
+    get: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getUserProfilePhoto(ctx.user.id);
+      }),
+
+    // Salvar foto de perfil
+    save: protectedProcedure
+      .input(z.object({
+        fotoUrl: z.string(),
+        fotoKey: z.string(),
+        fotoNome: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.saveUserProfilePhoto(ctx.user.id, input);
+      }),
+
+    // Excluir foto de perfil
+    delete: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        return await db.deleteUserProfilePhoto(ctx.user.id);
+      }),
+  }),
+
+  // ============================================
+  // UPLOAD DE ARQUIVOS
+  // ============================================
+  upload: router({
+    // Upload de arquivo genérico
+    file: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileData: z.string(), // Base64
+        contentType: z.string(),
+        folder: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import("./storage");
+        
+        // Gerar nome único para evitar enumeração
+        const randomSuffix = Math.random().toString(36).substring(2, 10);
+        const folder = input.folder || "uploads";
+        const fileKey = `${folder}/${ctx.user.id}-${randomSuffix}-${input.fileName}`;
+        
+        // Converter base64 para buffer
+        const buffer = Buffer.from(input.fileData, "base64");
+        
+        const result = await storagePut(fileKey, buffer, input.contentType);
+        
+        return {
+          success: true,
+          url: result.url,
+          key: result.key,
+          fileName: input.fileName,
+          size: buffer.length,
+        };
       }),
   }),
 });

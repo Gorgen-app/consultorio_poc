@@ -71,6 +71,13 @@
       "when": 1768051218752,
       "tag": "0009_real_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1768054462146,
+      "tag": "0010_ambitious_bishop",
+      "breakpoints": true
     }
   ]
 }
