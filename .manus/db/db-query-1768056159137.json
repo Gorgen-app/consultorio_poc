@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS paciente_autorizacoes (id INT AUTO_INCREMENT PRIMARY KEY, tenant_id INT NOT NULL, paciente_id INT NOT NULL, autorizado_por_user_id INT NOT NULL, autorizado_para_user_id INT NOT NULL, tipo_acesso ENUM('leitura', 'escrita', 'completo') DEFAULT 'leitura', data_inicio DATETIME DEFAULT CURRENT_TIMESTAMP, data_fim DATETIME, motivo TEXT, status ENUM('ativo', 'revogado', 'expirado') DEFAULT 'ativo', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS paciente_autorizacoes (id INT AUTO_INCREMENT PRIMARY KEY, tenant_id INT NOT NULL, paciente_id INT NOT NULL, autorizado_por_user_id INT NOT NULL, autorizado_para_user_id INT NOT NULL, tipo_acesso ENUM('leitura', 'escrita', 'completo') DEFAULT 'leitura', data_inicio DATETIME DEFAULT CURRENT_TIMESTAMP, data_fim DATETIME, motivo TEXT, status ENUM('ativo', 'revogado', 'expirado') DEFAULT 'ativo', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 182
+}

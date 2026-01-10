@@ -31,17 +31,14 @@ export type Funcionalidade =
   | 'faturamento'
   | 'faturamento.criar'
   | 'faturamento.editar'
-  | 'leads'
-  | 'leads.criar'
-  | 'leads.editar'
-  | 'portal_paciente'
   | 'relatorios'
   | 'relatorios.financeiro'
   | 'configuracoes'
   | 'configuracoes.sistema'
   | 'usuarios'
   | 'usuarios.criar'
-  | 'usuarios.editar';
+  | 'usuarios.editar'
+  | 'admin_tenants';
 
 // Matriz de permissões: true = permitido, false = negado
 export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, boolean>> = {
@@ -62,10 +59,6 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: true,
     'faturamento.criar': true,
     'faturamento.editar': true,
-    leads: true,
-    'leads.criar': true,
-    'leads.editar': true,
-    portal_paciente: true,
     relatorios: true,
     'relatorios.financeiro': true,
     configuracoes: true,
@@ -73,6 +66,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     usuarios: true,
     'usuarios.criar': true,
     'usuarios.editar': true,
+    admin_tenants: true,
   },
   medico: {
     dashboard: true,
@@ -91,10 +85,6 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: false, // Médico não acessa faturamento
     'faturamento.criar': false,
     'faturamento.editar': false,
-    leads: true, // Médico pode ver leads
-    'leads.criar': true,
-    'leads.editar': true,
-    portal_paciente: false, // Portal do paciente não é para médico
     relatorios: true,
     'relatorios.financeiro': false, // Médico não vê relatórios financeiros
     configuracoes: true,
@@ -102,6 +92,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     usuarios: false,
     'usuarios.criar': false,
     'usuarios.editar': false,
+    admin_tenants: false,
   },
   secretaria: {
     dashboard: true,
@@ -120,10 +111,6 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: false, // Secretária não acessa faturamento
     'faturamento.criar': false,
     'faturamento.editar': false,
-    leads: true, // Secretária pode gerenciar leads
-    'leads.criar': true,
-    'leads.editar': true,
-    portal_paciente: false, // Portal do paciente não é para secretária
     relatorios: true,
     'relatorios.financeiro': false,
     configuracoes: true,
@@ -131,6 +118,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     usuarios: false,
     'usuarios.criar': false,
     'usuarios.editar': false,
+    admin_tenants: false,
   },
   auditor: {
     dashboard: true,
@@ -149,10 +137,6 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: true, // Pode ver faturamento para auditoria
     'faturamento.criar': false,
     'faturamento.editar': false,
-    leads: true, // Auditor pode ver leads para auditoria
-    'leads.criar': false,
-    'leads.editar': false,
-    portal_paciente: false, // Portal do paciente não é para auditor
     relatorios: true,
     'relatorios.financeiro': true, // Pode ver relatórios financeiros
     configuracoes: true,
@@ -160,6 +144,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     usuarios: false,
     'usuarios.criar': false,
     'usuarios.editar': false,
+    admin_tenants: false,
   },
   paciente: {
     dashboard: false, // Paciente não vê dashboard geral
@@ -178,10 +163,6 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     faturamento: true, // Pode ver suas próprias faturas
     'faturamento.criar': false,
     'faturamento.editar': false,
-    leads: false, // Paciente não vê leads
-    'leads.criar': false,
-    'leads.editar': false,
-    portal_paciente: true, // Paciente acessa seu portal
     relatorios: false,
     'relatorios.financeiro': false,
     configuracoes: true, // Pode acessar suas configurações
@@ -189,6 +170,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     usuarios: false,
     'usuarios.criar': false,
     'usuarios.editar': false,
+    admin_tenants: false,
   },
 };
 

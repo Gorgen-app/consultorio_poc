@@ -1,6 +1,6 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, userPasswords, passwordResetTokens, medicoDocumentos, userProfilePhotos } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -84,18 +84,6 @@ export async function getUserByOpenId(openId: string) {
   }
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getUserByEmail(email: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
-  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
@@ -2669,817 +2657,141 @@ export async function updateOrdemExamesFavoritos(userId: string, exames: { nomeE
 }
 
 
-// ===== CADASTRO COMPLETO DE MÉDICOS =====
+// ============================================
+// FUNÇÕES MULTI-TENANT
+// ============================================
 
-// Interfaces para os tipos
-export interface MedicoCadastroPessoal {
-  id: number;
-  userProfileId: number;
-  nomeCompleto: string;
-  nomeSocial: string | null;
-  sexo: 'Masculino' | 'Feminino' | 'Outro' | null;
-  dataNascimento: string | null;
-  nacionalidade: string | null;
-  ufNascimento: string | null;
-  cidadeNascimento: string | null;
-  dddCelular: string | null;
-  celular: string | null;
-  dddResidencial: string | null;
-  telefoneResidencial: string | null;
-  dddComercial: string | null;
-  telefoneComercial: string | null;
-  nomeMae: string | null;
-  nomePai: string | null;
-  estadoCivil: string | null;
-  nomeConjuge: string | null;
-}
-
-export interface MedicoEndereco {
-  id: number;
-  userProfileId: number;
-  logradouro: string | null;
-  enderecoResidencial: string | null;
-  numero: string | null;
-  complemento: string | null;
-  bairro: string | null;
-  cidade: string | null;
-  uf: string | null;
-  cep: string | null;
-}
-
-export interface MedicoDocumentacao {
-  id: number;
-  userProfileId: number;
-  rg: string | null;
-  rgUf: string | null;
-  rgOrgaoEmissor: string | null;
-  rgDataEmissao: string | null;
-  rgDigitalizadoUrl: string | null;
-  numeroPis: string | null;
-  numeroCns: string | null;
-  cpf: string | null;
-  cpfDigitalizadoUrl: string | null;
-}
-
-export interface MedicoBancario {
-  id: number;
-  userProfileId: number;
-  banco: string | null;
-  agencia: string | null;
-  contaCorrente: string | null;
-  tipoConta: 'Corrente' | 'Poupança' | null;
-  ativo: boolean;
-}
-
-export interface MedicoConselho {
-  id: number;
-  userProfileId: number;
-  conselho: string | null;
-  numeroRegistro: string | null;
-  uf: string | null;
-  carteiraConselhoUrl: string | null;
-  certidaoRqeUrl: string | null;
-  codigoValidacao: string | null;
-}
-
-export interface MedicoFormacao {
-  id: number;
-  userProfileId: number;
-  curso: string;
-  instituicao: string;
-  anoConclusao: number | null;
-  certificadoUrl: string | null;
-}
-
-export interface MedicoEspecializacao {
-  id: number;
-  userProfileId: number;
-  especializacao: string;
-  instituicao: string;
-  tituloEspecialista: boolean;
-  registroConselho: boolean;
-  rqe: string | null;
-  certificadoUrl: string | null;
-}
-
-export interface MedicoLinks {
-  id: number;
-  userProfileId: number;
-  curriculoLattes: string | null;
-  linkedin: string | null;
-  orcid: string | null;
-  researchGate: string | null;
-}
-
-// Buscar cadastro pessoal
-export async function getMedicoCadastroPessoal(userProfileId: number): Promise<MedicoCadastroPessoal | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  const result = await db.execute(sql`SELECT * FROM medico_cadastro_pessoal WHERE user_profile_id = ${userProfileId} LIMIT 1`);
-  const rows = (result as any)[0] as any[];
-  if (!rows || rows.length === 0) return null;
-  
-  const row = rows[0];
-  return {
-    id: row.id,
-    userProfileId: row.user_profile_id,
-    nomeCompleto: row.nome_completo,
-    nomeSocial: row.nome_social,
-    sexo: row.sexo,
-    dataNascimento: row.data_nascimento,
-    nacionalidade: row.nacionalidade,
-    ufNascimento: row.uf_nascimento,
-    cidadeNascimento: row.cidade_nascimento,
-    dddCelular: row.ddd_celular,
-    celular: row.celular,
-    dddResidencial: row.ddd_residencial,
-    telefoneResidencial: row.telefone_residencial,
-    dddComercial: row.ddd_comercial,
-    telefoneComercial: row.telefone_comercial,
-    nomeMae: row.nome_mae,
-    nomePai: row.nome_pai,
-    estadoCivil: row.estado_civil,
-    nomeConjuge: row.nome_conjuge,
-  };
-}
-
-// Salvar/atualizar cadastro pessoal
-export async function upsertMedicoCadastroPessoal(data: Partial<MedicoCadastroPessoal> & { userProfileId: number }): Promise<MedicoCadastroPessoal | null> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const existing = await getMedicoCadastroPessoal(data.userProfileId);
-  
-  if (existing) {
-    await db.execute(sql`
-      UPDATE medico_cadastro_pessoal SET
-        nome_completo = ${data.nomeCompleto || existing.nomeCompleto},
-        nome_social = ${data.nomeSocial ?? existing.nomeSocial},
-        sexo = ${data.sexo ?? existing.sexo},
-        data_nascimento = ${data.dataNascimento ?? existing.dataNascimento},
-        nacionalidade = ${data.nacionalidade ?? existing.nacionalidade},
-        uf_nascimento = ${data.ufNascimento ?? existing.ufNascimento},
-        cidade_nascimento = ${data.cidadeNascimento ?? existing.cidadeNascimento},
-        ddd_celular = ${data.dddCelular ?? existing.dddCelular},
-        celular = ${data.celular ?? existing.celular},
-        ddd_residencial = ${data.dddResidencial ?? existing.dddResidencial},
-        telefone_residencial = ${data.telefoneResidencial ?? existing.telefoneResidencial},
-        ddd_comercial = ${data.dddComercial ?? existing.dddComercial},
-        telefone_comercial = ${data.telefoneComercial ?? existing.telefoneComercial},
-        nome_mae = ${data.nomeMae ?? existing.nomeMae},
-        nome_pai = ${data.nomePai ?? existing.nomePai},
-        estado_civil = ${data.estadoCivil ?? existing.estadoCivil},
-        nome_conjuge = ${data.nomeConjuge ?? existing.nomeConjuge}
-      WHERE user_profile_id = ${data.userProfileId}
-    `);
-  } else {
-    await db.execute(sql`
-      INSERT INTO medico_cadastro_pessoal (user_profile_id, nome_completo, nome_social, sexo, data_nascimento, nacionalidade, uf_nascimento, cidade_nascimento, ddd_celular, celular, ddd_residencial, telefone_residencial, ddd_comercial, telefone_comercial, nome_mae, nome_pai, estado_civil, nome_conjuge)
-      VALUES (${data.userProfileId}, ${data.nomeCompleto || ''}, ${data.nomeSocial || null}, ${data.sexo || null}, ${data.dataNascimento || null}, ${data.nacionalidade || 'Brasileira'}, ${data.ufNascimento || null}, ${data.cidadeNascimento || null}, ${data.dddCelular || null}, ${data.celular || null}, ${data.dddResidencial || null}, ${data.telefoneResidencial || null}, ${data.dddComercial || null}, ${data.telefoneComercial || null}, ${data.nomeMae || null}, ${data.nomePai || null}, ${data.estadoCivil || null}, ${data.nomeConjuge || null})
-    `);
-  }
-  
-  return getMedicoCadastroPessoal(data.userProfileId);
-}
-
-// Buscar endereço
-export async function getMedicoEndereco(userProfileId: number): Promise<MedicoEndereco | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  const result = await db.execute(sql`SELECT * FROM medico_endereco WHERE user_profile_id = ${userProfileId} LIMIT 1`);
-  const rows = (result as any)[0] as any[];
-  if (!rows || rows.length === 0) return null;
-  
-  const row = rows[0];
-  return {
-    id: row.id,
-    userProfileId: row.user_profile_id,
-    logradouro: row.logradouro,
-    enderecoResidencial: row.endereco_residencial,
-    numero: row.numero,
-    complemento: row.complemento,
-    bairro: row.bairro,
-    cidade: row.cidade,
-    uf: row.uf,
-    cep: row.cep,
-  };
-}
-
-// Salvar/atualizar endereço
-export async function upsertMedicoEndereco(data: Partial<MedicoEndereco> & { userProfileId: number }): Promise<MedicoEndereco | null> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const existing = await getMedicoEndereco(data.userProfileId);
-  
-  if (existing) {
-    await db.execute(sql`
-      UPDATE medico_endereco SET
-        logradouro = ${data.logradouro ?? existing.logradouro},
-        endereco_residencial = ${data.enderecoResidencial ?? existing.enderecoResidencial},
-        numero = ${data.numero ?? existing.numero},
-        complemento = ${data.complemento ?? existing.complemento},
-        bairro = ${data.bairro ?? existing.bairro},
-        cidade = ${data.cidade ?? existing.cidade},
-        uf = ${data.uf ?? existing.uf},
-        cep = ${data.cep ?? existing.cep}
-      WHERE user_profile_id = ${data.userProfileId}
-    `);
-  } else {
-    await db.execute(sql`
-      INSERT INTO medico_endereco (user_profile_id, logradouro, endereco_residencial, numero, complemento, bairro, cidade, uf, cep)
-      VALUES (${data.userProfileId}, ${data.logradouro || null}, ${data.enderecoResidencial || null}, ${data.numero || null}, ${data.complemento || null}, ${data.bairro || null}, ${data.cidade || null}, ${data.uf || null}, ${data.cep || null})
-    `);
-  }
-  
-  return getMedicoEndereco(data.userProfileId);
-}
-
-// Buscar documentação
-export async function getMedicoDocumentacao(userProfileId: number): Promise<MedicoDocumentacao | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  const result = await db.execute(sql`SELECT * FROM medico_documentacao WHERE user_profile_id = ${userProfileId} LIMIT 1`);
-  const rows = (result as any)[0] as any[];
-  if (!rows || rows.length === 0) return null;
-  
-  const row = rows[0];
-  return {
-    id: row.id,
-    userProfileId: row.user_profile_id,
-    rg: row.rg,
-    rgUf: row.rg_uf,
-    rgOrgaoEmissor: row.rg_orgao_emissor,
-    rgDataEmissao: row.rg_data_emissao,
-    rgDigitalizadoUrl: row.rg_digitalizado_url,
-    numeroPis: row.numero_pis,
-    numeroCns: row.numero_cns,
-    cpf: row.cpf,
-    cpfDigitalizadoUrl: row.cpf_digitalizado_url,
-  };
-}
-
-// Salvar/atualizar documentação
-export async function upsertMedicoDocumentacao(data: Partial<MedicoDocumentacao> & { userProfileId: number }): Promise<MedicoDocumentacao | null> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const existing = await getMedicoDocumentacao(data.userProfileId);
-  
-  if (existing) {
-    await db.execute(sql`
-      UPDATE medico_documentacao SET
-        rg = ${data.rg ?? existing.rg},
-        rg_uf = ${data.rgUf ?? existing.rgUf},
-        rg_orgao_emissor = ${data.rgOrgaoEmissor ?? existing.rgOrgaoEmissor},
-        rg_data_emissao = ${data.rgDataEmissao ?? existing.rgDataEmissao},
-        rg_digitalizado_url = ${data.rgDigitalizadoUrl ?? existing.rgDigitalizadoUrl},
-        numero_pis = ${data.numeroPis ?? existing.numeroPis},
-        numero_cns = ${data.numeroCns ?? existing.numeroCns},
-        cpf = ${data.cpf ?? existing.cpf},
-        cpf_digitalizado_url = ${data.cpfDigitalizadoUrl ?? existing.cpfDigitalizadoUrl}
-      WHERE user_profile_id = ${data.userProfileId}
-    `);
-  } else {
-    await db.execute(sql`
-      INSERT INTO medico_documentacao (user_profile_id, rg, rg_uf, rg_orgao_emissor, rg_data_emissao, rg_digitalizado_url, numero_pis, numero_cns, cpf, cpf_digitalizado_url)
-      VALUES (${data.userProfileId}, ${data.rg || null}, ${data.rgUf || null}, ${data.rgOrgaoEmissor || null}, ${data.rgDataEmissao || null}, ${data.rgDigitalizadoUrl || null}, ${data.numeroPis || null}, ${data.numeroCns || null}, ${data.cpf || null}, ${data.cpfDigitalizadoUrl || null})
-    `);
-  }
-  
-  return getMedicoDocumentacao(data.userProfileId);
-}
-
-// Buscar informações bancárias
-export async function getMedicoBancario(userProfileId: number): Promise<MedicoBancario[]> {
+export async function listTenants() {
   const db = await getDb();
   if (!db) return [];
   
-  const result = await db.execute(sql`SELECT * FROM medico_bancario WHERE user_profile_id = ${userProfileId} AND ativo = 1`);
-  const rows = (result as any)[0] as any[];
-  
-  return rows.map(row => ({
-    id: row.id,
-    userProfileId: row.user_profile_id,
-    banco: row.banco,
-    agencia: row.agencia,
-    contaCorrente: row.conta_corrente,
-    tipoConta: row.tipo_conta,
-    ativo: row.ativo,
-  }));
+  const result = await db.select().from(tenants).orderBy(asc(tenants.id));
+  return result;
 }
 
-// Adicionar conta bancária
-export async function addMedicoBancario(data: Omit<MedicoBancario, 'id' | 'ativo'>): Promise<MedicoBancario> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.execute(sql`
-    INSERT INTO medico_bancario (user_profile_id, banco, agencia, conta_corrente, tipo_conta, ativo)
-    VALUES (${data.userProfileId}, ${data.banco}, ${data.agencia}, ${data.contaCorrente}, ${data.tipoConta || 'Corrente'}, 1)
-  `);
-  
-  return { ...data, id: (result[0] as any).insertId, ativo: true };
-}
-
-// Buscar conselho
-export async function getMedicoConselho(userProfileId: number): Promise<MedicoConselho | null> {
+export async function getTenantById(id: number) {
   const db = await getDb();
   if (!db) return null;
   
-  const result = await db.execute(sql`SELECT * FROM medico_conselho WHERE user_profile_id = ${userProfileId} LIMIT 1`);
-  const rows = (result as any)[0] as any[];
-  if (!rows || rows.length === 0) return null;
-  
-  const row = rows[0];
-  return {
-    id: row.id,
-    userProfileId: row.user_profile_id,
-    conselho: row.conselho,
-    numeroRegistro: row.numero_registro,
-    uf: row.uf,
-    carteiraConselhoUrl: row.carteira_conselho_url,
-    certidaoRqeUrl: row.certidao_rqe_url,
-    codigoValidacao: row.codigo_validacao,
-  };
+  const result = await db.select().from(tenants).where(eq(tenants.id, id));
+  return result[0] || null;
 }
 
-// Salvar/atualizar conselho
-export async function upsertMedicoConselho(data: Partial<MedicoConselho> & { userProfileId: number }): Promise<MedicoConselho | null> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const existing = await getMedicoConselho(data.userProfileId);
-  
-  if (existing) {
-    await db.execute(sql`
-      UPDATE medico_conselho SET
-        conselho = ${data.conselho ?? existing.conselho},
-        numero_registro = ${data.numeroRegistro ?? existing.numeroRegistro},
-        uf = ${data.uf ?? existing.uf},
-        carteira_conselho_url = ${data.carteiraConselhoUrl ?? existing.carteiraConselhoUrl},
-        certidao_rqe_url = ${data.certidaoRqeUrl ?? existing.certidaoRqeUrl},
-        codigo_validacao = ${data.codigoValidacao ?? existing.codigoValidacao}
-      WHERE user_profile_id = ${data.userProfileId}
-    `);
-  } else {
-    await db.execute(sql`
-      INSERT INTO medico_conselho (user_profile_id, conselho, numero_registro, uf, carteira_conselho_url, certidao_rqe_url, codigo_validacao)
-      VALUES (${data.userProfileId}, ${data.conselho || 'CRM'}, ${data.numeroRegistro || null}, ${data.uf || null}, ${data.carteiraConselhoUrl || null}, ${data.certidaoRqeUrl || null}, ${data.codigoValidacao || null})
-    `);
-  }
-  
-  return getMedicoConselho(data.userProfileId);
-}
-
-// Buscar formações
-export async function getMedicoFormacoes(userProfileId: number): Promise<MedicoFormacao[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const result = await db.execute(sql`SELECT * FROM medico_formacoes WHERE user_profile_id = ${userProfileId}`);
-  const rows = (result as any)[0] as any[];
-  
-  return rows.map(row => ({
-    id: row.id,
-    userProfileId: row.user_profile_id,
-    curso: row.curso,
-    instituicao: row.instituicao,
-    anoConclusao: row.ano_conclusao,
-    certificadoUrl: row.certificado_url,
-  }));
-}
-
-// Adicionar formação
-export async function addMedicoFormacao(data: Omit<MedicoFormacao, 'id'>): Promise<MedicoFormacao> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.execute(sql`
-    INSERT INTO medico_formacoes (user_profile_id, curso, instituicao, ano_conclusao, certificado_url)
-    VALUES (${data.userProfileId}, ${data.curso}, ${data.instituicao}, ${data.anoConclusao || null}, ${data.certificadoUrl || null})
-  `);
-  
-  return { ...data, id: (result[0] as any).insertId };
-}
-
-// Remover formação
-export async function removeMedicoFormacao(id: number): Promise<void> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.execute(sql`DELETE FROM medico_formacoes WHERE id = ${id}`);
-}
-
-// Buscar especializações
-export async function getMedicoEspecializacoes(userProfileId: number): Promise<MedicoEspecializacao[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const result = await db.execute(sql`SELECT * FROM medico_especializacoes WHERE user_profile_id = ${userProfileId}`);
-  const rows = (result as any)[0] as any[];
-  
-  return rows.map(row => ({
-    id: row.id,
-    userProfileId: row.user_profile_id,
-    especializacao: row.especializacao,
-    instituicao: row.instituicao,
-    tituloEspecialista: row.titulo_especialista,
-    registroConselho: row.registro_conselho,
-    rqe: row.rqe,
-    certificadoUrl: row.certificado_url,
-  }));
-}
-
-// Adicionar especialização
-export async function addMedicoEspecializacao(data: Omit<MedicoEspecializacao, 'id'>): Promise<MedicoEspecializacao> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.execute(sql`
-    INSERT INTO medico_especializacoes (user_profile_id, especializacao, instituicao, titulo_especialista, registro_conselho, rqe, certificado_url)
-    VALUES (${data.userProfileId}, ${data.especializacao}, ${data.instituicao}, ${data.tituloEspecialista ? 1 : 0}, ${data.registroConselho ? 1 : 0}, ${data.rqe || null}, ${data.certificadoUrl || null})
-  `);
-  
-  return { ...data, id: (result[0] as any).insertId };
-}
-
-// Remover especialização
-export async function removeMedicoEspecializacao(id: number): Promise<void> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.execute(sql`DELETE FROM medico_especializacoes WHERE id = ${id}`);
-}
-
-// Buscar links profissionais
-export async function getMedicoLinks(userProfileId: number): Promise<MedicoLinks | null> {
+export async function getTenantBySlug(slug: string) {
   const db = await getDb();
   if (!db) return null;
   
-  const result = await db.execute(sql`SELECT * FROM medico_links WHERE user_profile_id = ${userProfileId} LIMIT 1`);
-  const rows = (result as any)[0] as any[];
-  if (!rows || rows.length === 0) return null;
-  
-  const row = rows[0];
-  return {
-    id: row.id,
-    userProfileId: row.user_profile_id,
-    curriculoLattes: row.curriculo_lattes,
-    linkedin: row.linkedin,
-    orcid: row.orcid,
-    researchGate: row.research_gate,
-  };
+  const result = await db.select().from(tenants).where(eq(tenants.slug, slug));
+  return result[0] || null;
 }
 
-// Salvar/atualizar links
-export async function upsertMedicoLinks(data: Partial<MedicoLinks> & { userProfileId: number }): Promise<MedicoLinks | null> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const existing = await getMedicoLinks(data.userProfileId);
-  
-  if (existing) {
-    await db.execute(sql`
-      UPDATE medico_links SET
-        curriculo_lattes = ${data.curriculoLattes ?? existing.curriculoLattes},
-        linkedin = ${data.linkedin ?? existing.linkedin},
-        orcid = ${data.orcid ?? existing.orcid},
-        research_gate = ${data.researchGate ?? existing.researchGate}
-      WHERE user_profile_id = ${data.userProfileId}
-    `);
-  } else {
-    await db.execute(sql`
-      INSERT INTO medico_links (user_profile_id, curriculo_lattes, linkedin, orcid, research_gate)
-      VALUES (${data.userProfileId}, ${data.curriculoLattes || null}, ${data.linkedin || null}, ${data.orcid || null}, ${data.researchGate || null})
-    `);
-  }
-  
-  return getMedicoLinks(data.userProfileId);
-}
-
-// Buscar cadastro completo do médico
-export async function getMedicoCadastroCompleto(userProfileId: number) {
-  const [pessoal, endereco, documentacao, bancario, conselho, formacoes, especializacoes, links] = await Promise.all([
-    getMedicoCadastroPessoal(userProfileId),
-    getMedicoEndereco(userProfileId),
-    getMedicoDocumentacao(userProfileId),
-    getMedicoBancario(userProfileId),
-    getMedicoConselho(userProfileId),
-    getMedicoFormacoes(userProfileId),
-    getMedicoEspecializacoes(userProfileId),
-    getMedicoLinks(userProfileId),
-  ]);
-  
-  return {
-    pessoal,
-    endereco,
-    documentacao,
-    bancario,
-    conselho,
-    formacoes,
-    especializacoes,
-    links,
-  };
-}
-
-
-// ============================================
-// GERENCIAMENTO DE SENHAS
-// ============================================
-
-import crypto from "crypto";
-
-// Política de senha: mínimo 16 caracteres, maiúsculas, minúsculas, números e caracteres especiais
-export function validatePasswordPolicy(password: string): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  
-  if (password.length < 16) {
-    errors.push("A senha deve ter no mínimo 16 caracteres");
-  }
-  if (!/[A-Z]/.test(password)) {
-    errors.push("A senha deve conter pelo menos uma letra maiúscula");
-  }
-  if (!/[a-z]/.test(password)) {
-    errors.push("A senha deve conter pelo menos uma letra minúscula");
-  }
-  if (!/[0-9]/.test(password)) {
-    errors.push("A senha deve conter pelo menos um número");
-  }
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-    errors.push("A senha deve conter pelo menos um caractere especial (!@#$%^&*()_+-=[]{};\':\"\\|,.<>/?)");
-  }
-  
-  return { valid: errors.length === 0, errors };
-}
-
-// Gerar hash de senha com salt
-function hashPassword(password: string, salt: string): string {
-  return crypto.pbkdf2Sync(password, salt, 100000, 64, "sha512").toString("hex");
-}
-
-// Criar ou atualizar senha do usuário
-export async function setUserPassword(userId: number, password: string): Promise<{ success: boolean; error?: string }> {
-  const validation = validatePasswordPolicy(password);
-  if (!validation.valid) {
-    return { success: false, error: validation.errors.join("; ") };
-  }
-  
-  const db = await getDb();
-  if (!db) return { success: false, error: "Banco de dados não disponível" };
-  
-  const salt = crypto.randomBytes(32).toString("hex");
-  const passwordHash = hashPassword(password, salt);
-  
-  try {
-    // Verificar se já existe senha para o usuário
-    const existing = await db.select().from(userPasswords).where(eq(userPasswords.userId, userId)).limit(1);
-    
-    if (existing.length > 0) {
-      // Atualizar senha existente
-      await db.update(userPasswords)
-        .set({ 
-          passwordHash, 
-          salt, 
-          lastChangedAt: new Date(),
-          mustChangeOnLogin: false 
-        })
-        .where(eq(userPasswords.userId, userId));
-    } else {
-      // Criar nova senha
-      await db.insert(userPasswords).values({
-        userId,
-        passwordHash,
-        salt,
-        lastChangedAt: new Date(),
-        mustChangeOnLogin: false,
-      });
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error("[Password] Erro ao salvar senha:", error);
-    return { success: false, error: "Erro ao salvar senha" };
-  }
-}
-
-// Verificar senha do usuário
-export async function verifyUserPassword(userId: number, password: string): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-  
-  try {
-    const [userPassword] = await db.select().from(userPasswords).where(eq(userPasswords.userId, userId)).limit(1);
-    
-    if (!userPassword) return false;
-    
-    const hash = hashPassword(password, userPassword.salt);
-    return hash === userPassword.passwordHash;
-  } catch (error) {
-    console.error("[Password] Erro ao verificar senha:", error);
-    return false;
-  }
-}
-
-// Verificar se usuário tem senha cadastrada
-export async function hasUserPassword(userId: number): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-  
-  try {
-    const [userPassword] = await db.select().from(userPasswords).where(eq(userPasswords.userId, userId)).limit(1);
-    return !!userPassword;
-  } catch (error) {
-    return false;
-  }
-}
-
-// Criar token de recuperação de senha
-export async function createPasswordResetToken(userId: number): Promise<string | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
-  
-  try {
-    await db.insert(passwordResetTokens).values({
-      userId,
-      token,
-      expiresAt,
-    });
-    
-    return token;
-  } catch (error) {
-    console.error("[Password] Erro ao criar token de recuperação:", error);
-    return null;
-  }
-}
-
-// Validar e usar token de recuperação
-export async function usePasswordResetToken(token: string): Promise<{ valid: boolean; userId?: number }> {
-  const db = await getDb();
-  if (!db) return { valid: false };
-  
-  try {
-    const [resetToken] = await db.select()
-      .from(passwordResetTokens)
-      .where(eq(passwordResetTokens.token, token))
-      .limit(1);
-    
-    if (!resetToken) return { valid: false };
-    if (resetToken.usedAt) return { valid: false };
-    if (new Date() > resetToken.expiresAt) return { valid: false };
-    
-    // Marcar como usado
-    await db.update(passwordResetTokens)
-      .set({ usedAt: new Date() })
-      .where(eq(passwordResetTokens.id, resetToken.id));
-    
-    return { valid: true, userId: resetToken.userId };
-  } catch (error) {
-    console.error("[Password] Erro ao validar token:", error);
-    return { valid: false };
-  }
-}
-
-// ============================================
-// DOCUMENTOS DO MÉDICO
-// ============================================
-
-export async function saveMedicoDocumento(data: {
-  userProfileId: number;
-  tipo: "diploma_graduacao" | "carteira_conselho" | "certificado_especializacao" | "certificado_residencia" | "certificado_mestrado" | "certificado_doutorado" | "certificado_curso" | "outro";
-  titulo: string;
-  descricao?: string;
-  arquivoUrl: string;
-  arquivoKey: string;
-  arquivoNome: string;
-  arquivoTamanho?: number;
-  formacaoId?: number;
-  especializacaoId?: number;
+export async function createTenant(data: {
+  nome: string;
+  slug: string;
+  cnpj?: string;
+  email?: string;
+  telefone?: string;
+  endereco?: string;
+  plano?: "free" | "basic" | "professional" | "enterprise";
+  maxUsuarios?: number;
+  maxPacientes?: number;
 }) {
   const db = await getDb();
-  if (!db) return null;
+  if (!db) throw new Error("Database not available");
   
-  try {
-    const [result] = await db.insert(medicoDocumentos).values(data).$returningId();
-    return result.id;
-  } catch (error) {
-    console.error("[Documentos] Erro ao salvar documento:", error);
-    return null;
-  }
+  const result = await db.insert(tenants).values({
+    nome: data.nome,
+    slug: data.slug,
+    cnpj: data.cnpj || null,
+    email: data.email || null,
+    telefone: data.telefone || null,
+    endereco: data.endereco || null,
+    plano: data.plano || "basic",
+    status: "ativo",
+    maxUsuarios: data.maxUsuarios || 5,
+    maxPacientes: data.maxPacientes || 100,
+  });
+  
+  return result;
 }
 
-export async function getMedicoDocumentos(userProfileId: number) {
+export async function updateTenant(id: number, data: {
+  nome?: string;
+  slug?: string;
+  cnpj?: string;
+  email?: string;
+  telefone?: string;
+  endereco?: string;
+  plano?: "free" | "basic" | "professional" | "enterprise";
+  status?: "ativo" | "inativo" | "suspenso";
+  maxUsuarios?: number;
+  maxPacientes?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const updateData: Record<string, unknown> = {};
+  if (data.nome !== undefined) updateData.nome = data.nome;
+  if (data.slug !== undefined) updateData.slug = data.slug;
+  if (data.cnpj !== undefined) updateData.cnpj = data.cnpj;
+  if (data.email !== undefined) updateData.email = data.email;
+  if (data.telefone !== undefined) updateData.telefone = data.telefone;
+  if (data.endereco !== undefined) updateData.endereco = data.endereco;
+  if (data.plano !== undefined) updateData.plano = data.plano;
+  if (data.status !== undefined) updateData.status = data.status;
+  if (data.maxUsuarios !== undefined) updateData.maxUsuarios = data.maxUsuarios;
+  if (data.maxPacientes !== undefined) updateData.maxPacientes = data.maxPacientes;
+  
+  await db.update(tenants).set(updateData).where(eq(tenants.id, id));
+}
+
+export async function toggleTenantStatus(id: number, status: "ativo" | "inativo" | "suspenso") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(tenants).set({ status }).where(eq(tenants.id, id));
+}
+
+// Autorizações de pacientes
+export async function createPacienteAutorizacao(data: {
+  tenantId: number;
+  pacienteId: number;
+  autorizadoPorUserId: number;
+  autorizadoParaUserId: number;
+  tipoAcesso?: "leitura" | "escrita" | "completo";
+  motivo?: string;
+  dataFim?: Date;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(pacienteAutorizacoes).values({
+    tenantId: data.tenantId,
+    pacienteId: data.pacienteId,
+    autorizadoPorUserId: data.autorizadoPorUserId,
+    autorizadoParaUserId: data.autorizadoParaUserId,
+    tipoAcesso: data.tipoAcesso || "leitura",
+    motivo: data.motivo || null,
+    dataFim: data.dataFim || null,
+    status: "ativo",
+  });
+}
+
+export async function revokePacienteAutorizacao(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(pacienteAutorizacoes).set({ status: "revogado" }).where(eq(pacienteAutorizacoes.id, id));
+}
+
+export async function listPacienteAutorizacoes(pacienteId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  try {
-    return await db.select()
-      .from(medicoDocumentos)
-      .where(and(
-        eq(medicoDocumentos.userProfileId, userProfileId),
-        sql`${medicoDocumentos.deletedAt} IS NULL`
-      ))
-      .orderBy(desc(medicoDocumentos.createdAt));
-  } catch (error) {
-    console.error("[Documentos] Erro ao buscar documentos:", error);
-    return [];
-  }
-}
-
-export async function deleteMedicoDocumento(id: number, userProfileId: number) {
-  const db = await getDb();
-  if (!db) return false;
-  
-  try {
-    await db.update(medicoDocumentos)
-      .set({ deletedAt: new Date() })
-      .where(and(
-        eq(medicoDocumentos.id, id),
-        eq(medicoDocumentos.userProfileId, userProfileId)
-      ));
-    return true;
-  } catch (error) {
-    console.error("[Documentos] Erro ao excluir documento:", error);
-    return false;
-  }
-}
-
-// Verificar se tem documentos obrigatórios
-export async function verificarDocumentosObrigatorios(userProfileId: number): Promise<{ completo: boolean; faltando: string[] }> {
-  const documentos = await getMedicoDocumentos(userProfileId);
-  const faltando: string[] = [];
-  
-  const temDiplomaGraduacao = documentos.some(d => d.tipo === "diploma_graduacao");
-  const temCarteiraConselho = documentos.some(d => d.tipo === "carteira_conselho");
-  
-  if (!temDiplomaGraduacao) faltando.push("Diploma de Graduação");
-  if (!temCarteiraConselho) faltando.push("Carteira do Conselho");
-  
-  return { completo: faltando.length === 0, faltando };
-}
-
-// ============================================
-// FOTO DE PERFIL
-// ============================================
-
-export async function saveUserProfilePhoto(userId: number, data: {
-  fotoUrl: string;
-  fotoKey: string;
-  fotoNome?: string;
-}) {
-  const db = await getDb();
-  if (!db) return false;
-  
-  try {
-    // Verificar se já existe foto
-    const [existing] = await db.select().from(userProfilePhotos).where(eq(userProfilePhotos.userId, userId)).limit(1);
-    
-    if (existing) {
-      await db.update(userProfilePhotos)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(userProfilePhotos.userId, userId));
-    } else {
-      await db.insert(userProfilePhotos).values({
-        userId,
-        ...data,
-      });
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("[ProfilePhoto] Erro ao salvar foto:", error);
-    return false;
-  }
-}
-
-export async function getUserProfilePhoto(userId: number) {
-  const db = await getDb();
-  if (!db) return null;
-  
-  try {
-    const [photo] = await db.select().from(userProfilePhotos).where(eq(userProfilePhotos.userId, userId)).limit(1);
-    return photo || null;
-  } catch (error) {
-    console.error("[ProfilePhoto] Erro ao buscar foto:", error);
-    return null;
-  }
-}
-
-export async function deleteUserProfilePhoto(userId: number) {
-  const db = await getDb();
-  if (!db) return false;
-  
-  try {
-    await db.delete(userProfilePhotos).where(eq(userProfilePhotos.userId, userId));
-    return true;
-  } catch (error) {
-    console.error("[ProfilePhoto] Erro ao excluir foto:", error);
-    return false;
-  }
+  const result = await db.select().from(pacienteAutorizacoes)
+    .where(and(
+      eq(pacienteAutorizacoes.pacienteId, pacienteId),
+      eq(pacienteAutorizacoes.status, "ativo")
+    ));
+  return result;
 }

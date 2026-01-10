@@ -14,6 +14,7 @@ import Prontuario from "./pages/Prontuario";
 import Agenda from "./pages/Agenda";
 import Configuracoes from "./pages/Configuracoes";
 import ExamesFavoritos from "./pages/ExamesFavoritos";
+import AdminTenants from "./pages/AdminTenants";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Router() {
@@ -67,6 +68,11 @@ function Router() {
       <Route path="/configuracoes/exames-favoritos">
         <ProtectedRoute funcionalidade="configuracoes">
           <ExamesFavoritos />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/tenants">
+        <ProtectedRoute funcionalidade="admin_tenants">
+          <AdminTenants />
         </ProtectedRoute>
       </Route>
       <Route path="/config-simples">

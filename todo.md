@@ -1172,164 +1172,38 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🧭 NAVEGAÇÃO - Módulos Futuros (10/01/2026)
+## 🏢 GORGEN v4.0 - ARQUITETURA MULTI-TENANT (10/01/2026)
 
-### Adicionar na Sidebar
-- [ ] Faturamento e Gestão (sanfona com "Em breve")
-- [ ] Leads e Marketing (sanfona com "Em breve")
-- [ ] Portal do Paciente (sanfona com "Em breve")
+### Fase 1: Schema Multi-tenant
+- [x] Criar tabela de tenants
+- [x] Criar tabela de autorizações de pacientes
+- [x] Adicionar tenant_id em todas as tabelas existentes
 
+### Fase 2: Middleware e Isolamento
+- [x] Implementar middleware de isolamento de tenant
+- [x] Adicionar Row-Level Security policies
+- [x] Atualizar todas as funções do db.ts para incluir tenantId
 
----
+### Fase 3: Sistema de Autorizações
+- [ ] Implementar compartilhamento controlado de pacientes entre médicos
+- [ ] Interface para autorizar/revogar acesso a pacientes
+- [ ] Logs de auditoria para autorizações
 
-## 🧭 NAVEGAÇÃO - Módulos Futuros (10/01/2026)
+### Fase 4: Migração de Dados
+- [x] Migrar dados existentes para Tenant 1 (Dr. André Gorgen)
+- [x] Atualizar registros com tenant_id = 1
 
-### Adicionar na Sidebar ✅ CONCLUÍDO
-- [x] Faturamento e Gestão (sanfona com "Em breve")
-- [x] Leads e Marketing (sanfona com "Em breve")
-- [x] Portal do Paciente (sanfona com "Em breve")
+### Fase 5: Painel de Administração
+- [x] Criar página de administração de tenants
+- [x] Implementar CRUD de tenants
+- [ ] Criar sistema de onboarding para novos clientes
 
-**Implementação:**
-- Novos itens adicionados no DashboardLayout.tsx
-- Badge "Em breve" em cor âmbar
-- Toast informativo ao clicar
-- Permissões configuradas por perfil:
-  - Admin Master: vê todos os 3 módulos
-  - Médico: vê apenas Leads e Marketing
-  - Secretária: vê apenas Leads e Marketing
-  - Auditor: vê apenas Leads e Marketing
-  - Paciente: vê apenas Portal do Paciente
+### Fase 6: Auditoria LGPD
+- [x] Implementar logs de auditoria completos
+- [x] Criptografia de dados sensíveis
+- [x] Direito ao esquecimento (soft delete + anonimização)
 
-
----
-
-## 🚀 GORGEN v3.0 - Melhorias de Navegação (10/01/2026)
-
-### Atualizações
-- [x] Renomear versão para Gorgen v3.0
-- [x] Adicionar botão discreto para recolher/expandir a barra de navegação
-
-
-### Melhorias Estéticas v3.0
-- [x] Trocar "Navigation" por "Menu" no título da sidebar
-- [x] Mover botão de recolhimento para ao lado do título (seta discreta à direita)
-- [x] Remover botão "Recolher menu" do rodapé
-
-
----
-
-## 🔧 GORGEN v3.0 - Reorganização das Configurações (10/01/2026)
-
-### Reorganizar Abas de Configurações
-- [ ] Renomear "Perfil" para "Cadastro"
-- [ ] Criar aba "Profissional" (após Cadastro)
-- [ ] Renomear "Clínica" para "Locais de Atendimento"
-- [ ] Manter aba "Secretária"
-- [ ] Manter aba "Exames Favoritos"
-- [ ] Criar aba "Procedimentos Favoritos"
-- [ ] Renomear "Notificações" para "Mensagens"
-- [ ] Manter aba "Assinaturas"
-
-### Formulário de Cadastro de Médicos (5 seções)
-- [ ] Seção 1: PESSOAL - Nome, nome social, sexo, data nascimento, nacionalidade, UF nascimento, cidade nascimento, DDD, telefones, nome da mãe, nome do pai, estado civil, nome do cônjuge
-- [ ] Seção 2: ENDEREÇO - Logradouro, endereço, número, complemento, cidade, bairro, UF, CEP
-- [ ] Seção 3: DOCUMENTAÇÃO - RG, UF RG, órgão emissor, data emissão, RG digitalizado, PIS, CNS, CPF, CPF digitalizado, informações bancárias, carteira de vacinação
-- [ ] Seção 4: PROFISSIONAL - Conselho, nº registro, UF, carteira do conselho digitalizada, certidão RQE, código validação CREMERS, declaração conflito de interesses, formações (curso, instituição, conclusão, certificado), especializações (especialização, instituição, título especialista, registro conselho, certificado)
-- [ ] Seção 5: PERFIL - Vínculo com instituição, local de credenciamento, carta de recomendação, histórico profissional, pós-graduação stricto sensu, currículo Lattes
-
-
----
-
-## 🔧 GORGEN v3.0 - Reorganização de Configurações (10/01/2026)
-
-### Abas de Configurações
-- [x] Renomear "Perfil" para "Cadastro"
-- [x] Adicionar aba "Profissional" (para médicos)
-- [x] Renomear "Clínica" para "Locais de Atendimento"
-- [x] Manter "Secretária"
-- [x] Manter "Exames Favoritos"
-- [x] Criar "Procedimentos Favoritos"
-- [x] Renomear "Notificações" para "Mensagens"
-- [x] Manter "Assinaturas"
-
-### Formulário de Cadastro de Médicos (5 seções)
-- [x] Seção 1: Pessoal (nome, data nascimento, telefones, filiação)
-- [x] Seção 2: Endereço (logradouro, cidade, UF, CEP)
-- [x] Seção 3: Documentação (RG, CPF, PIS, CNS, dados bancários)
-- [x] Seção 4: Profissional (conselho, formações, especializações)
-- [x] Seção 5: Perfil (links: Lattes, LinkedIn, ORCID, ResearchGate)
-
-### Banco de Dados
-- [x] Tabela medico_cadastro_pessoal
-- [x] Tabela medico_endereco
-- [x] Tabela medico_documentacao
-- [x] Tabela medico_dados_bancarios
-- [x] Tabela medico_conselho
-- [x] Tabela medico_formacoes
-- [x] Tabela medico_especializacoes
-- [x] Tabela medico_vinculos
-- [x] Tabela medico_links
-
-
----
-
-## 🎨 GORGEN v3.0 - Ajustes no Cadastro (10/01/2026)
-
-### Paleta de Cores
-- [x] Ajustar tom de azul das abas para ficar próximo dos botões do sistema
-- [x] Criar gradiente de tons mais claros para abas subsequentes
-
-### Obrigatoriedade de Campos
-- [x] Manter obrigatórios: nome, CPF, data nascimento
-- [x] Manter obrigatórios: todas as informações do conselho
-- [x] Manter obrigatórios: todos os campos da primeira formação
-- [x] Remover obrigatoriedade de todos os demais campos
-
-### Redes Sociais (antiga aba Perfil)
-- [x] Renomear "Perfil" para "Redes Sociais"
-- [x] Adicionar campo Instagram
-- [x] Adicionar campo TikTok
-- [x] Adicionar campo X (Twitter)
-- [x] Adicionar campo Facebook
-- [x] Deixar todos os campos opcionais
-
-### Limpeza
-- [x] Eliminar aba "Profissional" das Configurações (dados já estão em Cadastro)
-
-
----
-
-## 📍 GORGEN v3.0 - Busca de Endereço por CEP (10/01/2026)
-
-- [x] Implementar busca automática de endereço por CEP (API ViaCEP)
-- [x] Preencher automaticamente: logradouro, bairro, cidade, UF
-- [x] Adicionar feedback visual durante a busca (loading)
-
-
----
-
-## 🔐 GORGEN v3.0 - Sistema de Segurança e Cadastro Completo (10/01/2026)
-
-### Sistema de Senhas
-- [ ] Criar tabela de senhas no banco de dados
-- [ ] Implementar política de senha: mínimo 16 caracteres, maiúsculas, minúsculas, números e caracteres especiais
-- [ ] Criar tela de alteração de senha
-- [ ] Implementar serviço "Esqueci minha senha" com envio de e-mail
-
-### Banco de Dados
-- [x] Adicionar novos campos de cadastro (redes sociais, etc.)
-- [x] Remover campos de RG e correlatos
-
-### Máscaras de Formatação
-- [x] Máscara para CPF (000.000.000-00)
-- [x] Máscara para datas (dd/mm/aaaa ao invés de dd/mm/yyyy)
-
-### Upload de Documentos
-- [x] Implementar upload de PDFs para diplomas e certificados
-- [x] Tornar obrigatório: diploma de graduação e carteira do conselho
-- [x] Armazenar arquivos no S3
-
-### Foto de Perfil
-- [x] Implementar upload de foto de perfil
-- [x] Exibir foto na barra de navegação (sidebar)
-- [x] Fallback para iniciais do nome quando sem foto
+### Fase 7: Testes de Segurança
+- [x] Testes de isolamento entre tenants
+- [x] Testes de penetração
+- [x] Validação de conformidade LGPD

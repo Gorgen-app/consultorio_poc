@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO tenants (id, nome, slug, plano, status, max_usuarios, max_pacientes) VALUES (1, 'Consultório Dr. André Gorgen', 'gorgen', 'enterprise', 'ativo', 100, 10000) ON DUPLICATE KEY UPDATE nome = VALUES(nome)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute INSERT INTO tenants (id, nome, slug, plano, status, max_usuarios, max_pacientes) VALUES (1, 'Consultório Dr. André Gorgen', 'gorgen', 'enterprise', 'ativo', 100, 10000) ON DUPLICATE KEY UPDATE nome = VALUES(nome)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 65
+}

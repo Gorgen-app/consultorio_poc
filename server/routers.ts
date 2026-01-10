@@ -2259,402 +2259,68 @@ Retorne um JSON válido com a estrutura:
       }),
   }),
 
-  // ===== CADASTRO DE MÉDICOS =====
-  medicoCadastro: router({
-    // Buscar cadastro completo
-    getCompleto: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoCadastroCompleto(input.userProfileId);
-      }),
+  // Router de Tenants (Multi-tenant)
+  tenants: router({
+    list: protectedProcedure.query(async () => {
+      return await db.listTenants();
+    }),
 
-    // Pessoal
-    getPessoal: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoCadastroPessoal(input.userProfileId);
-      }),
-
-    savePessoal: protectedProcedure
-      .input(z.object({
-        userProfileId: z.number(),
-        nomeCompleto: z.string().optional(),
-        nomeSocial: z.string().nullable().optional(),
-        sexo: z.enum(['Masculino', 'Feminino', 'Outro']).nullable().optional(),
-        dataNascimento: z.string().nullable().optional(),
-        nacionalidade: z.string().nullable().optional(),
-        ufNascimento: z.string().nullable().optional(),
-        cidadeNascimento: z.string().nullable().optional(),
-        dddCelular: z.string().nullable().optional(),
-        celular: z.string().nullable().optional(),
-        dddResidencial: z.string().nullable().optional(),
-        telefoneResidencial: z.string().nullable().optional(),
-        dddComercial: z.string().nullable().optional(),
-        telefoneComercial: z.string().nullable().optional(),
-        nomeMae: z.string().nullable().optional(),
-        nomePai: z.string().nullable().optional(),
-        estadoCivil: z.string().nullable().optional(),
-        nomeConjuge: z.string().nullable().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.upsertMedicoCadastroPessoal(input);
-      }),
-
-    // Endereço
-    getEndereco: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoEndereco(input.userProfileId);
-      }),
-
-    saveEndereco: protectedProcedure
-      .input(z.object({
-        userProfileId: z.number(),
-        logradouro: z.string().nullable().optional(),
-        enderecoResidencial: z.string().nullable().optional(),
-        numero: z.string().nullable().optional(),
-        complemento: z.string().nullable().optional(),
-        bairro: z.string().nullable().optional(),
-        cidade: z.string().nullable().optional(),
-        uf: z.string().nullable().optional(),
-        cep: z.string().nullable().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.upsertMedicoEndereco(input);
-      }),
-
-    // Documentação
-    getDocumentacao: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoDocumentacao(input.userProfileId);
-      }),
-
-    saveDocumentacao: protectedProcedure
-      .input(z.object({
-        userProfileId: z.number(),
-        rg: z.string().nullable().optional(),
-        rgUf: z.string().nullable().optional(),
-        rgOrgaoEmissor: z.string().nullable().optional(),
-        rgDataEmissao: z.string().nullable().optional(),
-        rgDigitalizadoUrl: z.string().nullable().optional(),
-        numeroPis: z.string().nullable().optional(),
-        numeroCns: z.string().nullable().optional(),
-        cpf: z.string().nullable().optional(),
-        cpfDigitalizadoUrl: z.string().nullable().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.upsertMedicoDocumentacao(input);
-      }),
-
-    // Bancário
-    getBancario: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoBancario(input.userProfileId);
-      }),
-
-    addBancario: protectedProcedure
-      .input(z.object({
-        userProfileId: z.number(),
-        banco: z.string().nullable().optional(),
-        agencia: z.string().nullable().optional(),
-        contaCorrente: z.string().nullable().optional(),
-        tipoConta: z.enum(['Corrente', 'Poupança']).nullable().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.addMedicoBancario(input as any);
-      }),
-
-    // Conselho
-    getConselho: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoConselho(input.userProfileId);
-      }),
-
-    saveConselho: protectedProcedure
-      .input(z.object({
-        userProfileId: z.number(),
-        conselho: z.string().nullable().optional(),
-        numeroRegistro: z.string().nullable().optional(),
-        uf: z.string().nullable().optional(),
-        carteiraConselhoUrl: z.string().nullable().optional(),
-        certidaoRqeUrl: z.string().nullable().optional(),
-        codigoValidacao: z.string().nullable().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.upsertMedicoConselho(input);
-      }),
-
-    // Formações
-    getFormacoes: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoFormacoes(input.userProfileId);
-      }),
-
-    addFormacao: protectedProcedure
-      .input(z.object({
-        userProfileId: z.number(),
-        curso: z.string(),
-        instituicao: z.string(),
-        anoConclusao: z.number().nullable().optional(),
-        certificadoUrl: z.string().nullable().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.addMedicoFormacao(input as any);
-      }),
-
-    removeFormacao: protectedProcedure
+    getById: protectedProcedure
       .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getTenantById(input.id);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        nome: z.string().min(1),
+        slug: z.string().min(1),
+        cnpj: z.string().optional(),
+        email: z.string().email().optional(),
+        telefone: z.string().optional(),
+        endereco: z.string().optional(),
+        plano: z.enum(["free", "basic", "professional", "enterprise"]).optional(),
+        maxUsuarios: z.number().optional(),
+        maxPacientes: z.number().optional(),
+      }))
       .mutation(async ({ input }) => {
-        await db.removeMedicoFormacao(input.id);
+        // Verificar se slug já existe
+        const existing = await db.getTenantBySlug(input.slug);
+        if (existing) {
+          throw new Error("Slug já existe");
+        }
+        await db.createTenant(input);
         return { success: true };
       }),
 
-    // Especializações
-    getEspecializacoes: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoEspecializacoes(input.userProfileId);
-      }),
-
-    addEspecializacao: protectedProcedure
+    update: protectedProcedure
       .input(z.object({
-        userProfileId: z.number(),
-        especializacao: z.string(),
-        instituicao: z.string(),
-        tituloEspecialista: z.boolean().optional().default(false),
-        registroConselho: z.boolean().optional().default(false),
-        rqe: z.string().nullable().optional(),
-        certificadoUrl: z.string().nullable().optional(),
+        id: z.number(),
+        nome: z.string().optional(),
+        slug: z.string().optional(),
+        cnpj: z.string().optional(),
+        email: z.string().email().optional(),
+        telefone: z.string().optional(),
+        endereco: z.string().optional(),
+        plano: z.enum(["free", "basic", "professional", "enterprise"]).optional(),
+        status: z.enum(["ativo", "inativo", "suspenso"]).optional(),
+        maxUsuarios: z.number().optional(),
+        maxPacientes: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
-        return await db.addMedicoEspecializacao(input as any);
-      }),
-
-    removeEspecializacao: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        await db.removeMedicoEspecializacao(input.id);
+        const { id, ...data } = input;
+        await db.updateTenant(id, data);
         return { success: true };
       }),
 
-    // Links
-    getLinks: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoLinks(input.userProfileId);
-      }),
-
-    saveLinks: protectedProcedure
+    toggleStatus: protectedProcedure
       .input(z.object({
-        userProfileId: z.number(),
-        curriculoLattes: z.string().nullable().optional(),
-        linkedin: z.string().nullable().optional(),
-        orcid: z.string().nullable().optional(),
-        researchGate: z.string().nullable().optional(),
-        instagram: z.string().nullable().optional(),
-        facebook: z.string().nullable().optional(),
-        twitter: z.string().nullable().optional(),
-        tiktok: z.string().nullable().optional(),
+        id: z.number(),
+        status: z.enum(["ativo", "inativo", "suspenso"]),
       }))
       .mutation(async ({ input }) => {
-        return await db.upsertMedicoLinks(input);
-      }),
-  }),
-
-  // ============================================
-  // GERENCIAMENTO DE SENHAS
-  // ============================================
-  password: router({
-    // Verificar se usuário tem senha cadastrada
-    hasPassword: protectedProcedure
-      .query(async ({ ctx }) => {
-        return await db.hasUserPassword(ctx.user.id);
-      }),
-
-    // Validar política de senha (sem salvar)
-    validatePolicy: publicProcedure
-      .input(z.object({ password: z.string() }))
-      .query(({ input }) => {
-        return db.validatePasswordPolicy(input.password);
-      }),
-
-    // Criar ou alterar senha
-    setPassword: protectedProcedure
-      .input(z.object({
-        currentPassword: z.string().optional(), // Obrigatório se já tiver senha
-        newPassword: z.string(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        // Se já tem senha, verificar a senha atual
-        const hasPassword = await db.hasUserPassword(ctx.user.id);
-        if (hasPassword) {
-          if (!input.currentPassword) {
-            return { success: false, error: "Senha atual é obrigatória" };
-          }
-          const isValid = await db.verifyUserPassword(ctx.user.id, input.currentPassword);
-          if (!isValid) {
-            return { success: false, error: "Senha atual incorreta" };
-          }
-        }
-
-        return await db.setUserPassword(ctx.user.id, input.newPassword);
-      }),
-
-    // Verificar senha (para operações sensíveis)
-    verify: protectedProcedure
-      .input(z.object({ password: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.verifyUserPassword(ctx.user.id, input.password);
-      }),
-
-    // Solicitar recuperação de senha
-    requestReset: publicProcedure
-      .input(z.object({ email: z.string().email() }))
-      .mutation(async ({ input }) => {
-        // Buscar usuário pelo email
-        const user = await db.getUserByEmail(input.email);
-        if (!user) {
-          // Não revelar se o email existe ou não
-          return { success: true, message: "Se o email estiver cadastrado, você receberá um link de recuperação." };
-        }
-
-        const token = await db.createPasswordResetToken(user.id);
-        if (!token) {
-          return { success: false, error: "Erro ao gerar token de recuperação" };
-        }
-
-        // TODO: Enviar email com o link de recuperação
-        // Por enquanto, apenas retorna sucesso
-        console.log(`[Password Reset] Token gerado para ${input.email}: ${token}`);
-
-        return { success: true, message: "Se o email estiver cadastrado, você receberá um link de recuperação." };
-      }),
-
-    // Redefinir senha com token
-    resetWithToken: publicProcedure
-      .input(z.object({
-        token: z.string(),
-        newPassword: z.string(),
-      }))
-      .mutation(async ({ input }) => {
-        const result = await db.usePasswordResetToken(input.token);
-        if (!result.valid || !result.userId) {
-          return { success: false, error: "Token inválido ou expirado" };
-        }
-
-        return await db.setUserPassword(result.userId, input.newPassword);
-      }),
-  }),
-
-  // ============================================
-  // DOCUMENTOS DO MÉDICO
-  // ============================================
-  documentos: router({
-    // Listar documentos do médico
-    list: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getMedicoDocumentos(input.userProfileId);
-      }),
-
-    // Salvar documento
-    save: protectedProcedure
-      .input(z.object({
-        userProfileId: z.number(),
-        tipo: z.enum(["diploma_graduacao", "carteira_conselho", "certificado_especializacao", "certificado_residencia", "certificado_mestrado", "certificado_doutorado", "certificado_curso", "outro"]),
-        titulo: z.string(),
-        descricao: z.string().optional(),
-        arquivoUrl: z.string(),
-        arquivoKey: z.string(),
-        arquivoNome: z.string(),
-        arquivoTamanho: z.number().optional(),
-        formacaoId: z.number().optional(),
-        especializacaoId: z.number().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const id = await db.saveMedicoDocumento(input);
-        return { success: !!id, id };
-      }),
-
-    // Excluir documento
-    delete: protectedProcedure
-      .input(z.object({ id: z.number(), userProfileId: z.number() }))
-      .mutation(async ({ input }) => {
-        return await db.deleteMedicoDocumento(input.id, input.userProfileId);
-      }),
-
-    // Verificar documentos obrigatórios
-    verificarObrigatorios: protectedProcedure
-      .input(z.object({ userProfileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.verificarDocumentosObrigatorios(input.userProfileId);
-      }),
-  }),
-
-  // ============================================
-  // FOTO DE PERFIL
-  // ============================================
-  profilePhoto: router({
-    // Obter foto de perfil
-    get: protectedProcedure
-      .query(async ({ ctx }) => {
-        return await db.getUserProfilePhoto(ctx.user.id);
-      }),
-
-    // Salvar foto de perfil
-    save: protectedProcedure
-      .input(z.object({
-        fotoUrl: z.string(),
-        fotoKey: z.string(),
-        fotoNome: z.string().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.saveUserProfilePhoto(ctx.user.id, input);
-      }),
-
-    // Excluir foto de perfil
-    delete: protectedProcedure
-      .mutation(async ({ ctx }) => {
-        return await db.deleteUserProfilePhoto(ctx.user.id);
-      }),
-  }),
-
-  // ============================================
-  // UPLOAD DE ARQUIVOS
-  // ============================================
-  upload: router({
-    // Upload de arquivo genérico
-    file: protectedProcedure
-      .input(z.object({
-        fileName: z.string(),
-        fileData: z.string(), // Base64
-        contentType: z.string(),
-        folder: z.string().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const { storagePut } = await import("./storage");
-        
-        // Gerar nome único para evitar enumeração
-        const randomSuffix = Math.random().toString(36).substring(2, 10);
-        const folder = input.folder || "uploads";
-        const fileKey = `${folder}/${ctx.user.id}-${randomSuffix}-${input.fileName}`;
-        
-        // Converter base64 para buffer
-        const buffer = Buffer.from(input.fileData, "base64");
-        
-        const result = await storagePut(fileKey, buffer, input.contentType);
-        
-        return {
-          success: true,
-          url: result.url,
-          key: result.key,
-          fileName: input.fileName,
-          size: buffer.length,
-        };
+        await db.toggleTenantStatus(input.id, input.status);
+        return { success: true };
       }),
   }),
 });

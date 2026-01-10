@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, ChevronLeft, Search, Receipt, Megaphone, UserCircle, Clock } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, Search } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -86,13 +86,6 @@ const menuWithSubitems: {
       { icon: Search, label: "Buscar Atendimento", path: "/atendimentos?buscar=true", funcionalidade: "atendimentos" },
     ],
   },
-];
-
-// Menu items para módulos futuros (Em breve)
-const futureMenuItems: { icon: typeof Receipt; label: string; funcionalidade: Funcionalidade }[] = [
-  { icon: Receipt, label: "Faturamento e Gestão", funcionalidade: "faturamento" },
-  { icon: Megaphone, label: "Leads e Marketing", funcionalidade: "leads" },
-  { icon: UserCircle, label: "Portal do Paciente", funcionalidade: "portal_paciente" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -187,10 +180,6 @@ function DashboardLayoutContent({
   const { data: availablePerfis } = trpc.perfil.getAvailablePerfis.useQuery(undefined, {
     enabled: !!user,
   });
-  // Query de foto de perfil
-  const { data: profilePhoto } = trpc.profilePhoto.get.useQuery(undefined, {
-    enabled: !!user,
-  });
   const setPerfilAtivo = trpc.perfil.setPerfilAtivo.useMutation({
     onSuccess: () => {
       toast.success("Perfil alterado com sucesso!");
@@ -264,31 +253,21 @@ function DashboardLayoutContent({
           disableTransition={isResizing}
         >
           <SidebarHeader className="h-16 justify-center">
-            <div className="flex items-center justify-between px-2 transition-all w-full">
+            <div className="flex items-center gap-3 px-2 transition-all w-full">
+              <button
+                onClick={toggleSidebar}
+                className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                aria-label="Toggle navigation"
+              >
+                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+              </button>
               {!isCollapsed ? (
-                <>
+                <div className="flex items-center gap-2 min-w-0">
                   <span className="font-semibold tracking-tight truncate">
-                    Menu
+                    Navigation
                   </span>
-                  <button
-                    onClick={toggleSidebar}
-                    className="h-6 w-6 flex items-center justify-center hover:bg-accent rounded transition-colors focus:outline-none text-muted-foreground hover:text-foreground"
-                    aria-label="Recolher menu"
-                    title="Recolher menu"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={toggleSidebar}
-                  className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none mx-auto text-muted-foreground hover:text-foreground"
-                  aria-label="Expandir menu"
-                  title="Expandir menu"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              )}
+                </div>
+              ) : null}
             </div>
           </SidebarHeader>
 
@@ -387,29 +366,6 @@ function DashboardLayoutContent({
                     </Collapsible>
                   );
                 })}
-              {/* Módulos futuros - Em breve */}
-              {futureMenuItems
-                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
-                .map(item => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton
-                      onClick={() => toast.info(`${item.label} - Em breve!`, {
-                        description: "Este módulo está em desenvolvimento e estará disponível em breve.",
-                        icon: <Clock className="h-4 w-4" />,
-                      })}
-                      tooltip={`${item.label} (Em breve)`}
-                      className="h-10 transition-all font-normal opacity-60 hover:opacity-80"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                      {!isCollapsed && (
-                        <span className="ml-auto text-xs bg-amber-500/20 text-amber-600 px-1.5 py-0.5 rounded-full">
-                          Em breve
-                        </span>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
             </SidebarMenu>
           </SidebarContent>
 
@@ -433,8 +389,7 @@ function DashboardLayoutContent({
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarImage src={profilePhoto?.fotoUrl || undefined} alt={user?.name || "Foto de perfil"} />
-                    <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
+                    <AvatarFallback className="text-xs font-medium">
                       {user?.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
