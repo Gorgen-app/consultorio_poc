@@ -1214,3 +1214,58 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Trocar "Navigation" por "Menu" no título da sidebar
 - [x] Mover botão de recolhimento para ao lado do título (seta discreta à direita)
 - [x] Remover botão "Recolher menu" do rodapé
+
+
+---
+
+## 🔧 GORGEN v3.0 - Reorganização das Configurações (10/01/2026)
+
+### Reorganizar Abas de Configurações
+- [ ] Renomear "Perfil" para "Cadastro"
+- [ ] Criar aba "Profissional" (após Cadastro)
+- [ ] Renomear "Clínica" para "Locais de Atendimento"
+- [ ] Manter aba "Secretária"
+- [ ] Manter aba "Exames Favoritos"
+- [ ] Criar aba "Procedimentos Favoritos"
+- [ ] Renomear "Notificações" para "Mensagens"
+- [ ] Manter aba "Assinaturas"
+
+### Formulário de Cadastro de Médicos (5 seções)
+- [ ] Seção 1: PESSOAL - Nome, nome social, sexo, data nascimento, nacionalidade, UF nascimento, cidade nascimento, DDD, telefones, nome da mãe, nome do pai, estado civil, nome do cônjuge
+- [ ] Seção 2: ENDEREÇO - Logradouro, endereço, número, complemento, cidade, bairro, UF, CEP
+- [ ] Seção 3: DOCUMENTAÇÃO - RG, UF RG, órgão emissor, data emissão, RG digitalizado, PIS, CNS, CPF, CPF digitalizado, informações bancárias, carteira de vacinação
+- [ ] Seção 4: PROFISSIONAL - Conselho, nº registro, UF, carteira do conselho digitalizada, certidão RQE, código validação CREMERS, declaração conflito de interesses, formações (curso, instituição, conclusão, certificado), especializações (especialização, instituição, título especialista, registro conselho, certificado)
+- [ ] Seção 5: PERFIL - Vínculo com instituição, local de credenciamento, carta de recomendação, histórico profissional, pós-graduação stricto sensu, currículo Lattes
+
+
+---
+
+## 🔧 GORGEN v3.0 - Reorganização de Configurações (10/01/2026)
+
+### Abas de Configurações
+- [x] Renomear "Perfil" para "Cadastro"
+- [x] Adicionar aba "Profissional" (para médicos)
+- [x] Renomear "Clínica" para "Locais de Atendimento"
+- [x] Manter "Secretária"
+- [x] Manter "Exames Favoritos"
+- [x] Criar "Procedimentos Favoritos"
+- [x] Renomear "Notificações" para "Mensagens"
+- [x] Manter "Assinaturas"
+
+### Formulário de Cadastro de Médicos (5 seções)
+- [x] Seção 1: Pessoal (nome, data nascimento, telefones, filiação)
+- [x] Seção 2: Endereço (logradouro, cidade, UF, CEP)
+- [x] Seção 3: Documentação (RG, CPF, PIS, CNS, dados bancários)
+- [x] Seção 4: Profissional (conselho, formações, especializações)
+- [x] Seção 5: Perfil (links: Lattes, LinkedIn, ORCID, ResearchGate)
+
+### Banco de Dados
+- [x] Tabela medico_cadastro_pessoal
+- [x] Tabela medico_endereco
+- [x] Tabela medico_documentacao
+- [x] Tabela medico_dados_bancarios
+- [x] Tabela medico_conselho
+- [x] Tabela medico_formacoes
+- [x] Tabela medico_especializacoes
+- [x] Tabela medico_vinculos
+- [x] Tabela medico_links

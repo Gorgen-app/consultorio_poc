@@ -1167,3 +1167,357 @@ export const examesFavoritos = mysqlTable("exames_favoritos", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
+
+
+// ==========================================
+// CADASTRO COMPLETO DE MÉDICOS
+// Baseado no modelo de referência fornecido
+// ==========================================
+
+/**
+ * Cadastro Pessoal do Médico
+ * Seção 1: PESSOAL - Dados pessoais básicos
+ */
+export const medicoCadastroPessoal = mysqlTable("medico_cadastro_pessoal", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull().unique(),
+  
+  // Dados básicos
+  nomeCompleto: varchar("nome_completo", { length: 255 }).notNull(),
+  nomeSocial: varchar("nome_social", { length: 255 }), // Nome social/afetivo
+  sexo: mysqlEnum("sexo", ["Masculino", "Feminino", "Outro"]),
+  dataNascimento: date("data_nascimento"),
+  
+  // Naturalidade
+  nacionalidade: varchar("nacionalidade", { length: 100 }).default("Brasileira"),
+  ufNascimento: varchar("uf_nascimento", { length: 2 }),
+  cidadeNascimento: varchar("cidade_nascimento", { length: 100 }),
+  
+  // Telefones
+  dddCelular: varchar("ddd_celular", { length: 3 }),
+  celular: varchar("celular", { length: 15 }),
+  dddResidencial: varchar("ddd_residencial", { length: 3 }),
+  telefoneResidencial: varchar("telefone_residencial", { length: 15 }),
+  dddComercial: varchar("ddd_comercial", { length: 3 }),
+  telefoneComercial: varchar("telefone_comercial", { length: 15 }),
+  
+  // Filiação
+  nomeMae: varchar("nome_mae", { length: 255 }),
+  nomePai: varchar("nome_pai", { length: 255 }),
+  
+  // Estado civil
+  estadoCivil: mysqlEnum("estado_civil", ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável", "Separado(a)"]),
+  nomeConjuge: varchar("nome_conjuge", { length: 255 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoCadastroPessoal = typeof medicoCadastroPessoal.$inferSelect;
+export type InsertMedicoCadastroPessoal = typeof medicoCadastroPessoal.$inferInsert;
+
+/**
+ * Endereço do Médico
+ * Seção 2: ENDEREÇO - Endereço residencial
+ */
+export const medicoEndereco = mysqlTable("medico_endereco", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull().unique(),
+  
+  logradouro: mysqlEnum("logradouro", ["Rua", "Avenida", "Alameda", "Travessa", "Praça", "Estrada", "Rodovia", "Outro"]),
+  enderecoResidencial: varchar("endereco_residencial", { length: 255 }),
+  numero: varchar("numero", { length: 20 }),
+  complemento: varchar("complemento", { length: 100 }),
+  bairro: varchar("bairro", { length: 100 }),
+  cidade: varchar("cidade", { length: 100 }),
+  uf: varchar("uf", { length: 2 }),
+  cep: varchar("cep", { length: 10 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoEndereco = typeof medicoEndereco.$inferSelect;
+export type InsertMedicoEndereco = typeof medicoEndereco.$inferInsert;
+
+/**
+ * Documentação do Médico
+ * Seção 3: DOCUMENTAÇÃO - Documentos pessoais e bancários
+ */
+export const medicoDocumentacao = mysqlTable("medico_documentacao", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull().unique(),
+  
+  // RG
+  rg: varchar("rg", { length: 20 }),
+  rgUf: varchar("rg_uf", { length: 2 }),
+  rgOrgaoEmissor: varchar("rg_orgao_emissor", { length: 50 }),
+  rgDataEmissao: date("rg_data_emissao"),
+  rgDigitalizadoUrl: varchar("rg_digitalizado_url", { length: 500 }),
+  
+  // PIS e CNS
+  numeroPis: varchar("numero_pis", { length: 20 }),
+  numeroCns: varchar("numero_cns", { length: 20 }), // Cartão Nacional de Saúde
+  
+  // CPF
+  cpf: varchar("cpf", { length: 14 }),
+  cpfDigitalizadoUrl: varchar("cpf_digitalizado_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoDocumentacao = typeof medicoDocumentacao.$inferSelect;
+export type InsertMedicoDocumentacao = typeof medicoDocumentacao.$inferInsert;
+
+/**
+ * Informações Bancárias do Médico
+ */
+export const medicoBancario = mysqlTable("medico_bancario", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  banco: varchar("banco", { length: 100 }),
+  agencia: varchar("agencia", { length: 20 }),
+  contaCorrente: varchar("conta_corrente", { length: 30 }),
+  tipoConta: mysqlEnum("tipo_conta", ["Corrente", "Poupança"]).default("Corrente"),
+  
+  // Soft delete para histórico
+  ativo: boolean("ativo").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoBancario = typeof medicoBancario.$inferSelect;
+export type InsertMedicoBancario = typeof medicoBancario.$inferInsert;
+
+/**
+ * Vacinas do Médico
+ */
+export const medicoVacinas = mysqlTable("medico_vacinas", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  vacina: varchar("vacina", { length: 100 }).notNull(),
+  dataAplicacao: date("data_aplicacao"),
+  dose: varchar("dose", { length: 50 }), // 1ª dose, 2ª dose, Reforço
+  lote: varchar("lote", { length: 50 }),
+  fabricante: varchar("fabricante", { length: 100 }),
+  comprovanteUrl: varchar("comprovante_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoVacina = typeof medicoVacinas.$inferSelect;
+export type InsertMedicoVacina = typeof medicoVacinas.$inferInsert;
+
+/**
+ * Informações do Conselho Profissional
+ * Seção 4: PROFISSIONAL - Informações do conselho
+ */
+export const medicoConselho = mysqlTable("medico_conselho", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull().unique(),
+  
+  conselho: varchar("conselho", { length: 20 }).default("CRM"), // CRM, CRO, etc.
+  numeroRegistro: varchar("numero_registro", { length: 20 }),
+  uf: varchar("uf", { length: 2 }),
+  carteiraConselhoUrl: varchar("carteira_conselho_url", { length: 500 }),
+  
+  // Certidão de regularidade com RQE
+  certidaoRqeUrl: varchar("certidao_rqe_url", { length: 500 }),
+  
+  // Código de validação CREMERS (ou equivalente)
+  codigoValidacao: varchar("codigo_validacao", { length: 50 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoConselho = typeof medicoConselho.$inferSelect;
+export type InsertMedicoConselho = typeof medicoConselho.$inferInsert;
+
+/**
+ * Declaração de Conflito de Interesses
+ */
+export const medicoConflitoInteresses = mysqlTable("medico_conflito_interesses", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  anoReferencia: int("ano_referencia").notNull(),
+  dataPreeenchimento: timestamp("data_preenchimento").notNull(),
+  declaracaoUrl: varchar("declaracao_url", { length: 500 }),
+  
+  // Campos da declaração
+  temConflito: boolean("tem_conflito").default(false),
+  descricaoConflito: text("descricao_conflito"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoConflitoInteresses = typeof medicoConflitoInteresses.$inferSelect;
+export type InsertMedicoConflitoInteresses = typeof medicoConflitoInteresses.$inferInsert;
+
+/**
+ * Formações Acadêmicas (Graduação)
+ */
+export const medicoFormacoes = mysqlTable("medico_formacoes", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  curso: varchar("curso", { length: 100 }).notNull(), // Ex: MEDICINA
+  instituicao: varchar("instituicao", { length: 255 }).notNull(),
+  anoConclusao: int("ano_conclusao"),
+  certificadoUrl: varchar("certificado_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoFormacao = typeof medicoFormacoes.$inferSelect;
+export type InsertMedicoFormacao = typeof medicoFormacoes.$inferInsert;
+
+/**
+ * Especializações e Residências
+ */
+export const medicoEspecializacoes = mysqlTable("medico_especializacoes", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  especializacao: varchar("especializacao", { length: 255 }).notNull(),
+  instituicao: varchar("instituicao", { length: 255 }).notNull(),
+  tituloEspecialista: boolean("titulo_especialista").default(false), // Título de especialista (Sim/Não)
+  registroConselho: boolean("registro_conselho").default(false), // Registro no conselho (Sim/Não)
+  rqe: varchar("rqe", { length: 20 }), // Registro de Qualificação de Especialista
+  certificadoUrl: varchar("certificado_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoEspecializacao = typeof medicoEspecializacoes.$inferSelect;
+export type InsertMedicoEspecializacao = typeof medicoEspecializacoes.$inferInsert;
+
+/**
+ * Vínculos Institucionais
+ * Seção 5: PERFIL - Vínculo com a Instituição
+ */
+export const medicoVinculos = mysqlTable("medico_vinculos", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  tipoVinculo: varchar("tipo_vinculo", { length: 100 }).notNull(), // Autônomo, CLT, PJ, etc.
+  instituicao: varchar("instituicao", { length: 255 }),
+  cargo: varchar("cargo", { length: 100 }),
+  dataInicio: date("data_inicio"),
+  dataFim: date("data_fim"),
+  ativo: boolean("ativo").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoVinculo = typeof medicoVinculos.$inferSelect;
+export type InsertMedicoVinculo = typeof medicoVinculos.$inferInsert;
+
+/**
+ * Locais de Credenciamento
+ */
+export const medicoCredenciamento = mysqlTable("medico_credenciamento", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  localCredenciamento: varchar("local_credenciamento", { length: 255 }).notNull(),
+  selecionado: boolean("selecionado").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoCredenciamento = typeof medicoCredenciamento.$inferSelect;
+export type InsertMedicoCredenciamento = typeof medicoCredenciamento.$inferInsert;
+
+/**
+ * Cartas de Recomendação
+ */
+export const medicoRecomendacoes = mysqlTable("medico_recomendacoes", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  titulo: varchar("titulo", { length: 255 }),
+  recomendador: varchar("recomendador", { length: 255 }),
+  instituicao: varchar("instituicao", { length: 255 }),
+  dataEmissao: date("data_emissao"),
+  cartaUrl: varchar("carta_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoRecomendacao = typeof medicoRecomendacoes.$inferSelect;
+export type InsertMedicoRecomendacao = typeof medicoRecomendacoes.$inferInsert;
+
+/**
+ * Histórico Profissional
+ */
+export const medicoHistoricoProfissional = mysqlTable("medico_historico_profissional", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  instituicao: varchar("instituicao", { length: 255 }).notNull(),
+  cargo: varchar("cargo", { length: 100 }),
+  departamento: varchar("departamento", { length: 100 }),
+  dataInicio: date("data_inicio"),
+  dataFim: date("data_fim"),
+  descricaoAtividades: text("descricao_atividades"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoHistoricoProfissional = typeof medicoHistoricoProfissional.$inferSelect;
+export type InsertMedicoHistoricoProfissional = typeof medicoHistoricoProfissional.$inferInsert;
+
+/**
+ * Pós-Graduação Stricto Sensu (Mestrado, Doutorado)
+ */
+export const medicoPosGraduacao = mysqlTable("medico_pos_graduacao", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull(),
+  
+  tipo: mysqlEnum("tipo", ["Mestrado", "Doutorado", "Pós-Doutorado"]).notNull(),
+  programa: varchar("programa", { length: 255 }).notNull(),
+  instituicao: varchar("instituicao", { length: 255 }).notNull(),
+  anoConclusao: int("ano_conclusao"),
+  tituloTese: varchar("titulo_tese", { length: 500 }),
+  orientador: varchar("orientador", { length: 255 }),
+  certificadoUrl: varchar("certificado_url", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoPosGraduacao = typeof medicoPosGraduacao.$inferSelect;
+export type InsertMedicoPosGraduacao = typeof medicoPosGraduacao.$inferInsert;
+
+/**
+ * Currículo Lattes e Links Profissionais
+ */
+export const medicoLinks = mysqlTable("medico_links", {
+  id: int("id").autoincrement().primaryKey(),
+  userProfileId: int("user_profile_id").notNull().unique(),
+  
+  curriculoLattes: varchar("curriculo_lattes", { length: 500 }),
+  linkedin: varchar("linkedin", { length: 500 }),
+  orcid: varchar("orcid", { length: 100 }),
+  researchGate: varchar("research_gate", { length: 500 }),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MedicoLinks = typeof medicoLinks.$inferSelect;
+export type InsertMedicoLinks = typeof medicoLinks.$inferInsert;

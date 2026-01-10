@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especialidadesMedicas";
+import CadastroMedicoForm from "@/components/CadastroMedicoForm";
 
 // Mapeamento de perfis para labels e ícones
 const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -250,6 +251,7 @@ export default function Configuracoes() {
       {/* Abas de configurações - usando botões manuais */}
       <div className="w-full">
         <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg mb-4">
+          {/* 1. Cadastro (antigo Perfil) */}
           <Button
             variant={activeTab === "perfil" ? "default" : "ghost"}
             size="sm"
@@ -257,48 +259,10 @@ export default function Configuracoes() {
             className="flex items-center gap-2"
           >
             <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Perfil</span>
+            <span className="hidden sm:inline">Cadastro</span>
           </Button>
           
-          {/* Aba de Vínculos para Secretária */}
-          {isSecretaria && currentPerfil === "secretaria" && (
-            <Button
-              variant={activeTab === "vinculos" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("vinculos")}
-              className="flex items-center gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              <span className="hidden sm:inline">Vínculos</span>
-            </Button>
-          )}
-
-          {/* Aba de Secretárias para Médico */}
-          {isMedico && currentPerfil === "medico" && (
-            <Button
-              variant={activeTab === "vinculos" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("vinculos")}
-              className="flex items-center gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              <span className="hidden sm:inline">Secretárias</span>
-            </Button>
-          )}
-          
-          {/* Abas específicas por perfil */}
-          {(currentPerfil === "admin_master" || currentPerfil === "medico") && (
-            <Button
-              variant={activeTab === "clinica" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("clinica")}
-              className="flex items-center gap-2"
-            >
-              <Building2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Clínica</span>
-            </Button>
-          )}
-          
+          {/* 2. Profissional - para médicos */}
           {currentPerfil === "medico" && (
             <Button
               variant={activeTab === "profissional" ? "default" : "ghost"}
@@ -311,28 +275,46 @@ export default function Configuracoes() {
             </Button>
           )}
           
-          <Button
-            variant={activeTab === "notificacoes" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveTab("notificacoes")}
-            className="flex items-center gap-2"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">Notificações</span>
-          </Button>
+          {/* 3. Locais de Atendimento (antigo Clínica) */}
+          {(currentPerfil === "admin_master" || currentPerfil === "medico") && (
+            <Button
+              variant={activeTab === "clinica" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("clinica")}
+              className="flex items-center gap-2"
+            >
+              <Building2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Locais de Atendimento</span>
+            </Button>
+          )}
           
-          {/* Aba de Assinatura - visível para todos */}
-          <Button
-            variant={activeTab === "assinatura" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveTab("assinatura")}
-            className="flex items-center gap-2"
-          >
-            <CreditCard className="h-4 w-4" />
-            <span className="hidden sm:inline">Assinatura</span>
-          </Button>
+          {/* 4. Secretária - Vínculos para Secretária */}
+          {isSecretaria && currentPerfil === "secretaria" && (
+            <Button
+              variant={activeTab === "vinculos" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("vinculos")}
+              className="flex items-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Secretária</span>
+            </Button>
+          )}
+
+          {/* 4. Secretária - para Médico ver suas secretárias */}
+          {isMedico && currentPerfil === "medico" && (
+            <Button
+              variant={activeTab === "vinculos" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("vinculos")}
+              className="flex items-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Secretária</span>
+            </Button>
+          )}
           
-          {/* Botão para Exames Favoritos */}
+          {/* 5. Exames Favoritos */}
           <Link href="/configuracoes/exames-favoritos">
             <Button
               variant="ghost"
@@ -343,92 +325,134 @@ export default function Configuracoes() {
               <span className="hidden sm:inline">Exames Favoritos</span>
             </Button>
           </Link>
+          
+          {/* 6. Procedimentos Favoritos */}
+          <Link href="/configuracoes/procedimentos-favoritos">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Stethoscope className="h-4 w-4" />
+              <span className="hidden sm:inline">Procedimentos Favoritos</span>
+            </Button>
+          </Link>
+          
+          {/* 7. Mensagens (antigo Notificações) */}
+          <Button
+            variant={activeTab === "notificacoes" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("notificacoes")}
+            className="flex items-center gap-2"
+          >
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">Mensagens</span>
+          </Button>
+          
+          {/* 8. Assinaturas */}
+          <Button
+            variant={activeTab === "assinatura" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("assinatura")}
+            className="flex items-center gap-2"
+          >
+            <CreditCard className="h-4 w-4" />
+            <span className="hidden sm:inline">Assinaturas</span>
+          </Button>
         </div>
 
         {/* Conteúdo das abas */}
         
-        {/* Tab: Perfil */}
+        {/* Tab: Cadastro */}
         {activeTab === "perfil" && (
           <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações Pessoais</CardTitle>
-                <CardDescription>
-                  Seus dados de identificação no sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nomeCompleto">Nome Completo</Label>
-                    <Input
-                      id="nomeCompleto"
-                      placeholder="Seu nome completo"
-                      value={formData.nomeCompleto}
-                      onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF</Label>
-                    <Input
-                      id="cpf"
-                      placeholder="000.000.000-00"
-                      value={formData.cpf}
-                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveProfile} disabled={updateProfile.isPending}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Salvar Alterações
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Para médicos: formulário completo de cadastro */}
+            {currentPerfil === "medico" && profile?.id ? (
+              <CadastroMedicoForm userProfileId={profile.id} />
+            ) : (
+              /* Para outros perfis: formulário básico */
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Informações Pessoais</CardTitle>
+                    <CardDescription>
+                      Seus dados de identificação no sistema
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nomeCompleto">Nome Completo</Label>
+                        <Input
+                          id="nomeCompleto"
+                          placeholder="Seu nome completo"
+                          value={formData.nomeCompleto}
+                          onChange={(e) => setFormData({ ...formData, nomeCompleto: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cpf">CPF</Label>
+                        <Input
+                          id="cpf"
+                          placeholder="000.000.000-00"
+                          value={formData.cpf}
+                          onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-mail</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button onClick={handleSaveProfile} disabled={updateProfile.isPending}>
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar Alterações
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  Segurança
-                </CardTitle>
-                <CardDescription>
-                  Configurações de acesso e autenticação
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Autenticação em duas etapas</p>
-                    <p className="text-sm text-muted-foreground">
-                      Adicione uma camada extra de segurança à sua conta
-                    </p>
-                  </div>
-                  <Badge variant="outline">Em breve</Badge>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Sessões ativas</p>
-                    <p className="text-sm text-muted-foreground">
-                      Gerencie os dispositivos conectados à sua conta
-                    </p>
-                  </div>
-                  <Badge variant="outline">Em breve</Badge>
-                </div>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Lock className="h-5 w-5" />
+                      Segurança
+                    </CardTitle>
+                    <CardDescription>
+                      Configurações de acesso e autenticação
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Autenticação em duas etapas</p>
+                        <p className="text-sm text-muted-foreground">
+                          Adicione uma camada extra de segurança à sua conta
+                        </p>
+                      </div>
+                      <Badge variant="outline">Em breve</Badge>
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Sessões ativas</p>
+                        <p className="text-sm text-muted-foreground">
+                          Gerencie os dispositivos conectados à sua conta
+                        </p>
+                      </div>
+                      <Badge variant="outline">Em breve</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
         )}
 

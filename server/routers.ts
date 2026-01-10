@@ -2258,6 +2258,208 @@ Retorne um JSON válido com a estrutura:
         };
       }),
   }),
+
+  // ===== CADASTRO DE MÉDICOS =====
+  medicoCadastro: router({
+    // Buscar cadastro completo
+    getCompleto: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoCadastroCompleto(input.userProfileId);
+      }),
+
+    // Pessoal
+    getPessoal: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoCadastroPessoal(input.userProfileId);
+      }),
+
+    savePessoal: protectedProcedure
+      .input(z.object({
+        userProfileId: z.number(),
+        nomeCompleto: z.string().optional(),
+        nomeSocial: z.string().nullable().optional(),
+        sexo: z.enum(['Masculino', 'Feminino', 'Outro']).nullable().optional(),
+        dataNascimento: z.string().nullable().optional(),
+        nacionalidade: z.string().nullable().optional(),
+        ufNascimento: z.string().nullable().optional(),
+        cidadeNascimento: z.string().nullable().optional(),
+        dddCelular: z.string().nullable().optional(),
+        celular: z.string().nullable().optional(),
+        dddResidencial: z.string().nullable().optional(),
+        telefoneResidencial: z.string().nullable().optional(),
+        dddComercial: z.string().nullable().optional(),
+        telefoneComercial: z.string().nullable().optional(),
+        nomeMae: z.string().nullable().optional(),
+        nomePai: z.string().nullable().optional(),
+        estadoCivil: z.string().nullable().optional(),
+        nomeConjuge: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.upsertMedicoCadastroPessoal(input);
+      }),
+
+    // Endereço
+    getEndereco: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoEndereco(input.userProfileId);
+      }),
+
+    saveEndereco: protectedProcedure
+      .input(z.object({
+        userProfileId: z.number(),
+        logradouro: z.string().nullable().optional(),
+        enderecoResidencial: z.string().nullable().optional(),
+        numero: z.string().nullable().optional(),
+        complemento: z.string().nullable().optional(),
+        bairro: z.string().nullable().optional(),
+        cidade: z.string().nullable().optional(),
+        uf: z.string().nullable().optional(),
+        cep: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.upsertMedicoEndereco(input);
+      }),
+
+    // Documentação
+    getDocumentacao: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoDocumentacao(input.userProfileId);
+      }),
+
+    saveDocumentacao: protectedProcedure
+      .input(z.object({
+        userProfileId: z.number(),
+        rg: z.string().nullable().optional(),
+        rgUf: z.string().nullable().optional(),
+        rgOrgaoEmissor: z.string().nullable().optional(),
+        rgDataEmissao: z.string().nullable().optional(),
+        rgDigitalizadoUrl: z.string().nullable().optional(),
+        numeroPis: z.string().nullable().optional(),
+        numeroCns: z.string().nullable().optional(),
+        cpf: z.string().nullable().optional(),
+        cpfDigitalizadoUrl: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.upsertMedicoDocumentacao(input);
+      }),
+
+    // Bancário
+    getBancario: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoBancario(input.userProfileId);
+      }),
+
+    addBancario: protectedProcedure
+      .input(z.object({
+        userProfileId: z.number(),
+        banco: z.string().nullable().optional(),
+        agencia: z.string().nullable().optional(),
+        contaCorrente: z.string().nullable().optional(),
+        tipoConta: z.enum(['Corrente', 'Poupança']).nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.addMedicoBancario(input as any);
+      }),
+
+    // Conselho
+    getConselho: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoConselho(input.userProfileId);
+      }),
+
+    saveConselho: protectedProcedure
+      .input(z.object({
+        userProfileId: z.number(),
+        conselho: z.string().nullable().optional(),
+        numeroRegistro: z.string().nullable().optional(),
+        uf: z.string().nullable().optional(),
+        carteiraConselhoUrl: z.string().nullable().optional(),
+        certidaoRqeUrl: z.string().nullable().optional(),
+        codigoValidacao: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.upsertMedicoConselho(input);
+      }),
+
+    // Formações
+    getFormacoes: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoFormacoes(input.userProfileId);
+      }),
+
+    addFormacao: protectedProcedure
+      .input(z.object({
+        userProfileId: z.number(),
+        curso: z.string(),
+        instituicao: z.string(),
+        anoConclusao: z.number().nullable().optional(),
+        certificadoUrl: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.addMedicoFormacao(input as any);
+      }),
+
+    removeFormacao: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.removeMedicoFormacao(input.id);
+        return { success: true };
+      }),
+
+    // Especializações
+    getEspecializacoes: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoEspecializacoes(input.userProfileId);
+      }),
+
+    addEspecializacao: protectedProcedure
+      .input(z.object({
+        userProfileId: z.number(),
+        especializacao: z.string(),
+        instituicao: z.string(),
+        tituloEspecialista: z.boolean().optional().default(false),
+        registroConselho: z.boolean().optional().default(false),
+        rqe: z.string().nullable().optional(),
+        certificadoUrl: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.addMedicoEspecializacao(input as any);
+      }),
+
+    removeEspecializacao: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.removeMedicoEspecializacao(input.id);
+        return { success: true };
+      }),
+
+    // Links
+    getLinks: protectedProcedure
+      .input(z.object({ userProfileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMedicoLinks(input.userProfileId);
+      }),
+
+    saveLinks: protectedProcedure
+      .input(z.object({
+        userProfileId: z.number(),
+        curriculoLattes: z.string().nullable().optional(),
+        linkedin: z.string().nullable().optional(),
+        orcid: z.string().nullable().optional(),
+        researchGate: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.upsertMedicoLinks(input);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

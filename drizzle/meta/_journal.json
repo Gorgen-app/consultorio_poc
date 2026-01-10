@@ -64,6 +64,13 @@
       "when": 1767993845237,
       "tag": "0008_demonic_nehzno",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1768051218752,
+      "tag": "0009_real_wolfsbane",
+      "breakpoints": true
     }
   ]
 }

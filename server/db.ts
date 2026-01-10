@@ -2655,3 +2655,521 @@ export async function updateOrdemExamesFavoritos(userId: string, exames: { nomeE
       ));
   }
 }
+
+
+// ===== CADASTRO COMPLETO DE MÉDICOS =====
+
+// Interfaces para os tipos
+export interface MedicoCadastroPessoal {
+  id: number;
+  userProfileId: number;
+  nomeCompleto: string;
+  nomeSocial: string | null;
+  sexo: 'Masculino' | 'Feminino' | 'Outro' | null;
+  dataNascimento: string | null;
+  nacionalidade: string | null;
+  ufNascimento: string | null;
+  cidadeNascimento: string | null;
+  dddCelular: string | null;
+  celular: string | null;
+  dddResidencial: string | null;
+  telefoneResidencial: string | null;
+  dddComercial: string | null;
+  telefoneComercial: string | null;
+  nomeMae: string | null;
+  nomePai: string | null;
+  estadoCivil: string | null;
+  nomeConjuge: string | null;
+}
+
+export interface MedicoEndereco {
+  id: number;
+  userProfileId: number;
+  logradouro: string | null;
+  enderecoResidencial: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
+  cep: string | null;
+}
+
+export interface MedicoDocumentacao {
+  id: number;
+  userProfileId: number;
+  rg: string | null;
+  rgUf: string | null;
+  rgOrgaoEmissor: string | null;
+  rgDataEmissao: string | null;
+  rgDigitalizadoUrl: string | null;
+  numeroPis: string | null;
+  numeroCns: string | null;
+  cpf: string | null;
+  cpfDigitalizadoUrl: string | null;
+}
+
+export interface MedicoBancario {
+  id: number;
+  userProfileId: number;
+  banco: string | null;
+  agencia: string | null;
+  contaCorrente: string | null;
+  tipoConta: 'Corrente' | 'Poupança' | null;
+  ativo: boolean;
+}
+
+export interface MedicoConselho {
+  id: number;
+  userProfileId: number;
+  conselho: string | null;
+  numeroRegistro: string | null;
+  uf: string | null;
+  carteiraConselhoUrl: string | null;
+  certidaoRqeUrl: string | null;
+  codigoValidacao: string | null;
+}
+
+export interface MedicoFormacao {
+  id: number;
+  userProfileId: number;
+  curso: string;
+  instituicao: string;
+  anoConclusao: number | null;
+  certificadoUrl: string | null;
+}
+
+export interface MedicoEspecializacao {
+  id: number;
+  userProfileId: number;
+  especializacao: string;
+  instituicao: string;
+  tituloEspecialista: boolean;
+  registroConselho: boolean;
+  rqe: string | null;
+  certificadoUrl: string | null;
+}
+
+export interface MedicoLinks {
+  id: number;
+  userProfileId: number;
+  curriculoLattes: string | null;
+  linkedin: string | null;
+  orcid: string | null;
+  researchGate: string | null;
+}
+
+// Buscar cadastro pessoal
+export async function getMedicoCadastroPessoal(userProfileId: number): Promise<MedicoCadastroPessoal | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.execute(sql`SELECT * FROM medico_cadastro_pessoal WHERE user_profile_id = ${userProfileId} LIMIT 1`);
+  const rows = (result as any)[0] as any[];
+  if (!rows || rows.length === 0) return null;
+  
+  const row = rows[0];
+  return {
+    id: row.id,
+    userProfileId: row.user_profile_id,
+    nomeCompleto: row.nome_completo,
+    nomeSocial: row.nome_social,
+    sexo: row.sexo,
+    dataNascimento: row.data_nascimento,
+    nacionalidade: row.nacionalidade,
+    ufNascimento: row.uf_nascimento,
+    cidadeNascimento: row.cidade_nascimento,
+    dddCelular: row.ddd_celular,
+    celular: row.celular,
+    dddResidencial: row.ddd_residencial,
+    telefoneResidencial: row.telefone_residencial,
+    dddComercial: row.ddd_comercial,
+    telefoneComercial: row.telefone_comercial,
+    nomeMae: row.nome_mae,
+    nomePai: row.nome_pai,
+    estadoCivil: row.estado_civil,
+    nomeConjuge: row.nome_conjuge,
+  };
+}
+
+// Salvar/atualizar cadastro pessoal
+export async function upsertMedicoCadastroPessoal(data: Partial<MedicoCadastroPessoal> & { userProfileId: number }): Promise<MedicoCadastroPessoal | null> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getMedicoCadastroPessoal(data.userProfileId);
+  
+  if (existing) {
+    await db.execute(sql`
+      UPDATE medico_cadastro_pessoal SET
+        nome_completo = ${data.nomeCompleto || existing.nomeCompleto},
+        nome_social = ${data.nomeSocial ?? existing.nomeSocial},
+        sexo = ${data.sexo ?? existing.sexo},
+        data_nascimento = ${data.dataNascimento ?? existing.dataNascimento},
+        nacionalidade = ${data.nacionalidade ?? existing.nacionalidade},
+        uf_nascimento = ${data.ufNascimento ?? existing.ufNascimento},
+        cidade_nascimento = ${data.cidadeNascimento ?? existing.cidadeNascimento},
+        ddd_celular = ${data.dddCelular ?? existing.dddCelular},
+        celular = ${data.celular ?? existing.celular},
+        ddd_residencial = ${data.dddResidencial ?? existing.dddResidencial},
+        telefone_residencial = ${data.telefoneResidencial ?? existing.telefoneResidencial},
+        ddd_comercial = ${data.dddComercial ?? existing.dddComercial},
+        telefone_comercial = ${data.telefoneComercial ?? existing.telefoneComercial},
+        nome_mae = ${data.nomeMae ?? existing.nomeMae},
+        nome_pai = ${data.nomePai ?? existing.nomePai},
+        estado_civil = ${data.estadoCivil ?? existing.estadoCivil},
+        nome_conjuge = ${data.nomeConjuge ?? existing.nomeConjuge}
+      WHERE user_profile_id = ${data.userProfileId}
+    `);
+  } else {
+    await db.execute(sql`
+      INSERT INTO medico_cadastro_pessoal (user_profile_id, nome_completo, nome_social, sexo, data_nascimento, nacionalidade, uf_nascimento, cidade_nascimento, ddd_celular, celular, ddd_residencial, telefone_residencial, ddd_comercial, telefone_comercial, nome_mae, nome_pai, estado_civil, nome_conjuge)
+      VALUES (${data.userProfileId}, ${data.nomeCompleto || ''}, ${data.nomeSocial || null}, ${data.sexo || null}, ${data.dataNascimento || null}, ${data.nacionalidade || 'Brasileira'}, ${data.ufNascimento || null}, ${data.cidadeNascimento || null}, ${data.dddCelular || null}, ${data.celular || null}, ${data.dddResidencial || null}, ${data.telefoneResidencial || null}, ${data.dddComercial || null}, ${data.telefoneComercial || null}, ${data.nomeMae || null}, ${data.nomePai || null}, ${data.estadoCivil || null}, ${data.nomeConjuge || null})
+    `);
+  }
+  
+  return getMedicoCadastroPessoal(data.userProfileId);
+}
+
+// Buscar endereço
+export async function getMedicoEndereco(userProfileId: number): Promise<MedicoEndereco | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.execute(sql`SELECT * FROM medico_endereco WHERE user_profile_id = ${userProfileId} LIMIT 1`);
+  const rows = (result as any)[0] as any[];
+  if (!rows || rows.length === 0) return null;
+  
+  const row = rows[0];
+  return {
+    id: row.id,
+    userProfileId: row.user_profile_id,
+    logradouro: row.logradouro,
+    enderecoResidencial: row.endereco_residencial,
+    numero: row.numero,
+    complemento: row.complemento,
+    bairro: row.bairro,
+    cidade: row.cidade,
+    uf: row.uf,
+    cep: row.cep,
+  };
+}
+
+// Salvar/atualizar endereço
+export async function upsertMedicoEndereco(data: Partial<MedicoEndereco> & { userProfileId: number }): Promise<MedicoEndereco | null> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getMedicoEndereco(data.userProfileId);
+  
+  if (existing) {
+    await db.execute(sql`
+      UPDATE medico_endereco SET
+        logradouro = ${data.logradouro ?? existing.logradouro},
+        endereco_residencial = ${data.enderecoResidencial ?? existing.enderecoResidencial},
+        numero = ${data.numero ?? existing.numero},
+        complemento = ${data.complemento ?? existing.complemento},
+        bairro = ${data.bairro ?? existing.bairro},
+        cidade = ${data.cidade ?? existing.cidade},
+        uf = ${data.uf ?? existing.uf},
+        cep = ${data.cep ?? existing.cep}
+      WHERE user_profile_id = ${data.userProfileId}
+    `);
+  } else {
+    await db.execute(sql`
+      INSERT INTO medico_endereco (user_profile_id, logradouro, endereco_residencial, numero, complemento, bairro, cidade, uf, cep)
+      VALUES (${data.userProfileId}, ${data.logradouro || null}, ${data.enderecoResidencial || null}, ${data.numero || null}, ${data.complemento || null}, ${data.bairro || null}, ${data.cidade || null}, ${data.uf || null}, ${data.cep || null})
+    `);
+  }
+  
+  return getMedicoEndereco(data.userProfileId);
+}
+
+// Buscar documentação
+export async function getMedicoDocumentacao(userProfileId: number): Promise<MedicoDocumentacao | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.execute(sql`SELECT * FROM medico_documentacao WHERE user_profile_id = ${userProfileId} LIMIT 1`);
+  const rows = (result as any)[0] as any[];
+  if (!rows || rows.length === 0) return null;
+  
+  const row = rows[0];
+  return {
+    id: row.id,
+    userProfileId: row.user_profile_id,
+    rg: row.rg,
+    rgUf: row.rg_uf,
+    rgOrgaoEmissor: row.rg_orgao_emissor,
+    rgDataEmissao: row.rg_data_emissao,
+    rgDigitalizadoUrl: row.rg_digitalizado_url,
+    numeroPis: row.numero_pis,
+    numeroCns: row.numero_cns,
+    cpf: row.cpf,
+    cpfDigitalizadoUrl: row.cpf_digitalizado_url,
+  };
+}
+
+// Salvar/atualizar documentação
+export async function upsertMedicoDocumentacao(data: Partial<MedicoDocumentacao> & { userProfileId: number }): Promise<MedicoDocumentacao | null> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getMedicoDocumentacao(data.userProfileId);
+  
+  if (existing) {
+    await db.execute(sql`
+      UPDATE medico_documentacao SET
+        rg = ${data.rg ?? existing.rg},
+        rg_uf = ${data.rgUf ?? existing.rgUf},
+        rg_orgao_emissor = ${data.rgOrgaoEmissor ?? existing.rgOrgaoEmissor},
+        rg_data_emissao = ${data.rgDataEmissao ?? existing.rgDataEmissao},
+        rg_digitalizado_url = ${data.rgDigitalizadoUrl ?? existing.rgDigitalizadoUrl},
+        numero_pis = ${data.numeroPis ?? existing.numeroPis},
+        numero_cns = ${data.numeroCns ?? existing.numeroCns},
+        cpf = ${data.cpf ?? existing.cpf},
+        cpf_digitalizado_url = ${data.cpfDigitalizadoUrl ?? existing.cpfDigitalizadoUrl}
+      WHERE user_profile_id = ${data.userProfileId}
+    `);
+  } else {
+    await db.execute(sql`
+      INSERT INTO medico_documentacao (user_profile_id, rg, rg_uf, rg_orgao_emissor, rg_data_emissao, rg_digitalizado_url, numero_pis, numero_cns, cpf, cpf_digitalizado_url)
+      VALUES (${data.userProfileId}, ${data.rg || null}, ${data.rgUf || null}, ${data.rgOrgaoEmissor || null}, ${data.rgDataEmissao || null}, ${data.rgDigitalizadoUrl || null}, ${data.numeroPis || null}, ${data.numeroCns || null}, ${data.cpf || null}, ${data.cpfDigitalizadoUrl || null})
+    `);
+  }
+  
+  return getMedicoDocumentacao(data.userProfileId);
+}
+
+// Buscar informações bancárias
+export async function getMedicoBancario(userProfileId: number): Promise<MedicoBancario[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.execute(sql`SELECT * FROM medico_bancario WHERE user_profile_id = ${userProfileId} AND ativo = 1`);
+  const rows = (result as any)[0] as any[];
+  
+  return rows.map(row => ({
+    id: row.id,
+    userProfileId: row.user_profile_id,
+    banco: row.banco,
+    agencia: row.agencia,
+    contaCorrente: row.conta_corrente,
+    tipoConta: row.tipo_conta,
+    ativo: row.ativo,
+  }));
+}
+
+// Adicionar conta bancária
+export async function addMedicoBancario(data: Omit<MedicoBancario, 'id' | 'ativo'>): Promise<MedicoBancario> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.execute(sql`
+    INSERT INTO medico_bancario (user_profile_id, banco, agencia, conta_corrente, tipo_conta, ativo)
+    VALUES (${data.userProfileId}, ${data.banco}, ${data.agencia}, ${data.contaCorrente}, ${data.tipoConta || 'Corrente'}, 1)
+  `);
+  
+  return { ...data, id: (result[0] as any).insertId, ativo: true };
+}
+
+// Buscar conselho
+export async function getMedicoConselho(userProfileId: number): Promise<MedicoConselho | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.execute(sql`SELECT * FROM medico_conselho WHERE user_profile_id = ${userProfileId} LIMIT 1`);
+  const rows = (result as any)[0] as any[];
+  if (!rows || rows.length === 0) return null;
+  
+  const row = rows[0];
+  return {
+    id: row.id,
+    userProfileId: row.user_profile_id,
+    conselho: row.conselho,
+    numeroRegistro: row.numero_registro,
+    uf: row.uf,
+    carteiraConselhoUrl: row.carteira_conselho_url,
+    certidaoRqeUrl: row.certidao_rqe_url,
+    codigoValidacao: row.codigo_validacao,
+  };
+}
+
+// Salvar/atualizar conselho
+export async function upsertMedicoConselho(data: Partial<MedicoConselho> & { userProfileId: number }): Promise<MedicoConselho | null> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getMedicoConselho(data.userProfileId);
+  
+  if (existing) {
+    await db.execute(sql`
+      UPDATE medico_conselho SET
+        conselho = ${data.conselho ?? existing.conselho},
+        numero_registro = ${data.numeroRegistro ?? existing.numeroRegistro},
+        uf = ${data.uf ?? existing.uf},
+        carteira_conselho_url = ${data.carteiraConselhoUrl ?? existing.carteiraConselhoUrl},
+        certidao_rqe_url = ${data.certidaoRqeUrl ?? existing.certidaoRqeUrl},
+        codigo_validacao = ${data.codigoValidacao ?? existing.codigoValidacao}
+      WHERE user_profile_id = ${data.userProfileId}
+    `);
+  } else {
+    await db.execute(sql`
+      INSERT INTO medico_conselho (user_profile_id, conselho, numero_registro, uf, carteira_conselho_url, certidao_rqe_url, codigo_validacao)
+      VALUES (${data.userProfileId}, ${data.conselho || 'CRM'}, ${data.numeroRegistro || null}, ${data.uf || null}, ${data.carteiraConselhoUrl || null}, ${data.certidaoRqeUrl || null}, ${data.codigoValidacao || null})
+    `);
+  }
+  
+  return getMedicoConselho(data.userProfileId);
+}
+
+// Buscar formações
+export async function getMedicoFormacoes(userProfileId: number): Promise<MedicoFormacao[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.execute(sql`SELECT * FROM medico_formacoes WHERE user_profile_id = ${userProfileId}`);
+  const rows = (result as any)[0] as any[];
+  
+  return rows.map(row => ({
+    id: row.id,
+    userProfileId: row.user_profile_id,
+    curso: row.curso,
+    instituicao: row.instituicao,
+    anoConclusao: row.ano_conclusao,
+    certificadoUrl: row.certificado_url,
+  }));
+}
+
+// Adicionar formação
+export async function addMedicoFormacao(data: Omit<MedicoFormacao, 'id'>): Promise<MedicoFormacao> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.execute(sql`
+    INSERT INTO medico_formacoes (user_profile_id, curso, instituicao, ano_conclusao, certificado_url)
+    VALUES (${data.userProfileId}, ${data.curso}, ${data.instituicao}, ${data.anoConclusao || null}, ${data.certificadoUrl || null})
+  `);
+  
+  return { ...data, id: (result[0] as any).insertId };
+}
+
+// Remover formação
+export async function removeMedicoFormacao(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.execute(sql`DELETE FROM medico_formacoes WHERE id = ${id}`);
+}
+
+// Buscar especializações
+export async function getMedicoEspecializacoes(userProfileId: number): Promise<MedicoEspecializacao[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.execute(sql`SELECT * FROM medico_especializacoes WHERE user_profile_id = ${userProfileId}`);
+  const rows = (result as any)[0] as any[];
+  
+  return rows.map(row => ({
+    id: row.id,
+    userProfileId: row.user_profile_id,
+    especializacao: row.especializacao,
+    instituicao: row.instituicao,
+    tituloEspecialista: row.titulo_especialista,
+    registroConselho: row.registro_conselho,
+    rqe: row.rqe,
+    certificadoUrl: row.certificado_url,
+  }));
+}
+
+// Adicionar especialização
+export async function addMedicoEspecializacao(data: Omit<MedicoEspecializacao, 'id'>): Promise<MedicoEspecializacao> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.execute(sql`
+    INSERT INTO medico_especializacoes (user_profile_id, especializacao, instituicao, titulo_especialista, registro_conselho, rqe, certificado_url)
+    VALUES (${data.userProfileId}, ${data.especializacao}, ${data.instituicao}, ${data.tituloEspecialista ? 1 : 0}, ${data.registroConselho ? 1 : 0}, ${data.rqe || null}, ${data.certificadoUrl || null})
+  `);
+  
+  return { ...data, id: (result[0] as any).insertId };
+}
+
+// Remover especialização
+export async function removeMedicoEspecializacao(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.execute(sql`DELETE FROM medico_especializacoes WHERE id = ${id}`);
+}
+
+// Buscar links profissionais
+export async function getMedicoLinks(userProfileId: number): Promise<MedicoLinks | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.execute(sql`SELECT * FROM medico_links WHERE user_profile_id = ${userProfileId} LIMIT 1`);
+  const rows = (result as any)[0] as any[];
+  if (!rows || rows.length === 0) return null;
+  
+  const row = rows[0];
+  return {
+    id: row.id,
+    userProfileId: row.user_profile_id,
+    curriculoLattes: row.curriculo_lattes,
+    linkedin: row.linkedin,
+    orcid: row.orcid,
+    researchGate: row.research_gate,
+  };
+}
+
+// Salvar/atualizar links
+export async function upsertMedicoLinks(data: Partial<MedicoLinks> & { userProfileId: number }): Promise<MedicoLinks | null> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getMedicoLinks(data.userProfileId);
+  
+  if (existing) {
+    await db.execute(sql`
+      UPDATE medico_links SET
+        curriculo_lattes = ${data.curriculoLattes ?? existing.curriculoLattes},
+        linkedin = ${data.linkedin ?? existing.linkedin},
+        orcid = ${data.orcid ?? existing.orcid},
+        research_gate = ${data.researchGate ?? existing.researchGate}
+      WHERE user_profile_id = ${data.userProfileId}
+    `);
+  } else {
+    await db.execute(sql`
+      INSERT INTO medico_links (user_profile_id, curriculo_lattes, linkedin, orcid, research_gate)
+      VALUES (${data.userProfileId}, ${data.curriculoLattes || null}, ${data.linkedin || null}, ${data.orcid || null}, ${data.researchGate || null})
+    `);
+  }
+  
+  return getMedicoLinks(data.userProfileId);
+}
+
+// Buscar cadastro completo do médico
+export async function getMedicoCadastroCompleto(userProfileId: number) {
+  const [pessoal, endereco, documentacao, bancario, conselho, formacoes, especializacoes, links] = await Promise.all([
+    getMedicoCadastroPessoal(userProfileId),
+    getMedicoEndereco(userProfileId),
+    getMedicoDocumentacao(userProfileId),
+    getMedicoBancario(userProfileId),
+    getMedicoConselho(userProfileId),
+    getMedicoFormacoes(userProfileId),
+    getMedicoEspecializacoes(userProfileId),
+    getMedicoLinks(userProfileId),
+  ]);
+  
+  return {
+    pessoal,
+    endereco,
+    documentacao,
+    bancario,
+    conselho,
+    formacoes,
+    especializacoes,
+    links,
+  };
+}
