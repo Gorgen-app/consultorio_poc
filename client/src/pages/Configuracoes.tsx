@@ -262,20 +262,7 @@ export default function Configuracoes() {
             <span className="hidden sm:inline">Cadastro</span>
           </Button>
           
-          {/* 2. Profissional - para médicos */}
-          {currentPerfil === "medico" && (
-            <Button
-              variant={activeTab === "profissional" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveTab("profissional")}
-              className="flex items-center gap-2"
-            >
-              <Stethoscope className="h-4 w-4" />
-              <span className="hidden sm:inline">Profissional</span>
-            </Button>
-          )}
-          
-          {/* 3. Locais de Atendimento (antigo Clínica) */}
+          {/* 2. Locais de Atendimento (antigo Clínica) */}
           {(currentPerfil === "admin_master" || currentPerfil === "medico") && (
             <Button
               variant={activeTab === "clinica" ? "default" : "ghost"}
@@ -676,110 +663,12 @@ export default function Configuracoes() {
           </div>
         )}
 
-        {/* Tab: Profissional (Médico) */}
-        {activeTab === "profissional" && (
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Registro Profissional</CardTitle>
-                <CardDescription>
-                  Dados do seu registro no Conselho Regional de Medicina
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="crm">CRM</Label>
-                    <Input
-                      id="crm"
-                      placeholder="CRM/UF 000000"
-                      value={formData.crm}
-                      onChange={(e) => setFormData({ ...formData, crm: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Especialidades e Área de Atuação</CardTitle>
-                <CardDescription>
-                  Especialidades reconhecidas pelo CFM (Resolução nº 2.330/2023)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Especialidade Principal</Label>
-                  <Select
-                    value={especialidadeForm.especialidadePrincipal}
-                    onValueChange={(value) => setEspecialidadeForm({ ...especialidadeForm, especialidadePrincipal: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione sua especialidade principal" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Nenhuma</SelectItem>
-                      {ESPECIALIDADES_MEDICAS.map((esp) => (
-                        <SelectItem key={esp} value={esp}>{esp}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Especialidade Secundária (opcional)</Label>
-                  <Select
-                    value={especialidadeForm.especialidadeSecundaria}
-                    onValueChange={(value) => setEspecialidadeForm({ ...especialidadeForm, especialidadeSecundaria: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma segunda especialidade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Nenhuma</SelectItem>
-                      {ESPECIALIDADES_MEDICAS.map((esp) => (
-                        <SelectItem key={esp} value={esp}>{esp}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Área de Atuação</Label>
-                  <Select
-                    value={especialidadeForm.areaAtuacao}
-                    onValueChange={(value) => setEspecialidadeForm({ ...especialidadeForm, areaAtuacao: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione sua área de atuação" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Nenhuma</SelectItem>
-                      {AREAS_ATUACAO.map((area) => (
-                        <SelectItem key={area} value={area}>{area}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveEspecialidades} disabled={atualizarEspecialidades.isPending}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Salvar Especialidades
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Tab: Notificações */}
+        {/* Tab: Mensagens (antigo Notificações) */}
         {activeTab === "notificacoes" && (
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Preferências de Notificação</CardTitle>
+                <CardTitle>Mensagens</CardTitle>
                 <CardDescription>
                   Configure como deseja receber notificações do sistema
                 </CardDescription>

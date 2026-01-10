@@ -43,7 +43,7 @@ interface CadastroMedicoFormProps {
 }
 
 export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoFormProps) {
-  const [activeSection, setActiveSection] = useState<"pessoal" | "endereco" | "documentacao" | "profissional" | "perfil">("pessoal");
+  const [activeSection, setActiveSection] = useState<"pessoal" | "endereco" | "documentacao" | "profissional" | "redesSociais">("pessoal");
   
   // Queries
   const { data: cadastroCompleto, refetch } = trpc.medicoCadastro.getCompleto.useQuery({ userProfileId });
@@ -177,6 +177,10 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
     linkedin: "",
     orcid: "",
     researchGate: "",
+    instagram: "",
+    facebook: "",
+    twitter: "",
+    tiktok: "",
   });
 
   const [novaFormacao, setNovaFormacao] = useState({
@@ -254,6 +258,10 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
           linkedin: cadastroCompleto.links.linkedin || "",
           orcid: cadastroCompleto.links.orcid || "",
           researchGate: cadastroCompleto.links.researchGate || "",
+          instagram: (cadastroCompleto.links as any).instagram || "",
+          facebook: (cadastroCompleto.links as any).facebook || "",
+          twitter: (cadastroCompleto.links as any).twitter || "",
+          tiktok: (cadastroCompleto.links as any).tiktok || "",
         });
       }
     }
@@ -323,30 +331,49 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
     });
   };
 
-  // Seções do formulário
+  // Seções do formulário - cores alinhadas com a paleta do sistema
   const sections = [
-    { id: "pessoal", label: "1. Pessoal", color: "bg-cyan-600" },
-    { id: "endereco", label: "2. Endereço", color: "bg-cyan-500" },
-    { id: "documentacao", label: "3. Documentação", color: "bg-cyan-500" },
-    { id: "profissional", label: "4. Profissional", color: "bg-cyan-500" },
-    { id: "perfil", label: "5. Perfil", color: "bg-cyan-500" },
+    { id: "pessoal", label: "1. Pessoal" },
+    { id: "endereco", label: "2. Endereço" },
+    { id: "documentacao", label: "3. Documentação" },
+    { id: "profissional", label: "4. Profissional" },
+    { id: "redesSociais", label: "5. Redes Sociais" },
   ];
 
   return (
     <div className="space-y-4">
-      {/* Navegação das seções */}
+      {/* Navegação das seções - usando cores da paleta do sistema */}
       <div className="flex gap-1">
-        {sections.map((section) => (
-          <button
-            key={section.id}
-            onClick={() => setActiveSection(section.id as typeof activeSection)}
-            className={`flex-1 py-2 px-4 text-sm font-medium text-white rounded-t transition-colors ${
-              activeSection === section.id ? "bg-cyan-600" : "bg-cyan-400 hover:bg-cyan-500"
-            }`}
-          >
-            {section.label}
-          </button>
-        ))}
+        {sections.map((section, index) => {
+          // Gradiente de cores: mais escuro para mais claro
+          const bgColors = [
+            "bg-primary", // 1. Pessoal - azul principal
+            "bg-primary/90", // 2. Endereço
+            "bg-primary/80", // 3. Documentação
+            "bg-primary/70", // 4. Profissional
+            "bg-primary/60", // 5. Redes Sociais
+          ];
+          const hoverColors = [
+            "hover:bg-primary/95",
+            "hover:bg-primary/85",
+            "hover:bg-primary/75",
+            "hover:bg-primary/65",
+            "hover:bg-primary/55",
+          ];
+          return (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id as typeof activeSection)}
+              className={`flex-1 py-2 px-4 text-sm font-medium text-white rounded-t transition-colors ${
+                activeSection === section.id 
+                  ? bgColors[index] 
+                  : `${bgColors[index]} opacity-70 ${hoverColors[index]}`
+              }`}
+            >
+              {section.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Seção 1: Pessoal */}
@@ -390,7 +417,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="sexo">Sexo *</Label>
+                <Label htmlFor="sexo">Sexo</Label>
                 <Select value={pessoalForm.sexo} onValueChange={(v) => setPessoalForm({ ...pessoalForm, sexo: v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
@@ -403,7 +430,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nacionalidade">Nacionalidade *</Label>
+                <Label htmlFor="nacionalidade">Nacionalidade</Label>
                 <Input
                   id="nacionalidade"
                   value={pessoalForm.nacionalidade}
@@ -411,7 +438,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ufNascimento">UF de nascimento *</Label>
+                <Label htmlFor="ufNascimento">UF de nascimento</Label>
                 <Select value={pessoalForm.ufNascimento} onValueChange={(v) => setPessoalForm({ ...pessoalForm, ufNascimento: v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="UF" />
@@ -424,7 +451,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cidadeNascimento">Cidade de nascimento *</Label>
+                <Label htmlFor="cidadeNascimento">Cidade de nascimento</Label>
                 <Input
                   id="cidadeNascimento"
                   value={pessoalForm.cidadeNascimento}
@@ -438,7 +465,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
             <h4 className="font-medium">Contatos</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Celular *</Label>
+                <Label>Celular</Label>
                 <div className="flex gap-2">
                   <Input
                     className="w-20"
@@ -470,7 +497,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Telefone comercial *</Label>
+                <Label>Telefone comercial</Label>
                 <div className="flex gap-2">
                   <Input
                     className="w-20"
@@ -492,7 +519,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
             <h4 className="font-medium">Filiação</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nomeMae">Nome da mãe *</Label>
+                <Label htmlFor="nomeMae">Nome da mãe</Label>
                 <Input
                   id="nomeMae"
                   value={pessoalForm.nomeMae}
@@ -512,7 +539,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
             {/* Estado civil */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="estadoCivil">Estado civil *</Label>
+                <Label htmlFor="estadoCivil">Estado civil</Label>
                 <Select value={pessoalForm.estadoCivil} onValueChange={(v) => setPessoalForm({ ...pessoalForm, estadoCivil: v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
@@ -554,7 +581,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="logradouro">Logradouro *</Label>
+                <Label htmlFor="logradouro">Logradouro</Label>
                 <Select value={enderecoForm.logradouro} onValueChange={(v) => setEnderecoForm({ ...enderecoForm, logradouro: v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Tipo" />
@@ -567,7 +594,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 </Select>
               </div>
               <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="enderecoResidencial">Endereço residencial *</Label>
+                <Label htmlFor="enderecoResidencial">Endereço residencial</Label>
                 <Input
                   id="enderecoResidencial"
                   value={enderecoForm.enderecoResidencial}
@@ -575,7 +602,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="numero">Nº *</Label>
+                <Label htmlFor="numero">Nº</Label>
                 <Input
                   id="numero"
                   value={enderecoForm.numero}
@@ -594,7 +621,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro *</Label>
+                <Label htmlFor="bairro">Bairro</Label>
                 <Input
                   id="bairro"
                   value={enderecoForm.bairro}
@@ -602,7 +629,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cidade">Cidade *</Label>
+                <Label htmlFor="cidade">Cidade</Label>
                 <Input
                   id="cidade"
                   value={enderecoForm.cidade}
@@ -610,7 +637,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="uf">UF *</Label>
+                <Label htmlFor="uf">UF</Label>
                 <Select value={enderecoForm.uf} onValueChange={(v) => setEnderecoForm({ ...enderecoForm, uf: v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="UF" />
@@ -626,7 +653,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cep">CEP *</Label>
+                <Label htmlFor="cep">CEP</Label>
                 <Input
                   id="cep"
                   value={enderecoForm.cep}
@@ -657,7 +684,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
             {/* RG */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="rg">RG *</Label>
+                <Label htmlFor="rg">RG</Label>
                 <Input
                   id="rg"
                   value={documentacaoForm.rg}
@@ -665,7 +692,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rgUf">UF *</Label>
+                <Label htmlFor="rgUf">UF</Label>
                 <Select value={documentacaoForm.rgUf} onValueChange={(v) => setDocumentacaoForm({ ...documentacaoForm, rgUf: v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="UF" />
@@ -678,7 +705,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rgOrgaoEmissor">Órgão emissor *</Label>
+                <Label htmlFor="rgOrgaoEmissor">Órgão emissor</Label>
                 <Select value={documentacaoForm.rgOrgaoEmissor} onValueChange={(v) => setDocumentacaoForm({ ...documentacaoForm, rgOrgaoEmissor: v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
@@ -691,7 +718,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rgDataEmissao">Data de emissão *</Label>
+                <Label htmlFor="rgDataEmissao">Data de emissão</Label>
                 <Input
                   id="rgDataEmissao"
                   type="date"
@@ -700,7 +727,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 />
               </div>
               <div className="space-y-2">
-                <Label>RG digitalizado *</Label>
+                <Label>RG digitalizado</Label>
                 <Button variant="outline" className="w-full" disabled>
                   <FileText className="h-4 w-4 mr-2" />
                   Identidade
@@ -711,7 +738,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
             {/* PIS, CNS, CPF */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="numeroPis">Nº do PIS *</Label>
+                <Label htmlFor="numeroPis">Nº do PIS</Label>
                 <Input
                   id="numeroPis"
                   value={documentacaoForm.numeroPis}
@@ -720,7 +747,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="numeroCns">Nº do cartão nacional de saúde (CNS) *</Label>
+                <Label htmlFor="numeroCns">Nº do cartão nacional de saúde (CNS)</Label>
                 <Input
                   id="numeroCns"
                   value={documentacaoForm.numeroCns}
@@ -738,7 +765,7 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
                 />
               </div>
               <div className="space-y-2">
-                <Label>CPF digitalizado *</Label>
+                <Label>CPF digitalizado</Label>
                 <Button variant="outline" className="w-full" disabled>
                   <FileText className="h-4 w-4 mr-2" />
                   CPF
@@ -1010,58 +1037,109 @@ export default function CadastroMedicoForm({ userProfileId }: CadastroMedicoForm
         </div>
       )}
 
-      {/* Seção 5: Perfil */}
-      {activeSection === "perfil" && (
+      {/* Seção 5: Redes Sociais */}
+      {activeSection === "redesSociais" && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <LinkIcon className="h-5 w-5" />
-              Links Profissionais
+              Redes Sociais
             </CardTitle>
-            <CardDescription>Currículo e redes profissionais</CardDescription>
+            <CardDescription>Perfis em redes sociais e plataformas profissionais (todos opcionais)</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="curriculoLattes">Currículo Lattes</Label>
-              <Input
-                id="curriculoLattes"
-                value={linksForm.curriculoLattes}
-                onChange={(e) => setLinksForm({ ...linksForm, curriculoLattes: e.target.value })}
-                placeholder="https://wwws.cnpq.br/cvlattesweb/..."
-              />
+          <CardContent className="space-y-6">
+            {/* Redes Profissionais */}
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">Redes Profissionais</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="curriculoLattes">Currículo Lattes</Label>
+                  <Input
+                    id="curriculoLattes"
+                    value={linksForm.curriculoLattes}
+                    onChange={(e) => setLinksForm({ ...linksForm, curriculoLattes: e.target.value })}
+                    placeholder="https://wwws.cnpq.br/cvlattesweb/..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <Input
+                    id="linkedin"
+                    value={linksForm.linkedin}
+                    onChange={(e) => setLinksForm({ ...linksForm, linkedin: e.target.value })}
+                    placeholder="https://linkedin.com/in/..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="orcid">ORCID</Label>
+                  <Input
+                    id="orcid"
+                    value={linksForm.orcid}
+                    onChange={(e) => setLinksForm({ ...linksForm, orcid: e.target.value })}
+                    placeholder="0000-0000-0000-0000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="researchGate">ResearchGate</Label>
+                  <Input
+                    id="researchGate"
+                    value={linksForm.researchGate}
+                    onChange={(e) => setLinksForm({ ...linksForm, researchGate: e.target.value })}
+                    placeholder="https://researchgate.net/profile/..."
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="linkedin">LinkedIn</Label>
-              <Input
-                id="linkedin"
-                value={linksForm.linkedin}
-                onChange={(e) => setLinksForm({ ...linksForm, linkedin: e.target.value })}
-                placeholder="https://linkedin.com/in/..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="orcid">ORCID</Label>
-              <Input
-                id="orcid"
-                value={linksForm.orcid}
-                onChange={(e) => setLinksForm({ ...linksForm, orcid: e.target.value })}
-                placeholder="0000-0000-0000-0000"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="researchGate">ResearchGate</Label>
-              <Input
-                id="researchGate"
-                value={linksForm.researchGate}
-                onChange={(e) => setLinksForm({ ...linksForm, researchGate: e.target.value })}
-                placeholder="https://researchgate.net/profile/..."
-              />
+
+            <Separator />
+
+            {/* Redes Sociais */}
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">Redes Sociais</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="instagram">Instagram</Label>
+                  <Input
+                    id="instagram"
+                    value={linksForm.instagram || ""}
+                    onChange={(e) => setLinksForm({ ...linksForm, instagram: e.target.value })}
+                    placeholder="@seuusuario"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="facebook">Facebook</Label>
+                  <Input
+                    id="facebook"
+                    value={linksForm.facebook || ""}
+                    onChange={(e) => setLinksForm({ ...linksForm, facebook: e.target.value })}
+                    placeholder="https://facebook.com/..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="twitter">X (Twitter)</Label>
+                  <Input
+                    id="twitter"
+                    value={linksForm.twitter || ""}
+                    onChange={(e) => setLinksForm({ ...linksForm, twitter: e.target.value })}
+                    placeholder="@seuusuario"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tiktok">TikTok</Label>
+                  <Input
+                    id="tiktok"
+                    value={linksForm.tiktok || ""}
+                    onChange={(e) => setLinksForm({ ...linksForm, tiktok: e.target.value })}
+                    placeholder="@seuusuario"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end">
               <Button onClick={handleSaveLinks} disabled={saveLinks.isPending}>
                 <Save className="h-4 w-4 mr-2" />
-                Salvar Links
+                Salvar Redes Sociais
               </Button>
             </div>
           </CardContent>

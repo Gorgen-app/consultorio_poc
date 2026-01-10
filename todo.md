@@ -1269,3 +1269,29 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Tabela medico_especializacoes
 - [x] Tabela medico_vinculos
 - [x] Tabela medico_links
+
+
+---
+
+## 🎨 GORGEN v3.0 - Ajustes no Cadastro (10/01/2026)
+
+### Paleta de Cores
+- [x] Ajustar tom de azul das abas para ficar próximo dos botões do sistema
+- [x] Criar gradiente de tons mais claros para abas subsequentes
+
+### Obrigatoriedade de Campos
+- [x] Manter obrigatórios: nome, CPF, data nascimento
+- [x] Manter obrigatórios: todas as informações do conselho
+- [x] Manter obrigatórios: todos os campos da primeira formação
+- [x] Remover obrigatoriedade de todos os demais campos
+
+### Redes Sociais (antiga aba Perfil)
+- [x] Renomear "Perfil" para "Redes Sociais"
+- [x] Adicionar campo Instagram
+- [x] Adicionar campo TikTok
+- [x] Adicionar campo X (Twitter)
+- [x] Adicionar campo Facebook
+- [x] Deixar todos os campos opcionais
+
+### Limpeza
+- [x] Eliminar aba "Profissional" das Configurações (dados já estão em Cadastro)
