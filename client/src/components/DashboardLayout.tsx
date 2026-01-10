@@ -400,6 +400,24 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3">
+            {/* Botão discreto para recolher/expandir sidebar */}
+            <div className="mb-2">
+              <button
+                onClick={toggleSidebar}
+                className="w-full h-8 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+                title={isCollapsed ? "Expandir menu" : "Recolher menu"}
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 -rotate-90" />
+                    <span>Recolher menu</span>
+                  </>
+                )}
+              </button>
+            </div>
+            
             {/* Botão de Configurações - apenas ícone */}
             {temPermissao(currentPerfil as PerfilType, "configuracoes") && (
               <div className="mb-2">

@@ -1199,3 +1199,12 @@ A dashboard deve integrar **medicina e administração**:
   - Secretária: vê apenas Leads e Marketing
   - Auditor: vê apenas Leads e Marketing
   - Paciente: vê apenas Portal do Paciente
+
+
+---
+
+## 🚀 GORGEN v3.0 - Melhorias de Navegação (10/01/2026)
+
+### Atualizações
+- [x] Renomear versão para Gorgen v3.0
+- [x] Adicionar botão discreto para recolher/expandir a barra de navegação
