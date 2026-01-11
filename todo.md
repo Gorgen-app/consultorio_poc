@@ -1558,3 +1558,9 @@ A dashboard deve integrar **medicina e administração**:
 ### Limpeza de Dados
 - [x] Remover pacientes fictícios anteriores à migração (exceto Leticia Uzeika)
 - [x] Validar total de pacientes após limpeza (21.645 pacientes no tenant 1)
+
+
+#### Limpeza de IDs
+- [x] Remover prefixo MIG- dos IDs dos pacientes migrados (21.644 atualizados)
+- [x] Campo data de nascimento já existe no formulário de cadastro
+- [x] Resolver conflito de IDs duplicados (950 duplicatas sem tenant removidas)
