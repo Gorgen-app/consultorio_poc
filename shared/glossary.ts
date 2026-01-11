@@ -159,6 +159,39 @@ export function formatarCPF(cpf: string): string {
 export const MASCARA_CPF = '###.###.###-##';
 
 /**
+ * Formata telefone no padrão: (xx) xxxxx-xxxx
+ */
+export function formatarTelefone(telefone: string): string {
+  const numeros = telefone.replace(/\D/g, '');
+  if (numeros.length === 11) {
+    return numeros.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  }
+  if (numeros.length === 10) {
+    return numeros.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  }
+  return telefone;
+}
+
+/**
+ * Máscara de telefone para inputs: (xx) xxxxx-xxxx
+ */
+export const MASCARA_TELEFONE = '(##) #####-####';
+
+/**
+ * Formata CEP no padrão brasileiro: xxxxx-xxx
+ */
+export function formatarCEP(cep: string): string {
+  const numeros = cep.replace(/\D/g, '');
+  if (numeros.length !== 8) return cep;
+  return numeros.replace(/(\d{5})(\d{3})/, '$1-$2');
+}
+
+/**
+ * Máscara de CEP para inputs: xxxxx-xxx
+ */
+export const MASCARA_CEP = '#####-###';
+
+/**
  * Gera ID de paciente no formato: aaaa-xxxxxxx
  * @param ano Ano do cadastro (4 dígitos)
  * @param sequencia Número sequencial (será formatado com 7 dígitos)
@@ -209,26 +242,45 @@ export function obterDiaSemana(data: Date | string): string {
 // CONVÊNIOS RECONHECIDOS
 // =============================================================================
 
+/**
+ * Lista completa de convênios reconhecidos pelo sistema
+ * Atualizada em 11/01/2026 com base na migração de 21.644 pacientes
+ */
 export const CONVENIOS = [
+  'AFRAFEP',
   'Amil',
+  'ASSEFAZ',
   'BRADESCO SAÚDE',
+  'CABERGS',
+  'CAMED',
   'CASSI',
   'CCG',
   'Cortesia',
   'DoctorClin',
+  'EMBRATEL',
+  'FAPES',
+  'FUNDAFFEMG',
+  'GEAP',
   'GKN',
   'Hapvida',
+  'IPE',
   'IPE Saúde',
+  'MEDISERVICE',
   'Notre Dame',
   'Particular',
   'Particular com 25% desconto',
+  'PETROBRAS',
   'Petrobrás',
+  'POSTAL SAUDE',
   'Retorno de particular',
+  'SAUDE BNDES',
   'Saúde Caixa',
   'SAÚDE PAS',
   'SulAmérica',
   'SulMed',
   'SUS',
+  'TELOS',
+  'UNAFISCO',
   'UNIMED',
 ] as const;
 

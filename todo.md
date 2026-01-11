@@ -1592,3 +1592,8 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Criar arquivo de referência no projeto (shared/glossary.ts)
 - [x] Integrar definições ao código do Gorgen (MaskedInput atualizado)
 - [x] Identificar e apresentar pendências para aprovação
+
+- [x] Confirmar formato de telefone: (xx) xxxxx-xxxx
+- [x] Adicionar convênios extras ao glossário (35 convênios no total)
+- [x] Adicionar formatação de CEP: xxxxx-xxx
+- [x] Verificar formato atual de ID de atendimento

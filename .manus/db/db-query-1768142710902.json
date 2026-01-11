@@ -1,0 +1,154 @@
+{
+  "query": "\nSELECT convenio, COUNT(*) as qtd FROM (\n  SELECT operadora_1 as convenio FROM pacientes WHERE operadora_1 IS NOT NULL AND operadora_1 != ''\n  UNION ALL\n  SELECT operadora_2 FROM pacientes WHERE operadora_2 IS NOT NULL AND operadora_2 != ''\n) t\nGROUP BY convenio\nORDER BY qtd DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute \nSELECT convenio, COUNT(*) as qtd FROM (\n  SELECT operadora_1 as convenio FROM pacientes WHERE operadora_1 IS NOT NULL AND operadora_1 != ''\n  UNION ALL\n  SELECT operadora_2 FROM pacientes WHERE operadora_2 IS NOT NULL AND operadora_2 != ''\n) t\nGROUP BY convenio\nORDER BY qtd DESC;\n",
+  "rows": [
+    {
+      "convenio": "UNIMED",
+      "qtd": "9780"
+    },
+    {
+      "convenio": "Particular",
+      "qtd": "2169"
+    },
+    {
+      "convenio": "IPE",
+      "qtd": "1778"
+    },
+    {
+      "convenio": "BRADESCO SAÚDE",
+      "qtd": "733"
+    },
+    {
+      "convenio": "CASSI",
+      "qtd": "732"
+    },
+    {
+      "convenio": "CABERGS",
+      "qtd": "546"
+    },
+    {
+      "convenio": "SAUDE PAS",
+      "qtd": "303"
+    },
+    {
+      "convenio": "COOPMED",
+      "qtd": "300"
+    },
+    {
+      "convenio": "CCG",
+      "qtd": "294"
+    },
+    {
+      "convenio": "SAUDE CAIXA",
+      "qtd": "260"
+    },
+    {
+      "convenio": "ACERTO ESPECIAL",
+      "qtd": "207"
+    },
+    {
+      "convenio": "CAF RBS",
+      "qtd": "191"
+    },
+    {
+      "convenio": "Janssen - Gastros",
+      "qtd": "122"
+    },
+    {
+      "convenio": "PESQUISA/HCPA",
+      "qtd": "62"
+    },
+    {
+      "convenio": "UNIMED - UNIFACIL",
+      "qtd": "43"
+    },
+    {
+      "convenio": "BACEN",
+      "qtd": "38"
+    },
+    {
+      "convenio": "DANAMED",
+      "qtd": "32"
+    },
+    {
+      "convenio": "MEDISERVICE",
+      "qtd": "29"
+    },
+    {
+      "convenio": "Takeda - Gastros",
+      "qtd": "29"
+    },
+    {
+      "convenio": "LIFEDAY",
+      "qtd": "23"
+    },
+    {
+      "convenio": "CORTESIA",
+      "qtd": "17"
+    },
+    {
+      "convenio": "SUL AMERICA",
+      "qtd": "9"
+    },
+    {
+      "convenio": "MEDSENIOR",
+      "qtd": "7"
+    },
+    {
+      "convenio": "NUCLEO DE PESQUISA",
+      "qtd": "5"
+    },
+    {
+      "convenio": "DOCTOR CLIN",
+      "qtd": "4"
+    },
+    {
+      "convenio": "Acerto Especial",
+      "qtd": "3"
+    },
+    {
+      "convenio": "BRADESCO",
+      "qtd": "3"
+    },
+    {
+      "convenio": "Humanizar - ABBVIE 51",
+      "qtd": "2"
+    },
+    {
+      "convenio": "Acerto especial",
+      "qtd": "1"
+    },
+    {
+      "convenio": "UNIMED TESTE",
+      "qtd": "1"
+    },
+    {
+      "convenio": "Saude Caixa",
+      "qtd": "1"
+    },
+    {
+      "convenio": "Retorno de Particular",
+      "qtd": "1"
+    },
+    {
+      "convenio": "PARTICULAR",
+      "qtd": "1"
+    },
+    {
+      "convenio": "Cortesia",
+      "qtd": "1"
+    },
+    {
+      "convenio": "DoctorClin",
+      "qtd": "1"
+    },
+    {
+      "convenio": "BRADESCO TESTE",
+      "qtd": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "convenio\tqtd\nUNIMED\t9780\nParticular\t2169\nIPE\t1778\nBRADESCO SAÚDE\t733\nCASSI\t732\nCABERGS\t546\nSAUDE PAS\t303\nCOOPMED\t300\nCCG\t294\nSAUDE CAIXA\t260\nACERTO ESPECIAL\t207\nCAF RBS\t191\nJanssen - Gastros\t122\nPESQUISA/HCPA\t62\nUNIMED - UNIFACIL\t43\nBACEN\t38\nDANAMED\t32\nMEDISERVICE\t29\nTakeda - Gastros\t29\nLIFEDAY\t23\nCORTESIA\t17\nSUL AMERICA\t9\nMEDSENIOR\t7\nNUCLEO DE PESQUISA\t5\nDOCTOR CLIN\t4\nAcerto Especial\t3\nBRADESCO\t3\nHumanizar - ABBVIE 51\t2\nAcerto especial\t1\nUNIMED TESTE\t1\nSaude Caixa\t1\nRetorno de Particular\t1\nPARTICULAR\t1\nCortesia\t1\nDoctorClin\t1\nBRADESCO TESTE\t1\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}
