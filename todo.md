@@ -1545,3 +1545,16 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Testar migração piloto (1000 pacientes)
 - [x] Executar migração completa (21.644 pacientes)
 - [x] Validar totais e integridade
+
+
+---
+
+## 🐛 BUGS E CORREÇÕES (11/01/2026)
+
+### Bug de Exclusão de Pacientes
+- [x] Investigar por que exclusão mostra sucesso mas paciente permanece na lista
+- [x] Corrigir lógica de exclusão/soft-delete (adicionado filtro deletedAt IS NULL)
+
+### Limpeza de Dados
+- [x] Remover pacientes fictícios anteriores à migração (exceto Leticia Uzeika)
+- [x] Validar total de pacientes após limpeza (21.645 pacientes no tenant 1)

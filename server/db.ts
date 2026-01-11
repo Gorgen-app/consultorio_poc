@@ -131,8 +131,11 @@ export async function listPacientes(tenantId: number, filters?: {
 
   let query = db.select().from(pacientes);
   
-  // Filtro obrigatório por tenant
-  const conditions = [eq(pacientes.tenantId, tenantId)];
+  // Filtro obrigatório por tenant e excluir deletados
+  const conditions = [
+    eq(pacientes.tenantId, tenantId),
+    sql`${pacientes.deletedAt} IS NULL`  // Soft delete filter
+  ];
   
   if (filters?.nome) {
     conditions.push(like(pacientes.nome, `%${filters.nome}%`));
@@ -210,7 +213,10 @@ export async function countPacientes(tenantId: number, filters?: {
   const db = await getDb();
   if (!db) return 0;
 
-  const conditions = [eq(pacientes.tenantId, tenantId)];
+  const conditions = [
+    eq(pacientes.tenantId, tenantId),
+    sql`${pacientes.deletedAt} IS NULL`  // Soft delete filter
+  ];
 
   if (filters?.status) {
     conditions.push(eq(pacientes.statusCaso, filters.status));
