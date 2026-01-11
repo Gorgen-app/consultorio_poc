@@ -1577,3 +1577,6 @@ A dashboard deve integrar **medicina e administração**:
 
 - [x] Trocar "Navigation" por "Menu" no cabeçalho da sidebar
 - [x] Seta para recolher a barra de navegação já existe (à esquerda de "Menu")
+
+- [x] Ícone de recolher menu: seta para esquerda (aberto) e direita (recolhido)
+- [x] Quando recolhido, manter apenas ícones das seções visíveis (já funciona assim)
