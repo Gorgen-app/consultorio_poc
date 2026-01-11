@@ -1574,3 +1574,6 @@ A dashboard deve integrar **medicina e administração**:
 
 - [x] Corrigir busca de pacientes mostrando apenas 10000 (aumentado limite para 50000)
 - [x] Reorganizar menu do usuário: adicionar Configurações, Perfil e Conta (termo para tenant)
+
+- [x] Trocar "Navigation" por "Menu" no cabeçalho da sidebar
+- [x] Seta para recolher a barra de navegação já existe (à esquerda de "Menu")
