@@ -1612,3 +1612,66 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Adicionar exportação em PDF
 - [x] Adicionar exportação em Excel (CSV)
 - [ ] Aguardar planilha de atendimentos do usuário para importação
+
+
+## 📅 IMPORTAÇÃO DE ATENDIMENTOS (11/01/2026)
+- [x] Analisar estrutura da planilha de atendimentos 2025-2026
+- [x] Gerar relatório de feedback sobre os dados
+- [ ] Criar script de importação de atendimentos
+
+
+---
+
+## 📅 IMPORTAÇÃO DE ATENDIMENTOS (11/01/2026) ✅ CONCLUÍDO
+
+### Análise da Planilha
+- [x] Analisar estrutura da planilha atendimentos2025-2026.xlsx (1.402 registros, 32 colunas)
+- [x] Identificar campos: Atendimento, Data, Tipo, Procedimento, Nome, Local, Convênio, Faturamento
+- [x] Mapear convênios para formato padronizado do glossário
+- [x] Identificar formatos de data (DD/mes./YYYY, ISO, DD/MM/YYYY)
+
+### Script de Migração
+- [x] Criar script migrate_atendimentos.py com validações
+- [x] Implementar parse de datas em múltiplos formatos brasileiros
+- [x] Implementar parse de valores monetários (R$ xxx,xx)
+- [x] Implementar normalização de convênios
+- [x] Implementar normalização de tipos de atendimento
+- [x] Implementar normalização de locais
+
+### Busca de Pacientes Melhorada
+- [x] Implementar busca exata (case insensitive)
+- [x] Implementar busca LIKE parcial
+- [x] Implementar busca por sobrenome (para acentos diferentes)
+- [x] Implementar normalização de nomes (remover acentos)
+- [x] Implementar busca com COLLATE utf8mb4_general_ci
+
+### Execução da Importação
+- [x] Executar importação piloto (100 registros - 100% sucesso)
+- [x] Corrigir 4 pacientes não encontrados por diferença de grafia
+- [x] Executar importação completa (1.335 atendimentos importados)
+- [x] Validar dados no banco
+
+### Resultado Final
+| Métrica | Valor |
+|---------|-------|
+| Total processado | 1.402 |
+| ✅ Sucesso | 1.335 (95,2%) |
+| ⚠️ Linhas vazias | 66 |
+| ⚠️ Paciente não encontrado | 1 (Natalia Salvadori Frizzon) |
+| Pacientes distintos | 532 |
+| Período | 03/01/2025 a 10/01/2026 |
+| Faturamento total | R$ 423.761,45 |
+
+### Distribuição por Tipo
+- Consulta: 1.068 (80%)
+- Visita internado: 165 (12%)
+- Cirurgia: 72 (5%)
+- Procedimento em consultório: 31 (2%)
+
+### Top 5 Convênios
+1. UNIMED: 545 atendimentos (R$ 135.590,14)
+2. IPE SAÚDE: 216 atendimentos (R$ 21.272,80)
+3. PARTICULAR: 145 atendimentos (R$ 136.334,60)
+4. SAUDEPAS: 136 atendimentos (R$ 82.720,10)
+5. RETORNO PARTICULAR: 73 atendimentos
+
