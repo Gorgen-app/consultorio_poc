@@ -1568,3 +1568,9 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Configurar geração automática de IDs no formato 2026-XXXXX para novos pacientes (já implementado, próximo ID: 2026-0000053)
 
 - [x] Restaurar seções pendentes na barra de navegação (Faturamento e Gestão, Leads e Marketing, Portal do Paciente)
+
+
+## 🐛 BUGS (11/01/2026 - Sessão 2)
+
+- [x] Corrigir busca de pacientes mostrando apenas 10000 (aumentado limite para 50000)
+- [x] Reorganizar menu do usuário: adicionar Configurações, Perfil e Conta (termo para tenant)

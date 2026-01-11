@@ -398,26 +398,6 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3">
-            {/* Seletor de Tenant - apenas para usuários com acesso a múltiplos tenants */}
-            <div className="mb-2">
-              <TenantSelector className={`w-full ${isCollapsed ? "px-0" : ""}`} />
-            </div>
-            
-            {/* Botão de Configurações - apenas ícone */}
-            {temPermissao(currentPerfil as PerfilType, "configuracoes") && (
-              <div className="mb-2">
-                <SidebarMenuButton
-                  isActive={location === "/configuracoes"}
-                  onClick={() => setLocation("/configuracoes")}
-                  tooltip="Configurações"
-                  className={`h-10 transition-all font-normal ${isCollapsed ? "justify-center" : ""}`}
-                >
-                  <Settings className={`h-4 w-4 ${location === "/configuracoes" ? "text-primary" : ""}`} />
-                  {!isCollapsed && <span>Configurações</span>}
-                </SidebarMenuButton>
-              </div>
-            )}
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -445,36 +425,57 @@ function DashboardLayoutContent({
                   </Badge>
                 </DropdownMenuLabel>
                 
-                {/* Seletor de perfil - só mostra se tiver mais de um perfil */}
-                {availablePerfis && availablePerfis.length > 1 && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="cursor-pointer">
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Trocar Perfil</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {availablePerfis.map((perfil) => {
-                          const info = perfilInfo[perfil];
-                          const isActive = perfil === currentPerfil;
-                          return (
-                            <DropdownMenuItem
-                              key={perfil}
-                              onClick={() => !isActive && setPerfilAtivo.mutate({ perfil: perfil as any })}
-                              className={`cursor-pointer ${isActive ? 'bg-accent' : ''}`}
-                              disabled={isActive || setPerfilAtivo.isPending}
-                            >
-                              {info?.icon}
-                              <span className="ml-2">{info?.label}</span>
-                              {isActive && <span className="ml-auto text-xs text-muted-foreground">(Ativo)</span>}
-                            </DropdownMenuItem>
-                          );
-                        })}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  </>
+                <DropdownMenuSeparator />
+                
+                {/* Configurações */}
+                {temPermissao(currentPerfil as PerfilType, "configuracoes") && (
+                  <DropdownMenuItem
+                    onClick={() => setLocation("/configuracoes")}
+                    className="cursor-pointer"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </DropdownMenuItem>
                 )}
+                
+                {/* Perfil - Trocar perfil de acesso */}
+                {availablePerfis && availablePerfis.length > 1 && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="cursor-pointer">
+                      <UserCircle className="mr-2 h-4 w-4" />
+                      <span>Perfil</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {availablePerfis.map((perfil) => {
+                        const info = perfilInfo[perfil];
+                        const isActive = perfil === currentPerfil;
+                        return (
+                          <DropdownMenuItem
+                            key={perfil}
+                            onClick={() => !isActive && setPerfilAtivo.mutate({ perfil: perfil as any })}
+                            className={`cursor-pointer ${isActive ? 'bg-accent' : ''}`}
+                            disabled={isActive || setPerfilAtivo.isPending}
+                          >
+                            {info?.icon}
+                            <span className="ml-2">{info?.label}</span>
+                            {isActive && <span className="ml-auto text-xs text-muted-foreground">(Ativo)</span>}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )}
+                
+                {/* Conta - Seletor de Tenant */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="cursor-pointer">
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span>Conta</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="p-2 min-w-[200px]">
+                    <TenantSelector className="w-full" />
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

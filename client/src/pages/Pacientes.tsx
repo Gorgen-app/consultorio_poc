@@ -86,7 +86,7 @@ export default function Pacientes() {
   };
 
   const { data: pacientes, isLoading } = trpc.pacientes.list.useQuery({
-    limit: 10000,
+    limit: 50000,
   });
 
   // Função de ordenação

@@ -69,7 +69,7 @@ export default function Atendimentos() {
   const utils = trpc.useUtils();
 
   const { data: atendimentos, isLoading } = trpc.atendimentos.list.useQuery({
-    limit: 10000,
+    limit: 50000,
   });
 
   const deleteMutation = trpc.atendimentos.delete.useMutation({
