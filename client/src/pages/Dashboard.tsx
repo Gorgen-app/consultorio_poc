@@ -4,6 +4,12 @@ import { Users, Calendar, DollarSign, TrendingUp, Building2 } from "lucide-react
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
+// Formata número inteiro no padrão brasileiro (21.644)
+const formatarNumero = (valor: number | undefined | null): string => {
+  if (valor === undefined || valor === null) return "0";
+  return new Intl.NumberFormat("pt-BR").format(valor);
+};
+
 export default function Dashboard() {
   const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
   const { data: activeTenant, isLoading: loadingTenant } = trpc.tenants.getActiveTenant.useQuery();
@@ -76,8 +82,8 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalPacientes || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">{stats?.pacientesAtivos || 0} ativos</p>
+            <div className="text-2xl font-bold">{formatarNumero(stats?.totalPacientes)}</div>
+            <p className="text-xs text-muted-foreground mt-1">{formatarNumero(stats?.pacientesAtivos)} ativos</p>
           </CardContent>
         </Card>
         <Card className="card-elevated">
@@ -86,7 +92,7 @@ export default function Dashboard() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalAtendimentos || 0}</div>
+            <div className="text-2xl font-bold">{formatarNumero(stats?.totalAtendimentos)}</div>
             <p className="text-xs text-muted-foreground mt-1">Total registrado</p>
           </CardContent>
         </Card>

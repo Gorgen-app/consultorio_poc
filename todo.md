@@ -1675,3 +1675,7 @@ A dashboard deve integrar **medicina e administração**:
 4. SAUDEPAS: 136 atendimentos (R$ 82.720,10)
 5. RETORNO PARTICULAR: 73 atendimentos
 
+
+
+## 🔧 CORREÇÕES (11/01/2026)
+- [x] Uniformizar formato de números no Dashboard para padrão brasileiro (xx.xxx)
