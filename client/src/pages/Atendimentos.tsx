@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, FileText } from "lucide-react";
 import { Link, useSearch } from "wouter";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -469,7 +469,15 @@ export default function Atendimentos() {
                         <TableCell className="font-medium">{atd.atendimento}</TableCell>
                         <TableCell>{formatarData(atd.dataAtendimento)}</TableCell>
                         <TableCell>{atd.tipoAtendimento || "-"}</TableCell>
-                        <TableCell>{atd.pacientes?.nome || "-"}</TableCell>
+                        <TableCell>
+                          {atd.pacientes?.id ? (
+                            <Link href={`/prontuario/${atd.pacientes.id}`} className="text-primary hover:underline font-medium">
+                              {atd.pacientes.nome || "-"}
+                            </Link>
+                          ) : (
+                            atd.pacientes?.nome || "-"
+                          )}
+                        </TableCell>
                         <TableCell>{atd.pacientes?.idade ?? "-"}</TableCell>
                         <TableCell>{atd.local || "-"}</TableCell>
                         <TableCell>{atd.convenio || "-"}</TableCell>

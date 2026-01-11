@@ -1679,3 +1679,8 @@ A dashboard deve integrar **medicina e administração**:
 
 ## 🔧 CORREÇÕES (11/01/2026)
 - [x] Uniformizar formato de números no Dashboard para padrão brasileiro (xx.xxx)
+
+## 🔧 MELHORIAS (11/01/2026)
+- [x] Link para prontuário na tela de Atendimentos (nome clicável)
+- [x] Botão de edição de cadastro na página do Prontuário
+- [x] Corrigir IDs de pacientes duplicados (z-DUP-* e z) - 19 pacientes corrigidos

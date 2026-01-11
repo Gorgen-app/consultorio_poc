@@ -45,6 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { EditarPacienteModal } from "@/components/EditarPacienteModal";
 
 // Componentes das seções
 import ProntuarioEvolucoes from "@/components/prontuario/ProntuarioEvolucoes";
@@ -149,6 +150,9 @@ export default function Prontuario() {
   
   // Estado para modal de gráfico
   const [modalGraficoAberto, setModalGraficoAberto] = useState(false);
+  
+  // Estado para modal de edição de cadastro do paciente
+  const [modalEditarPacienteAberto, setModalEditarPacienteAberto] = useState(false);
   
   // Estados para modais de Alergias
   const [modalNovaAlergia, setModalNovaAlergia] = useState(false);
@@ -394,10 +398,21 @@ export default function Prontuario() {
             {/* Coluna 1: Identificação */}
             <Card className="lg:col-span-1">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Identificação
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Identificação
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setModalEditarPacienteAberto(true)}
+                    title="Editar cadastro do paciente"
+                    className="h-7 w-7 p-0"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div>
@@ -1382,6 +1397,18 @@ export default function Prontuario() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Modal de Edição de Cadastro do Paciente */}
+      <EditarPacienteModal
+        paciente={paciente}
+        open={modalEditarPacienteAberto}
+        onOpenChange={(open) => {
+          setModalEditarPacienteAberto(open);
+          if (!open) {
+            refetch(); // Recarrega os dados do prontuário após fechar o modal
+          }
+        }}
+      />
     </div>
   );
 }
