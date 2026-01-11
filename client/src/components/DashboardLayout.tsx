@@ -376,24 +376,18 @@ function DashboardLayoutContent({
                   );
                 })}
               
-              {/* Separção visual */}
-              {!isCollapsed && (
-                <div className="my-4 mx-2 border-t border-border" />
-              )}
-              
               {/* Menu items "Em breve" */}
               {comingSoonItems.map(item => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     onClick={() => toast.info(`${item.label} estará disponível em breve!`)}
                     tooltip={`${item.label} (Em breve)`}
-                    className="h-10 transition-all font-normal opacity-60 cursor-not-allowed"
+                    className="h-10 transition-all font-normal"
                   >
-                    <item.icon className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">{item.label}</span>
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
                     {!isCollapsed && (
-                      <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 h-5 bg-muted">
-                        <Clock className="h-3 w-3 mr-1" />
+                      <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 h-5">
                         Em breve
                       </Badge>
                     )}
