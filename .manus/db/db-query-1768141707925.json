@@ -1,0 +1,9 @@
+{
+  "query": "\nSELECT \n    LOWER(TRIM(nome)) as nome_norm,\n    cpf,\n    COUNT(*) as qtd,\n    GROUP_CONCAT(id_paciente SEPARATOR ', ') as ids\nFROM pacientes \nWHERE deleted_at IS NULL \n    AND cpf IS NOT NULL \n    AND cpf != ''\n    AND LENGTH(REPLACE(REPLACE(cpf, '.', ''), '-', '')) >= 11\nGROUP BY LOWER(TRIM(nome)), cpf\nHAVING COUNT(*) > 1\nORDER BY qtd DESC, nome_norm\nLIMIT 50;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute \nSELECT \n    LOWER(TRIM(nome)) as nome_norm,\n    cpf,\n    COUNT(*) as qtd,\n    GROUP_CONCAT(id_paciente SEPARATOR ', ') as ids\nFROM pacientes \nWHERE deleted_at IS NULL \n    AND cpf IS NOT NULL \n    AND cpf != ''\n    AND LENGTH(REPLACE(REPLACE(cpf, '.', ''), '-', '')) >= 11\nGROUP BY LOWER(TRIM(nome)), cpf\nHAVING COUNT(*) > 1\nORDER BY qtd DESC, nome_norm\nLIMIT 50;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 453
+}

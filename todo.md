@@ -1580,3 +1580,15 @@ A dashboard deve integrar **medicina e administração**:
 
 - [x] Ícone de recolher menu: seta para esquerda (aberto) e direita (recolhido)
 - [x] Quando recolhido, manter apenas ícones das seções visíveis (já funciona assim)
+
+- [x] Adicionar tooltip nos ícones do menu quando recolhido (já implementado nativamente no SidebarMenuButton)
+
+- [x] Identificar pacientes duplicados (mesmo nome + CPF ou data nascimento)
+- [x] Gerar lista de suspeitos para revisão manual
+
+
+## 📚 GLOSSÁRIO E PADRONIZAÇÃO
+- [x] Ler e analisar glossário de termos e formatações
+- [x] Criar arquivo de referência no projeto (shared/glossary.ts)
+- [x] Integrar definições ao código do Gorgen (MaskedInput atualizado)
+- [x] Identificar e apresentar pendências para aprovação
