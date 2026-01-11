@@ -1603,3 +1603,12 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Normalizar nomes de convênios duplicados (PETROBRAS/Petrobrás, IPE/IPE Saúde)
 - [x] Validar máscaras de CPF, telefone e CEP em todos os formulários
 - [x] Definir formato da planilha para importação de atendimentos históricos
+
+
+## 📊 RELATÓRIOS E MÁSCARAS (11/01/2026 - Sessão 2)
+- [x] Adicionar máscara de CNPJ no formulário de tenant (xx.xxx.xxx/xxxx-xx)
+- [x] Criar página de relatório de pacientes por convênio
+- [x] Implementar filtros por convênio, período e status
+- [x] Adicionar exportação em PDF
+- [x] Adicionar exportação em Excel (CSV)
+- [ ] Aguardar planilha de atendimentos do usuário para importação

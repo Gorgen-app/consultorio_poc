@@ -10,7 +10,7 @@
 import { Input } from "@/components/ui/input";
 import { forwardRef } from "react";
 
-type MaskType = "cpf" | "telefone" | "cep" | "numero";
+type MaskType = "cpf" | "cnpj" | "telefone" | "cep" | "numero";
 
 interface MaskedInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   mask: MaskType;
@@ -29,6 +29,18 @@ const masks = {
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d)/, "$1.$2")
       .replace(/(\d{3})(\d{1,2})/, "$1-$2")
+      .replace(/(-\d{2})\d+?$/, "$1");
+  },
+  /**
+   * CNPJ: xx.xxx.xxx/xxxx-xx
+   */
+  cnpj: (value: string) => {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{2})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2")
       .replace(/(-\d{2})\d+?$/, "$1");
   },
   /**
