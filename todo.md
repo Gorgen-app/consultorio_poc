@@ -1684,3 +1684,9 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Link para prontuário na tela de Atendimentos (nome clicável)
 - [x] Botão de edição de cadastro na página do Prontuário
 - [x] Corrigir IDs de pacientes duplicados (z-DUP-* e z) - 19 pacientes corrigidos
+
+## 🐛 BUGS E MELHORIAS (11/01/2026 - Tarde)
+- [x] Bug: Busca de pacientes em Novo Atendimento retorna apenas parte dos resultados (limite aumentado para 50000)
+- [x] Adicionar botão "Ver Prontuário" na coluna Ações de Atendimentos
+- [x] Criar relatório de pacientes duplicados (nome/CPF)
+- [x] Implementar histórico de alterações no modal de edição (LGPD)

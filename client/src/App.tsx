@@ -17,6 +17,7 @@ import ExamesFavoritos from "./pages/ExamesFavoritos";
 import AdminTenants from "./pages/AdminTenants";
 import CrossTenantAutorizacoes from "./pages/CrossTenantAutorizacoes";
 import RelatorioPacientes from "./pages/RelatorioPacientes";
+import RelatorioDuplicados from "./pages/RelatorioDuplicados";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Router() {
@@ -45,6 +46,11 @@ function Router() {
       <Route path="/pacientes/relatorio">
         <ProtectedRoute funcionalidade="pacientes">
           <RelatorioPacientes />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/pacientes/duplicados">
+        <ProtectedRoute funcionalidade="pacientes">
+          <RelatorioDuplicados />
         </ProtectedRoute>
       </Route>
       <Route path="/atendimentos">

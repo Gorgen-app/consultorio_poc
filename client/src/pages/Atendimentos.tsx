@@ -493,6 +493,18 @@ export default function Atendimentos() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {atd.pacientes?.id && (
+                              <Link href={`/prontuario/${atd.pacientes.id}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  title="Ver prontuário do paciente"
+                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"

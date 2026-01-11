@@ -14,7 +14,7 @@ import { TIPOS_ATENDIMENTO, LOCAIS_ATENDIMENTO, PROCEDIMENTOS_CBHPM, TABELA_HONO
 export default function NovoAtendimento() {
   const [, setLocation] = useLocation();
   const createMutation = trpc.atendimentos.create.useMutation();
-  const { data: pacientes } = trpc.pacientes.list.useQuery({ limit: 1000 });
+  const { data: pacientes } = trpc.pacientes.list.useQuery({ limit: 50000 });
 
   const [searchPaciente, setSearchPaciente] = useState("");
   const [pacienteSelecionado, setPacienteSelecionado] = useState<any>(null);

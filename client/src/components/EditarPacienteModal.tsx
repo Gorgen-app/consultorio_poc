@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { OPERADORAS } from "@/lib/operadoras";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { History, Clock, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface Paciente {
   id: number;
@@ -52,6 +54,139 @@ interface EditarPacienteModalProps {
   paciente: Paciente | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+// Componente de Histórico de Alterações (LGPD)
+function HistoricoAlteracoes({ pacienteId }: { pacienteId: number }) {
+  const { data: historico, isLoading } = trpc.audit.list.useQuery({
+    entityType: "paciente",
+    entityId: pacienteId,
+    limit: 50,
+  });
+
+  // Mapeamento de campos para nomes legíveis
+  const campoLabels: Record<string, string> = {
+    nome: "Nome",
+    cpf: "CPF",
+    dataNascimento: "Data de Nascimento",
+    sexo: "Sexo",
+    telefone: "Telefone",
+    email: "E-mail",
+    endereco: "Endereço",
+    bairro: "Bairro",
+    cep: "CEP",
+    cidade: "Cidade",
+    uf: "UF",
+    pais: "País",
+    nomeMae: "Nome da Mãe",
+    operadora1: "Convênio 1",
+    planoModalidade1: "Plano 1",
+    matriculaConvenio1: "Matrícula 1",
+    operadora2: "Convênio 2",
+    planoModalidade2: "Plano 2",
+    matriculaConvenio2: "Matrícula 2",
+    grupoDiagnostico: "Grupo Diagnóstico",
+    diagnosticoEspecifico: "Diagnóstico Específico",
+    statusCaso: "Status do Caso",
+    obitoPerda: "Óbito/Perda",
+    dataObitoLastFU: "Data Óbito/Last FU",
+  };
+
+  const actionLabels: Record<string, { label: string; color: string }> = {
+    CREATE: { label: "Cadastro", color: "bg-green-100 text-green-800" },
+    UPDATE: { label: "Alteração", color: "bg-blue-100 text-blue-800" },
+    DELETE: { label: "Exclusão", color: "bg-red-100 text-red-800" },
+    RESTORE: { label: "Restauração", color: "bg-purple-100 text-purple-800" },
+  };
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <Clock className="h-6 w-6 mx-auto mb-2 animate-pulse" />
+        Carregando histórico...
+      </div>
+    );
+  }
+
+  if (!historico || historico.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <p>Nenhuma alteração registrada.</p>
+        <p className="text-xs mt-1">O histórico começa a ser registrado a partir de agora.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+        <History className="h-4 w-4" />
+        <span>{historico.length} alterações registradas (LGPD)</span>
+      </div>
+      
+      {historico.map((log: any) => (
+        <div key={log.id} className="border rounded-lg p-3 bg-gray-50">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Badge className={actionLabels[log.action]?.color || "bg-gray-100"}>
+                {actionLabels[log.action]?.label || log.action}
+              </Badge>
+              <span className="text-sm text-gray-600">
+                {new Date(log.createdAt).toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <User className="h-3 w-3" />
+              {log.userName || log.userEmail || "Sistema"}
+            </div>
+          </div>
+          
+          {log.action === "UPDATE" && log.changedFields && log.changedFields.length > 0 && (
+            <div className="mt-2 space-y-1">
+              <p className="text-xs font-medium text-gray-500">Campos alterados:</p>
+              <div className="grid grid-cols-1 gap-1">
+                {log.changedFields.map((field: string) => {
+                  const oldVal = log.oldValues?.[field];
+                  const newVal = log.newValues?.[field];
+                  return (
+                    <div key={field} className="text-xs bg-white rounded px-2 py-1 border">
+                      <span className="font-medium">{campoLabels[field] || field}:</span>
+                      <span className="text-red-600 line-through ml-2">
+                        {oldVal === null || oldVal === undefined || oldVal === "" ? "(vazio)" : String(oldVal)}
+                      </span>
+                      <span className="mx-1">→</span>
+                      <span className="text-green-600">
+                        {newVal === null || newVal === undefined || newVal === "" ? "(vazio)" : String(newVal)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          
+          {log.action === "CREATE" && (
+            <p className="text-xs text-gray-500 mt-1">Paciente cadastrado no sistema</p>
+          )}
+          
+          {log.action === "DELETE" && (
+            <p className="text-xs text-red-600 mt-1">Registro marcado como excluído (soft delete)</p>
+          )}
+          
+          {log.action === "RESTORE" && (
+            <p className="text-xs text-purple-600 mt-1">Registro restaurado</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPacienteModalProps) {
@@ -125,11 +260,15 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
         <form onSubmit={handleSubmit}>
           <ScrollArea className="h-[calc(90vh-200px)] pr-4">
             <Tabs defaultValue="dados-basicos" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="dados-basicos">Dados Básicos</TabsTrigger>
                 <TabsTrigger value="contato">Contato</TabsTrigger>
                 <TabsTrigger value="convenios">Convênios</TabsTrigger>
                 <TabsTrigger value="clinico">Clínico</TabsTrigger>
+                <TabsTrigger value="historico" className="gap-1">
+                  <History className="h-3.5 w-3.5" />
+                  Histórico
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="dados-basicos" className="space-y-4 mt-4">
@@ -495,6 +634,10 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                     </div>
                   )}
                 </div>
+              </TabsContent>
+
+              <TabsContent value="historico" className="space-y-4 mt-4">
+                <HistoricoAlteracoes pacienteId={paciente.id} />
               </TabsContent>
             </Tabs>
           </ScrollArea>
