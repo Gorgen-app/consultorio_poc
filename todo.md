@@ -1564,3 +1564,7 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Remover prefixo MIG- dos IDs dos pacientes migrados (21.644 atualizados)
 - [x] Campo data de nascimento já existe no formulário de cadastro
 - [x] Resolver conflito de IDs duplicados (950 duplicatas sem tenant removidas)
+
+- [x] Configurar geração automática de IDs no formato 2026-XXXXX para novos pacientes (já implementado, próximo ID: 2026-0000053)
+
+- [x] Restaurar seções pendentes na barra de navegação (Faturamento e Gestão, Leads e Marketing, Portal do Paciente)

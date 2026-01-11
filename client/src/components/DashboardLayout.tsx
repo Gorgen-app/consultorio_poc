@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, Search, Share2 } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, Search, Share2, Receipt, Megaphone, UserCircle, Clock } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -54,10 +54,17 @@ const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: 
 };
 
 // Menu items principais (sem subitens)
-const mainMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade }[] = [
+const mainMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade; comingSoon?: boolean }[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", funcionalidade: "dashboard" },
   { icon: Calendar, label: "Agenda", path: "/agenda", funcionalidade: "agenda" },
   { icon: Share2, label: "Compartilhamento", path: "/compartilhamento", funcionalidade: "compartilhamento" },
+];
+
+// Menu items "Em breve" (funcionalidades futuras)
+const comingSoonItems: { icon: typeof LayoutDashboard; label: string; path: string }[] = [
+  { icon: Receipt, label: "Faturamento e Gestão", path: "/faturamento" },
+  { icon: Megaphone, label: "Leads e Marketing", path: "/marketing" },
+  { icon: UserCircle, label: "Portal do Paciente", path: "/portal-paciente" },
 ];
 
 // Menu items com subitens
@@ -368,6 +375,31 @@ function DashboardLayoutContent({
                     </Collapsible>
                   );
                 })}
+              
+              {/* Separção visual */}
+              {!isCollapsed && (
+                <div className="my-4 mx-2 border-t border-border" />
+              )}
+              
+              {/* Menu items "Em breve" */}
+              {comingSoonItems.map(item => (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton
+                    onClick={() => toast.info(`${item.label} estará disponível em breve!`)}
+                    tooltip={`${item.label} (Em breve)`}
+                    className="h-10 transition-all font-normal opacity-60 cursor-not-allowed"
+                  >
+                    <item.icon className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">{item.label}</span>
+                    {!isCollapsed && (
+                      <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 h-5 bg-muted">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Em breve
+                      </Badge>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarContent>
 
