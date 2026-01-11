@@ -1597,3 +1597,9 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Adicionar convênios extras ao glossário (35 convênios no total)
 - [x] Adicionar formatação de CEP: xxxxx-xxx
 - [x] Verificar formato atual de ID de atendimento
+
+
+## 📋 NORMALIZAÇÃO E VALIDAÇÃO (11/01/2026)
+- [x] Normalizar nomes de convênios duplicados (PETROBRAS/Petrobrás, IPE/IPE Saúde)
+- [x] Validar máscaras de CPF, telefone e CEP em todos os formulários
+- [x] Definir formato da planilha para importação de atendimentos históricos

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MaskedInput } from "@/components/MaskedInput";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -145,7 +146,8 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
 
                   <div className="space-y-2">
                     <Label htmlFor="cpf">CPF</Label>
-                    <Input
+                    <MaskedInput
+                      mask="cpf"
                       id="cpf"
                       value={formData.cpf || ""}
                       onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
@@ -195,7 +197,8 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone</Label>
-                    <Input
+                    <MaskedInput
+                      mask="telefone"
                       id="telefone"
                       value={formData.telefone || ""}
                       onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
@@ -233,7 +236,8 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
 
                   <div className="space-y-2">
                     <Label htmlFor="cep">CEP</Label>
-                    <Input
+                    <MaskedInput
+                      mask="cep"
                       id="cep"
                       value={formData.cep || ""}
                       onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
