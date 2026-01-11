@@ -163,6 +163,7 @@ export const pacientes = mysqlTable("pacientes", {
   id: int("id").autoincrement().primaryKey(),
   tenantId: int("tenant_id").notNull().default(1).references(() => tenants.id),
   idPaciente: varchar("id_paciente", { length: 64 }).notNull(), // ex: 2025-0000001
+  codigoLegado: varchar("codigo_legado", { length: 64 }), // ID do sistema anterior para migração
   dataInclusao: date("data_inclusao"),
   pastaPaciente: varchar("pasta_paciente", { length: 255 }),
   nome: varchar("nome", { length: 255 }).notNull(),

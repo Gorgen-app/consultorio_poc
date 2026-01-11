@@ -1522,3 +1522,26 @@ A dashboard deve integrar **medicina e administração**:
 
 ### Total de Testes
 - 200 testes passando (174 anteriores + 26 novos)
+
+
+---
+
+## 📦 MIGRAÇÃO DE 21.644 PACIENTES (11/01/2026)
+
+### Preparação do Schema
+- [x] Adicionar campo codigoLegado no schema de pacientes
+- [ ] Criar tabela de convênios
+- [ ] Mapear 34 operadoras da planilha para convênios
+
+### Script de Migração
+- [x] Desenvolver script de migração com validações
+- [x] Validar datas (range 1900-2025)
+- [x] Tratar IDs duplicados (21 casos)
+- [x] Normalizar e-mails (lowercase, trim)
+- [ ] Tratar e-mails duplicados (1.290 casos)
+- [x] Criar relatório de inconsistências
+
+### Execução
+- [ ] Testar migração piloto (1000 pacientes)
+- [ ] Executar migração completa
+- [ ] Validar totais e integridade
