@@ -2403,7 +2403,204 @@ Retorne um JSON válido com a estrutura:
         await db.toggleTenantStatus(input.tenantId, input.status);
         return { success: true };
       }),
+   }),
+
+  // ============================================
+  // CROSS-TENANT SHARING
+  // ============================================
+  crossTenant: router({
+    // Solicitar autorização de acesso cross-tenant
+    solicitarAutorizacao: tenantProcedure
+      .input(z.object({
+        tenantOrigemId: z.number(),
+        pacienteId: z.number(),
+        tipoAutorizacao: z.enum(['leitura', 'escrita', 'completo']).default('leitura'),
+        escopoAutorizacao: z.enum(['prontuario', 'atendimentos', 'exames', 'documentos', 'completo']).default('completo'),
+        motivo: z.string().min(10),
+        dataFim: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.createCrossTenantAutorizacao({
+          tenantOrigemId: input.tenantOrigemId,
+          tenantDestinoId: ctx.tenant.tenantId,
+          pacienteId: input.pacienteId,
+          criadoPorUserId: ctx.user!.id,
+          tipoAutorizacao: input.tipoAutorizacao,
+          escopoAutorizacao: input.escopoAutorizacao,
+          motivo: input.motivo,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        });
+      }),
+
+    // Listar autorizações concedidas pelo meu tenant
+    listAutorizacoesConcedidas: tenantProcedure
+      .input(z.object({
+        status: z.enum(['pendente', 'ativa', 'revogada', 'expirada', 'rejeitada']).optional(),
+        limit: z.number().default(50),
+        offset: z.number().default(0),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.listAutorizacoesConcedidas(
+          ctx.tenant.tenantId,
+          input?.status,
+          input?.limit,
+          input?.offset
+        );
+      }),
+
+    // Listar autorizações recebidas pelo meu tenant
+    listAutorizacoesRecebidas: tenantProcedure
+      .input(z.object({
+        status: z.enum(['pendente', 'ativa', 'revogada', 'expirada', 'rejeitada']).optional(),
+        limit: z.number().default(50),
+        offset: z.number().default(0),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.listAutorizacoesRecebidas(
+          ctx.tenant.tenantId,
+          input?.status,
+          input?.limit,
+          input?.offset
+        );
+      }),
+
+    // Aprovar solicitação de autorização
+    aprovarAutorizacao: tenantProcedure
+      .input(z.object({
+        autorizacaoId: z.number(),
+        consentimentoLGPD: z.boolean(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verificar se a autorização pertence ao tenant de origem
+        const auth = await db.getCrossTenantAutorizacao(input.autorizacaoId);
+        if (!auth || auth.tenantOrigemId !== ctx.tenant.tenantId) {
+          throw new Error('Autorização não encontrada ou sem permissão');
+        }
+        
+        return await db.approveCrossTenantAutorizacao(
+          input.autorizacaoId,
+          input.consentimentoLGPD,
+          ctx.req?.ip || 'unknown'
+        );
+      }),
+
+    // Rejeitar solicitação de autorização
+    rejeitarAutorizacao: tenantProcedure
+      .input(z.object({
+        autorizacaoId: z.number(),
+        motivo: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const auth = await db.getCrossTenantAutorizacao(input.autorizacaoId);
+        if (!auth || auth.tenantOrigemId !== ctx.tenant.tenantId) {
+          throw new Error('Autorização não encontrada ou sem permissão');
+        }
+        
+        return await db.updateAutorizacaoStatus(input.autorizacaoId, 'rejeitada');
+      }),
+
+    // Revogar autorização ativa
+    revogarAutorizacao: tenantProcedure
+      .input(z.object({
+        autorizacaoId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const auth = await db.getCrossTenantAutorizacao(input.autorizacaoId);
+        if (!auth || auth.tenantOrigemId !== ctx.tenant.tenantId) {
+          throw new Error('Autorização não encontrada ou sem permissão');
+        }
+        
+        return await db.revokeCrossTenantAutorizacao(input.autorizacaoId);
+      }),
+
+    // Acessar prontuário de outro tenant (com validação)
+    getProntuario: tenantProcedure
+      .input(z.object({
+        tenantOrigemId: z.number(),
+        pacienteId: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        return await db.getProntuarioCrossTenant(
+          ctx.tenant.tenantId,
+          input.tenantOrigemId,
+          input.pacienteId,
+          ctx.user!.id,
+          ctx.req?.ip,
+          ctx.req?.headers['user-agent']
+        );
+      }),
+
+    // Acessar atendimentos de outro tenant (com validação)
+    getAtendimentos: tenantProcedure
+      .input(z.object({
+        tenantOrigemId: z.number(),
+        pacienteId: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        return await db.getAtendimentosCrossTenant(
+          ctx.tenant.tenantId,
+          input.tenantOrigemId,
+          input.pacienteId,
+          ctx.user!.id,
+          ctx.req?.ip,
+          ctx.req?.headers['user-agent']
+        );
+      }),
+
+    // Listar logs de acesso (auditoria)
+    listAccessLogs: tenantProcedure
+      .input(z.object({
+        pacienteId: z.number().optional(),
+        autorizacaoId: z.number().optional(),
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+        limit: z.number().default(100),
+        offset: z.number().default(0),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.listCrossTenantAccessLogs({
+          tenantOrigemId: ctx.tenant.tenantId,
+          pacienteId: input?.pacienteId,
+          autorizacaoId: input?.autorizacaoId,
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          limit: input?.limit,
+          offset: input?.offset,
+        });
+      }),
+
+    // Contar logs de acesso
+    countAccessLogs: tenantProcedure
+      .input(z.object({
+        pacienteId: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.countCrossTenantAccessLogs({
+          tenantOrigemId: ctx.tenant.tenantId,
+          pacienteId: input?.pacienteId,
+        });
+      }),
+
+    // Obter estatísticas de compartilhamento
+    getStats: tenantProcedure
+      .query(async ({ ctx }) => {
+        return await db.getCrossTenantStats(ctx.tenant.tenantId);
+      }),
+
+    // Obter autorizações prestes a expirar
+    getAutorizacoesExpirando: tenantProcedure
+      .input(z.object({
+        diasAntecedencia: z.number().default(7),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getAutorizacoesExpirando(input?.diasAntecedencia || 7);
+      }),
+
+    // Atualizar autorizações expiradas (job de manutenção)
+    atualizarExpiradas: tenantProcedure
+      .mutation(async () => {
+        return await db.atualizarAutorizacoesExpiradas();
+      }),
   }),
 });
-
 export type AppRouter = typeof appRouter;

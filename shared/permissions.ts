@@ -38,7 +38,11 @@ export type Funcionalidade =
   | 'usuarios'
   | 'usuarios.criar'
   | 'usuarios.editar'
-  | 'admin_tenants';
+  | 'admin_tenants'
+  | 'compartilhamento'
+  | 'compartilhamento.solicitar'
+  | 'compartilhamento.aprovar'
+  | 'compartilhamento.revogar';
 
 // Matriz de permissões: true = permitido, false = negado
 export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, boolean>> = {
@@ -67,6 +71,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'usuarios.criar': true,
     'usuarios.editar': true,
     admin_tenants: true,
+    compartilhamento: true,
+    'compartilhamento.solicitar': true,
+    'compartilhamento.aprovar': true,
+    'compartilhamento.revogar': true,
   },
   medico: {
     dashboard: true,
@@ -93,6 +101,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'usuarios.criar': false,
     'usuarios.editar': false,
     admin_tenants: false,
+    compartilhamento: true,
+    'compartilhamento.solicitar': true,
+    'compartilhamento.aprovar': true,
+    'compartilhamento.revogar': true,
   },
   secretaria: {
     dashboard: true,
@@ -119,6 +131,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'usuarios.criar': false,
     'usuarios.editar': false,
     admin_tenants: false,
+    compartilhamento: false,
+    'compartilhamento.solicitar': false,
+    'compartilhamento.aprovar': false,
+    'compartilhamento.revogar': false,
   },
   auditor: {
     dashboard: true,
@@ -145,6 +161,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'usuarios.criar': false,
     'usuarios.editar': false,
     admin_tenants: false,
+    compartilhamento: true, // Auditor pode ver compartilhamentos para auditoria
+    'compartilhamento.solicitar': false,
+    'compartilhamento.aprovar': false,
+    'compartilhamento.revogar': false,
   },
   paciente: {
     dashboard: false, // Paciente não vê dashboard geral
@@ -171,6 +191,10 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'usuarios.criar': false,
     'usuarios.editar': false,
     admin_tenants: false,
+    compartilhamento: true, // Paciente pode ver seus compartilhamentos
+    'compartilhamento.solicitar': false,
+    'compartilhamento.aprovar': true, // Paciente pode aprovar compartilhamento de seus dados
+    'compartilhamento.revogar': true, // Paciente pode revogar compartilhamento de seus dados
   },
 };
 

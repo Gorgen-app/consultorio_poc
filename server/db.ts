@@ -1,6 +1,6 @@
-import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, inArray } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 /**
@@ -2842,48 +2842,231 @@ export async function toggleTenantStatus(id: number, status: "ativo" | "inativo"
   await db.update(tenants).set({ status }).where(eq(tenants.id, id));
 }
 
-// Autorizações de pacientes
-export async function createPacienteAutorizacao(data: {
-  tenantId: number;
+// ============================================
+// FUNÇÕES DE AUTORIZAÇÃO CROSS-TENANT
+// ============================================
+
+/**
+ * Cria uma nova autorização de compartilhamento cross-tenant
+ */
+export async function createCrossTenantAutorizacao(data: {
+  tenantOrigemId: number;
+  tenantDestinoId: number;
   pacienteId: number;
-  autorizadoPorUserId: number;
-  autorizadoParaUserId: number;
-  tipoAcesso?: "leitura" | "escrita" | "completo";
+  criadoPorUserId: number;
+  tipoAutorizacao?: "leitura" | "escrita" | "completo";
+  escopoAutorizacao?: "prontuario" | "atendimentos" | "exames" | "documentos" | "completo";
   motivo?: string;
   dataFim?: Date;
+  consentimentoLGPD?: boolean;
+  ipConsentimento?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.insert(pacienteAutorizacoes).values({
-    tenantId: data.tenantId,
+  const [result] = await db.insert(pacienteAutorizacoes).values({
+    tenantOrigemId: data.tenantOrigemId,
+    tenantDestinoId: data.tenantDestinoId,
     pacienteId: data.pacienteId,
-    autorizadoPorUserId: data.autorizadoPorUserId,
-    autorizadoParaUserId: data.autorizadoParaUserId,
-    tipoAcesso: data.tipoAcesso || "leitura",
+    criadoPorUserId: data.criadoPorUserId,
+    tipoAutorizacao: data.tipoAutorizacao || "leitura",
+    escopoAutorizacao: data.escopoAutorizacao || "completo",
     motivo: data.motivo || null,
     dataFim: data.dataFim || null,
-    status: "ativo",
+    status: "pendente",
+    consentimentoLGPD: data.consentimentoLGPD || false,
+    dataConsentimento: data.consentimentoLGPD ? new Date() : null,
+    ipConsentimento: data.ipConsentimento || null,
   });
-}
-
-export async function revokePacienteAutorizacao(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
   
-  await db.update(pacienteAutorizacoes).set({ status: "revogado" }).where(eq(pacienteAutorizacoes.id, id));
+  return result.insertId;
 }
 
-export async function listPacienteAutorizacoes(pacienteId: number) {
+/**
+ * Busca uma autorização por ID
+ */
+export async function getCrossTenantAutorizacao(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const [result] = await db.select().from(pacienteAutorizacoes)
+    .where(eq(pacienteAutorizacoes.id, id));
+  return result || null;
+}
+
+/**
+ * Lista autorizações concedidas por um tenant (onde ele é o titular dos dados)
+ */
+export async function listAutorizacoesConcedidas(
+  tenantOrigemId: number,
+  status?: "pendente" | "ativa" | "revogada" | "expirada" | "rejeitada",
+  limit: number = 50,
+  offset: number = 0
+) {
   const db = await getDb();
   if (!db) return [];
   
-  const result = await db.select().from(pacienteAutorizacoes)
-    .where(and(
-      eq(pacienteAutorizacoes.pacienteId, pacienteId),
-      eq(pacienteAutorizacoes.status, "ativo")
-    ));
+  const conditions = [eq(pacienteAutorizacoes.tenantOrigemId, tenantOrigemId)];
+  if (status) {
+    conditions.push(eq(pacienteAutorizacoes.status, status));
+  }
+  
+  const result = await db.select({
+    autorizacao: pacienteAutorizacoes,
+    tenantDestino: {
+      id: tenants.id,
+      nome: tenants.nome,
+      slug: tenants.slug,
+    }
+  })
+    .from(pacienteAutorizacoes)
+    .innerJoin(tenants, eq(pacienteAutorizacoes.tenantDestinoId, tenants.id))
+    .where(and(...conditions))
+    .orderBy(desc(pacienteAutorizacoes.createdAt))
+    .limit(limit)
+    .offset(offset);
+  
   return result;
+}
+
+/**
+ * Lista autorizações recebidas por um tenant (onde ele pode acessar dados de outros tenants)
+ */
+export async function listAutorizacoesRecebidas(
+  tenantDestinoId: number,
+  status?: "pendente" | "ativa" | "revogada" | "expirada" | "rejeitada",
+  limit: number = 50,
+  offset: number = 0
+) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [eq(pacienteAutorizacoes.tenantDestinoId, tenantDestinoId)];
+  if (status) {
+    conditions.push(eq(pacienteAutorizacoes.status, status));
+  }
+  
+  const result = await db.select({
+    autorizacao: pacienteAutorizacoes,
+    tenantOrigem: {
+      id: tenants.id,
+      nome: tenants.nome,
+      slug: tenants.slug,
+    },
+    paciente: {
+      id: pacientes.id,
+      nome: pacientes.nome,
+      cpf: pacientes.cpf,
+    }
+  })
+    .from(pacienteAutorizacoes)
+    .innerJoin(tenants, eq(pacienteAutorizacoes.tenantOrigemId, tenants.id))
+    .innerJoin(pacientes, eq(pacienteAutorizacoes.pacienteId, pacientes.id))
+    .where(and(...conditions))
+    .orderBy(desc(pacienteAutorizacoes.createdAt))
+    .limit(limit)
+    .offset(offset);
+  
+  return result;
+}
+
+/**
+ * Atualiza o status de uma autorização
+ */
+export async function updateAutorizacaoStatus(
+  id: number, 
+  status: "pendente" | "ativa" | "revogada" | "expirada" | "rejeitada"
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(pacienteAutorizacoes)
+    .set({ status })
+    .where(eq(pacienteAutorizacoes.id, id));
+}
+
+/**
+ * Revoga uma autorização
+ */
+export async function revokeCrossTenantAutorizacao(id: number) {
+  return updateAutorizacaoStatus(id, "revogada");
+}
+
+/**
+ * Aprova uma autorização pendente
+ */
+export async function approveCrossTenantAutorizacao(id: number, consentimentoLGPD: boolean, ipConsentimento?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(pacienteAutorizacoes)
+    .set({ 
+      status: "ativa",
+      consentimentoLGPD,
+      dataConsentimento: new Date(),
+      ipConsentimento: ipConsentimento || null,
+    })
+    .where(eq(pacienteAutorizacoes.id, id));
+}
+
+/**
+ * Verifica se um tenant tem autorização para acessar dados de um paciente de outro tenant
+ */
+export async function verificarAutorizacaoCrossTenant(
+  tenantOrigemId: number,
+  tenantDestinoId: number,
+  pacienteId: number,
+  tipoAcesso: "leitura" | "escrita" | "completo" = "leitura",
+  escopo: "prontuario" | "atendimentos" | "exames" | "documentos" | "completo" = "completo"
+): Promise<{ autorizado: boolean; autorizacaoId?: number; motivo?: string }> {
+  const db = await getDb();
+  if (!db) return { autorizado: false, motivo: "Database not available" };
+  
+  // Busca autorização ativa
+  const [autorizacao] = await db.select().from(pacienteAutorizacoes)
+    .where(and(
+      eq(pacienteAutorizacoes.tenantOrigemId, tenantOrigemId),
+      eq(pacienteAutorizacoes.tenantDestinoId, tenantDestinoId),
+      eq(pacienteAutorizacoes.pacienteId, pacienteId),
+      eq(pacienteAutorizacoes.status, "ativa")
+    ));
+  
+  if (!autorizacao) {
+    return { autorizado: false, motivo: "Nenhuma autorização encontrada" };
+  }
+  
+  // Verifica se a autorização não expirou
+  if (autorizacao.dataFim && new Date(autorizacao.dataFim) < new Date()) {
+    // Atualiza status para expirada
+    await updateAutorizacaoStatus(autorizacao.id, "expirada");
+    return { autorizado: false, motivo: "Autorização expirada" };
+  }
+  
+  // Verifica tipo de acesso
+  const tiposPermitidos: Record<string, string[]> = {
+    "completo": ["leitura", "escrita", "completo"],
+    "escrita": ["leitura", "escrita"],
+    "leitura": ["leitura"],
+  };
+  
+  if (!tiposPermitidos[autorizacao.tipoAutorizacao || "leitura"].includes(tipoAcesso)) {
+    return { autorizado: false, motivo: `Tipo de acesso '${tipoAcesso}' não permitido` };
+  }
+  
+  // Verifica escopo
+  const escoposPermitidos: Record<string, string[]> = {
+    "completo": ["prontuario", "atendimentos", "exames", "documentos", "completo"],
+    "prontuario": ["prontuario"],
+    "atendimentos": ["atendimentos"],
+    "exames": ["exames"],
+    "documentos": ["documentos"],
+  };
+  
+  if (!escoposPermitidos[autorizacao.escopoAutorizacao || "completo"].includes(escopo)) {
+    return { autorizado: false, motivo: `Escopo '${escopo}' não autorizado` };
+  }
+  
+  return { autorizado: true, autorizacaoId: autorizacao.id };
 }
 
 
@@ -3111,4 +3294,435 @@ export async function inviteUserToTenant(
   });
   
   return result[0].insertId;
+}
+
+
+// ============================================
+// QUERIES CROSS-TENANT COM VALIDAÇÃO
+// ============================================
+
+// crossTenantAccessLogs já importado no início do arquivo
+
+/**
+ * Registra um acesso cross-tenant no log de auditoria
+ */
+export async function logCrossTenantAccess(data: {
+  autorizacaoId: number;
+  tenantOrigemId: number;
+  tenantDestinoId: number;
+  pacienteId: number;
+  userId: number;
+  tipoAcao: "visualizacao" | "download" | "impressao" | "criacao" | "edicao" | "exportacao";
+  recursoTipo: string;
+  recursoId?: number;
+  detalhes?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(crossTenantAccessLogs).values({
+    autorizacaoId: data.autorizacaoId,
+    tenantOrigemId: data.tenantOrigemId,
+    tenantDestinoId: data.tenantDestinoId,
+    pacienteId: data.pacienteId,
+    userId: data.userId,
+    tipoAcao: data.tipoAcao,
+    recursoTipo: data.recursoTipo,
+    recursoId: data.recursoId || null,
+    detalhes: data.detalhes || null,
+    ipAddress: data.ipAddress || null,
+    userAgent: data.userAgent || null,
+  });
+}
+
+/**
+ * Busca o prontuário de um paciente de outro tenant (com validação de autorização)
+ */
+export async function getProntuarioCrossTenant(
+  tenantDestinoId: number,
+  tenantOrigemId: number,
+  pacienteId: number,
+  userId: number,
+  ipAddress?: string,
+  userAgent?: string
+) {
+  // Verificar autorização
+  const auth = await verificarAutorizacaoCrossTenant(
+    tenantOrigemId,
+    tenantDestinoId,
+    pacienteId,
+    "leitura",
+    "prontuario"
+  );
+  
+  if (!auth.autorizado) {
+    return { error: auth.motivo, autorizado: false };
+  }
+  
+  // Buscar prontuário do tenant de origem
+  const prontuario = await getProntuarioCompleto(pacienteId, tenantOrigemId);
+  
+  // Registrar acesso no log
+  await logCrossTenantAccess({
+    autorizacaoId: auth.autorizacaoId!,
+    tenantOrigemId,
+    tenantDestinoId,
+    pacienteId,
+    userId,
+    tipoAcao: "visualizacao",
+    recursoTipo: "prontuario",
+    detalhes: "Acesso ao prontuário completo via autorização cross-tenant",
+    ipAddress,
+    userAgent,
+  });
+  
+  return { data: prontuario, autorizado: true };
+}
+
+/**
+ * Busca atendimentos de um paciente de outro tenant (com validação de autorização)
+ */
+export async function getAtendimentosCrossTenant(
+  tenantDestinoId: number,
+  tenantOrigemId: number,
+  pacienteId: number,
+  userId: number,
+  ipAddress?: string,
+  userAgent?: string
+) {
+  // Verificar autorização
+  const auth = await verificarAutorizacaoCrossTenant(
+    tenantOrigemId,
+    tenantDestinoId,
+    pacienteId,
+    "leitura",
+    "atendimentos"
+  );
+  
+  if (!auth.autorizado) {
+    return { error: auth.motivo, autorizado: false };
+  }
+  
+  // Buscar atendimentos do tenant de origem
+  const atendimentosList = await listAtendimentos(tenantOrigemId, { pacienteId });
+  
+  // Registrar acesso no log
+  await logCrossTenantAccess({
+    autorizacaoId: auth.autorizacaoId!,
+    tenantOrigemId,
+    tenantDestinoId,
+    pacienteId,
+    userId,
+    tipoAcao: "visualizacao",
+    recursoTipo: "atendimentos",
+    detalhes: `Listagem de ${atendimentosList.length} atendimentos via autorização cross-tenant`,
+    ipAddress,
+    userAgent,
+  });
+  
+  return { data: atendimentosList, autorizado: true };
+}
+
+/**
+ * Lista logs de acesso cross-tenant para auditoria
+ */
+export async function listCrossTenantAccessLogs(filters: {
+  tenantOrigemId?: number;
+  tenantDestinoId?: number;
+  pacienteId?: number;
+  userId?: number;
+  autorizacaoId?: number;
+  dataInicio?: Date;
+  dataFim?: Date;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  
+  if (filters.tenantOrigemId) {
+    conditions.push(eq(crossTenantAccessLogs.tenantOrigemId, filters.tenantOrigemId));
+  }
+  if (filters.tenantDestinoId) {
+    conditions.push(eq(crossTenantAccessLogs.tenantDestinoId, filters.tenantDestinoId));
+  }
+  if (filters.pacienteId) {
+    conditions.push(eq(crossTenantAccessLogs.pacienteId, filters.pacienteId));
+  }
+  if (filters.userId) {
+    conditions.push(eq(crossTenantAccessLogs.userId, filters.userId));
+  }
+  if (filters.autorizacaoId) {
+    conditions.push(eq(crossTenantAccessLogs.autorizacaoId, filters.autorizacaoId));
+  }
+  if (filters.dataInicio) {
+    conditions.push(gte(crossTenantAccessLogs.createdAt, filters.dataInicio));
+  }
+  
+  let query = db.select({
+    log: crossTenantAccessLogs,
+    tenantOrigem: {
+      id: tenants.id,
+      nome: tenants.nome,
+    },
+    tenantDestino: {
+      id: tenants.id,
+      nome: tenants.nome,
+    },
+  })
+    .from(crossTenantAccessLogs)
+    .innerJoin(tenants, eq(crossTenantAccessLogs.tenantOrigemId, tenants.id))
+    .orderBy(desc(crossTenantAccessLogs.createdAt));
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as typeof query;
+  }
+  
+  if (filters.limit) {
+    query = query.limit(filters.limit) as typeof query;
+  }
+  
+  if (filters.offset) {
+    query = query.offset(filters.offset) as typeof query;
+  }
+  
+  const result = await query;
+  return result;
+}
+
+/**
+ * Conta total de acessos cross-tenant
+ */
+export async function countCrossTenantAccessLogs(filters: {
+  tenantOrigemId?: number;
+  tenantDestinoId?: number;
+  pacienteId?: number;
+}) {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const conditions = [];
+  
+  if (filters.tenantOrigemId) {
+    conditions.push(eq(crossTenantAccessLogs.tenantOrigemId, filters.tenantOrigemId));
+  }
+  if (filters.tenantDestinoId) {
+    conditions.push(eq(crossTenantAccessLogs.tenantDestinoId, filters.tenantDestinoId));
+  }
+  if (filters.pacienteId) {
+    conditions.push(eq(crossTenantAccessLogs.pacienteId, filters.pacienteId));
+  }
+  
+  const [result] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(crossTenantAccessLogs)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+  
+  return result?.count || 0;
+}
+
+
+// ============================================
+// NOTIFICAÇÕES CROSS-TENANT
+// ============================================
+
+/**
+ * Tipos de notificação cross-tenant
+ */
+export type CrossTenantNotificationType = 
+  | 'autorizacao_solicitada'
+  | 'autorizacao_aprovada'
+  | 'autorizacao_rejeitada'
+  | 'autorizacao_revogada'
+  | 'autorizacao_expirando'
+  | 'acesso_realizado';
+
+/**
+ * Interface para notificação cross-tenant
+ */
+export interface CrossTenantNotification {
+  tipo: CrossTenantNotificationType;
+  tenantOrigemId: number;
+  tenantDestinoId: number;
+  pacienteId: number;
+  autorizacaoId: number;
+  mensagem: string;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Gera mensagem de notificação baseada no tipo
+ */
+export function gerarMensagemNotificacao(
+  tipo: CrossTenantNotificationType,
+  dados: {
+    tenantOrigemNome?: string;
+    tenantDestinoNome?: string;
+    pacienteNome?: string;
+    tipoAutorizacao?: string;
+    diasRestantes?: number;
+  }
+): { titulo: string; conteudo: string } {
+  const { tenantOrigemNome, tenantDestinoNome, pacienteNome, tipoAutorizacao, diasRestantes } = dados;
+  
+  switch (tipo) {
+    case 'autorizacao_solicitada':
+      return {
+        titulo: '🔔 Nova Solicitação de Acesso',
+        conteudo: `A clínica "${tenantDestinoNome}" solicitou acesso ${tipoAutorizacao} aos dados do paciente "${pacienteNome}". Aguardando sua aprovação.`,
+      };
+    
+    case 'autorizacao_aprovada':
+      return {
+        titulo: '✅ Acesso Aprovado',
+        conteudo: `Sua solicitação de acesso aos dados do paciente "${pacienteNome}" na clínica "${tenantOrigemNome}" foi aprovada. Tipo de acesso: ${tipoAutorizacao}.`,
+      };
+    
+    case 'autorizacao_rejeitada':
+      return {
+        titulo: '❌ Acesso Rejeitado',
+        conteudo: `Sua solicitação de acesso aos dados do paciente "${pacienteNome}" na clínica "${tenantOrigemNome}" foi rejeitada.`,
+      };
+    
+    case 'autorizacao_revogada':
+      return {
+        titulo: '⚠️ Acesso Revogado',
+        conteudo: `O acesso aos dados do paciente "${pacienteNome}" na clínica "${tenantOrigemNome}" foi revogado.`,
+      };
+    
+    case 'autorizacao_expirando':
+      return {
+        titulo: '⏰ Autorização Expirando',
+        conteudo: `A autorização de acesso aos dados do paciente "${pacienteNome}" expira em ${diasRestantes} dias. Solicite renovação se necessário.`,
+      };
+    
+    case 'acesso_realizado':
+      return {
+        titulo: '👁️ Acesso Registrado',
+        conteudo: `A clínica "${tenantDestinoNome}" acessou dados do paciente "${pacienteNome}". Este acesso foi registrado para fins de auditoria LGPD.`,
+      };
+    
+    default:
+      return {
+        titulo: 'Notificação Cross-Tenant',
+        conteudo: 'Uma ação foi realizada no sistema de compartilhamento de dados.',
+      };
+  }
+}
+
+/**
+ * Busca autorizações que estão prestes a expirar
+ */
+export async function getAutorizacoesExpirando(diasAntecedencia: number = 7) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const dataLimite = new Date();
+  dataLimite.setDate(dataLimite.getDate() + diasAntecedencia);
+  
+  const autorizacoes = await db.select()
+    .from(pacienteAutorizacoes)
+    .where(
+      and(
+        eq(pacienteAutorizacoes.status, 'ativa'),
+        lte(pacienteAutorizacoes.dataFim, dataLimite),
+        gt(pacienteAutorizacoes.dataFim, new Date())
+      )
+    );
+  
+  return autorizacoes;
+}
+
+/**
+ * Verifica e atualiza autorizações expiradas
+ */
+export async function atualizarAutorizacoesExpiradas() {
+  const db = await getDb();
+  if (!db) return { atualizadas: 0 };
+  
+  const agora = new Date();
+  
+  const result = await db.update(pacienteAutorizacoes)
+    .set({ 
+      status: 'expirada',
+      updatedAt: agora,
+    })
+    .where(
+      and(
+        eq(pacienteAutorizacoes.status, 'ativa'),
+        lte(pacienteAutorizacoes.dataFim, agora)
+      )
+    );
+  
+  return { atualizadas: (result as any)[0]?.affectedRows || 0 };
+}
+
+/**
+ * Obtém estatísticas de compartilhamento para um tenant
+ */
+export async function getCrossTenantStats(tenantId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Autorizações concedidas (onde este tenant é a origem)
+  const [concedidas] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(pacienteAutorizacoes)
+    .where(eq(pacienteAutorizacoes.tenantOrigemId, tenantId));
+  
+  // Autorizações recebidas (onde este tenant é o destino)
+  const [recebidas] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(pacienteAutorizacoes)
+    .where(eq(pacienteAutorizacoes.tenantDestinoId, tenantId));
+  
+  // Autorizações ativas concedidas
+  const [ativasConcedidas] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(pacienteAutorizacoes)
+    .where(
+      and(
+        eq(pacienteAutorizacoes.tenantOrigemId, tenantId),
+        eq(pacienteAutorizacoes.status, 'ativa')
+      )
+    );
+  
+  // Autorizações ativas recebidas
+  const [ativasRecebidas] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(pacienteAutorizacoes)
+    .where(
+      and(
+        eq(pacienteAutorizacoes.tenantDestinoId, tenantId),
+        eq(pacienteAutorizacoes.status, 'ativa')
+      )
+    );
+  
+  // Pendentes para aprovação
+  const [pendentes] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(pacienteAutorizacoes)
+    .where(
+      and(
+        eq(pacienteAutorizacoes.tenantOrigemId, tenantId),
+        eq(pacienteAutorizacoes.status, 'pendente')
+      )
+    );
+  
+  // Total de acessos registrados
+  const [acessos] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(crossTenantAccessLogs)
+    .where(
+      or(
+        eq(crossTenantAccessLogs.tenantOrigemId, tenantId),
+        eq(crossTenantAccessLogs.tenantDestinoId, tenantId)
+      )
+    );
+  
+  return {
+    totalConcedidas: concedidas?.count || 0,
+    totalRecebidas: recebidas?.count || 0,
+    ativasConcedidas: ativasConcedidas?.count || 0,
+    ativasRecebidas: ativasRecebidas?.count || 0,
+    pendentesAprovacao: pendentes?.count || 0,
+    totalAcessosRegistrados: acessos?.count || 0,
+  };
 }

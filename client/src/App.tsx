@@ -15,6 +15,7 @@ import Agenda from "./pages/Agenda";
 import Configuracoes from "./pages/Configuracoes";
 import ExamesFavoritos from "./pages/ExamesFavoritos";
 import AdminTenants from "./pages/AdminTenants";
+import CrossTenantAutorizacoes from "./pages/CrossTenantAutorizacoes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Router() {
@@ -73,6 +74,11 @@ function Router() {
       <Route path="/admin/tenants">
         <ProtectedRoute funcionalidade="admin_tenants">
           <AdminTenants />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/compartilhamento">
+        <ProtectedRoute funcionalidade="compartilhamento">
+          <CrossTenantAutorizacoes />
         </ProtectedRoute>
       </Route>
       <Route path="/config-simples">

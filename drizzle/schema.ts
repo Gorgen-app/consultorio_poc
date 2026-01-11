@@ -26,25 +26,116 @@ export type Tenant = typeof tenants.$inferSelect;
 export type InsertTenant = typeof tenants.$inferInsert;
 
 /**
- * Tabela de Autorizações de Pacientes - Compartilhamento entre médicos
+ * Tabela de Autorizações de Pacientes - Compartilhamento Cross-Tenant
+ * Permite que um paciente autorize o compartilhamento de seus dados entre diferentes clínicas/tenants
  */
 export const pacienteAutorizacoes = mysqlTable("paciente_autorizacoes", {
   id: int("id").autoincrement().primaryKey(),
-  tenantId: int("tenant_id").notNull(),
+  
+  // Tenant de origem (onde os dados estão armazenados)
+  tenantOrigemId: int("tenant_origem_id").notNull().references(() => tenants.id),
+  
+  // Tenant de destino (quem receberá acesso aos dados)
+  tenantDestinoId: int("tenant_destino_id").notNull().references(() => tenants.id),
+  
+  // Paciente que está concedendo a autorização
   pacienteId: int("paciente_id").notNull(),
-  autorizadoPorUserId: int("autorizado_por_user_id").notNull(),
-  autorizadoParaUserId: int("autorizado_para_user_id").notNull(),
-  tipoAcesso: mysqlEnum("tipo_acesso", ["leitura", "escrita", "completo"]).default("leitura"),
+  
+  // Usuário que criou a autorização (pode ser o próprio paciente ou um admin)
+  criadoPorUserId: int("criado_por_user_id").notNull(),
+  
+  // Tipo de autorização
+  tipoAutorizacao: mysqlEnum("tipo_autorizacao", [
+    "leitura",      // Apenas visualização
+    "escrita",      // Pode adicionar registros
+    "completo"      // Acesso total (leitura + escrita + histórico)
+  ]).default("leitura"),
+  
+  // Escopo da autorização - quais dados podem ser acessados
+  escopoAutorizacao: mysqlEnum("escopo_autorizacao", [
+    "prontuario",        // Apenas prontuário médico
+    "atendimentos",      // Apenas atendimentos
+    "exames",            // Apenas exames
+    "documentos",        // Apenas documentos
+    "completo"           // Todos os dados do paciente
+  ]).default("completo"),
+  
+  // Período de validade
   dataInicio: timestamp("data_inicio").defaultNow(),
   dataFim: timestamp("data_fim"),
+  
+  // Motivo/justificativa da autorização
   motivo: text("motivo"),
-  status: mysqlEnum("status", ["ativo", "revogado", "expirado"]).default("ativo"),
+  
+  // Status da autorização
+  status: mysqlEnum("status", [
+    "pendente",    // Aguardando aprovação
+    "ativa",       // Autorização válida
+    "revogada",    // Revogada pelo paciente ou admin
+    "expirada",    // Passou da data de validade
+    "rejeitada"    // Rejeitada pelo paciente
+  ]).default("pendente"),
+  
+  // Consentimento LGPD
+  consentimentoLGPD: boolean("consentimento_lgpd").default(false),
+  dataConsentimento: timestamp("data_consentimento"),
+  ipConsentimento: varchar("ip_consentimento", { length: 45 }),
+  
+  // Metadados
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
 export type PacienteAutorizacao = typeof pacienteAutorizacoes.$inferSelect;
 export type InsertPacienteAutorizacao = typeof pacienteAutorizacoes.$inferInsert;
+
+/**
+ * Tabela de Logs de Acesso Cross-Tenant
+ * Registra todos os acessos realizados através de autorizações cross-tenant
+ */
+export const crossTenantAccessLogs = mysqlTable("cross_tenant_access_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Referência à autorização utilizada
+  autorizacaoId: int("autorizacao_id").notNull().references(() => pacienteAutorizacoes.id),
+  
+  // Tenants envolvidos
+  tenantOrigemId: int("tenant_origem_id").notNull().references(() => tenants.id),
+  tenantDestinoId: int("tenant_destino_id").notNull().references(() => tenants.id),
+  
+  // Paciente acessado
+  pacienteId: int("paciente_id").notNull(),
+  
+  // Usuário que realizou o acesso
+  userId: int("user_id").notNull(),
+  
+  // Tipo de ação realizada
+  tipoAcao: mysqlEnum("tipo_acao", [
+    "visualizacao",      // Visualizou dados
+    "download",          // Baixou documento/exame
+    "impressao",         // Imprimiu dados
+    "criacao",           // Criou novo registro
+    "edicao",            // Editou registro existente
+    "exportacao"         // Exportou dados
+  ]).notNull(),
+  
+  // Recurso acessado
+  recursoTipo: varchar("recurso_tipo", { length: 50 }).notNull(), // prontuario, atendimento, exame, etc.
+  recursoId: int("recurso_id"),
+  
+  // Detalhes adicionais
+  detalhes: text("detalhes"),
+  
+  // Informações de contexto
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  
+  // Timestamp
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type CrossTenantAccessLog = typeof crossTenantAccessLogs.$inferSelect;
+export type InsertCrossTenantAccessLog = typeof crossTenantAccessLogs.$inferInsert;
 
 /**
  * Core user table backing auth flow.

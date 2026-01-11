@@ -1406,3 +1406,119 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Documentar análise de priorização (ANALISE_PORTAL_PACIENTE.md)
 - [x] Recomendar sequência: manter na Fase 5 (Semanas 11-14)
 
+
+
+## 🔗 SISTEMA CROSS-TENANT (10/01/2026)
+
+### Fase 1: Funções de Banco para Autorizações
+- [ ] Criar função createAutorizacao()
+- [ ] Criar função getAutorizacao()
+- [ ] Criar função listAutorizacoesPaciente()
+- [ ] Criar função listAutorizacoesRecebidas()
+- [ ] Criar função updateAutorizacaoStatus()
+- [ ] Criar função revogarAutorizacao()
+- [ ] Criar função verificarAutorizacao()
+
+### Fase 2: Queries Cross-Tenant
+- [ ] Criar função getPacienteCrossTenant()
+- [ ] Criar função getProntuarioCrossTenant()
+- [ ] Criar função listAtendimentosCrossTenant()
+- [ ] Implementar validação de autorização em cada query
+
+### Fase 3: Procedures tRPC
+- [ ] Criar router de autorizações
+- [ ] Implementar procedures CRUD de autorizações
+- [ ] Implementar procedure de verificação de acesso
+
+### Fase 4: Interface de Autorização
+- [ ] Criar página /paciente/autorizacoes
+- [ ] Criar componente de listagem de autorizações
+- [ ] Criar modal de nova autorização
+- [ ] Criar modal de revogação
+
+### Fase 5: Notificações Cross-Tenant
+- [ ] Criar notificação de solicitação de autorização
+- [ ] Criar notificação de autorização concedida
+- [ ] Criar notificação de autorização revogada
+- [ ] Criar notificação de acesso realizado
+
+### Fase 6: Auditoria
+- [ ] Criar tabela de logs de acesso cross-tenant
+- [ ] Registrar todos os acessos cross-tenant
+- [ ] Criar relatório de acessos por paciente
+
+### Fase 7: Testes
+- [ ] Criar testes de autorização
+- [ ] Criar testes de queries cross-tenant
+- [ ] Criar testes de auditoria
+
+
+---
+
+## 🔄 GORGEN 4.1 - Sistema Cross-Tenant (IMPLEMENTADO 10/01/2026)
+
+### Autorizações Cross-Tenant
+- [x] Tabela `paciente_autorizacoes` para gerenciar compartilhamentos
+- [x] Tabela `cross_tenant_access_logs` para auditoria LGPD
+- [x] Tipos de autorização: leitura, escrita, completo
+- [x] Escopos: prontuário, atendimentos, exames, documentos, completo
+- [x] Status: pendente, ativa, revogada, expirada, rejeitada
+- [x] Consentimento LGPD obrigatório para aprovação
+
+### Procedures tRPC
+- [x] `crossTenant.solicitarAutorizacao` - Solicitar acesso a dados de outro tenant
+- [x] `crossTenant.listAutorizacoesConcedidas` - Listar autorizações concedidas
+- [x] `crossTenant.listAutorizacoesRecebidas` - Listar autorizações recebidas
+- [x] `crossTenant.aprovarAutorizacao` - Aprovar solicitação com consentimento LGPD
+- [x] `crossTenant.rejeitarAutorizacao` - Rejeitar solicitação
+- [x] `crossTenant.revogarAutorizacao` - Revogar autorização ativa
+- [x] `crossTenant.getProntuario` - Acessar prontuário com validação
+- [x] `crossTenant.getAtendimentos` - Acessar atendimentos com validação
+- [x] `crossTenant.listAccessLogs` - Listar logs de auditoria
+- [x] `crossTenant.countAccessLogs` - Contar logs de acesso
+- [x] `crossTenant.getStats` - Estatísticas de compartilhamento
+- [x] `crossTenant.getAutorizacoesExpirando` - Autorizações prestes a expirar
+- [x] `crossTenant.atualizarExpiradas` - Job de manutenção
+
+### Interface de Usuário
+- [x] Página `/compartilhamento` com gerenciamento completo
+- [x] Aba "Acessos Recebidos" - Dados que tenho acesso
+- [x] Aba "Acessos Concedidos" - Solicitações pendentes e ativas
+- [x] Aba "Log de Auditoria" - Registro de todos os acessos
+- [x] Modal de solicitação de acesso
+- [x] Modal de aprovação com checkbox LGPD
+- [x] Botões de aprovar/rejeitar/revogar
+- [x] Badges de status visuais
+- [x] Card informativo sobre conformidade LGPD
+
+### Sistema de Notificações
+- [x] Função `gerarMensagemNotificacao` para diferentes tipos
+- [x] Tipos: solicitação, aprovação, rejeição, revogação, expiração
+- [x] Mensagens personalizadas com dados do paciente e clínica
+
+### Auditoria LGPD
+- [x] Log automático de todos os acessos cross-tenant
+- [x] Registro de IP, User-Agent, timestamp
+- [x] Tipos de ação: visualização, download, impressão, exportação
+- [x] Tipos de recurso: prontuário, atendimento, exame, documento, paciente
+
+### Permissões por Perfil
+- [x] Admin Master: acesso total ao compartilhamento
+- [x] Médico: pode solicitar, aprovar e revogar
+- [x] Secretária: sem acesso ao compartilhamento
+- [x] Auditor: pode visualizar (sem ações)
+- [x] Paciente: pode aprovar e revogar seus próprios dados
+
+### Testes Automatizados
+- [x] 26 testes para sistema cross-tenant
+- [x] Testes de autorizações e validações
+- [x] Testes de isolamento de dados
+- [x] Testes de auditoria LGPD
+- [x] Testes de permissões por tipo
+- [x] Testes de fluxo de aprovação
+- [x] Testes de estatísticas
+- [x] Testes de notificações
+- [x] Cenários de uso real (encaminhamento, rede de clínicas, emergência)
+
+### Total de Testes
+- 200 testes passando (174 anteriores + 26 novos)
