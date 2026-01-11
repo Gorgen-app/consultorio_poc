@@ -36,16 +36,34 @@ CONFIG = {
     'max_date': datetime(2025, 12, 31),
 }
 
-# Conexão com banco (usando variáveis de ambiente ou defaults)
-DB_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'gateway01.us-east-1.prod.aws.tidbcloud.com'),
-    'port': int(os.environ.get('DB_PORT', '4000')),
-    'user': os.environ.get('DB_USER', ''),
-    'password': os.environ.get('DB_PASSWORD', ''),
-    'database': os.environ.get('DB_NAME', ''),
-    'ssl_ca': '/etc/ssl/certs/ca-certificates.crt',
-    'ssl_verify_cert': True,
-}
+def get_db_config():
+    """Obtém configuração do banco a partir de DATABASE_URL ou variáveis individuais."""
+    database_url = os.environ.get('DATABASE_URL', '')
+    
+    if database_url:
+        # Parse DATABASE_URL (formato: mysql://user:pass@host:port/database)
+        from urllib.parse import urlparse
+        parsed = urlparse(database_url)
+        return {
+            'host': parsed.hostname,
+            'port': parsed.port or 4000,
+            'user': parsed.username,
+            'password': parsed.password,
+            'database': parsed.path.lstrip('/'),
+            'ssl_ca': '/etc/ssl/certs/ca-certificates.crt',
+            'ssl_verify_cert': False,
+        }
+    else:
+        # Fallback para variáveis individuais
+        return {
+            'host': os.environ.get('DB_HOST', 'localhost'),
+            'port': int(os.environ.get('DB_PORT', '4000')),
+            'user': os.environ.get('DB_USER', ''),
+            'password': os.environ.get('DB_PASSWORD', ''),
+            'database': os.environ.get('DB_NAME', ''),
+            'ssl_ca': '/etc/ssl/certs/ca-certificates.crt',
+            'ssl_verify_cert': False,
+        }
 
 # ============================================
 # MAPEAMENTO DE CONVÊNIOS
@@ -187,8 +205,9 @@ def transform_dataframe(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[Dict]]:
     
     # Campos diretos
     result['tenant_id'] = CONFIG['tenant_id']
-    result['id_paciente'] = df['ID paciente'].astype(str)
-    result['codigo_legado'] = df['ID paciente'].astype(str)
+    # Usa prefixo MIG- para diferenciar pacientes migrados dos existentes
+    result['id_paciente'] = 'MIG-' + df['ID paciente'].astype(str)
+    result['codigo_legado'] = df['ID paciente'].astype(str)  # Guarda ID original sem prefixo
     result['nome'] = df['Nome'].apply(lambda x: safe_str(x, 255))
     
     # Data de nascimento com validação
@@ -263,8 +282,14 @@ def transform_dataframe(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[Dict]]:
     return result, warnings
 
 
-def insert_batch(cursor, df_batch: pd.DataFrame) -> int:
-    """Insere um lote de pacientes no banco."""
+def insert_batch(cursor, df_batch: pd.DataFrame, upsert: bool = False) -> int:
+    """Insere um lote de pacientes no banco.
+    
+    Args:
+        cursor: Cursor do banco de dados
+        df_batch: DataFrame com os pacientes
+        upsert: Se True, atualiza registros existentes (ON DUPLICATE KEY UPDATE)
+    """
     
     columns = [
         'tenant_id', 'id_paciente', 'codigo_legado', 'nome', 'data_nascimento', 'sexo',
@@ -275,7 +300,14 @@ def insert_batch(cursor, df_batch: pd.DataFrame) -> int:
     ]
     
     placeholders = ', '.join(['%s'] * len(columns))
-    sql = f"INSERT INTO pacientes ({', '.join(columns)}) VALUES ({placeholders})"
+    
+    if upsert:
+        # ON DUPLICATE KEY UPDATE - atualiza todos os campos exceto tenant_id e id_paciente
+        update_cols = [c for c in columns if c not in ('tenant_id', 'id_paciente')]
+        update_clause = ', '.join([f"{c} = VALUES({c})" for c in update_cols])
+        sql = f"INSERT INTO pacientes ({', '.join(columns)}) VALUES ({placeholders}) ON DUPLICATE KEY UPDATE {update_clause}"
+    else:
+        sql = f"INSERT INTO pacientes ({', '.join(columns)}) VALUES ({placeholders})"
     
     # Converte DataFrame para lista de tuplas
     values = []
@@ -290,7 +322,9 @@ def insert_batch(cursor, df_batch: pd.DataFrame) -> int:
         values.append(tuple(row_values))
     
     cursor.executemany(sql, values)
-    return cursor.rowcount
+    # No modo upsert, rowcount retorna 2 para updates e 1 para inserts
+    # Retornamos o número de linhas processadas
+    return len(values)
 
 
 # ============================================
@@ -300,6 +334,7 @@ def insert_batch(cursor, df_batch: pd.DataFrame) -> int:
 def main():
     args = sys.argv[1:]
     dry_run = '--dry-run' in args
+    upsert = '--upsert' in args
     
     limit = None
     batch_size = CONFIG['batch_size']
@@ -314,6 +349,8 @@ def main():
     print('🏥 GORGEN - Migração de Pacientes (Python)')
     print('=' * 60)
     print(f"   Modo: {'🔍 DRY-RUN (simulação)' if dry_run else '🚀 PRODUÇÃO'}")
+    if upsert:
+        print("   UPSERT: Ativado (atualiza registros existentes)")
     if limit:
         print(f"   Limite: {limit} registros")
     print(f"   Batch size: {batch_size}")
@@ -359,7 +396,7 @@ def main():
         if not dry_run:
             print()
             print('🔌 Conectando ao banco de dados...')
-            connection = mysql.connector.connect(**DB_CONFIG)
+            connection = mysql.connector.connect(**get_db_config())
             cursor = connection.cursor()
             print('   ✅ Conectado!')
         
@@ -374,7 +411,7 @@ def main():
             batch = df_transformed.iloc[i:i + batch_size]
             
             if not dry_run:
-                inserted = insert_batch(cursor, batch)
+                inserted = insert_batch(cursor, batch, upsert=upsert)
                 connection.commit()
                 stats['inserted'] += inserted
             else:

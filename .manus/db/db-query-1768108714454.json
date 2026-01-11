@@ -1,0 +1,50 @@
+{
+  "query": "SELECT operadora_1, COUNT(*) as total \nFROM pacientes \nWHERE id_paciente LIKE 'MIG-%' \nGROUP BY operadora_1 \nORDER BY total DESC \nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT operadora_1, COUNT(*) as total \nFROM pacientes \nWHERE id_paciente LIKE 'MIG-%' \nGROUP BY operadora_1 \nORDER BY total DESC \nLIMIT 10;",
+  "rows": [
+    {
+      "operadora_1": "NULL",
+      "total": "485"
+    },
+    {
+      "operadora_1": "UNIMED",
+      "total": "278"
+    },
+    {
+      "operadora_1": "Particular",
+      "total": "72"
+    },
+    {
+      "operadora_1": "IPE",
+      "total": "64"
+    },
+    {
+      "operadora_1": "CASSI",
+      "total": "31"
+    },
+    {
+      "operadora_1": "BRADESCO SAÚDE",
+      "total": "18"
+    },
+    {
+      "operadora_1": "COOPMED",
+      "total": "10"
+    },
+    {
+      "operadora_1": "SAUDE PAS",
+      "total": "8"
+    },
+    {
+      "operadora_1": "CABERGS",
+      "total": "7"
+    },
+    {
+      "operadora_1": "CCG",
+      "total": "5"
+    }
+  ],
+  "messages": [],
+  "stdout": "operadora_1\ttotal\nNULL\t485\nUNIMED\t278\nParticular\t72\nIPE\t64\nCASSI\t31\nBRADESCO SAÚDE\t18\nCOOPMED\t10\nSAUDE PAS\t8\nCABERGS\t7\nCCG\t5\n",
+  "stderr": "",
+  "execution_time_ms": 69
+}

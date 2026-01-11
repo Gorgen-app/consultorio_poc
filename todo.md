@@ -1542,6 +1542,6 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Criar relatório de inconsistências
 
 ### Execução
-- [ ] Testar migração piloto (1000 pacientes)
-- [ ] Executar migração completa
-- [ ] Validar totais e integridade
+- [x] Testar migração piloto (1000 pacientes)
+- [x] Executar migração completa (21.644 pacientes)
+- [x] Validar totais e integridade
