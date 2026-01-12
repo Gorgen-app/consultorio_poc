@@ -474,7 +474,7 @@ export async function buscarPacientesInativosPendentes(tenantId: number): Promis
   const hoje = new Date();
 
   // Buscar pacientes ativos cujo último atendimento foi há mais de 360 dias
-  const resultado = await db
+  const pacientesInativos = await db
     .select({
       pacienteId: atendimentos.pacienteId,
       pacienteNome: pacientes.nome,
@@ -493,7 +493,7 @@ export async function buscarPacientesInativosPendentes(tenantId: number): Promis
     .groupBy(atendimentos.pacienteId, pacientes.nome)
     .having(sql`MAX(${atendimentos.dataAtendimento}) < ${dataLimite.toISOString().split('T')[0]}`);
 
-  return resultado.map(r => {
+  return pacientesInativos.map(r => {
     const ultimoAtend = new Date(r.ultimoAtendimento);
     const diffTime = hoje.getTime() - ultimoAtend.getTime();
     const diasSemAtendimento = Math.floor(diffTime / (1000 * 60 * 60 * 24));

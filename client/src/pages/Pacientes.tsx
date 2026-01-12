@@ -124,6 +124,9 @@ export default function Pacientes() {
   const totalPacientes = paginatedData?.total || 0;
   const totalPaginas = paginatedData?.totalPages || 1;
 
+  // Verificar se há próxima página para pré-carregamento
+  const hasNextPage = paginaAtual < totalPaginas;
+
   // IDs dos pacientes da página atual para carregar métricas
   const pacienteIdsDaPagina = useMemo(() => pacientes.map(p => p.id), [pacientes]);
 
@@ -133,6 +136,38 @@ export default function Pacientes() {
     { 
       enabled: pacienteIdsDaPagina.length > 0,
       staleTime: CACHE_TTL, // Cache por 5 minutos
+    }
+  );
+
+  // Pré-carregamento dos dados da próxima página para navegação fluida
+  const { data: proximaPaginaData } = trpc.pacientes.listPaginated.useQuery(
+    {
+      busca: debouncedSearchTerm || undefined,
+      convenio: filtroOperadora && filtroOperadora !== "todos" ? filtroOperadora : undefined,
+      diagnostico: filtroDiagnostico || undefined,
+      status: filtroStatus && filtroStatus !== "todos" ? filtroStatus : undefined,
+      cidade: filtroCidade || undefined,
+      uf: filtroUF || undefined,
+      page: paginaAtual + 1,
+      pageSize: itensPorPagina,
+    },
+    {
+      enabled: hasNextPage && !isLoading && !isFetching,
+      staleTime: 30000,
+    }
+  );
+
+  // Pré-carregar métricas da próxima página em background
+  const proximaPaginaIds = useMemo(
+    () => proximaPaginaData?.pacientes?.map(p => p.id) || [],
+    [proximaPaginaData]
+  );
+  
+  trpc.pacientes.getMetricasAtendimento.useQuery(
+    { pacienteIds: proximaPaginaIds },
+    {
+      enabled: proximaPaginaIds.length > 0 && hasNextPage,
+      staleTime: CACHE_TTL,
     }
   );
 

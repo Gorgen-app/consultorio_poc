@@ -1846,3 +1846,11 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Skeleton loading durante carregamento
 - [x] Indicador visual de carregamento (spinner)
 - [x] Testes unitários para paginação e cache (10 testes)
+
+
+---
+
+## 🐛 CORREÇÃO E MELHORIA (12/01/2026)
+
+- [x] Corrigir erro de API: "Unexpected token '<', is not valid JSON" (variável duplicada no db.ts)
+- [x] Implementar pré-carregamento da próxima página de pacientes em background (dados + métricas)
