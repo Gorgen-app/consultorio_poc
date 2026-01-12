@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { OPERADORAS } from "@/lib/operadoras";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { History, Clock, User } from "lucide-react";
+import { History, Clock, User, FileSpreadsheet, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Paciente {
@@ -118,11 +118,50 @@ function HistoricoAlteracoes({ pacienteId }: { pacienteId: number }) {
     );
   }
 
+  // Função para exportar para Excel (CSV)
+  const exportToExcel = () => {
+    const headers = ["Data/Hora", "Ação", "Usuário", "Campos Alterados", "Valores Anteriores", "Valores Novos"];
+    const rows = historico.map((log: any) => {
+      const data = new Date(log.createdAt).toLocaleString("pt-BR");
+      const acao = actionLabels[log.action]?.label || log.action;
+      const usuario = log.userName || log.userEmail || "Sistema";
+      const campos = log.changedFields?.map((f: string) => campoLabels[f] || f).join("; ") || "-";
+      const antigos = log.changedFields?.map((f: string) => `${campoLabels[f] || f}: ${log.oldValues?.[f] || "(vazio)"}`).join("; ") || "-";
+      const novos = log.changedFields?.map((f: string) => `${campoLabels[f] || f}: ${log.newValues?.[f] || "(vazio)"}`).join("; ") || "-";
+      return [data, acao, usuario, campos, antigos, novos];
+    });
+    const csvContent = [headers.join(","), ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `historico_paciente_${pacienteId}_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    toast.success("Histórico exportado para Excel (CSV)");
+  };
+
+  // Função para exportar para PDF
+  const exportToPDF = () => {
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Histórico - Paciente ${pacienteId}</title><style>body{font-family:Arial,sans-serif;padding:20px}h1{color:#333;border-bottom:2px solid #333;padding-bottom:10px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background-color:#f5f5f5}.old{color:#dc3545;text-decoration:line-through}.new{color:#28a745}.footer{margin-top:30px;font-size:10px;color:#999;border-top:1px solid #ddd;padding-top:10px}</style></head><body><h1>Histórico de Alterações - LGPD</h1><p><strong>ID Paciente:</strong> ${pacienteId} | <strong>Exportado em:</strong> ${new Date().toLocaleString("pt-BR")} | <strong>Total:</strong> ${historico.length} registros</p><table><thead><tr><th>Data/Hora</th><th>Ação</th><th>Usuário</th><th>Detalhes</th></tr></thead><tbody>${historico.map((log: any) => {const data = new Date(log.createdAt).toLocaleString("pt-BR");const acao = actionLabels[log.action]?.label || log.action;const usuario = log.userName || log.userEmail || "Sistema";let detalhes = "";if (log.action === "UPDATE" && log.changedFields) {detalhes = log.changedFields.map((f: string) => `<strong>${campoLabels[f] || f}:</strong> <span class="old">${log.oldValues?.[f] || "(vazio)"}</span> → <span class="new">${log.newValues?.[f] || "(vazio)"}</span>`).join("<br>");} else if (log.action === "CREATE") {detalhes = "Paciente cadastrado";} else if (log.action === "DELETE") {detalhes = "Registro excluído";} else if (log.action === "RESTORE") {detalhes = "Registro restaurado";}return `<tr><td>${data}</td><td>${acao}</td><td>${usuario}</td><td>${detalhes}</td></tr>`;}).join("")}</tbody></table><div class="footer"><p>Documento gerado automaticamente pelo sistema Gorgen para compliance LGPD.</p></div></body></html>`;
+    const printWindow = window.open("", "_blank");
+    if (printWindow) { printWindow.document.write(htmlContent); printWindow.document.close(); printWindow.print(); }
+    toast.success("Preparando PDF para impressão...");
+  };
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-        <History className="h-4 w-4" />
-        <span>{historico.length} alterações registradas (LGPD)</span>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <History className="h-4 w-4" />
+          <span>{historico.length} alterações registradas (LGPD)</span>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportToExcel}>
+            <FileSpreadsheet className="h-4 w-4 mr-1" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportToPDF}>
+            <FileText className="h-4 w-4 mr-1" /> PDF
+          </Button>
+        </div>
       </div>
       
       {historico.map((log: any) => (
