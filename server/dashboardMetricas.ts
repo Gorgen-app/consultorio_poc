@@ -4,27 +4,45 @@ import { pacientes, atendimentos, dashboardConfigs } from "../drizzle/schema";
 import { PeriodoTempo } from "../shared/metricas";
 
 // Função auxiliar para calcular data de início baseada no período
-function calcularDataInicio(periodo: PeriodoTempo): Date {
+// Retorna string no formato YYYY-MM-DD para uso em queries SQL
+function calcularDataInicio(periodo: PeriodoTempo): string {
   const agora = new Date();
+  let data: Date;
+  
   switch (periodo) {
     case '7d':
-      return new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000);
+      data = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
     case '30d':
-      return new Date(agora.getTime() - 30 * 24 * 60 * 60 * 1000);
+      data = new Date(agora.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
     case '3m':
-      return new Date(agora.setMonth(agora.getMonth() - 3));
+      data = new Date(agora);
+      data.setMonth(data.getMonth() - 3);
+      break;
     case '6m':
-      return new Date(agora.setMonth(agora.getMonth() - 6));
+      data = new Date(agora);
+      data.setMonth(data.getMonth() - 6);
+      break;
     case '1a':
-      return new Date(agora.setFullYear(agora.getFullYear() - 1));
+      data = new Date(agora);
+      data.setFullYear(data.getFullYear() - 1);
+      break;
     case '3a':
-      return new Date(agora.setFullYear(agora.getFullYear() - 3));
+      data = new Date(agora);
+      data.setFullYear(data.getFullYear() - 3);
+      break;
     case '5a':
-      return new Date(agora.setFullYear(agora.getFullYear() - 5));
+      data = new Date(agora);
+      data.setFullYear(data.getFullYear() - 5);
+      break;
     case 'todo':
     default:
-      return new Date('2000-01-01');
+      data = new Date('2000-01-01');
   }
+  
+  // Formatar como YYYY-MM-DD para SQL
+  return data.toISOString().split('T')[0];
 }
 
 // ========================================

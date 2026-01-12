@@ -1914,3 +1914,5 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Remover Dashboard antiga e renomear DashboardCustom para Dashboard (página inicial)
 - [x] Verificar fonte dos IDs de pacientes (já está com font-mono text-sm)
 - [x] Mover Performance para baixo na barra de navegação (após itens "Em breve")
+
+- [x] Corrigir formato de data nas queries de métricas do dashboard (valor_recebido, valor_total)
