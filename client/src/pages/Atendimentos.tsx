@@ -3,8 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, FileText } from "lucide-react";
-import { Link, useSearch } from "wouter";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, FileText, Copy } from "lucide-react";
+import { Link, useSearch, useLocation } from "wouter";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TIPOS_ATENDIMENTO, LOCAIS_ATENDIMENTO } from "@/lib/atendimentos-constants";
@@ -84,9 +84,29 @@ export default function Atendimentos() {
     },
   });
 
+  const [, navigate] = useLocation();
+
   const handleEditar = (atendimento: any) => {
     setAtendimentoSelecionado(atendimento);
     setModalEditarAberto(true);
+  };
+
+  const handleDuplicar = (atendimento: any) => {
+    // Codifica os dados do atendimento para passar via URL
+    const params = new URLSearchParams({
+      duplicar: "true",
+      pacienteId: atendimento.pacienteId?.toString() || "",
+      pacienteNome: atendimento.pacienteNome || "",
+      tipoAtendimento: atendimento.tipoAtendimento || "",
+      local: atendimento.local || "",
+      convenio: atendimento.convenio || "",
+      carteirinha: atendimento.carteirinha || "",
+      guia: atendimento.guia || "",
+      faturamentoPrevisto: atendimento.faturamentoPrevisto?.toString() || "",
+      desconto: atendimento.desconto?.toString() || "0",
+      observacoes: atendimento.observacoes || "",
+    });
+    navigate(`/atendimentos/novo?${params.toString()}`);
   };
 
   const handleExcluir = (atendimento: any) => {
@@ -505,6 +525,15 @@ export default function Atendimentos() {
                                 </Button>
                               </Link>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDuplicar(atd)}
+                              title="Duplicar atendimento"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"

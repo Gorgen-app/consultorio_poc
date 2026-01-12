@@ -1690,3 +1690,9 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Adicionar botão "Ver Prontuário" na coluna Ações de Atendimentos
 - [x] Criar relatório de pacientes duplicados (nome/CPF)
 - [x] Implementar histórico de alterações no modal de edição (LGPD)
+
+
+## 🚀 DUPLICAR ATENDIMENTO (11/01/2026)
+- [x] Botão "Duplicar" na coluna Ações da tabela de Atendimentos
+- [x] Tela NovoAtendimento aceitar dados pré-preenchidos via URL params
+- [x] Apenas data em branco para preenchimento (destacado em verde)

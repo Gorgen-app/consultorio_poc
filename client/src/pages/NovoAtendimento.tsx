@@ -54,11 +54,38 @@ export default function NovoAtendimento() {
     }
   }, [nextId]);
 
-  // Pré-selecionar paciente se vier da URL
+  // Pré-selecionar paciente e preencher dados se vier de duplicação
+  const [isDuplicacao, setIsDuplicacao] = useState(false);
+  
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const duplicar = params.get('duplicar');
     const pacienteIdParam = params.get('pacienteId');
-    if (pacienteIdParam && pacientes) {
+    
+    if (duplicar === 'true' && pacientes) {
+      setIsDuplicacao(true);
+      
+      // Preencher dados do atendimento duplicado
+      const pacienteId = parseInt(pacienteIdParam || '0');
+      const paciente = pacientes.find(p => p.id === pacienteId);
+      
+      if (paciente && !pacienteSelecionado) {
+        handlePacienteSelect(pacienteId);
+        
+        // Preencher demais campos (exceto data)
+        setFormData(prev => ({
+          ...prev,
+          tipoAtendimento: params.get('tipoAtendimento') || '',
+          local: params.get('local') || '',
+          convenio: params.get('convenio') || '',
+          faturamentoPrevistoInicial: params.get('faturamentoPrevisto') || '',
+          faturamentoPrevistoFinal: params.get('faturamentoPrevisto') || '',
+          observacoes: params.get('observacoes') || '',
+          dataAtendimento: '', // Data em branco para preencher
+        }));
+      }
+    } else if (pacienteIdParam && pacientes) {
+      // Fluxo normal - apenas pré-selecionar paciente
       const pacienteId = parseInt(pacienteIdParam);
       const paciente = pacientes.find(p => p.id === pacienteId);
       if (paciente && !pacienteSelecionado) {
@@ -142,8 +169,14 @@ export default function NovoAtendimento() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Novo Atendimento</h1>
-          <p className="text-muted-foreground mt-2">Registrar novo atendimento no sistema</p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {isDuplicacao ? "Duplicar Atendimento" : "Novo Atendimento"}
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            {isDuplicacao 
+              ? "Dados pré-preenchidos - informe apenas a data do novo atendimento" 
+              : "Registrar novo atendimento no sistema"}
+          </p>
         </div>
       </div>
 
@@ -168,13 +201,17 @@ export default function NovoAtendimento() {
                   <p className="text-xs text-muted-foreground">ID gerado automaticamente</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dataAtendimento">Data do Atendimento *</Label>
+                  <Label htmlFor="dataAtendimento" className={isDuplicacao ? "text-green-600 font-semibold" : ""}>
+                    Data do Atendimento * {isDuplicacao && "(PREENCHER)"}
+                  </Label>
                   <Input
                     id="dataAtendimento"
                     type="date"
                     value={formData.dataAtendimento}
                     onChange={(e) => handleChange("dataAtendimento", e.target.value)}
                     required
+                    className={isDuplicacao && !formData.dataAtendimento ? "border-green-500 ring-2 ring-green-200" : ""}
+                    autoFocus={isDuplicacao}
                   />
                 </div>
               </div>
