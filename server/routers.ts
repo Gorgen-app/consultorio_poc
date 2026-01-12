@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, tenantProcedure, router } from "./
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
+import * as performance from "./performance";
 
 // Schema de validação para Paciente
 const pacienteSchema = z.object({
@@ -75,6 +76,47 @@ const atendimentoSchema = z.object({
 
 export const appRouter = router({
   system: systemRouter,
+  
+  // Router de métricas de performance (apenas admin)
+  performance: router({
+    getOverview: protectedProcedure
+      .query(async ({ ctx }) => {
+        // Verificar se é admin
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        const stats = performance.getOverallStats();
+        const system = performance.getSystemMetrics();
+        const slowest = performance.getSlowestEndpoints(5);
+        const history = performance.getResponseTimeHistory();
+        
+        return {
+          stats,
+          system,
+          slowest,
+          history,
+        };
+      }),
+    
+    getEndpoints: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return performance.getAggregatedMetrics();
+      }),
+    
+    getHistory: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return performance.getResponseTimeHistory();
+      }),
+  }),
   
   // Router de notificações
   notificacoes: router({

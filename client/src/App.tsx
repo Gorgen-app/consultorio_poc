@@ -19,6 +19,7 @@ import CrossTenantAutorizacoes from "./pages/CrossTenantAutorizacoes";
 import RelatorioPacientes from "./pages/RelatorioPacientes";
 import RelatorioDuplicados from "./pages/RelatorioDuplicados";
 import Relatorios from "./pages/Relatorios";
+import Performance from "./pages/Performance";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Router() {
@@ -97,6 +98,11 @@ function Router() {
       <Route path="/compartilhamento">
         <ProtectedRoute funcionalidade="compartilhamento">
           <CrossTenantAutorizacoes />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/performance">
+        <ProtectedRoute funcionalidade="admin_tenants">
+          <Performance />
         </ProtectedRoute>
       </Route>
       <Route path="/config-simples">

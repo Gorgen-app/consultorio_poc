@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, ChevronLeft, Search, Share2, Receipt, Megaphone, UserCircle, Clock, FileSpreadsheet, AlertTriangle } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, ChevronLeft, Search, Share2, Receipt, Megaphone, UserCircle, Clock, FileSpreadsheet, AlertTriangle, Activity } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -55,10 +55,11 @@ const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: 
 };
 
 // Menu items principais (sem subitens)
-const mainMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade; comingSoon?: boolean }[] = [
+const mainMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade; comingSoon?: boolean; adminOnly?: boolean }[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", funcionalidade: "dashboard" },
   { icon: Calendar, label: "Agenda", path: "/agenda", funcionalidade: "agenda" },
   { icon: Share2, label: "Compartilhamento", path: "/compartilhamento", funcionalidade: "compartilhamento" },
+  { icon: Activity, label: "Performance", path: "/performance", funcionalidade: "admin_tenants", adminOnly: true },
 ];
 
 // Menu items "Em breve" (funcionalidades futuras)
@@ -296,6 +297,7 @@ function DashboardLayoutContent({
               {/* Menu items principais */}
               {mainMenuItems
                 .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
+                .filter(item => !item.adminOnly || user?.role === 'admin')
                 .map(item => {
                   const isActive = location === item.path;
                   return (

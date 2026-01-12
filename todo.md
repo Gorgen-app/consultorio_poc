@@ -1854,3 +1854,13 @@ A dashboard deve integrar **medicina e administração**:
 
 - [x] Corrigir erro de API: "Unexpected token '<', is not valid JSON" (variável duplicada no db.ts)
 - [x] Implementar pré-carregamento da próxima página de pacientes em background (dados + métricas)
+
+
+---
+
+## 📊 PAINEL DE PERFORMANCE (12/01/2026)
+
+- [x] Criar sistema de coleta de métricas de performance (tempo de carregamento, queries)
+- [x] Criar página de painel de administração com visualização de métricas
+- [x] Adicionar gráficos de tempo de resposta por endpoint (histórico 24h)
+- [x] Mostrar estatísticas de uso do cache de métricas (hit rate, hits, misses)
