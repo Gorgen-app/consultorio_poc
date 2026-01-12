@@ -54,6 +54,35 @@ let cacheMisses = 0;
 // Tempo de início do servidor
 const serverStartTime = Date.now();
 
+// Configurações de alertas
+interface AlertConfig {
+  responseTimeThreshold: number; // ms
+  errorRateThreshold: number; // %
+  enabled: boolean;
+}
+
+interface PerformanceAlert {
+  id: string;
+  type: 'slow_response' | 'high_error_rate' | 'memory_warning';
+  message: string;
+  endpoint?: string;
+  value: number;
+  threshold: number;
+  timestamp: number;
+  acknowledged: boolean;
+}
+
+let alertConfig: AlertConfig = {
+  responseTimeThreshold: 2000, // 2 segundos
+  errorRateThreshold: 10, // 10%
+  enabled: true,
+};
+
+const alertsBuffer: PerformanceAlert[] = [];
+const MAX_ALERTS = 100;
+const ALERT_COOLDOWN = 5 * 60 * 1000; // 5 minutos entre alertas do mesmo tipo/endpoint
+const lastAlertTime = new Map<string, number>();
+
 /**
  * Registra uma métrica de endpoint
  */
@@ -270,4 +299,180 @@ export function getOverallStats(): {
     errorRate,
     requestsPerMinute,
   };
+}
+
+/**
+ * Configurações de alertas
+ */
+export function getAlertConfig(): AlertConfig {
+  return { ...alertConfig };
+}
+
+export function setAlertConfig(config: Partial<AlertConfig>): void {
+  alertConfig = { ...alertConfig, ...config };
+}
+
+/**
+ * Verifica e gera alertas
+ */
+export function checkAndGenerateAlerts(): void {
+  if (!alertConfig.enabled) return;
+  
+  const now = Date.now();
+  const aggregated = getAggregatedMetrics();
+  
+  // Verificar endpoints lentos
+  for (const metric of aggregated) {
+    if (metric.avgResponseTime > alertConfig.responseTimeThreshold && metric.count >= 5) {
+      const alertKey = `slow_response:${metric.endpoint}`;
+      const lastAlert = lastAlertTime.get(alertKey) || 0;
+      
+      if (now - lastAlert > ALERT_COOLDOWN) {
+        createAlert({
+          type: 'slow_response',
+          message: `Endpoint ${metric.endpoint} com tempo médio de ${metric.avgResponseTime}ms (limite: ${alertConfig.responseTimeThreshold}ms)`,
+          endpoint: metric.endpoint,
+          value: metric.avgResponseTime,
+          threshold: alertConfig.responseTimeThreshold,
+        });
+        lastAlertTime.set(alertKey, now);
+      }
+    }
+  }
+  
+  // Verificar taxa de erro geral
+  const stats = getOverallStats();
+  if (stats.errorRate > alertConfig.errorRateThreshold && stats.totalRequests >= 10) {
+    const alertKey = 'high_error_rate:global';
+    const lastAlert = lastAlertTime.get(alertKey) || 0;
+    
+    if (now - lastAlert > ALERT_COOLDOWN) {
+      createAlert({
+        type: 'high_error_rate',
+        message: `Taxa de erro alta: ${stats.errorRate}% (limite: ${alertConfig.errorRateThreshold}%)`,
+        value: stats.errorRate,
+        threshold: alertConfig.errorRateThreshold,
+      });
+      lastAlertTime.set(alertKey, now);
+    }
+  }
+  
+  // Verificar uso de memória
+  const memUsage = process.memoryUsage();
+  const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+  const heapTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024);
+  const heapUsagePercent = Math.round((heapUsedMB / heapTotalMB) * 100);
+  
+  if (heapUsagePercent > 85) {
+    const alertKey = 'memory_warning:heap';
+    const lastAlert = lastAlertTime.get(alertKey) || 0;
+    
+    if (now - lastAlert > ALERT_COOLDOWN) {
+      createAlert({
+        type: 'memory_warning',
+        message: `Uso de memória heap alto: ${heapUsagePercent}% (${heapUsedMB}MB de ${heapTotalMB}MB)`,
+        value: heapUsagePercent,
+        threshold: 85,
+      });
+      lastAlertTime.set(alertKey, now);
+    }
+  }
+}
+
+function createAlert(alert: Omit<PerformanceAlert, 'id' | 'timestamp' | 'acknowledged'>): void {
+  const newAlert: PerformanceAlert = {
+    ...alert,
+    id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    timestamp: Date.now(),
+    acknowledged: false,
+  };
+  
+  alertsBuffer.unshift(newAlert);
+  
+  // Limitar tamanho do buffer
+  while (alertsBuffer.length > MAX_ALERTS) {
+    alertsBuffer.pop();
+  }
+}
+
+/**
+ * Obtém alertas ativos
+ */
+export function getAlerts(includeAcknowledged: boolean = false): PerformanceAlert[] {
+  if (includeAcknowledged) {
+    return [...alertsBuffer];
+  }
+  return alertsBuffer.filter(a => !a.acknowledged);
+}
+
+/**
+ * Reconhece um alerta
+ */
+export function acknowledgeAlert(alertId: string): boolean {
+  const alert = alertsBuffer.find(a => a.id === alertId);
+  if (alert) {
+    alert.acknowledged = true;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Reconhece todos os alertas
+ */
+export function acknowledgeAllAlerts(): number {
+  let count = 0;
+  for (const alert of alertsBuffer) {
+    if (!alert.acknowledged) {
+      alert.acknowledged = true;
+      count++;
+    }
+  }
+  return count;
+}
+
+/**
+ * Exporta métricas para CSV
+ */
+export function exportMetricsToCSV(): string {
+  const headers = ['Timestamp', 'Endpoint', 'Method', 'Response Time (ms)', 'Status Code'];
+  const rows = metricsBuffer.map(m => [
+    new Date(m.timestamp).toISOString(),
+    m.endpoint,
+    m.method,
+    m.responseTime.toString(),
+    m.statusCode.toString(),
+  ]);
+  
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+  ].join('\n');
+  
+  return csvContent;
+}
+
+/**
+ * Exporta métricas agregadas para CSV
+ */
+export function exportAggregatedMetricsToCSV(): string {
+  const aggregated = getAggregatedMetrics();
+  const headers = ['Endpoint', 'Requests', 'Avg Time (ms)', 'Min Time (ms)', 'Max Time (ms)', 'P95 Time (ms)', 'Errors', 'Last Hour'];
+  const rows = aggregated.map(m => [
+    m.endpoint,
+    m.count.toString(),
+    m.avgResponseTime.toString(),
+    m.minResponseTime.toString(),
+    m.maxResponseTime.toString(),
+    m.p95ResponseTime.toString(),
+    m.errorCount.toString(),
+    m.lastHour.toString(),
+  ]);
+  
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+  ].join('\n');
+  
+  return csvContent;
 }

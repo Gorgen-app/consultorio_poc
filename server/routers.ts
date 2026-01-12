@@ -116,6 +116,78 @@ export const appRouter = router({
         
         return performance.getResponseTimeHistory();
       }),
+    
+    // Alertas
+    getAlerts: protectedProcedure
+      .input(z.object({ includeAcknowledged: z.boolean().default(false) }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        // Verificar e gerar novos alertas
+        performance.checkAndGenerateAlerts();
+        
+        return performance.getAlerts(input?.includeAcknowledged ?? false);
+      }),
+    
+    getAlertConfig: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return performance.getAlertConfig();
+      }),
+    
+    setAlertConfig: protectedProcedure
+      .input(z.object({
+        responseTimeThreshold: z.number().min(100).max(30000).optional(),
+        errorRateThreshold: z.number().min(1).max(100).optional(),
+        enabled: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        performance.setAlertConfig(input);
+        return performance.getAlertConfig();
+      }),
+    
+    acknowledgeAlert: protectedProcedure
+      .input(z.object({ alertId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return performance.acknowledgeAlert(input.alertId);
+      }),
+    
+    acknowledgeAllAlerts: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return performance.acknowledgeAllAlerts();
+      }),
+    
+    // Exportação
+    exportCSV: protectedProcedure
+      .input(z.object({ type: z.enum(['raw', 'aggregated']) }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        if (input.type === 'raw') {
+          return performance.exportMetricsToCSV();
+        } else {
+          return performance.exportAggregatedMetricsToCSV();
+        }
+      }),
   }),
   
   // Router de notificações

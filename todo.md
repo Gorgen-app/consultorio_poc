@@ -1864,3 +1864,12 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Criar página de painel de administração com visualização de métricas
 - [x] Adicionar gráficos de tempo de resposta por endpoint (histórico 24h)
 - [x] Mostrar estatísticas de uso do cache de métricas (hit rate, hits, misses)
+
+
+---
+
+## 📊 MELHORIAS DE PERFORMANCE (12/01/2026)
+
+- [x] Criar middleware para coleta automática de métricas de requisições
+- [x] Implementar alertas de performance (notificar quando tempo > limite configurável)
+- [x] Adicionar exportação de métricas em CSV (resumo e detalhado)

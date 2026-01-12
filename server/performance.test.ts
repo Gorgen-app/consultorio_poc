@@ -8,6 +8,14 @@ import {
   getResponseTimeHistory,
   getSlowestEndpoints,
   getOverallStats,
+  getAlertConfig,
+  setAlertConfig,
+  getAlerts,
+  checkAndGenerateAlerts,
+  acknowledgeAlert,
+  acknowledgeAllAlerts,
+  exportMetricsToCSV,
+  exportAggregatedMetricsToCSV,
 } from "./performance";
 
 describe("Performance Metrics", () => {
@@ -161,6 +169,73 @@ describe("Performance Metrics", () => {
       for (let i = 1; i < slowest.length; i++) {
         expect(slowest[i - 1].avgTime).toBeGreaterThanOrEqual(slowest[i].avgTime);
       }
+    });
+  });
+
+  describe("Alertas de Performance", () => {
+    it("deve retornar configuração de alertas", () => {
+      const config = getAlertConfig();
+      
+      expect(config).toHaveProperty("responseTimeThreshold");
+      expect(config).toHaveProperty("errorRateThreshold");
+      expect(config).toHaveProperty("enabled");
+    });
+
+    it("deve permitir atualizar configuração de alertas", () => {
+      setAlertConfig({ responseTimeThreshold: 3000 });
+      const config = getAlertConfig();
+      
+      expect(config.responseTimeThreshold).toBe(3000);
+      
+      // Restaurar valor padrão
+      setAlertConfig({ responseTimeThreshold: 2000 });
+    });
+
+    it("deve retornar alertas ativos", () => {
+      const alerts = getAlerts();
+      expect(Array.isArray(alerts)).toBe(true);
+    });
+
+    it("deve verificar e gerar alertas", () => {
+      expect(() => checkAndGenerateAlerts()).not.toThrow();
+    });
+
+    it("deve reconhecer alerta", () => {
+      const result = acknowledgeAlert("non_existent_id");
+      expect(result).toBe(false);
+    });
+
+    it("deve reconhecer todos os alertas", () => {
+      const count = acknowledgeAllAlerts();
+      expect(typeof count).toBe("number");
+    });
+  });
+
+  describe("Exportação CSV", () => {
+    it("deve exportar métricas brutas para CSV", () => {
+      // Registrar algumas métricas
+      recordEndpointMetric({
+        endpoint: "/api/test",
+        method: "GET",
+        responseTime: 100,
+        statusCode: 200,
+      });
+      
+      const csv = exportMetricsToCSV();
+      
+      expect(typeof csv).toBe("string");
+      expect(csv).toContain("Timestamp");
+      expect(csv).toContain("Endpoint");
+      expect(csv).toContain("Response Time");
+    });
+
+    it("deve exportar métricas agregadas para CSV", () => {
+      const csv = exportAggregatedMetricsToCSV();
+      
+      expect(typeof csv).toBe("string");
+      expect(csv).toContain("Endpoint");
+      expect(csv).toContain("Requests");
+      expect(csv).toContain("Avg Time");
     });
   });
 
