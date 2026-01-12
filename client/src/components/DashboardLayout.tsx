@@ -57,10 +57,8 @@ const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: 
 // Menu items principais (sem subitens)
 const mainMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade; comingSoon?: boolean; adminOnly?: boolean }[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", funcionalidade: "dashboard" },
-  { icon: LayoutGrid, label: "Dashboard Custom", path: "/dashboard/custom", funcionalidade: "dashboard" },
   { icon: Calendar, label: "Agenda", path: "/agenda", funcionalidade: "agenda" },
   { icon: Share2, label: "Compartilhamento", path: "/compartilhamento", funcionalidade: "compartilhamento" },
-  { icon: Activity, label: "Performance", path: "/performance", funcionalidade: "admin_tenants", adminOnly: true },
 ];
 
 // Menu items "Em breve" (funcionalidades futuras)
@@ -68,6 +66,11 @@ const comingSoonItems: { icon: typeof LayoutDashboard; label: string; path: stri
   { icon: Receipt, label: "Faturamento e Gestão", path: "/faturamento" },
   { icon: Megaphone, label: "Leads e Marketing", path: "/marketing" },
   { icon: UserCircle, label: "Portal do Paciente", path: "/portal-paciente" },
+];
+
+// Menu items de administração (apenas admin)
+const adminMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade }[] = [
+  { icon: Activity, label: "Performance", path: "/performance", funcionalidade: "admin_tenants" },
 ];
 
 // Menu items com subitens
@@ -408,6 +411,28 @@ function DashboardLayoutContent({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Menu items de administração (apenas admin) */}
+              {user?.role === 'admin' && adminMenuItems
+                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
+                .map(item => {
+                  const isActive = location === item.path;
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => setLocation(item.path)}
+                        tooltip={item.label}
+                        className={`h-10 transition-all font-normal`}
+                      >
+                        <item.icon
+                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
             </SidebarMenu>
           </SidebarContent>
 

@@ -1905,3 +1905,12 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Gerar backup completo do código (gorgen_backup_v2.6_20260112.zip - 19MB)
 - [x] Gerar documentação do sistema (docs/RELATORIO_STATUS_GORGEN_v2.5.md)
 - [x] Criar cronograma detalhado (docs/CRONOGRAMA_PROXIMAS_ETAPAS.md)
+
+
+---
+
+## 🔧 AJUSTES DE UI (12/01/2026)
+
+- [x] Remover Dashboard antiga e renomear DashboardCustom para Dashboard (página inicial)
+- [x] Verificar fonte dos IDs de pacientes (já está com font-mono text-sm)
+- [x] Mover Performance para baixo na barra de navegação (após itens "Em breve")

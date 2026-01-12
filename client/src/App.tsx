@@ -5,7 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
-import Dashboard from "./pages/Dashboard";
+// Dashboard antiga removida - usando DashboardCustom como principal
 import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
 import Atendimentos from "./pages/Atendimentos";
@@ -20,7 +20,7 @@ import RelatorioPacientes from "./pages/RelatorioPacientes";
 import RelatorioDuplicados from "./pages/RelatorioDuplicados";
 import Relatorios from "./pages/Relatorios";
 import Performance from "./pages/Performance";
-import DashboardCustom from "./pages/DashboardCustom";
+import Dashboard from "./pages/DashboardCustom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Router() {
@@ -34,11 +34,6 @@ function Router() {
       <Route path="/dashboard">
         <ProtectedRoute funcionalidade="dashboard">
           <Dashboard />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/dashboard/custom">
-        <ProtectedRoute funcionalidade="dashboard">
-          <DashboardCustom />
         </ProtectedRoute>
       </Route>
       <Route path="/pacientes">

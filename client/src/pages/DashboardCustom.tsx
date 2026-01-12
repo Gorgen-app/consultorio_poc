@@ -598,7 +598,7 @@ export default function DashboardCustom() {
         {/* Cabeçalho */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Dashboard Customizável</h1>
+            <h1 className="text-2xl font-bold">Dashboard</h1>
             <p className="text-muted-foreground">
               {metricasSelecionadas.length} métricas selecionadas de {todasMetricas.length} disponíveis
             </p>
