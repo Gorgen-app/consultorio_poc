@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -233,6 +233,38 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
   const [formData, setFormData] = useState<Partial<Paciente>>({});
   const [outroOperadora1, setOutroOperadora1] = useState("");
   const [outroOperadora2, setOutroOperadora2] = useState("");
+  const [buscandoCep, setBuscandoCep] = useState(false);
+
+  // Função para buscar endereço pelo CEP
+  const buscarEnderecoPorCep = useCallback(async (cep: string) => {
+    const cepLimpo = cep.replace(/\D/g, "");
+    if (cepLimpo.length !== 8) return;
+    
+    setBuscandoCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await response.json();
+      
+      if (!data.erro) {
+        setFormData(prev => ({
+          ...prev,
+          endereco: data.logradouro || prev.endereco,
+          bairro: data.bairro || prev.bairro,
+          cidade: data.localidade || prev.cidade,
+          uf: data.uf || prev.uf,
+        }));
+        toast.success("Endereço preenchido automaticamente!");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+    } finally {
+      setBuscandoCep(false);
+    }
+  }, []);
+
+  // Verificar se operadora é Particular (campos de convênio desabilitados)
+  const isParticular1 = formData.operadora1 === "Particular" || formData.operadora1 === "Retorno de Particular" || formData.operadora1 === "Cortesia";
+  const isParticular2 = formData.operadora2 === "Particular" || formData.operadora2 === "Retorno de Particular" || formData.operadora2 === "Cortesia";
 
   useEffect(() => {
     if (paciente) {
@@ -413,12 +445,13 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="cep">CEP</Label>
+                    <Label htmlFor="cep">CEP {buscandoCep && <span className="text-xs text-blue-500 ml-2">Buscando...</span>}</Label>
                     <MaskedInput
                       mask="cep"
                       id="cep"
                       value={formData.cep || ""}
                       onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                      onBlur={(e) => buscarEnderecoPorCep(e.target.value)}
                       placeholder="99999-999"
                     />
                   </div>
@@ -480,6 +513,8 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                       </div>
                     )}
 
+                    {!isParticular1 && (
+                    <>
                     <div className="space-y-2">
                       <Label htmlFor="planoModalidade1">Plano/Modalidade</Label>
                       <Input
@@ -521,6 +556,11 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                         <Label htmlFor="privativo1">Privativo</Label>
                       </div>
                     </div>
+                    </>
+                    )}
+                    {isParticular1 && (
+                      <p className="text-sm text-muted-foreground italic col-span-2">Campos de convênio não aplicáveis para atendimento particular.</p>
+                    )}
                   </div>
                 </div>
 
@@ -559,6 +599,8 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                       </div>
                     )}
 
+                    {!isParticular2 && (
+                    <>
                     <div className="space-y-2">
                       <Label htmlFor="planoModalidade2">Plano/Modalidade</Label>
                       <Input
@@ -600,6 +642,11 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                         <Label htmlFor="privativo2">Privativo</Label>
                       </div>
                     </div>
+                    </>
+                    )}
+                    {isParticular2 && formData.operadora2 && (
+                      <p className="text-sm text-muted-foreground italic col-span-2">Campos de convênio não aplicáveis para atendimento particular.</p>
+                    )}
                   </div>
                 </div>
               </TabsContent>

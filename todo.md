@@ -1713,3 +1713,13 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Coluna "Atendimentos nos últimos 12 meses" na lista de pacientes
 - [x] Coluna "Dias desde último atendimento" na lista de pacientes
 - [x] Inativação automática após 360 dias sem atendimento (procedure criada)
+
+
+## 🔧 MELHORIAS FORMULÁRIO PACIENTE (12/01/2026)
+- [ ] Verificar/implementar busca automática de endereço por CEP
+- [ ] Desabilitar campos de convênio quando operadora for "Particular"
+
+
+## 🔧 MELHORIAS FORMULÁRIO PACIENTE (12/01/2026)
+- [x] Implementar busca automática de endereço por CEP (ViaCEP) - NovoPaciente e EditarPacienteModal
+- [x] Desabilitar campos de convênio quando operadora for "Particular", "Retorno de Particular" ou "Cortesia"

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save } from "lucide-react";
 import { useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { MaskedInput } from "@/components/MaskedInput";
 import { OPERADORAS } from "@/lib/operadoras";
@@ -16,6 +16,35 @@ export default function NovoPaciente() {
   const [, setLocation] = useLocation();
   const createMutation = trpc.pacientes.create.useMutation();
   const { data: nextId, isLoading: loadingId } = trpc.pacientes.getNextId.useQuery();
+
+  const [buscandoCep, setBuscandoCep] = useState(false);
+
+  // Função para buscar endereço pelo CEP
+  const buscarEnderecoPorCep = useCallback(async (cep: string) => {
+    const cepLimpo = cep.replace(/\D/g, "");
+    if (cepLimpo.length !== 8) return;
+    
+    setBuscandoCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await response.json();
+      
+      if (!data.erro) {
+        setFormData(prev => ({
+          ...prev,
+          endereco: data.logradouro || prev.endereco,
+          bairro: data.bairro || prev.bairro,
+          cidade: data.localidade || prev.cidade,
+          uf: data.uf || prev.uf,
+        }));
+        toast.success("Endereço preenchido automaticamente!");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+    } finally {
+      setBuscandoCep(false);
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     idPaciente: "",
@@ -59,6 +88,10 @@ export default function NovoPaciente() {
       setFormData((prev) => ({ ...prev, idPaciente: nextId }));
     }
   }, [nextId]);
+
+  // Verificar se operadora é Particular ou Retorno de Particular (campos de convênio desabilitados)
+  const isParticular1 = formData.operadora1 === "Particular" || formData.operadora1 === "Retorno de Particular" || formData.operadora1 === "Cortesia";
+  const isParticular2 = formData.operadora2 === "Particular" || formData.operadora2 === "Retorno de Particular" || formData.operadora2 === "Cortesia";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,8 +253,15 @@ export default function NovoPaciente() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cep">CEP</Label>
-                  <MaskedInput mask="cep" id="cep" value={formData.cep} onChange={(e) => handleChange("cep", e.target.value)} placeholder="00000-000" />
+                  <Label htmlFor="cep">CEP {buscandoCep && <span className="text-xs text-blue-500 ml-2">Buscando...</span>}</Label>
+                  <MaskedInput 
+                    mask="cep" 
+                    id="cep" 
+                    value={formData.cep} 
+                    onChange={(e) => handleChange("cep", e.target.value)} 
+                    onBlur={(e) => buscarEnderecoPorCep(e.target.value)}
+                    placeholder="00000-000" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cidade">Cidade</Label>
@@ -262,11 +302,14 @@ export default function NovoPaciente() {
                     <Input id="operadora1Outro" value={formData.operadora1Outro} onChange={(e) => handleChange("operadora1Outro", e.target.value)} placeholder="Nome da operadora" />
                   </div>
                 )}
+                {!isParticular1 && (
                 <div className="space-y-2">
                   <Label htmlFor="planoModalidade1">Plano/Modalidade</Label>
                   <Input id="planoModalidade1" value={formData.planoModalidade1} onChange={(e) => handleChange("planoModalidade1", e.target.value)} placeholder="Tipo do plano" />
                 </div>
+              )}
               </div>
+              {!isParticular1 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="matriculaConvenio1">Matrícula</Label>
@@ -281,6 +324,10 @@ export default function NovoPaciente() {
                   <Label htmlFor="privativo1" className="cursor-pointer">Privativo</Label>
                 </div>
               </div>
+              )}
+              {isParticular1 && (
+                <p className="text-sm text-muted-foreground italic">Campos de convênio não aplicáveis para atendimento particular.</p>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -307,11 +354,14 @@ export default function NovoPaciente() {
                     <Input id="operadora2Outro" value={formData.operadora2Outro} onChange={(e) => handleChange("operadora2Outro", e.target.value)} placeholder="Nome da operadora" />
                   </div>
                 )}
+                {!isParticular2 && (
                 <div className="space-y-2">
                   <Label htmlFor="planoModalidade2">Plano/Modalidade</Label>
                   <Input id="planoModalidade2" value={formData.planoModalidade2} onChange={(e) => handleChange("planoModalidade2", e.target.value)} placeholder="Tipo do plano" />
                 </div>
+              )}
               </div>
+              {!isParticular2 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="matriculaConvenio2">Matrícula</Label>
@@ -326,6 +376,10 @@ export default function NovoPaciente() {
                   <Label htmlFor="privativo2" className="cursor-pointer">Privativo</Label>
                 </div>
               </div>
+              )}
+              {isParticular2 && formData.operadora2 && (
+                <p className="text-sm text-muted-foreground italic">Campos de convênio não aplicáveis para atendimento particular.</p>
+              )}
             </CardContent>
           </Card>
           <Card>
