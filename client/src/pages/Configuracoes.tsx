@@ -50,6 +50,79 @@ const statusVinculoInfo: Record<string, { label: string; color: string; icon: Re
   cancelado: { label: "Cancelado", color: "bg-gray-500", icon: <X className="h-4 w-4" /> },
 };
 
+// Componente de Alerta de Pacientes Inativos
+function AlertaPacientesInativos() {
+  const { data: pacientesInativos, isLoading } = trpc.pacientes.buscarPacientesInativos.useQuery();
+  const notificarMutation = trpc.pacientes.notificarPacientesInativos.useMutation({
+    onSuccess: (data) => {
+      if (data.enviado) {
+        toast.success(`Notificação enviada! ${data.total} pacientes identificados.`);
+      } else {
+        toast.info(data.mensagem || "Nenhum paciente para notificar");
+      }
+    },
+    onError: (error) => {
+      toast.error(`Erro ao enviar notificação: ${error.message}`);
+    },
+  });
+
+  const total = pacientesInativos?.length || 0;
+
+  return (
+    <Card className={total > 0 ? "border-orange-300 bg-orange-50 dark:bg-orange-950" : ""}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertTriangle className={`h-5 w-5 ${total > 0 ? "text-orange-500" : "text-muted-foreground"}`} />
+          Pacientes Ativos sem Atendimento
+        </CardTitle>
+        <CardDescription>
+          Pacientes marcados como ATIVOS que não têm atendimentos há mais de 360 dias
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : total > 0 ? (
+          <>
+            <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
+              <p className="font-medium text-orange-800 dark:text-orange-200">
+                {total} paciente{total > 1 ? "s" : ""} ativo{total > 1 ? "s" : ""} sem atendimento há 360+ dias
+              </p>
+              <p className="text-sm text-orange-600 dark:text-orange-300 mt-1">
+                Recomendação: Revise o status ou entre em contato para reativação
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => notificarMutation.mutate()}
+                disabled={notificarMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {notificarMutation.isPending ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Bell className="h-4 w-4 mr-2" />
+                )}
+                Enviar Notificação
+              </Button>
+              <Link href="/atendimentos/relatorios">
+                <Button variant="outline">
+                  Ver Relatório
+                </Button>
+              </Link>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-2 text-green-600">
+            <CheckCircle className="h-5 w-5" />
+            <span>Nenhum paciente ativo sem atendimento há 360+ dias</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Configuracoes() {
   const [activeTab, setActiveTab] = useState("perfil");
   
@@ -794,6 +867,9 @@ export default function Configuracoes() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Card de Alerta de Pacientes Inativos */}
+            <AlertaPacientesInativos />
           </div>
         )}
 

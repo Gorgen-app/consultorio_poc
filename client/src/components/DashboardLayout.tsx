@@ -96,6 +96,7 @@ const menuWithSubitems: {
     subitems: [
       { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo", funcionalidade: "atendimentos.criar" },
       { icon: Search, label: "Buscar Atendimento", path: "/atendimentos?buscar=true", funcionalidade: "atendimentos" },
+      { icon: FileSpreadsheet, label: "Relatórios", path: "/atendimentos/relatorios", funcionalidade: "atendimentos" },
     ],
   },
 ];

@@ -1798,3 +1798,14 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Adicionar filtros para colunas de atendimentos na tabela de pacientes
 
 - [x] Adicionar coluna de total de atendimentos na tabela de pacientes
+
+
+---
+
+## 🔔 MELHORIAS SOLICITADAS (12/01/2026)
+
+- [x] Corrigir cor do botão "Novo Atendimento" no prontuário para azul (padrão)
+- [x] Adicionar filtro por total de atendimentos na tabela de pacientes
+- [x] Adicionar coluna de primeiro atendimento na tabela de pacientes (1º Atend.)
+- [x] Criar página de Relatórios com exportação CSV/Excel (menu Atendimentos > Relatórios)
+- [x] Implementar notificação para pacientes ativos com 360+ dias sem atendimento (Configurações > Notificações)

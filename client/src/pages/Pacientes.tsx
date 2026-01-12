@@ -12,7 +12,7 @@ import { EditarPacienteModal } from "@/components/EditarPacienteModal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
-type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso" | "totalAtendimentos" | "atendimentos12m" | "diasDesdeUltimoAtendimento";
+type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso" | "totalAtendimentos" | "atendimentos12m" | "diasDesdeUltimoAtendimento" | "primeiroAtendimento";
 type SortDirection = "asc" | "desc" | null;
 
 export default function Pacientes() {
@@ -44,6 +44,7 @@ export default function Pacientes() {
   const [filtroDataAte, setFiltroDataAte] = useState("");
   const [filtroAtendimentos12m, setFiltroAtendimentos12m] = useState("");
   const [filtroDiasDesdeUltimoAtend, setFiltroDiasDesdeUltimoAtend] = useState("");
+  const [filtroTotalAtendimentos, setFiltroTotalAtendimentos] = useState("");
 
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -224,6 +225,17 @@ export default function Pacientes() {
       }
     }
 
+    // Filtro por Total de atendimentos
+    if (filtroTotalAtendimentos && todasMetricas) {
+      const filtroNum = parseInt(filtroTotalAtendimentos);
+      if (!isNaN(filtroNum)) {
+        resultado = resultado.filter((p) => {
+          const total = todasMetricas[p.id]?.totalAtendimentos ?? 0;
+          return total >= filtroNum;
+        });
+      }
+    }
+
     // Ordenação
     if (sortField && sortDirection && todasMetricas) {
       resultado = [...resultado].sort((a, b) => {
@@ -246,6 +258,13 @@ export default function Pacientes() {
           bVal = todasMetricas[b.id]?.diasSemAtendimento ?? 999999;
           const comparison = aVal - bVal;
           return sortDirection === "asc" ? comparison : -comparison;
+        } else if (sortField === "primeiroAtendimento") {
+          const aDate = todasMetricas[a.id]?.primeiroAtendimento;
+          const bDate = todasMetricas[b.id]?.primeiroAtendimento;
+          aVal = aDate ? new Date(aDate).getTime() : 0;
+          bVal = bDate ? new Date(bDate).getTime() : 0;
+          const comparison = aVal - bVal;
+          return sortDirection === "asc" ? comparison : -comparison;
         } else {
           aVal = a[sortField] || "";
           bVal = b[sortField] || "";
@@ -256,7 +275,7 @@ export default function Pacientes() {
     }
 
     return resultado;
-  }, [pacientes, searchTerm, filtroIdade, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, filtroAtendimentos12m, filtroDiasDesdeUltimoAtend, sortField, sortDirection, todasMetricas]);
+  }, [pacientes, searchTerm, filtroIdade, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, filtroAtendimentos12m, filtroDiasDesdeUltimoAtend, filtroTotalAtendimentos, sortField, sortDirection, todasMetricas]);
 
   // Paginação
   const totalPaginas = Math.ceil(pacientesFiltrados.length / itensPorPagina);
@@ -289,17 +308,18 @@ export default function Pacientes() {
     setFiltroDataAte("");
     setFiltroAtendimentos12m("");
     setFiltroDiasDesdeUltimoAtend("");
+    setFiltroTotalAtendimentos("");
     setSortField(null);
     setSortDirection(null);
     setPaginaAtual(1);
   };
 
-  const temFiltrosAtivos = searchTerm || filtroCidade || filtroUF || filtroOperadora || filtroStatus || filtroDiagnostico || filtroDataDe || filtroDataAte || filtroAtendimentos12m || filtroDiasDesdeUltimoAtend;
+  const temFiltrosAtivos = searchTerm || filtroCidade || filtroUF || filtroOperadora || filtroStatus || filtroDiagnostico || filtroDataDe || filtroDataAte || filtroAtendimentos12m || filtroDiasDesdeUltimoAtend || filtroTotalAtendimentos;
 
   // Resetar página ao mudar filtros
   useMemo(() => {
     setPaginaAtual(1);
-  }, [searchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, filtroAtendimentos12m, filtroDiasDesdeUltimoAtend]);
+  }, [searchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, filtroAtendimentos12m, filtroDiasDesdeUltimoAtend, filtroTotalAtendimentos]);
 
   // Componente de cabeçalho ordenável
   const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
@@ -470,8 +490,19 @@ export default function Pacientes() {
                 </div>
               </div>
 
-              {/* Terceira linha: Atendimentos 12m, Dias desde último atendimento */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+              {/* Terceira linha: Total Atendimentos, Atendimentos 12m, Dias desde último atendimento */}
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Total de atendimentos (mínimo)</label>
+                  <Input
+                    type="number"
+                    placeholder="Ex: 5 (pacientes com 5+ atendimentos no histórico)"
+                    value={filtroTotalAtendimentos}
+                    onChange={(e) => setFiltroTotalAtendimentos(e.target.value)}
+                    min="0"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Atendimentos 12 meses (mínimo)</label>
                   <Input
@@ -546,6 +577,7 @@ export default function Pacientes() {
                       <SortableHeader field="totalAtendimentos">Total Atend.</SortableHeader>
                       <SortableHeader field="atendimentos12m">Atend. 12m</SortableHeader>
                       <SortableHeader field="diasDesdeUltimoAtendimento">Dias desde último atend.</SortableHeader>
+                      <SortableHeader field="primeiroAtendimento">1º Atend.</SortableHeader>
                       <SortableHeader field="statusCaso">Status</SortableHeader>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -589,6 +621,11 @@ export default function Pacientes() {
                               </span>
                             );
                           })()}
+                        </TableCell>
+                        <TableCell className="text-center text-sm">
+                          {todasMetricas?.[paciente.id]?.primeiroAtendimento 
+                            ? new Date(todasMetricas[paciente.id].primeiroAtendimento!).toLocaleDateString('pt-BR')
+                            : "-"}
                         </TableCell>
                         <TableCell>
                           <span className={`badge-${paciente.statusCaso === "Ativo" ? "success" : "warning"} px-2 py-1 rounded text-xs`}>

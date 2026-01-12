@@ -188,8 +188,9 @@ export async function listPacientes(tenantId: number, filters?: {
  * - totalAtendimentos: número total de atendimentos do paciente
  * - atendimentos12m: número de atendimentos nos últimos 12 meses
  * - diasSemAtendimento: dias desde o último atendimento
+ * - primeiroAtendimento: data do primeiro atendimento
  */
-export async function calcularMetricasAtendimento(tenantId: number, pacienteIds: number[]): Promise<Map<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null }>> {
+export async function calcularMetricasAtendimento(tenantId: number, pacienteIds: number[]): Promise<Map<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null; primeiroAtendimento: Date | null }>> {
   const db = await getDb();
   if (!db || pacienteIds.length === 0) return new Map();
 
@@ -204,6 +205,7 @@ export async function calcularMetricasAtendimento(tenantId: number, pacienteIds:
       totalAtendimentos: sql<number>`COUNT(*)`,
       atendimentos12m: sql<number>`SUM(CASE WHEN ${atendimentos.dataAtendimento} >= ${umAnoAtras.toISOString().split('T')[0]} THEN 1 ELSE 0 END)`,
       ultimoAtendimento: sql<string>`MAX(${atendimentos.dataAtendimento})`,
+      primeiroAtendimento: sql<string>`MIN(${atendimentos.dataAtendimento})`,
     })
     .from(atendimentos)
     .where(
@@ -215,11 +217,12 @@ export async function calcularMetricasAtendimento(tenantId: number, pacienteIds:
     )
     .groupBy(atendimentos.pacienteId);
 
-  const resultado = new Map<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null }>();
+  const resultado = new Map<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null; primeiroAtendimento: Date | null }>();
   
   for (const m of metricas) {
     let diasSemAtendimento: number | null = null;
     let ultimoAtendimento: Date | null = null;
+    let primeiroAtendimento: Date | null = null;
     
     if (m.ultimoAtendimento) {
       ultimoAtendimento = new Date(m.ultimoAtendimento);
@@ -227,11 +230,16 @@ export async function calcularMetricasAtendimento(tenantId: number, pacienteIds:
       diasSemAtendimento = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     }
     
+    if (m.primeiroAtendimento) {
+      primeiroAtendimento = new Date(m.primeiroAtendimento);
+    }
+    
     resultado.set(m.pacienteId, {
       totalAtendimentos: Number(m.totalAtendimentos) || 0,
       atendimentos12m: Number(m.atendimentos12m) || 0,
       diasSemAtendimento,
       ultimoAtendimento,
+      primeiroAtendimento,
     });
   }
 
@@ -243,6 +251,7 @@ export async function calcularMetricasAtendimento(tenantId: number, pacienteIds:
         atendimentos12m: 0,
         diasSemAtendimento: null,
         ultimoAtendimento: null,
+        primeiroAtendimento: null,
       });
     }
   }
@@ -295,6 +304,50 @@ export async function inativarPacientesSemAtendimento(tenantId: number): Promise
     );
 
   return idsParaInativar.length;
+}
+
+/**
+ * Busca pacientes ativos com mais de 360 dias sem atendimento (para notificação)
+ */
+export async function buscarPacientesInativosPendentes(tenantId: number): Promise<{ id: number; nome: string; diasSemAtendimento: number; ultimoAtendimento: string }[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const dataLimite = new Date();
+  dataLimite.setDate(dataLimite.getDate() - 360);
+  const hoje = new Date();
+
+  // Buscar pacientes ativos cujo último atendimento foi há mais de 360 dias
+  const resultado = await db
+    .select({
+      pacienteId: atendimentos.pacienteId,
+      pacienteNome: pacientes.nome,
+      ultimoAtendimento: sql<string>`MAX(${atendimentos.dataAtendimento})`,
+    })
+    .from(atendimentos)
+    .innerJoin(pacientes, eq(atendimentos.pacienteId, pacientes.id))
+    .where(
+      and(
+        eq(atendimentos.tenantId, tenantId),
+        eq(pacientes.statusCaso, 'Ativo'),
+        sql`${atendimentos.deletedAt} IS NULL`,
+        sql`${pacientes.deletedAt} IS NULL`
+      )
+    )
+    .groupBy(atendimentos.pacienteId, pacientes.nome)
+    .having(sql`MAX(${atendimentos.dataAtendimento}) < ${dataLimite.toISOString().split('T')[0]}`);
+
+  return resultado.map(r => {
+    const ultimoAtend = new Date(r.ultimoAtendimento);
+    const diffTime = hoje.getTime() - ultimoAtend.getTime();
+    const diasSemAtendimento = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return {
+      id: r.pacienteId,
+      nome: r.pacienteNome || 'Sem nome',
+      diasSemAtendimento,
+      ultimoAtendimento: r.ultimoAtendimento,
+    };
+  });
 }
 
 export async function updatePaciente(tenantId: number, id: number, data: Partial<Omit<InsertPaciente, 'tenantId'>>): Promise<Paciente | undefined> {

@@ -182,13 +182,14 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const metricas = await db.calcularMetricasAtendimento(ctx.tenant.tenantId, input.pacienteIds);
         // Converter Map para objeto para serialização
-        const resultado: Record<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: string | null }> = {};
+        const resultado: Record<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: string | null; primeiroAtendimento: string | null }> = {};
         metricas.forEach((value, key) => {
           resultado[key] = {
             totalAtendimentos: value.totalAtendimentos,
             atendimentos12m: value.atendimentos12m,
             diasSemAtendimento: value.diasSemAtendimento,
             ultimoAtendimento: value.ultimoAtendimento?.toISOString() || null,
+            primeiroAtendimento: value.primeiroAtendimento?.toISOString() || null,
           };
         });
         return resultado;
@@ -204,6 +205,34 @@ export const appRouter = router({
         }
         const count = await db.inativarPacientesSemAtendimento(ctx.tenant.tenantId);
         return { inativados: count };
+      }),
+
+    // Buscar pacientes ativos com 360+ dias sem atendimento (para notificação)
+    buscarPacientesInativos: tenantProcedure
+      .query(async ({ ctx }) => {
+        const pacientes = await db.buscarPacientesInativosPendentes(ctx.tenant.tenantId);
+        return pacientes;
+      }),
+
+    // Notificar sobre pacientes inativos
+    notificarPacientesInativos: tenantProcedure
+      .mutation(async ({ ctx }) => {
+        const { notifyOwner } = await import("./_core/notification");
+        const pacientes = await db.buscarPacientesInativosPendentes(ctx.tenant.tenantId);
+        
+        if (pacientes.length === 0) {
+          return { enviado: false, mensagem: "Nenhum paciente ativo com 360+ dias sem atendimento" };
+        }
+
+        // Limitar a lista para os 20 primeiros para não sobrecarregar a notificação
+        const top20 = pacientes.slice(0, 20);
+        const listaPacientes = top20.map(p => `- ${p.nome} (${p.diasSemAtendimento} dias)`).join("\n");
+        
+        const titulo = `⚠️ ${pacientes.length} pacientes ativos com 360+ dias sem atendimento`;
+        const conteudo = `Os seguintes pacientes estão marcados como ATIVOS mas não têm atendimentos há mais de 360 dias:\n\n${listaPacientes}${pacientes.length > 20 ? `\n\n... e mais ${pacientes.length - 20} pacientes` : ""}\n\nRecomendação: Revise o status destes pacientes ou entre em contato para reativação.`;
+
+        const enviado = await notifyOwner({ title: titulo, content: conteudo });
+        return { enviado, total: pacientes.length };
       }),
 
     update: tenantProcedure

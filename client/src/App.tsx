@@ -18,6 +18,7 @@ import AdminTenants from "./pages/AdminTenants";
 import CrossTenantAutorizacoes from "./pages/CrossTenantAutorizacoes";
 import RelatorioPacientes from "./pages/RelatorioPacientes";
 import RelatorioDuplicados from "./pages/RelatorioDuplicados";
+import Relatorios from "./pages/Relatorios";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Router() {
@@ -61,6 +62,11 @@ function Router() {
       <Route path="/atendimentos/novo">
         <ProtectedRoute funcionalidade="atendimentos.criar">
           <NovoAtendimento />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/atendimentos/relatorios">
+        <ProtectedRoute funcionalidade="atendimentos">
+          <Relatorios />
         </ProtectedRoute>
       </Route>
       <Route path="/prontuario/:id">
