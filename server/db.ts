@@ -183,6 +183,117 @@ export async function listPacientes(tenantId: number, filters?: {
   return adicionarIdadeAosPacientes(result);
 }
 
+/**
+ * Calcula métricas de atendimento para uma lista de pacientes
+ * - atendimentos12m: número de atendimentos nos últimos 12 meses
+ * - diasSemAtendimento: dias desde o último atendimento
+ */
+export async function calcularMetricasAtendimento(tenantId: number, pacienteIds: number[]): Promise<Map<number, { atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null }>> {
+  const db = await getDb();
+  if (!db || pacienteIds.length === 0) return new Map();
+
+  const hoje = new Date();
+  const umAnoAtras = new Date();
+  umAnoAtras.setFullYear(umAnoAtras.getFullYear() - 1);
+
+  // Buscar métricas de atendimento para todos os pacientes
+  const metricas = await db
+    .select({
+      pacienteId: atendimentos.pacienteId,
+      totalAtendimentos: sql<number>`COUNT(*)`,
+      atendimentos12m: sql<number>`SUM(CASE WHEN ${atendimentos.dataAtendimento} >= ${umAnoAtras.toISOString().split('T')[0]} THEN 1 ELSE 0 END)`,
+      ultimoAtendimento: sql<string>`MAX(${atendimentos.dataAtendimento})`,
+    })
+    .from(atendimentos)
+    .where(
+      and(
+        eq(atendimentos.tenantId, tenantId),
+        inArray(atendimentos.pacienteId, pacienteIds),
+        sql`${atendimentos.deletedAt} IS NULL`
+      )
+    )
+    .groupBy(atendimentos.pacienteId);
+
+  const resultado = new Map<number, { atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null }>();
+  
+  for (const m of metricas) {
+    let diasSemAtendimento: number | null = null;
+    let ultimoAtendimento: Date | null = null;
+    
+    if (m.ultimoAtendimento) {
+      ultimoAtendimento = new Date(m.ultimoAtendimento);
+      const diffTime = hoje.getTime() - ultimoAtendimento.getTime();
+      diasSemAtendimento = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    }
+    
+    resultado.set(m.pacienteId, {
+      atendimentos12m: Number(m.atendimentos12m) || 0,
+      diasSemAtendimento,
+      ultimoAtendimento,
+    });
+  }
+
+  // Para pacientes sem atendimentos, definir valores padrão
+  for (const id of pacienteIds) {
+    if (!resultado.has(id)) {
+      resultado.set(id, {
+        atendimentos12m: 0,
+        diasSemAtendimento: null,
+        ultimoAtendimento: null,
+      });
+    }
+  }
+
+  return resultado;
+}
+
+/**
+ * Inativa pacientes sem atendimento há mais de 360 dias
+ */
+export async function inativarPacientesSemAtendimento(tenantId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const dataLimite = new Date();
+  dataLimite.setDate(dataLimite.getDate() - 360);
+
+  // Buscar pacientes ativos cujo último atendimento foi há mais de 360 dias
+  const pacientesParaInativar = await db
+    .select({
+      pacienteId: atendimentos.pacienteId,
+      ultimoAtendimento: sql<string>`MAX(${atendimentos.dataAtendimento})`,
+    })
+    .from(atendimentos)
+    .innerJoin(pacientes, eq(atendimentos.pacienteId, pacientes.id))
+    .where(
+      and(
+        eq(atendimentos.tenantId, tenantId),
+        eq(pacientes.statusCaso, 'Ativo'),
+        sql`${atendimentos.deletedAt} IS NULL`,
+        sql`${pacientes.deletedAt} IS NULL`
+      )
+    )
+    .groupBy(atendimentos.pacienteId)
+    .having(sql`MAX(${atendimentos.dataAtendimento}) < ${dataLimite.toISOString().split('T')[0]}`);
+
+  if (pacientesParaInativar.length === 0) return 0;
+
+  const idsParaInativar = pacientesParaInativar.map(p => p.pacienteId);
+
+  // Atualizar status para Inativo
+  await db
+    .update(pacientes)
+    .set({ statusCaso: 'Inativo' })
+    .where(
+      and(
+        eq(pacientes.tenantId, tenantId),
+        inArray(pacientes.id, idsParaInativar)
+      )
+    );
+
+  return idsParaInativar.length;
+}
+
 export async function updatePaciente(tenantId: number, id: number, data: Partial<Omit<InsertPaciente, 'tenantId'>>): Promise<Paciente | undefined> {
   const db = await getDb();
   if (!db) return undefined;

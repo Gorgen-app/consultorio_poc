@@ -1701,3 +1701,15 @@ A dashboard deve integrar **medicina e administração**:
 ## 🚀 MELHORIAS PRONTUÁRIO E ATALHOS (11/01/2026)
 - [x] Histórico de atendimentos na página do Prontuário
 - [x] Atalho Ctrl+D para duplicar atendimento selecionado
+
+
+## 🚀 MÉTRICAS DE ATENDIMENTO NA LISTA DE PACIENTES (11/01/2026)
+- [ ] Coluna "Atendimentos 12m" - número de atendimentos nos últimos 12 meses
+- [ ] Coluna "Dias s/ atendimento" - dias desde o último atendimento
+- [ ] Inativação automática - pacientes sem atendimento há mais de 360 dias ficam inativos
+
+
+## 🚀 MÉTRICAS DE ATENDIMENTO (11/01/2026)
+- [x] Coluna "Atendimentos nos últimos 12 meses" na lista de pacientes
+- [x] Coluna "Dias desde último atendimento" na lista de pacientes
+- [x] Inativação automática após 360 dias sem atendimento (procedure criada)

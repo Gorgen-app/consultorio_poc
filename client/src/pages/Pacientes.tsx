@@ -209,6 +209,30 @@ export default function Pacientes() {
   const indiceFim = indiceInicio + itensPorPagina;
   const pacientesPaginados = pacientesFiltrados.slice(indiceInicio, indiceFim);
 
+  // Buscar métricas de atendimento para os pacientes da página atual
+  const pacienteIds = useMemo(() => {
+    return pacientesPaginados?.map(p => p.id) || [];
+  }, [pacientesPaginados]);
+
+  const { data: metricasAtendimento } = trpc.pacientes.getMetricasAtendimento.useQuery(
+    { pacienteIds },
+    { enabled: pacienteIds.length > 0 }
+  );
+
+  // Função para formatar dias sem atendimento
+  const formatarDiasSemAtendimento = (dias: number | null | undefined): string => {
+    if (dias === null || dias === undefined) return "-";
+    if (dias === 0) return "Hoje";
+    if (dias === 1) return "1 dia";
+    if (dias < 30) return `${dias} dias`;
+    if (dias < 365) {
+      const meses = Math.floor(dias / 30);
+      return meses === 1 ? "1 mês" : `${meses} meses`;
+    }
+    const anos = Math.floor(dias / 365);
+    return anos === 1 ? "1 ano" : `${anos} anos`;
+  };
+
   const limparFiltros = () => {
     setSearchTerm("");
     setFiltroCidade("");
@@ -447,6 +471,8 @@ export default function Pacientes() {
                       <SortableHeader field="operadora1">Convênio 1</SortableHeader>
                       <SortableHeader field="operadora2">Convênio 2</SortableHeader>
                       <SortableHeader field="diagnosticoEspecifico">Diagnóstico</SortableHeader>
+                      <TableHead className="text-center">Atend. 12m</TableHead>
+                      <TableHead className="text-center">Dias s/ Atend.</TableHead>
                       <SortableHeader field="statusCaso">Status</SortableHeader>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -469,6 +495,22 @@ export default function Pacientes() {
                         <TableCell>{paciente.operadora2 || "-"}</TableCell>
                         <TableCell className="max-w-[200px] truncate">
                           {paciente.diagnosticoEspecifico || paciente.grupoDiagnostico || "-"}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className={`font-medium ${(metricasAtendimento?.[paciente.id]?.atendimentos12m || 0) > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                            {metricasAtendimento?.[paciente.id]?.atendimentos12m ?? "-"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(() => {
+                            const dias = metricasAtendimento?.[paciente.id]?.diasSemAtendimento;
+                            const isInativo = dias !== null && dias !== undefined && dias > 360;
+                            return (
+                              <span className={`font-medium ${isInativo ? 'text-red-600' : dias !== null && dias !== undefined && dias > 180 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                                {formatarDiasSemAtendimento(dias)}
+                              </span>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell>
                           <span className={`badge-${paciente.statusCaso === "Ativo" ? "success" : "warning"} px-2 py-1 rounded text-xs`}>

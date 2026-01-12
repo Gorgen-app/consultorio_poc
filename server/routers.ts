@@ -142,6 +142,37 @@ export const appRouter = router({
         return await db.listPacientes(ctx.tenant.tenantId, input);
       }),
 
+    // Obter métricas de atendimento para pacientes
+    getMetricasAtendimento: tenantProcedure
+      .input(z.object({
+        pacienteIds: z.array(z.number()),
+      }))
+      .query(async ({ input, ctx }) => {
+        const metricas = await db.calcularMetricasAtendimento(ctx.tenant.tenantId, input.pacienteIds);
+        // Converter Map para objeto para serialização
+        const resultado: Record<number, { atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: string | null }> = {};
+        metricas.forEach((value, key) => {
+          resultado[key] = {
+            atendimentos12m: value.atendimentos12m,
+            diasSemAtendimento: value.diasSemAtendimento,
+            ultimoAtendimento: value.ultimoAtendimento?.toISOString() || null,
+          };
+        });
+        return resultado;
+      }),
+
+    // Inativar pacientes sem atendimento há mais de 360 dias
+    inativarSemAtendimento: tenantProcedure
+      .mutation(async ({ ctx }) => {
+        // Verificar se é admin
+        const profile = await db.getUserProfile(ctx.user?.id || 0);
+        if (!profile?.isAdminMaster) {
+          throw new Error("Acesso negado: apenas administradores podem executar esta ação");
+        }
+        const count = await db.inativarPacientesSemAtendimento(ctx.tenant.tenantId);
+        return { inativados: count };
+      }),
+
     update: tenantProcedure
       .input(
         z.object({
