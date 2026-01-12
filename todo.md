@@ -1767,3 +1767,12 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Verificar se são duplicatas reais (comparar CPF e nome) - NÃO são duplicatas, são pacientes únicos
 - [x] Corrigir IDs inválidos para formato padrão (2026-0000055, 2026-0000056, 2026-0000057)
 - [x] Incluir duplicatas reais no relatório de merge - N/A (não eram duplicatas)
+
+
+---
+
+## 🩺 MELHORIAS NO PRONTUÁRIO (12/01/2026)
+
+- [x] Adicionar convênio principal no quadro de identificação
+- [x] Adicionar e-mail no quadro de contato (com link mailto)
+- [x] Adicionar botão WhatsApp com link para o telefone do paciente
