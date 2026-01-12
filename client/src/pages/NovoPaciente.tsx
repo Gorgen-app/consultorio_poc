@@ -20,6 +20,8 @@ export default function NovoPaciente() {
 
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [erroCpf, setErroCpf] = useState<string | null>(null);
+  const [cpfDuplicado, setCpfDuplicado] = useState<{ id: number; idPaciente: string; nome: string } | null>(null);
+  const [verificandoCpf, setVerificandoCpf] = useState(false);
 
   // Função para buscar endereço pelo CEP
   const buscarEnderecoPorCep = useCallback(async (cep: string) => {
@@ -94,6 +96,26 @@ export default function NovoPaciente() {
   // Verificar se operadora é Particular ou Retorno de Particular (campos de convênio desabilitados)
   const isParticular1 = formData.operadora1 === "Particular" || formData.operadora1 === "Retorno de Particular" || formData.operadora1 === "Cortesia";
   const isParticular2 = formData.operadora2 === "Particular" || formData.operadora2 === "Retorno de Particular" || formData.operadora2 === "Cortesia";
+
+  // Função para verificar CPF duplicado
+  const verificarCpfDuplicado = trpc.pacientes.checkCpfDuplicado.useQuery(
+    { cpf: formData.cpf },
+    {
+      enabled: formData.cpf.replace(/\D/g, "").length === 11 && !erroCpf,
+      staleTime: 0,
+    }
+  );
+
+  // Atualizar estado de CPF duplicado quando a query retornar
+  useEffect(() => {
+    if (verificarCpfDuplicado.data) {
+      if (verificarCpfDuplicado.data.duplicado && verificarCpfDuplicado.data.pacienteExistente) {
+        setCpfDuplicado(verificarCpfDuplicado.data.pacienteExistente);
+      } else {
+        setCpfDuplicado(null);
+      }
+    }
+  }, [verificarCpfDuplicado.data]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,6 +251,7 @@ export default function NovoPaciente() {
                     onChange={(e) => {
                       handleChange("cpf", e.target.value);
                       setErroCpf(null);
+                      setCpfDuplicado(null);
                     }}
                     onBlur={() => {
                       if (formData.cpf && formData.cpf.replace(/\D/g, "").length === 11) {
@@ -240,9 +263,22 @@ export default function NovoPaciente() {
                       }
                     }}
                     placeholder="000.000.000-00"
-                    className={erroCpf ? "border-red-500" : ""}
+                    className={erroCpf || cpfDuplicado ? "border-red-500" : ""}
                   />
                   {erroCpf && <p className="text-sm text-red-500 mt-1">{erroCpf}</p>}
+                  {cpfDuplicado && (
+                    <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                      <p className="text-sm text-amber-800 font-medium">
+                        ⚠️ CPF já cadastrado para outro paciente:
+                      </p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        <strong>{cpfDuplicado.nome}</strong> (ID: {cpfDuplicado.idPaciente})
+                      </p>
+                      <p className="text-xs text-amber-600 mt-1">
+                        Verifique se não é um cadastro duplicado antes de continuar.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

@@ -1,4 +1,4 @@
-import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -530,6 +530,53 @@ export async function getDashboardStats(tenantId: number) {
       total: Number(d.total),
     })),
   };
+}
+
+export async function checkCpfDuplicado(
+  tenantId: number,
+  cpf: string,
+  excludeId?: number
+): Promise<{ duplicado: boolean; pacienteExistente?: { id: number; idPaciente: string; nome: string } }> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Limpar CPF para comparar apenas números
+  const cpfLimpo = cpf.replace(/\D/g, "");
+  if (cpfLimpo.length !== 11) {
+    return { duplicado: false };
+  }
+
+  // Buscar pacientes com o mesmo CPF no tenant
+  const conditions = [
+    eq(pacientes.tenantId, tenantId),
+    sql`REPLACE(REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', ''), ' ', '') = ${cpfLimpo}`,
+  ];
+
+  // Excluir o próprio paciente na edição
+  if (excludeId) {
+    conditions.push(ne(pacientes.id, excludeId));
+  }
+
+  const result = await db
+    .select({
+      id: pacientes.id,
+      idPaciente: pacientes.idPaciente,
+      nome: pacientes.nome,
+    })
+    .from(pacientes)
+    .where(and(...conditions))
+    .limit(1);
+
+  if (result.length > 0) {
+    return {
+      duplicado: true,
+      pacienteExistente: result[0],
+    };
+  }
+
+  return { duplicado: false };
 }
 
 export async function getNextPacienteId(tenantId: number): Promise<string> {

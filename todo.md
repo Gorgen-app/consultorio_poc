@@ -1728,3 +1728,8 @@ A dashboard deve integrar **medicina e administração**:
 ## 🔧 VALIDAÇÕES E AUTOMAÇÕES (12/01/2026)
 - [x] Validação de dígitos verificadores do CPF no cadastro de pacientes
 - [x] Preenchimento automático de convênio ao selecionar paciente em Novo Atendimento
+
+
+## 🔧 VALIDAÇÕES E AUTOMAÇÕES v2 (12/01/2026)
+- [x] Validação de duplicidade de CPF - Alertar se já existe outro paciente com mesmo CPF
+- [x] Sugestão de convênio secundário - Permitir escolher entre convênio 1 ou 2 do paciente

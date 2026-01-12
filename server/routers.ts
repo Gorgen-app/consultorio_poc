@@ -92,6 +92,15 @@ export const appRouter = router({
         return await db.getNextPacienteId(ctx.tenant.tenantId);
       }),
 
+    checkCpfDuplicado: tenantProcedure
+      .input(z.object({
+        cpf: z.string(),
+        excludeId: z.number().optional(), // Para excluir o próprio paciente na edição
+      }))
+      .query(async ({ input, ctx }) => {
+        return await db.checkCpfDuplicado(ctx.tenant.tenantId, input.cpf, input.excludeId);
+      }),
+
     create: tenantProcedure
       .input(pacienteSchema)
       .mutation(async ({ input, ctx }) => {

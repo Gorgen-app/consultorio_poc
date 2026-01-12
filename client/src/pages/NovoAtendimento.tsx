@@ -134,6 +134,27 @@ export default function NovoAtendimento() {
     }
   };
 
+  // Função para selecionar convênio 1 ou 2 do paciente
+  const selecionarConvenio = (tipo: 1 | 2) => {
+    if (!pacienteSelecionado) return;
+    
+    if (tipo === 1) {
+      setFormData((prev) => ({
+        ...prev,
+        convenio: pacienteSelecionado.operadora1 || "",
+        plano: pacienteSelecionado.planoModalidade1 || "",
+      }));
+      toast.success(`Convênio 1 selecionado: ${pacienteSelecionado.operadora1}`);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        convenio: pacienteSelecionado.operadora2 || "",
+        plano: pacienteSelecionado.planoModalidade2 || "",
+      }));
+      toast.success(`Convênio 2 selecionado: ${pacienteSelecionado.operadora2}`);
+    }
+  };
+
   // Auto-preencher código CBHPM quando seleciona procedimento
   const handleProcedimentoChange = (procedimento: string) => {
     const codigo = PROCEDIMENTOS_CBHPM[procedimento] || "";
@@ -381,6 +402,33 @@ export default function NovoAtendimento() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* Botões de seleção rápida de convênio 1 ou 2 */}
+                  {pacienteSelecionado && (pacienteSelecionado.operadora1 || pacienteSelecionado.operadora2) && (
+                    <div className="flex gap-2 mt-2">
+                      {pacienteSelecionado.operadora1 && (
+                        <Button
+                          type="button"
+                          variant={formData.convenio === pacienteSelecionado.operadora1 ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => selecionarConvenio(1)}
+                          className="text-xs"
+                        >
+                          Conv. 1: {pacienteSelecionado.operadora1}
+                        </Button>
+                      )}
+                      {pacienteSelecionado.operadora2 && (
+                        <Button
+                          type="button"
+                          variant={formData.convenio === pacienteSelecionado.operadora2 ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => selecionarConvenio(2)}
+                          className="text-xs"
+                        >
+                          Conv. 2: {pacienteSelecionado.operadora2}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="plano">Plano/Modalidade</Label>
