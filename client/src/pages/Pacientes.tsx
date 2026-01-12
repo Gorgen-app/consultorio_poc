@@ -12,7 +12,7 @@ import { EditarPacienteModal } from "@/components/EditarPacienteModal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
-type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso";
+type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso" | "atendimentos12m" | "diasDesdeUltimoAtendimento";
 type SortDirection = "asc" | "desc" | null;
 
 export default function Pacientes() {
@@ -42,6 +42,8 @@ export default function Pacientes() {
   const [filtroDiagnostico, setFiltroDiagnostico] = useState("");
   const [filtroDataDe, setFiltroDataDe] = useState("");
   const [filtroDataAte, setFiltroDataAte] = useState("");
+  const [filtroAtendimentos12m, setFiltroAtendimentos12m] = useState("");
+  const [filtroDiasDesdeUltimoAtend, setFiltroDiasDesdeUltimoAtend] = useState("");
 
   // Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -88,6 +90,16 @@ export default function Pacientes() {
   const { data: pacientes, isLoading } = trpc.pacientes.list.useQuery({
     limit: 50000,
   });
+
+  // Buscar métricas de TODOS os pacientes para permitir ordenação e filtro
+  const todosPacienteIds = useMemo(() => {
+    return pacientes?.map(p => p.id) || [];
+  }, [pacientes]);
+
+  const { data: todasMetricas } = trpc.pacientes.getMetricasAtendimento.useQuery(
+    { pacienteIds: todosPacienteIds },
+    { enabled: todosPacienteIds.length > 0 }
+  );
 
   // Função de ordenação
   const handleSort = (field: SortField) => {
@@ -189,35 +201,63 @@ export default function Pacientes() {
       });
     }
 
+    // Filtro por Atendimentos 12 meses
+    if (filtroAtendimentos12m && todasMetricas) {
+      const filtroNum = parseInt(filtroAtendimentos12m);
+      if (!isNaN(filtroNum)) {
+        resultado = resultado.filter((p) => {
+          const atend = todasMetricas[p.id]?.atendimentos12m ?? 0;
+          return atend >= filtroNum;
+        });
+      }
+    }
+
+    // Filtro por Dias desde último atendimento
+    if (filtroDiasDesdeUltimoAtend && todasMetricas) {
+      const filtroNum = parseInt(filtroDiasDesdeUltimoAtend);
+      if (!isNaN(filtroNum)) {
+        resultado = resultado.filter((p) => {
+          const dias = todasMetricas[p.id]?.diasSemAtendimento;
+          if (dias === null || dias === undefined) return false;
+          return dias >= filtroNum;
+        });
+      }
+    }
+
     // Ordenação
-    if (sortField && sortDirection) {
+    if (sortField && sortDirection && todasMetricas) {
       resultado = [...resultado].sort((a, b) => {
-        const aVal = a[sortField] || "";
-        const bVal = b[sortField] || "";
+        let aVal: any;
+        let bVal: any;
         
-        const comparison = String(aVal).localeCompare(String(bVal), 'pt-BR', { numeric: true });
-        return sortDirection === "asc" ? comparison : -comparison;
+        // Ordenação especial para campos de métricas
+        if (sortField === "atendimentos12m") {
+          aVal = todasMetricas[a.id]?.atendimentos12m ?? -1;
+          bVal = todasMetricas[b.id]?.atendimentos12m ?? -1;
+          const comparison = aVal - bVal;
+          return sortDirection === "asc" ? comparison : -comparison;
+        } else if (sortField === "diasDesdeUltimoAtendimento") {
+          aVal = todasMetricas[a.id]?.diasSemAtendimento ?? 999999;
+          bVal = todasMetricas[b.id]?.diasSemAtendimento ?? 999999;
+          const comparison = aVal - bVal;
+          return sortDirection === "asc" ? comparison : -comparison;
+        } else {
+          aVal = a[sortField] || "";
+          bVal = b[sortField] || "";
+          const comparison = String(aVal).localeCompare(String(bVal), 'pt-BR', { numeric: true });
+          return sortDirection === "asc" ? comparison : -comparison;
+        }
       });
     }
 
     return resultado;
-  }, [pacientes, searchTerm, filtroIdade, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, sortField, sortDirection]);
+  }, [pacientes, searchTerm, filtroIdade, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, filtroAtendimentos12m, filtroDiasDesdeUltimoAtend, sortField, sortDirection, todasMetricas]);
 
   // Paginação
   const totalPaginas = Math.ceil(pacientesFiltrados.length / itensPorPagina);
   const indiceInicio = (paginaAtual - 1) * itensPorPagina;
   const indiceFim = indiceInicio + itensPorPagina;
   const pacientesPaginados = pacientesFiltrados.slice(indiceInicio, indiceFim);
-
-  // Buscar métricas de atendimento para os pacientes da página atual
-  const pacienteIds = useMemo(() => {
-    return pacientesPaginados?.map(p => p.id) || [];
-  }, [pacientesPaginados]);
-
-  const { data: metricasAtendimento } = trpc.pacientes.getMetricasAtendimento.useQuery(
-    { pacienteIds },
-    { enabled: pacienteIds.length > 0 }
-  );
 
   // Função para formatar dias sem atendimento
   const formatarDiasSemAtendimento = (dias: number | null | undefined): string => {
@@ -242,17 +282,19 @@ export default function Pacientes() {
     setFiltroDiagnostico("");
     setFiltroDataDe("");
     setFiltroDataAte("");
+    setFiltroAtendimentos12m("");
+    setFiltroDiasDesdeUltimoAtend("");
     setSortField(null);
     setSortDirection(null);
     setPaginaAtual(1);
   };
 
-  const temFiltrosAtivos = searchTerm || filtroCidade || filtroUF || filtroOperadora || filtroStatus || filtroDiagnostico || filtroDataDe || filtroDataAte;
+  const temFiltrosAtivos = searchTerm || filtroCidade || filtroUF || filtroOperadora || filtroStatus || filtroDiagnostico || filtroDataDe || filtroDataAte || filtroAtendimentos12m || filtroDiasDesdeUltimoAtend;
 
   // Resetar página ao mudar filtros
   useMemo(() => {
     setPaginaAtual(1);
-  }, [searchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte]);
+  }, [searchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, filtroAtendimentos12m, filtroDiasDesdeUltimoAtend]);
 
   // Componente de cabeçalho ordenável
   const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
@@ -422,6 +464,31 @@ export default function Pacientes() {
                   />
                 </div>
               </div>
+
+              {/* Terceira linha: Atendimentos 12m, Dias desde último atendimento */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Atendimentos 12 meses (mínimo)</label>
+                  <Input
+                    type="number"
+                    placeholder="Ex: 1 (pacientes com pelo menos 1 atendimento)"
+                    value={filtroAtendimentos12m}
+                    onChange={(e) => setFiltroAtendimentos12m(e.target.value)}
+                    min="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Dias desde último atendimento (mínimo)</label>
+                  <Input
+                    type="number"
+                    placeholder="Ex: 180 (pacientes sem atendimento há 180+ dias)"
+                    value={filtroDiasDesdeUltimoAtend}
+                    onChange={(e) => setFiltroDiasDesdeUltimoAtend(e.target.value)}
+                    min="0"
+                  />
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
@@ -471,8 +538,8 @@ export default function Pacientes() {
                       <SortableHeader field="operadora1">Convênio 1</SortableHeader>
                       <SortableHeader field="operadora2">Convênio 2</SortableHeader>
                       <SortableHeader field="diagnosticoEspecifico">Diagnóstico</SortableHeader>
-                      <TableHead className="text-center">Atend. 12m</TableHead>
-                      <TableHead className="text-center">Dias s/ Atend.</TableHead>
+                      <SortableHeader field="atendimentos12m">Atend. 12m</SortableHeader>
+                      <SortableHeader field="diasDesdeUltimoAtendimento">Dias desde último atend.</SortableHeader>
                       <SortableHeader field="statusCaso">Status</SortableHeader>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -497,13 +564,13 @@ export default function Pacientes() {
                           {paciente.diagnosticoEspecifico || paciente.grupoDiagnostico || "-"}
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className={`font-medium ${(metricasAtendimento?.[paciente.id]?.atendimentos12m || 0) > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            {metricasAtendimento?.[paciente.id]?.atendimentos12m ?? "-"}
+                          <span className={`font-medium ${(todasMetricas?.[paciente.id]?.atendimentos12m || 0) > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                            {todasMetricas?.[paciente.id]?.atendimentos12m ?? "-"}
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
                           {(() => {
-                            const dias = metricasAtendimento?.[paciente.id]?.diasSemAtendimento;
+                            const dias = todasMetricas?.[paciente.id]?.diasSemAtendimento;
                             const isInativo = dias !== null && dias !== undefined && dias > 360;
                             return (
                               <span className={`font-medium ${isInativo ? 'text-red-600' : dias !== null && dias !== undefined && dias > 180 ? 'text-orange-500' : 'text-muted-foreground'}`}>

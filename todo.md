@@ -1784,3 +1784,15 @@ A dashboard deve integrar **medicina e administração**:
 
 - [x] Adicionar botão "Novo Atendimento" no prontuário do paciente
 - [x] Corrigir IDs de atendimentos incompletos (formato: ID_PACIENTE-YYYYNNNN) - 1.339 corrigidos
+
+
+---
+
+## 🧹 LIMPEZA E MELHORIAS (12/01/2026)
+
+- [x] Limpar atendimentos de teste TESTE-2026-* (3 atendimentos + 3 pacientes removidos)
+- [x] Validar pré-seleção de paciente no formulário Novo Atendimento (já implementado)
+- [x] Renomear coluna "dias sem atendimento" para "dias desde o último atendimento"
+- [x] Adicionar ordenação por número de atendimentos (12 meses)
+- [x] Adicionar ordenação por dias desde último atendimento
+- [x] Adicionar filtros para colunas de atendimentos na tabela de pacientes
