@@ -374,6 +374,14 @@ export default function Prontuario() {
               <h1 className="text-2xl font-bold text-gray-900">Prontuário Médico</h1>
               <p className="text-sm text-gray-500">ID: {paciente.idPaciente}</p>
             </div>
+            {/* Botão Novo Atendimento */}
+            <Button 
+              onClick={() => setLocation(`/atendimentos/novo?pacienteId=${paciente.id}`)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Atendimento
+            </Button>
 {/* Card de Status do Paciente */}
             <div className="bg-white border rounded-lg p-3 shadow-sm min-w-[180px]">
               <div className="space-y-1.5 text-sm">

@@ -1776,3 +1776,11 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Adicionar convênio principal no quadro de identificação
 - [x] Adicionar e-mail no quadro de contato (com link mailto)
 - [x] Adicionar botão WhatsApp com link para o telefone do paciente
+
+
+---
+
+## 🔧 CORREÇÕES DE ATENDIMENTOS (12/01/2026)
+
+- [x] Adicionar botão "Novo Atendimento" no prontuário do paciente
+- [x] Corrigir IDs de atendimentos incompletos (formato: ID_PACIENTE-YYYYNNNN) - 1.339 corrigidos
