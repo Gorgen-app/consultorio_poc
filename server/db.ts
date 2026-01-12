@@ -621,26 +621,30 @@ export async function contarPacientesDuplicados(tenantId: number): Promise<numbe
     throw new Error("Database not available");
   }
 
-  // Contar grupos de pacientes com CPF duplicado
-  const cpfDuplicados = await db
-    .select({
-      cpf: pacientes.cpf,
-      count: sql<number>`COUNT(*)`.as('count'),
-    })
-    .from(pacientes)
-    .where(and(
-      eq(pacientes.tenantId, tenantId),
-      sql`${pacientes.cpf} IS NOT NULL`,
-      sql`${pacientes.cpf} != ''`,
-      sql`LENGTH(REPLACE(REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', ''), ' ', '')) = 11`
-    ))
-    .groupBy(sql`REPLACE(REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', ''), ' ', '')`)
-    .having(sql`COUNT(*) > 1`);
-
-  // Contar grupos de pacientes com nome muito similar (possíveis duplicados)
-  // Por simplicidade, contamos apenas CPFs duplicados por enquanto
-  
-  return cpfDuplicados.length;
+  try {
+    // Contar grupos de pacientes com CPF duplicado usando raw SQL
+    const result = await db.execute(sql`
+      SELECT COUNT(*) as total FROM (
+        SELECT cpf_normalizado
+        FROM (
+          SELECT REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), ' ', '') as cpf_normalizado
+          FROM pacientes
+          WHERE tenant_id = ${tenantId}
+            AND cpf IS NOT NULL
+            AND cpf != ''
+            AND LENGTH(REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), ' ', '')) = 11
+        ) as cpfs
+        GROUP BY cpf_normalizado
+        HAVING COUNT(*) > 1
+      ) as duplicados
+    `);
+    
+    const rows = result[0] as unknown as Array<{ total: number }>;
+    return rows[0]?.total || 0;
+  } catch (error) {
+    console.error('Erro ao contar duplicados:', error);
+    return 0;
+  }
 }
 
 export async function checkCpfDuplicado(
