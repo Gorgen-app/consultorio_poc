@@ -7,6 +7,8 @@ import { ArrowLeft, AlertTriangle, Users, FileText, RefreshCw } from "lucide-rea
 import { Link, useLocation } from "wouter";
 import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MergePacientesModal } from "@/components/MergePacientesModal";
+import { Merge } from "lucide-react";
 
 // Função para normalizar nome para comparação
 function normalizarNome(nome: string): string {
@@ -71,6 +73,8 @@ interface GrupoDuplicado {
 export default function RelatorioDuplicados() {
   const [, setLocation] = useLocation();
   const [abaAtiva, setAbaAtiva] = useState("cpf");
+  const [mergeModalOpen, setMergeModalOpen] = useState(false);
+  const [pacientesParaMerge, setPacientesParaMerge] = useState<Paciente[]>([]);
   
   const { data: pacientes, isLoading, refetch, isFetching } = trpc.pacientes.list.useQuery({ 
     limit: 50000 
@@ -242,10 +246,24 @@ export default function RelatorioDuplicados() {
                     {duplicadosCPF.map((grupo, idx) => (
                       <Card key={idx} className="border-red-200">
                         <CardHeader className="py-3 bg-red-50">
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-red-500" />
-                            CPF: {grupo.chave}
-                            <Badge variant="destructive">{grupo.pacientes.length} registros</Badge>
+                          <CardTitle className="text-sm flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4 text-red-500" />
+                              CPF: {grupo.chave}
+                              <Badge variant="destructive">{grupo.pacientes.length} registros</Badge>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 text-blue-600 border-blue-300 hover:bg-blue-50"
+                              onClick={() => {
+                                setPacientesParaMerge(grupo.pacientes);
+                                setMergeModalOpen(true);
+                              }}
+                            >
+                              <Merge className="h-4 w-4" />
+                              Unificar
+                            </Button>
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -304,10 +322,24 @@ export default function RelatorioDuplicados() {
                     {duplicadosNome.slice(0, 50).map((grupo, idx) => (
                       <Card key={idx} className="border-yellow-200">
                         <CardHeader className="py-3 bg-yellow-50">
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                            Nome: {grupo.chave}
-                            <Badge className="bg-yellow-500">{grupo.pacientes.length} registros</Badge>
+                          <CardTitle className="text-sm flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                              Nome: {grupo.chave}
+                              <Badge className="bg-yellow-500">{grupo.pacientes.length} registros</Badge>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 text-blue-600 border-blue-300 hover:bg-blue-50"
+                              onClick={() => {
+                                setPacientesParaMerge(grupo.pacientes);
+                                setMergeModalOpen(true);
+                              }}
+                            >
+                              <Merge className="h-4 w-4" />
+                              Unificar
+                            </Button>
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -360,6 +392,17 @@ export default function RelatorioDuplicados() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Modal de Merge */}
+      <MergePacientesModal
+        open={mergeModalOpen}
+        onOpenChange={setMergeModalOpen}
+        pacientes={pacientesParaMerge}
+        onMergeComplete={() => {
+          refetch();
+          setPacientesParaMerge([]);
+        }}
+      />
     </div>
   );
 }

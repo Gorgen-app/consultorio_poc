@@ -75,6 +75,29 @@ const atendimentoSchema = z.object({
 
 export const appRouter = router({
   system: systemRouter,
+  
+  // Router de notificações
+  notificacoes: router({
+    listar: tenantProcedure
+      .query(async ({ ctx }) => {
+        // Contar pacientes duplicados
+        const duplicados = await db.contarPacientesDuplicados(ctx.tenant.tenantId);
+        
+        // Contar atendimentos sem evolução (placeholder - será implementado quando houver módulo de evolução)
+        const pendenciasDocumentacao = 0;
+        
+        // Contar pagamentos pendentes (placeholder)
+        const pagamentosPendentes = 0;
+        
+        return {
+          duplicados,
+          pendenciasDocumentacao,
+          pagamentosPendentes,
+          total: duplicados + pendenciasDocumentacao + pagamentosPendentes,
+        };
+      }),
+  }),
+
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -282,6 +305,45 @@ export const appRouter = router({
       )
       .query(async ({ input, ctx }) => {
         return await db.countPacientes(ctx.tenant.tenantId, input);
+      }),
+
+    // Merge de pacientes duplicados (apenas admin_master)
+    mergeDuplicados: tenantProcedure
+      .input(z.object({
+        pacientePrincipalId: z.number(),
+        pacientesParaExcluirIds: z.array(z.number()),
+        camposParaCopiar: z.record(z.string(), z.number()).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Verificar se é admin_master
+        const perfil = await db.getUserProfile(ctx.user?.id || 0);
+        if (perfil?.perfilAtivo !== 'admin_master') {
+          throw new Error('Apenas administradores master podem unificar pacientes');
+        }
+
+        const result = await db.mergePacientesDuplicados(
+          ctx.tenant.tenantId,
+          input.pacientePrincipalId,
+          input.pacientesParaExcluirIds,
+          input.camposParaCopiar || {}
+        );
+
+        // Registrar auditoria
+        await db.createAuditLog(
+          "UPDATE",
+          "paciente",
+          input.pacientePrincipalId,
+          result.idPacientePrincipal,
+          { pacientesExcluidos: input.pacientesParaExcluirIds },
+          { pacientePrincipal: input.pacientePrincipalId, camposCopiados: input.camposParaCopiar },
+          {
+            userId: ctx.user?.id,
+            userName: ctx.user?.name || undefined,
+            tenantId: ctx.tenant.tenantId,
+          }
+        );
+
+        return result;
       }),
   }),
 

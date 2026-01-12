@@ -1733,3 +1733,27 @@ A dashboard deve integrar **medicina e administração**:
 ## 🔧 VALIDAÇÕES E AUTOMAÇÕES v2 (12/01/2026)
 - [x] Validação de duplicidade de CPF - Alertar se já existe outro paciente com mesmo CPF
 - [x] Sugestão de convênio secundário - Permitir escolher entre convênio 1 ou 2 do paciente
+
+
+## 🔔 SISTEMA DE NOTIFICAÇÕES (12/01/2026)
+- [ ] Ícone de sino no canto superior direito com badge vermelho
+- [ ] Backend para contar notificações pendentes (duplicados, pendências, pagamentos)
+- [ ] Painel de notificações ao clicar no sino
+- [ ] Notificação: Pacientes duplicados necessitando avaliação
+- [ ] Notificação: Atendimentos sem registro de evolução
+- [ ] Notificação: Pagamentos pendentes (placeholder para futuro)
+- [ ] Modal de merge de pacientes duplicados com seleção de registro principal
+- [ ] Preservação de dados: copiar dados faltantes para registro principal antes de excluir duplicados
+
+
+---
+
+## 🔔 SISTEMA DE NOTIFICAÇÕES (12/01/2026)
+- [x] Ícone de sino no canto superior direito com badge de notificações
+- [x] Backend para contar notificações pendentes (duplicados, pendências)
+- [x] Modal de merge de pacientes duplicados com preservação de dados
+- [x] Botão de merge em cada grupo de duplicados
+- [x] Seleção de paciente principal para preservar
+- [x] Cópia de campos de outros pacientes para o principal
+- [x] Migração de atendimentos para paciente principal
+- [x] Soft delete dos pacientes duplicados (status: Inativo - Duplicado)

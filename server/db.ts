@@ -532,6 +532,117 @@ export async function getDashboardStats(tenantId: number) {
   };
 }
 
+export async function mergePacientesDuplicados(
+  tenantId: number,
+  pacientePrincipalId: number,
+  pacientesParaExcluirIds: number[],
+  camposParaCopiar: Record<string, number>
+): Promise<{ success: boolean; idPacientePrincipal: string; atendimentosMigrados: number }> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Buscar paciente principal
+  const [pacientePrincipal] = await db
+    .select()
+    .from(pacientes)
+    .where(and(
+      eq(pacientes.id, pacientePrincipalId),
+      eq(pacientes.tenantId, tenantId)
+    ));
+
+  if (!pacientePrincipal) {
+    throw new Error("Paciente principal não encontrado");
+  }
+
+  // Buscar pacientes a serem excluídos
+  const pacientesParaExcluir = await db
+    .select()
+    .from(pacientes)
+    .where(and(
+      inArray(pacientes.id, pacientesParaExcluirIds),
+      eq(pacientes.tenantId, tenantId)
+    ));
+
+  // Copiar campos selecionados dos outros pacientes para o principal
+  const camposParaAtualizar: Record<string, any> = {};
+  for (const [campo, pacienteId] of Object.entries(camposParaCopiar)) {
+    if (pacienteId !== pacientePrincipalId) {
+      const pacienteOrigem = pacientesParaExcluir.find(p => p.id === pacienteId);
+      if (pacienteOrigem && (pacienteOrigem as any)[campo]) {
+        camposParaAtualizar[campo] = (pacienteOrigem as any)[campo];
+      }
+    }
+  }
+
+  // Atualizar paciente principal com campos copiados
+  if (Object.keys(camposParaAtualizar).length > 0) {
+    await db
+      .update(pacientes)
+      .set(camposParaAtualizar)
+      .where(eq(pacientes.id, pacientePrincipalId));
+  }
+
+  // Migrar atendimentos dos pacientes excluídos para o principal
+  let atendimentosMigrados = 0;
+  for (const pacienteExcluir of pacientesParaExcluir) {
+    const result = await db
+      .update(atendimentos)
+      .set({ pacienteId: pacientePrincipalId })
+      .where(and(
+        eq(atendimentos.pacienteId, pacienteExcluir.id),
+        eq(atendimentos.tenantId, tenantId)
+      ));
+    atendimentosMigrados += (result as any)[0]?.affectedRows || 0;
+  }
+
+  // Excluir pacientes duplicados (soft delete - marcar como inativo)
+  for (const pacienteExcluir of pacientesParaExcluir) {
+    await db
+      .update(pacientes)
+      .set({ 
+        statusCaso: 'Inativo - Duplicado',
+        obitoPerda: `Unificado com ${pacientePrincipal.idPaciente} em ${new Date().toISOString()}`
+      })
+      .where(eq(pacientes.id, pacienteExcluir.id));
+  }
+
+  return {
+    success: true,
+    idPacientePrincipal: pacientePrincipal.idPaciente,
+    atendimentosMigrados,
+  };
+}
+
+export async function contarPacientesDuplicados(tenantId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Contar grupos de pacientes com CPF duplicado
+  const cpfDuplicados = await db
+    .select({
+      cpf: pacientes.cpf,
+      count: sql<number>`COUNT(*)`.as('count'),
+    })
+    .from(pacientes)
+    .where(and(
+      eq(pacientes.tenantId, tenantId),
+      sql`${pacientes.cpf} IS NOT NULL`,
+      sql`${pacientes.cpf} != ''`,
+      sql`LENGTH(REPLACE(REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', ''), ' ', '')) = 11`
+    ))
+    .groupBy(sql`REPLACE(REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', ''), ' ', '')`)
+    .having(sql`COUNT(*) > 1`);
+
+  // Contar grupos de pacientes com nome muito similar (possíveis duplicados)
+  // Por simplicidade, contamos apenas CPFs duplicados por enquanto
+  
+  return cpfDuplicados.length;
+}
+
 export async function checkCpfDuplicado(
   tenantId: number,
   cpf: string,
