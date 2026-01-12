@@ -12,7 +12,7 @@ import { EditarPacienteModal } from "@/components/EditarPacienteModal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
-type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso" | "atendimentos12m" | "diasDesdeUltimoAtendimento";
+type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso" | "totalAtendimentos" | "atendimentos12m" | "diasDesdeUltimoAtendimento";
 type SortDirection = "asc" | "desc" | null;
 
 export default function Pacientes() {
@@ -231,7 +231,12 @@ export default function Pacientes() {
         let bVal: any;
         
         // Ordenação especial para campos de métricas
-        if (sortField === "atendimentos12m") {
+        if (sortField === "totalAtendimentos") {
+          aVal = todasMetricas[a.id]?.totalAtendimentos ?? -1;
+          bVal = todasMetricas[b.id]?.totalAtendimentos ?? -1;
+          const comparison = aVal - bVal;
+          return sortDirection === "asc" ? comparison : -comparison;
+        } else if (sortField === "atendimentos12m") {
           aVal = todasMetricas[a.id]?.atendimentos12m ?? -1;
           bVal = todasMetricas[b.id]?.atendimentos12m ?? -1;
           const comparison = aVal - bVal;
@@ -538,6 +543,7 @@ export default function Pacientes() {
                       <SortableHeader field="operadora1">Convênio 1</SortableHeader>
                       <SortableHeader field="operadora2">Convênio 2</SortableHeader>
                       <SortableHeader field="diagnosticoEspecifico">Diagnóstico</SortableHeader>
+                      <SortableHeader field="totalAtendimentos">Total Atend.</SortableHeader>
                       <SortableHeader field="atendimentos12m">Atend. 12m</SortableHeader>
                       <SortableHeader field="diasDesdeUltimoAtendimento">Dias desde último atend.</SortableHeader>
                       <SortableHeader field="statusCaso">Status</SortableHeader>
@@ -562,6 +568,11 @@ export default function Pacientes() {
                         <TableCell>{paciente.operadora2 || "-"}</TableCell>
                         <TableCell className="max-w-[200px] truncate">
                           {paciente.diagnosticoEspecifico || paciente.grupoDiagnostico || "-"}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className={`font-medium ${(todasMetricas?.[paciente.id]?.totalAtendimentos || 0) > 0 ? 'text-blue-600' : 'text-muted-foreground'}`}>
+                            {todasMetricas?.[paciente.id]?.totalAtendimentos ?? "-"}
+                          </span>
                         </TableCell>
                         <TableCell className="text-center">
                           <span className={`font-medium ${(todasMetricas?.[paciente.id]?.atendimentos12m || 0) > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>

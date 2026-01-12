@@ -182,9 +182,10 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const metricas = await db.calcularMetricasAtendimento(ctx.tenant.tenantId, input.pacienteIds);
         // Converter Map para objeto para serialização
-        const resultado: Record<number, { atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: string | null }> = {};
+        const resultado: Record<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: string | null }> = {};
         metricas.forEach((value, key) => {
           resultado[key] = {
+            totalAtendimentos: value.totalAtendimentos,
             atendimentos12m: value.atendimentos12m,
             diasSemAtendimento: value.diasSemAtendimento,
             ultimoAtendimento: value.ultimoAtendimento?.toISOString() || null,

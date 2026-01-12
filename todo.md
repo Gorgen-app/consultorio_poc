@@ -1796,3 +1796,5 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Adicionar ordenação por número de atendimentos (12 meses)
 - [x] Adicionar ordenação por dias desde último atendimento
 - [x] Adicionar filtros para colunas de atendimentos na tabela de pacientes
+
+- [x] Adicionar coluna de total de atendimentos na tabela de pacientes

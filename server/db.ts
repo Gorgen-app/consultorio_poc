@@ -185,10 +185,11 @@ export async function listPacientes(tenantId: number, filters?: {
 
 /**
  * Calcula métricas de atendimento para uma lista de pacientes
+ * - totalAtendimentos: número total de atendimentos do paciente
  * - atendimentos12m: número de atendimentos nos últimos 12 meses
  * - diasSemAtendimento: dias desde o último atendimento
  */
-export async function calcularMetricasAtendimento(tenantId: number, pacienteIds: number[]): Promise<Map<number, { atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null }>> {
+export async function calcularMetricasAtendimento(tenantId: number, pacienteIds: number[]): Promise<Map<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null }>> {
   const db = await getDb();
   if (!db || pacienteIds.length === 0) return new Map();
 
@@ -214,7 +215,7 @@ export async function calcularMetricasAtendimento(tenantId: number, pacienteIds:
     )
     .groupBy(atendimentos.pacienteId);
 
-  const resultado = new Map<number, { atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null }>();
+  const resultado = new Map<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null }>();
   
   for (const m of metricas) {
     let diasSemAtendimento: number | null = null;
@@ -227,6 +228,7 @@ export async function calcularMetricasAtendimento(tenantId: number, pacienteIds:
     }
     
     resultado.set(m.pacienteId, {
+      totalAtendimentos: Number(m.totalAtendimentos) || 0,
       atendimentos12m: Number(m.atendimentos12m) || 0,
       diasSemAtendimento,
       ultimoAtendimento,
@@ -237,6 +239,7 @@ export async function calcularMetricasAtendimento(tenantId: number, pacienteIds:
   for (const id of pacienteIds) {
     if (!resultado.has(id)) {
       resultado.set(id, {
+        totalAtendimentos: 0,
         atendimentos12m: 0,
         diasSemAtendimento: null,
         ultimoAtendimento: null,
