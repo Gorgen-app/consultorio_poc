@@ -34,12 +34,32 @@ export default function Atendimentos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   
+  // Atendimento selecionado para atalho Ctrl+D
+  const [atendimentoFocado, setAtendimentoFocado] = useState<any>(null);
+  
   // Foco automático no campo de busca quando vem do menu "Buscar Atendimento"
   useEffect(() => {
     if (searchParams.includes("buscar=true") && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [searchParams]);
+
+  // Atalho Ctrl+D para duplicar atendimento selecionado
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        if (atendimentoFocado) {
+          handleDuplicar(atendimentoFocado);
+          toast.info("Duplicando atendimento...");
+        } else {
+          toast.info("Selecione um atendimento na tabela para duplicar (Ctrl+D)");
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [atendimentoFocado]);
   
   // Ordenação
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -284,7 +304,10 @@ export default function Atendimentos() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Atendimentos</h1>
-          <p className="text-muted-foreground mt-2">Gerenciar atendimentos realizados</p>
+          <p className="text-muted-foreground mt-2">
+            Gerenciar atendimentos realizados
+            <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded">Ctrl+D para duplicar selecionado</span>
+          </p>
         </div>
         <Link href="/atendimentos/novo">
           <Button>
@@ -485,7 +508,11 @@ export default function Atendimentos() {
                   </TableHeader>
                   <TableBody>
                     {atendimentosPaginados.map((atd) => (
-                      <TableRow key={atd.id}>
+                      <TableRow 
+                        key={atd.id}
+                        onClick={() => setAtendimentoFocado(atd)}
+                        className={`cursor-pointer hover:bg-gray-50 ${atendimentoFocado?.id === atd.id ? 'bg-blue-50 ring-1 ring-blue-200' : ''}`}
+                      >
                         <TableCell className="font-medium">{atd.atendimento}</TableCell>
                         <TableCell>{formatarData(atd.dataAtendimento)}</TableCell>
                         <TableCell>{atd.tipoAtendimento || "-"}</TableCell>

@@ -58,6 +58,7 @@ import ProntuarioCardiologia from "@/components/prontuario/ProntuarioCardiologia
 import ProntuarioTerapias from "@/components/prontuario/ProntuarioTerapias";
 import ProntuarioObstetricia from "@/components/prontuario/ProntuarioObstetricia";
 import ProntuarioDocumentos from "@/components/prontuario/ProntuarioDocumentos";
+import ProntuarioAtendimentos from "@/components/prontuario/ProntuarioAtendimentos";
 import ProntuarioResumoClinico from "@/components/prontuario/ProntuarioResumoClinico";
 import ProntuarioPatologia from "@/components/prontuario/ProntuarioPatologia";
 import HistoricoMedidas from "@/components/prontuario/HistoricoMedidas";
@@ -339,6 +340,7 @@ export default function Prontuario() {
   // Menu lateral
   const menuItems = [
     { id: "resumo", label: "Resumo Clínico", icon: ClipboardList },
+    { id: "atendimentos", label: "Atendimentos", icon: Stethoscope },
     { id: "medidas", label: "Medidas Antropométricas", icon: Scale },
     { id: "evolucoes", label: "Evoluções", icon: FileText },
     { id: "internacoes", label: "Internações", icon: Building2 },
@@ -694,6 +696,11 @@ export default function Prontuario() {
               alergias={alergias}
               medicamentosUso={medicamentosUso}
               onUpdate={refetch}
+            />
+          )}
+          {secaoAtiva === "atendimentos" && (
+            <ProntuarioAtendimentos 
+              pacienteId={pacienteId} 
             />
           )}
           {secaoAtiva === "medidas" && (

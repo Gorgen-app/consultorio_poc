@@ -1696,3 +1696,8 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Botão "Duplicar" na coluna Ações da tabela de Atendimentos
 - [x] Tela NovoAtendimento aceitar dados pré-preenchidos via URL params
 - [x] Apenas data em branco para preenchimento (destacado em verde)
+
+
+## 🚀 MELHORIAS PRONTUÁRIO E ATALHOS (11/01/2026)
+- [x] Histórico de atendimentos na página do Prontuário
+- [x] Atalho Ctrl+D para duplicar atendimento selecionado
