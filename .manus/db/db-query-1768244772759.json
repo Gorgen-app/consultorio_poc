@@ -1,0 +1,64 @@
+{
+  "query": "SELECT TABLE_NAME, INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_NAME = 'pacientes' ORDER BY INDEX_NAME, SEQ_IN_INDEX;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT TABLE_NAME, INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_NAME = 'pacientes' ORDER BY INDEX_NAME, SEQ_IN_INDEX;",
+  "rows": [
+    {
+      "TABLE_NAME": "pacientes",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": "1"
+    },
+    {
+      "TABLE_NAME": "pacientes",
+      "INDEX_NAME": "id_paciente",
+      "COLUMN_NAME": "id_paciente",
+      "SEQ_IN_INDEX": "1"
+    },
+    {
+      "TABLE_NAME": "pacientes",
+      "INDEX_NAME": "idx_pacientes_tenant",
+      "COLUMN_NAME": "tenant_id",
+      "SEQ_IN_INDEX": "1"
+    },
+    {
+      "TABLE_NAME": "pacientes",
+      "INDEX_NAME": "idx_pacientes_tenant_cpf",
+      "COLUMN_NAME": "tenant_id",
+      "SEQ_IN_INDEX": "1"
+    },
+    {
+      "TABLE_NAME": "pacientes",
+      "INDEX_NAME": "idx_pacientes_tenant_cpf",
+      "COLUMN_NAME": "cpf",
+      "SEQ_IN_INDEX": "2"
+    },
+    {
+      "TABLE_NAME": "pacientes",
+      "INDEX_NAME": "idx_pacientes_tenant_id_paciente",
+      "COLUMN_NAME": "tenant_id",
+      "SEQ_IN_INDEX": "1"
+    },
+    {
+      "TABLE_NAME": "pacientes",
+      "INDEX_NAME": "idx_pacientes_tenant_id_paciente",
+      "COLUMN_NAME": "id_paciente",
+      "SEQ_IN_INDEX": "2"
+    },
+    {
+      "TABLE_NAME": "pacientes",
+      "INDEX_NAME": "idx_pacientes_tenant_nome",
+      "COLUMN_NAME": "tenant_id",
+      "SEQ_IN_INDEX": "1"
+    },
+    {
+      "TABLE_NAME": "pacientes",
+      "INDEX_NAME": "idx_pacientes_tenant_nome",
+      "COLUMN_NAME": "nome",
+      "SEQ_IN_INDEX": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tINDEX_NAME\tCOLUMN_NAME\tSEQ_IN_INDEX\npacientes\tPRIMARY\tid\t1\npacientes\tid_paciente\tid_paciente\t1\npacientes\tidx_pacientes_tenant\ttenant_id\t1\npacientes\tidx_pacientes_tenant_cpf\ttenant_id\t1\npacientes\tidx_pacientes_tenant_cpf\tcpf\t2\npacientes\tidx_pacientes_tenant_id_paciente\ttenant_id\t1\npacientes\tidx_pacientes_tenant_id_paciente\tid_paciente\t2\npacientes\tidx_pacientes_tenant_nome\ttenant_id\t1\npacientes\tidx_pacientes_tenant_nome\tnome\t2\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

@@ -117,25 +117,38 @@ export async function getPacienteByIdPaciente(tenantId: number, idPaciente: stri
   return result[0];
 }
 
-export async function listPacientes(tenantId: number, filters?: {
+// Tipo para filtros de pacientes com paginação server-side
+export interface PacienteFilters {
   nome?: string;
   cpf?: string;
   convenio?: string;
   diagnostico?: string;
   status?: string;
+  cidade?: string;
+  uf?: string;
+  busca?: string; // Busca global (nome, CPF, ID)
   limit?: number;
   offset?: number;
-}): Promise<any[]> {
-  const db = await getDb();
-  if (!db) return [];
+}
 
-  let query = db.select().from(pacientes);
-  
-  // Filtro obrigatório por tenant e excluir deletados
+// Função auxiliar para construir condições de filtro
+function buildPacienteConditions(tenantId: number, filters?: PacienteFilters) {
   const conditions = [
     eq(pacientes.tenantId, tenantId),
-    sql`${pacientes.deletedAt} IS NULL`  // Soft delete filter
+    sql`${pacientes.deletedAt} IS NULL`
   ];
+  
+  // Busca global (nome, CPF ou ID)
+  if (filters?.busca) {
+    const termo = filters.busca.trim();
+    conditions.push(
+      or(
+        like(pacientes.nome, `%${termo}%`),
+        like(pacientes.cpf, `%${termo}%`),
+        like(pacientes.idPaciente, `%${termo}%`)
+      )!
+    );
+  }
   
   if (filters?.nome) {
     conditions.push(like(pacientes.nome, `%${filters.nome}%`));
@@ -162,11 +175,40 @@ export async function listPacientes(tenantId: number, filters?: {
   if (filters?.status) {
     conditions.push(eq(pacientes.statusCaso, filters.status));
   }
-
-  if (conditions.length > 0) {
-    query = query.where(and(...conditions)!) as any;
+  if (filters?.cidade) {
+    conditions.push(like(pacientes.cidade, `%${filters.cidade}%`));
   }
+  if (filters?.uf) {
+    conditions.push(eq(pacientes.uf, filters.uf));
+  }
+  
+  return conditions;
+}
 
+/**
+ * Conta o total de pacientes com os filtros aplicados (para paginação)
+ */
+export async function countPacientes(tenantId: number, filters?: PacienteFilters): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const conditions = buildPacienteConditions(tenantId, filters);
+  
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(pacientes)
+    .where(and(...conditions)!);
+  
+  return result[0]?.count || 0;
+}
+
+export async function listPacientes(tenantId: number, filters?: PacienteFilters): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = buildPacienteConditions(tenantId, filters);
+
+  let query = db.select().from(pacientes).where(and(...conditions)!) as any;
   query = query.orderBy(desc(pacientes.createdAt)) as any;
 
   if (filters?.limit) {
@@ -374,27 +416,7 @@ export async function deletePaciente(tenantId: number, id: number): Promise<bool
   return true;
 }
 
-export async function countPacientes(tenantId: number, filters?: {
-  status?: string;
-}): Promise<number> {
-  const db = await getDb();
-  if (!db) return 0;
-
-  const conditions = [
-    eq(pacientes.tenantId, tenantId),
-    sql`${pacientes.deletedAt} IS NULL`  // Soft delete filter
-  ];
-
-  if (filters?.status) {
-    conditions.push(eq(pacientes.statusCaso, filters.status));
-  }
-
-  const query = db.select({ count: sql<number>`count(*)` }).from(pacientes)
-    .where(and(...conditions));
-
-  const result = await query;
-  return Number(result[0]?.count || 0);
-}
+// Função countPacientes movida para o início do arquivo com suporte a mais filtros
 
 // ===== ATENDIMENTOS =====
 

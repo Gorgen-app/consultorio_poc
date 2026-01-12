@@ -1809,3 +1809,17 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Adicionar coluna de primeiro atendimento na tabela de pacientes (1º Atend.)
 - [x] Criar página de Relatórios com exportação CSV/Excel (menu Atendimentos > Relatórios)
 - [x] Implementar notificação para pacientes ativos com 360+ dias sem atendimento (Configurações > Notificações)
+
+
+---
+
+## ⚡ OTIMIZAÇÃO DE PERFORMANCE (12/01/2026)
+
+- [x] Diagnosticar gargalos de performance (queries lentas, índices faltando)
+- [x] Adicionar índices nas colunas mais consultadas:
+  - idx_atendimentos_metricas (tenant_id, paciente_id, data_atendimento, deleted_at)
+  - idx_pacientes_nome (tenant_id, nome)
+  - idx_pacientes_status (tenant_id, status_caso, deleted_at)
+- [x] Otimizar queries que buscam métricas de atendimentos
+- [x] Implementar procedure count para paginação server-side
+- [ ] Avaliar cache de dados frequentes (futuro)

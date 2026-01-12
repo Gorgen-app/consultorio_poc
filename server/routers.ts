@@ -174,6 +174,22 @@ export const appRouter = router({
         return await db.listPacientes(ctx.tenant.tenantId, input);
       }),
 
+    // Contar total de pacientes (para paginação server-side)
+    count: tenantProcedure
+      .input(
+        z.object({
+          busca: z.string().optional(),
+          convenio: z.string().optional(),
+          diagnostico: z.string().optional(),
+          status: z.string().optional(),
+          cidade: z.string().optional(),
+          uf: z.string().optional(),
+        }).optional()
+      )
+      .query(async ({ input, ctx }) => {
+        return await db.countPacientes(ctx.tenant.tenantId, input);
+      }),
+
     // Obter métricas de atendimento para pacientes
     getMetricasAtendimento: tenantProcedure
       .input(z.object({
@@ -325,16 +341,6 @@ export const appRouter = router({
         }
         
         return result;
-      }),
-
-    count: tenantProcedure
-      .input(
-        z.object({
-          status: z.string().optional(),
-        })
-      )
-      .query(async ({ input, ctx }) => {
-        return await db.countPacientes(ctx.tenant.tenantId, input);
       }),
 
     // Merge de pacientes duplicados (apenas admin_master)
