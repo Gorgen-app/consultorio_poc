@@ -162,6 +162,9 @@ export const appRouter = router({
           convenio: z.string().optional(),
           diagnostico: z.string().optional(),
           status: z.string().optional(),
+          cidade: z.string().optional(),
+          uf: z.string().optional(),
+          busca: z.string().optional(), // Busca global (nome, CPF, ID)
           limit: z.number().optional(),
           offset: z.number().optional(),
           includeDeleted: z.boolean().optional(),
@@ -172,6 +175,39 @@ export const appRouter = router({
           return await db.listPacientesWithDeleted(ctx.tenant.tenantId, true);
         }
         return await db.listPacientes(ctx.tenant.tenantId, input);
+      }),
+
+    // Listar pacientes com paginação server-side (retorna pacientes + total)
+    listPaginated: tenantProcedure
+      .input(
+        z.object({
+          busca: z.string().optional(),
+          convenio: z.string().optional(),
+          diagnostico: z.string().optional(),
+          status: z.string().optional(),
+          cidade: z.string().optional(),
+          uf: z.string().optional(),
+          page: z.number().min(1).default(1),
+          pageSize: z.number().min(1).max(100).default(20),
+        })
+      )
+      .query(async ({ input, ctx }) => {
+        const { page, pageSize, ...filters } = input;
+        const offset = (page - 1) * pageSize;
+        
+        // Buscar total e pacientes em paralelo
+        const [total, pacientes] = await Promise.all([
+          db.countPacientes(ctx.tenant.tenantId, filters),
+          db.listPacientes(ctx.tenant.tenantId, { ...filters, limit: pageSize, offset })
+        ]);
+        
+        return {
+          pacientes,
+          total,
+          page,
+          pageSize,
+          totalPages: Math.ceil(total / pageSize)
+        };
       }),
 
     // Contar total de pacientes (para paginação server-side)

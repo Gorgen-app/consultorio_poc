@@ -225,22 +225,117 @@ export async function listPacientes(tenantId: number, filters?: PacienteFilters)
   return adicionarIdadeAosPacientes(result);
 }
 
+// ===== CACHE DE MÉTRICAS =====
+
+interface MetricasCacheEntry {
+  totalAtendimentos: number;
+  atendimentos12m: number;
+  diasSemAtendimento: number | null;
+  ultimoAtendimento: Date | null;
+  primeiroAtendimento: Date | null;
+  cachedAt: number;
+}
+
+// Cache em memória para métricas de atendimento
+const metricasCache = new Map<string, MetricasCacheEntry>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+const MAX_CACHE_SIZE = 10000; // Máximo de entradas no cache
+
+/**
+ * Gera chave de cache para um paciente
+ */
+function getCacheKey(tenantId: number, pacienteId: number): string {
+  return `${tenantId}:${pacienteId}`;
+}
+
+/**
+ * Limpa entradas expiradas do cache
+ */
+function cleanExpiredCache(): void {
+  const now = Date.now();
+  const entries = Array.from(metricasCache.entries());
+  for (const [key, entry] of entries) {
+    if (now - entry.cachedAt > CACHE_TTL) {
+      metricasCache.delete(key);
+    }
+  }
+  
+  // Se ainda estiver muito grande, remove as mais antigas
+  if (metricasCache.size > MAX_CACHE_SIZE) {
+    const sortedEntries = Array.from(metricasCache.entries());
+    sortedEntries.sort((a, b) => a[1].cachedAt - b[1].cachedAt);
+    const toRemove = sortedEntries.slice(0, sortedEntries.length - MAX_CACHE_SIZE);
+    for (const [key] of toRemove) {
+      metricasCache.delete(key);
+    }
+  }
+}
+
+/**
+ * Invalida cache de métricas para um paciente específico
+ * Deve ser chamado após criar/atualizar/deletar atendimentos
+ */
+export function invalidarCacheMetricas(tenantId: number, pacienteId?: number): void {
+  if (pacienteId) {
+    metricasCache.delete(getCacheKey(tenantId, pacienteId));
+  } else {
+    // Invalida todo o cache do tenant
+    const keys = Array.from(metricasCache.keys());
+    for (const key of keys) {
+      if (key.startsWith(`${tenantId}:`)) {
+        metricasCache.delete(key);
+      }
+    }
+  }
+}
+
 /**
  * Calcula métricas de atendimento para uma lista de pacientes
  * - totalAtendimentos: número total de atendimentos do paciente
  * - atendimentos12m: número de atendimentos nos últimos 12 meses
  * - diasSemAtendimento: dias desde o último atendimento
  * - primeiroAtendimento: data do primeiro atendimento
+ * 
+ * Utiliza cache em memória para evitar recálculos frequentes
  */
 export async function calcularMetricasAtendimento(tenantId: number, pacienteIds: number[]): Promise<Map<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null; primeiroAtendimento: Date | null }>> {
   const db = await getDb();
   if (!db || pacienteIds.length === 0) return new Map();
 
+  const resultado = new Map<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null; primeiroAtendimento: Date | null }>();
+  const now = Date.now();
+  const idsParaBuscar: number[] = [];
+  
+  // Verificar cache para cada paciente
+  for (const pacienteId of pacienteIds) {
+    const cacheKey = getCacheKey(tenantId, pacienteId);
+    const cached = metricasCache.get(cacheKey);
+    
+    if (cached && (now - cached.cachedAt) < CACHE_TTL) {
+      // Cache válido, usar dados em cache
+      resultado.set(pacienteId, {
+        totalAtendimentos: cached.totalAtendimentos,
+        atendimentos12m: cached.atendimentos12m,
+        diasSemAtendimento: cached.diasSemAtendimento,
+        ultimoAtendimento: cached.ultimoAtendimento,
+        primeiroAtendimento: cached.primeiroAtendimento,
+      });
+    } else {
+      // Cache inválido ou inexistente, precisa buscar
+      idsParaBuscar.push(pacienteId);
+    }
+  }
+  
+  // Se todos estão em cache, retornar imediatamente
+  if (idsParaBuscar.length === 0) {
+    return resultado;
+  }
+
   const hoje = new Date();
   const umAnoAtras = new Date();
   umAnoAtras.setFullYear(umAnoAtras.getFullYear() - 1);
 
-  // Buscar métricas de atendimento para todos os pacientes
+  // Buscar métricas de atendimento apenas para os IDs que não estão em cache
   const metricas = await db
     .select({
       pacienteId: atendimentos.pacienteId,
@@ -253,13 +348,11 @@ export async function calcularMetricasAtendimento(tenantId: number, pacienteIds:
     .where(
       and(
         eq(atendimentos.tenantId, tenantId),
-        inArray(atendimentos.pacienteId, pacienteIds),
+        inArray(atendimentos.pacienteId, idsParaBuscar),
         sql`${atendimentos.deletedAt} IS NULL`
       )
     )
     .groupBy(atendimentos.pacienteId);
-
-  const resultado = new Map<number, { totalAtendimentos: number; atendimentos12m: number; diasSemAtendimento: number | null; ultimoAtendimento: Date | null; primeiroAtendimento: Date | null }>();
   
   for (const m of metricas) {
     let diasSemAtendimento: number | null = null;
@@ -276,26 +369,47 @@ export async function calcularMetricasAtendimento(tenantId: number, pacienteIds:
       primeiroAtendimento = new Date(m.primeiroAtendimento);
     }
     
-    resultado.set(m.pacienteId, {
+    const metricaData = {
       totalAtendimentos: Number(m.totalAtendimentos) || 0,
       atendimentos12m: Number(m.atendimentos12m) || 0,
       diasSemAtendimento,
       ultimoAtendimento,
       primeiroAtendimento,
+    };
+    
+    // Adicionar ao resultado
+    resultado.set(m.pacienteId, metricaData);
+    
+    // Salvar no cache
+    metricasCache.set(getCacheKey(tenantId, m.pacienteId), {
+      ...metricaData,
+      cachedAt: now,
     });
   }
 
-  // Para pacientes sem atendimentos, definir valores padrão
-  for (const id of pacienteIds) {
+  // Para pacientes sem atendimentos, definir valores padrão e cachear
+  for (const id of idsParaBuscar) {
     if (!resultado.has(id)) {
-      resultado.set(id, {
+      const metricaData = {
         totalAtendimentos: 0,
         atendimentos12m: 0,
         diasSemAtendimento: null,
         ultimoAtendimento: null,
         primeiroAtendimento: null,
+      };
+      resultado.set(id, metricaData);
+      
+      // Salvar no cache
+      metricasCache.set(getCacheKey(tenantId, id), {
+        ...metricaData,
+        cachedAt: now,
       });
     }
+  }
+  
+  // Limpar cache expirado periodicamente
+  if (Math.random() < 0.1) { // 10% de chance de limpar
+    cleanExpiredCache();
   }
 
   return resultado;
@@ -430,6 +544,12 @@ export async function createAtendimento(tenantId: number, data: Omit<InsertAtend
   const insertedId = Number(result[0].insertId);
   
   const inserted = await db.select().from(atendimentos).where(eq(atendimentos.id, insertedId)).limit(1);
+  
+  // Invalidar cache de métricas do paciente
+  if (data.pacienteId) {
+    invalidarCacheMetricas(tenantId, data.pacienteId);
+  }
+  
   return inserted[0]!;
 }
 
@@ -525,6 +645,12 @@ export async function updateAtendimento(tenantId: number, id: number, data: Part
   if (!existing) return undefined;
 
   await db.update(atendimentos).set(data).where(and(eq(atendimentos.tenantId, tenantId), eq(atendimentos.id, id)));
+  
+  // Invalidar cache de métricas do paciente
+  if (existing.pacienteId) {
+    invalidarCacheMetricas(tenantId, existing.pacienteId);
+  }
+  
   return getAtendimentoById(tenantId, id);
 }
 
@@ -537,6 +663,12 @@ export async function deleteAtendimento(tenantId: number, id: number): Promise<b
   if (!existing) return false;
 
   await db.delete(atendimentos).where(and(eq(atendimentos.tenantId, tenantId), eq(atendimentos.id, id)));
+  
+  // Invalidar cache de métricas do paciente
+  if (existing.pacienteId) {
+    invalidarCacheMetricas(tenantId, existing.pacienteId);
+  }
+  
   return true;
 }
 

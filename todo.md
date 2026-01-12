@@ -1823,3 +1823,26 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Otimizar queries que buscam métricas de atendimentos
 - [x] Implementar procedure count para paginação server-side
 - [ ] Avaliar cache de dados frequentes (futuro)
+
+
+---
+
+## ⚡ OTIMIZAÇÃO AVANÇADA DE PERFORMANCE (12/01/2026)
+
+- [ ] Paginação server-side completa (buscar apenas pacientes da página atual)
+- [ ] Cache de métricas em memória no servidor
+- [ ] Lazy loading de métricas (carregar apenas quando necessário)
+
+
+---
+
+## ⚡ OTIMIZAÇÃO AVANÇADA DE PERFORMANCE (12/01/2026)
+
+- [x] Paginação server-side completa (buscar apenas pacientes da página atual)
+- [x] Cache de métricas em memória no servidor (TTL 5 minutos, max 10k entradas)
+- [x] Lazy loading de métricas (carregar apenas para pacientes visíveis na página)
+- [x] Invalidação automática de cache ao criar/atualizar/deletar atendimentos
+- [x] Debounce na busca (300ms) para evitar requisições excessivas
+- [x] Skeleton loading durante carregamento
+- [x] Indicador visual de carregamento (spinner)
+- [x] Testes unitários para paginação e cache (10 testes)

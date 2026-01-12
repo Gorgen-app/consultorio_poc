@@ -3,24 +3,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList, Loader2 } from "lucide-react";
 import { Link, useLocation, useSearch } from "wouter";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OPERADORAS } from "@/lib/operadoras";
 import { EditarPacienteModal } from "@/components/EditarPacienteModal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SortField = "idPaciente" | "nome" | "cpf" | "telefone" | "cidade" | "uf" | "operadora1" | "operadora2" | "diagnosticoEspecifico" | "statusCaso" | "totalAtendimentos" | "atendimentos12m" | "diasDesdeUltimoAtendimento" | "primeiroAtendimento";
 type SortDirection = "asc" | "desc" | null;
+
+// Cache de métricas em memória
+const metricasCache = new Map<number, {
+  totalAtendimentos: number;
+  atendimentos12m: number;
+  diasSemAtendimento: number | null;
+  ultimoAtendimento: string | null;
+  primeiroAtendimento: string | null;
+  cachedAt: number;
+}>();
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 export default function Pacientes() {
   const [, setLocation] = useLocation();
   const searchParams = useSearch();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Debounce da busca para evitar muitas requisições
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
   
   // Foco automático no campo de busca quando vem do menu "Buscar Paciente"
   useEffect(() => {
@@ -29,24 +51,18 @@ export default function Pacientes() {
     }
   }, [searchParams]);
   
-  // Ordenação
+  // Ordenação (client-side para campos básicos, server-side para métricas seria ideal mas complexo)
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   
-  // Filtros individuais por coluna (removidos Nome, CPF, Telefone)
-  const [filtroIdade, setFiltroIdade] = useState("");
+  // Filtros server-side
   const [filtroCidade, setFiltroCidade] = useState("");
   const [filtroUF, setFiltroUF] = useState("");
   const [filtroOperadora, setFiltroOperadora] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroDiagnostico, setFiltroDiagnostico] = useState("");
-  const [filtroDataDe, setFiltroDataDe] = useState("");
-  const [filtroDataAte, setFiltroDataAte] = useState("");
-  const [filtroAtendimentos12m, setFiltroAtendimentos12m] = useState("");
-  const [filtroDiasDesdeUltimoAtend, setFiltroDiasDesdeUltimoAtend] = useState("");
-  const [filtroTotalAtendimentos, setFiltroTotalAtendimentos] = useState("");
 
-  // Paginação
+  // Paginação server-side
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [itensPorPagina, setItensPorPagina] = useState(20);
 
@@ -58,12 +74,16 @@ export default function Pacientes() {
   const [pacienteParaExcluir, setPacienteParaExcluir] = useState<any>(null);
   const [dialogExcluirAberto, setDialogExcluirAberto] = useState(false);
 
+  // Estado para métricas carregadas via lazy loading
+  const [metricasCarregadas, setMetricasCarregadas] = useState<Record<number, any>>({});
+  const [metricasLoading, setMetricasLoading] = useState<Set<number>>(new Set());
+
   const utils = trpc.useUtils();
 
   const deleteMutation = trpc.pacientes.delete.useMutation({
     onSuccess: () => {
       toast.success("Paciente excluído com sucesso!");
-      utils.pacientes.list.invalidate();
+      utils.pacientes.listPaginated.invalidate();
       setDialogExcluirAberto(false);
       setPacienteParaExcluir(null);
     },
@@ -88,200 +108,99 @@ export default function Pacientes() {
     }
   };
 
-  const { data: pacientes, isLoading } = trpc.pacientes.list.useQuery({
-    limit: 50000,
+  // Query com paginação server-side
+  const { data: paginatedData, isLoading, isFetching } = trpc.pacientes.listPaginated.useQuery({
+    busca: debouncedSearchTerm || undefined,
+    convenio: filtroOperadora && filtroOperadora !== "todos" ? filtroOperadora : undefined,
+    diagnostico: filtroDiagnostico || undefined,
+    status: filtroStatus && filtroStatus !== "todos" ? filtroStatus : undefined,
+    cidade: filtroCidade || undefined,
+    uf: filtroUF || undefined,
+    page: paginaAtual,
+    pageSize: itensPorPagina,
   });
 
-  // Buscar métricas de TODOS os pacientes para permitir ordenação e filtro
-  const todosPacienteIds = useMemo(() => {
-    return pacientes?.map(p => p.id) || [];
-  }, [pacientes]);
+  const pacientes = paginatedData?.pacientes || [];
+  const totalPacientes = paginatedData?.total || 0;
+  const totalPaginas = paginatedData?.totalPages || 1;
 
-  const { data: todasMetricas } = trpc.pacientes.getMetricasAtendimento.useQuery(
-    { pacienteIds: todosPacienteIds },
-    { enabled: todosPacienteIds.length > 0 }
+  // IDs dos pacientes da página atual para carregar métricas
+  const pacienteIdsDaPagina = useMemo(() => pacientes.map(p => p.id), [pacientes]);
+
+  // Lazy loading de métricas - carrega apenas para os pacientes visíveis
+  const { data: metricasPagina } = trpc.pacientes.getMetricasAtendimento.useQuery(
+    { pacienteIds: pacienteIdsDaPagina },
+    { 
+      enabled: pacienteIdsDaPagina.length > 0,
+      staleTime: CACHE_TTL, // Cache por 5 minutos
+    }
   );
+
+  // Atualizar cache local quando métricas chegam
+  useEffect(() => {
+    if (metricasPagina) {
+      const now = Date.now();
+      Object.entries(metricasPagina).forEach(([id, metricas]) => {
+        metricasCache.set(Number(id), { ...metricas, cachedAt: now });
+      });
+      setMetricasCarregadas(prev => ({ ...prev, ...metricasPagina }));
+    }
+  }, [metricasPagina]);
 
   // Função de ordenação
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      // Se já está ordenando por este campo, alterna a direção
       if (sortDirection === "asc") {
         setSortDirection("desc");
       } else if (sortDirection === "desc") {
-        // Terceiro clique remove a ordenação
         setSortField(null);
         setSortDirection(null);
       }
     } else {
-      // Novo campo, começa com ascendente
       setSortField(field);
       setSortDirection("asc");
     }
   };
 
-  // Busca e filtros
-  const pacientesFiltrados = useMemo(() => {
-    if (!pacientes) return [];
-
-    let resultado = pacientes;
-
-    // Busca global (Nome, CPF ou ID)
-    if (searchTerm) {
-      const termo = searchTerm.toLowerCase().trim();
-      resultado = resultado.filter((p) => {
-        // Garantir que nome seja string e fazer busca
-        const nomeStr = String(p.nome || "").toLowerCase();
-        const cpfStr = String(p.cpf || "").replace(/[^\d]/g, "");
-        const idStr = String(p.idPaciente || "").toLowerCase();
-        const termoLimpo = termo.replace(/[^\d]/g, "");
-        
-        // Verificar se o termo está em qualquer um dos campos
-        const matchNome = nomeStr.includes(termo);
-        const matchCpf = termoLimpo.length > 0 && cpfStr.includes(termoLimpo);
-        const matchId = idStr.includes(termo);
-        
-        return matchNome || matchCpf || matchId;
-      });
-    }
-
-    // Filtros por coluna
-    if (filtroIdade) {
-      resultado = resultado.filter((p) => {
-        return p.idade?.toString() === filtroIdade;
-      });
-    }
-
-    if (filtroCidade) {
-      resultado = resultado.filter((p) =>
-        p.cidade?.toLowerCase().includes(filtroCidade.toLowerCase())
-      );
-    }
-
-    if (filtroUF) {
-      resultado = resultado.filter((p) =>
-        p.uf?.toLowerCase().includes(filtroUF.toLowerCase())
-      );
-    }
-
-    if (filtroOperadora && filtroOperadora !== "todos") {
-      resultado = resultado.filter((p) =>
-        p.operadora1?.toLowerCase().includes(filtroOperadora.toLowerCase()) ||
-        p.operadora2?.toLowerCase().includes(filtroOperadora.toLowerCase())
-      );
-    }
-
-    if (filtroStatus && filtroStatus !== "todos") {
-      resultado = resultado.filter((p) => p.statusCaso === filtroStatus);
-    }
-
-    if (filtroDiagnostico) {
-      resultado = resultado.filter((p) =>
-        p.grupoDiagnostico?.toLowerCase().includes(filtroDiagnostico.toLowerCase()) ||
-        p.diagnosticoEspecifico?.toLowerCase().includes(filtroDiagnostico.toLowerCase())
-      );
-    }
-
-    // Filtro por Data de Inclusão
-    if (filtroDataDe) {
-      const dataDe = new Date(filtroDataDe);
-      resultado = resultado.filter((p) => {
-        if (!p.dataInclusao) return false;
-        const dataInclusao = new Date(p.dataInclusao);
-        return dataInclusao >= dataDe;
-      });
-    }
-
-    if (filtroDataAte) {
-      const dataAte = new Date(filtroDataAte);
-      dataAte.setHours(23, 59, 59, 999);
-      resultado = resultado.filter((p) => {
-        if (!p.dataInclusao) return false;
-        const dataInclusao = new Date(p.dataInclusao);
-        return dataInclusao <= dataAte;
-      });
-    }
-
-    // Filtro por Atendimentos 12 meses
-    if (filtroAtendimentos12m && todasMetricas) {
-      const filtroNum = parseInt(filtroAtendimentos12m);
-      if (!isNaN(filtroNum)) {
-        resultado = resultado.filter((p) => {
-          const atend = todasMetricas[p.id]?.atendimentos12m ?? 0;
-          return atend >= filtroNum;
-        });
+  // Ordenação client-side dos pacientes da página atual
+  const pacientesOrdenados = useMemo(() => {
+    if (!sortField || !sortDirection) return pacientes;
+    
+    return [...pacientes].sort((a, b) => {
+      let aVal: any;
+      let bVal: any;
+      
+      // Ordenação especial para campos de métricas
+      if (sortField === "totalAtendimentos") {
+        aVal = metricasCarregadas[a.id]?.totalAtendimentos ?? metricasPagina?.[a.id]?.totalAtendimentos ?? -1;
+        bVal = metricasCarregadas[b.id]?.totalAtendimentos ?? metricasPagina?.[b.id]?.totalAtendimentos ?? -1;
+        const comparison = aVal - bVal;
+        return sortDirection === "asc" ? comparison : -comparison;
+      } else if (sortField === "atendimentos12m") {
+        aVal = metricasCarregadas[a.id]?.atendimentos12m ?? metricasPagina?.[a.id]?.atendimentos12m ?? -1;
+        bVal = metricasCarregadas[b.id]?.atendimentos12m ?? metricasPagina?.[b.id]?.atendimentos12m ?? -1;
+        const comparison = aVal - bVal;
+        return sortDirection === "asc" ? comparison : -comparison;
+      } else if (sortField === "diasDesdeUltimoAtendimento") {
+        aVal = metricasCarregadas[a.id]?.diasSemAtendimento ?? metricasPagina?.[a.id]?.diasSemAtendimento ?? 999999;
+        bVal = metricasCarregadas[b.id]?.diasSemAtendimento ?? metricasPagina?.[b.id]?.diasSemAtendimento ?? 999999;
+        const comparison = aVal - bVal;
+        return sortDirection === "asc" ? comparison : -comparison;
+      } else if (sortField === "primeiroAtendimento") {
+        const aDate = metricasCarregadas[a.id]?.primeiroAtendimento ?? metricasPagina?.[a.id]?.primeiroAtendimento;
+        const bDate = metricasCarregadas[b.id]?.primeiroAtendimento ?? metricasPagina?.[b.id]?.primeiroAtendimento;
+        aVal = aDate ? new Date(aDate).getTime() : 0;
+        bVal = bDate ? new Date(bDate).getTime() : 0;
+        const comparison = aVal - bVal;
+        return sortDirection === "asc" ? comparison : -comparison;
+      } else {
+        aVal = a[sortField] || "";
+        bVal = b[sortField] || "";
+        const comparison = String(aVal).localeCompare(String(bVal), 'pt-BR', { numeric: true });
+        return sortDirection === "asc" ? comparison : -comparison;
       }
-    }
-
-    // Filtro por Dias desde último atendimento
-    if (filtroDiasDesdeUltimoAtend && todasMetricas) {
-      const filtroNum = parseInt(filtroDiasDesdeUltimoAtend);
-      if (!isNaN(filtroNum)) {
-        resultado = resultado.filter((p) => {
-          const dias = todasMetricas[p.id]?.diasSemAtendimento;
-          if (dias === null || dias === undefined) return false;
-          return dias >= filtroNum;
-        });
-      }
-    }
-
-    // Filtro por Total de atendimentos
-    if (filtroTotalAtendimentos && todasMetricas) {
-      const filtroNum = parseInt(filtroTotalAtendimentos);
-      if (!isNaN(filtroNum)) {
-        resultado = resultado.filter((p) => {
-          const total = todasMetricas[p.id]?.totalAtendimentos ?? 0;
-          return total >= filtroNum;
-        });
-      }
-    }
-
-    // Ordenação
-    if (sortField && sortDirection && todasMetricas) {
-      resultado = [...resultado].sort((a, b) => {
-        let aVal: any;
-        let bVal: any;
-        
-        // Ordenação especial para campos de métricas
-        if (sortField === "totalAtendimentos") {
-          aVal = todasMetricas[a.id]?.totalAtendimentos ?? -1;
-          bVal = todasMetricas[b.id]?.totalAtendimentos ?? -1;
-          const comparison = aVal - bVal;
-          return sortDirection === "asc" ? comparison : -comparison;
-        } else if (sortField === "atendimentos12m") {
-          aVal = todasMetricas[a.id]?.atendimentos12m ?? -1;
-          bVal = todasMetricas[b.id]?.atendimentos12m ?? -1;
-          const comparison = aVal - bVal;
-          return sortDirection === "asc" ? comparison : -comparison;
-        } else if (sortField === "diasDesdeUltimoAtendimento") {
-          aVal = todasMetricas[a.id]?.diasSemAtendimento ?? 999999;
-          bVal = todasMetricas[b.id]?.diasSemAtendimento ?? 999999;
-          const comparison = aVal - bVal;
-          return sortDirection === "asc" ? comparison : -comparison;
-        } else if (sortField === "primeiroAtendimento") {
-          const aDate = todasMetricas[a.id]?.primeiroAtendimento;
-          const bDate = todasMetricas[b.id]?.primeiroAtendimento;
-          aVal = aDate ? new Date(aDate).getTime() : 0;
-          bVal = bDate ? new Date(bDate).getTime() : 0;
-          const comparison = aVal - bVal;
-          return sortDirection === "asc" ? comparison : -comparison;
-        } else {
-          aVal = a[sortField] || "";
-          bVal = b[sortField] || "";
-          const comparison = String(aVal).localeCompare(String(bVal), 'pt-BR', { numeric: true });
-          return sortDirection === "asc" ? comparison : -comparison;
-        }
-      });
-    }
-
-    return resultado;
-  }, [pacientes, searchTerm, filtroIdade, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, filtroAtendimentos12m, filtroDiasDesdeUltimoAtend, filtroTotalAtendimentos, sortField, sortDirection, todasMetricas]);
-
-  // Paginação
-  const totalPaginas = Math.ceil(pacientesFiltrados.length / itensPorPagina);
-  const indiceInicio = (paginaAtual - 1) * itensPorPagina;
-  const indiceFim = indiceInicio + itensPorPagina;
-  const pacientesPaginados = pacientesFiltrados.slice(indiceInicio, indiceFim);
+    });
+  }, [pacientes, sortField, sortDirection, metricasCarregadas, metricasPagina]);
 
   // Função para formatar dias sem atendimento
   const formatarDiasSemAtendimento = (dias: number | null | undefined): string => {
@@ -304,22 +223,17 @@ export default function Pacientes() {
     setFiltroOperadora("");
     setFiltroStatus("");
     setFiltroDiagnostico("");
-    setFiltroDataDe("");
-    setFiltroDataAte("");
-    setFiltroAtendimentos12m("");
-    setFiltroDiasDesdeUltimoAtend("");
-    setFiltroTotalAtendimentos("");
     setSortField(null);
     setSortDirection(null);
     setPaginaAtual(1);
   };
 
-  const temFiltrosAtivos = searchTerm || filtroCidade || filtroUF || filtroOperadora || filtroStatus || filtroDiagnostico || filtroDataDe || filtroDataAte || filtroAtendimentos12m || filtroDiasDesdeUltimoAtend || filtroTotalAtendimentos;
+  const temFiltrosAtivos = searchTerm || filtroCidade || filtroUF || filtroOperadora || filtroStatus || filtroDiagnostico;
 
   // Resetar página ao mudar filtros
-  useMemo(() => {
+  useEffect(() => {
     setPaginaAtual(1);
-  }, [searchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico, filtroDataDe, filtroDataAte, filtroAtendimentos12m, filtroDiasDesdeUltimoAtend, filtroTotalAtendimentos]);
+  }, [debouncedSearchTerm, filtroCidade, filtroUF, filtroOperadora, filtroStatus, filtroDiagnostico]);
 
   // Componente de cabeçalho ordenável
   const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
@@ -338,12 +252,30 @@ export default function Pacientes() {
     </TableHead>
   );
 
+  // Obter métricas de um paciente (do cache ou da query)
+  const getMetricas = useCallback((pacienteId: number) => {
+    // Primeiro tenta do cache local
+    const cached = metricasCache.get(pacienteId);
+    if (cached && Date.now() - cached.cachedAt < CACHE_TTL) {
+      return cached;
+    }
+    // Depois tenta da query atual
+    return metricasPagina?.[pacienteId] || metricasCarregadas[pacienteId];
+  }, [metricasPagina, metricasCarregadas]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Pacientes</h1>
-          <p className="text-muted-foreground mt-2">Gerenciar cadastro de pacientes</p>
+          <p className="text-muted-foreground mt-2">
+            Gerenciar cadastro de pacientes
+            {totalPacientes > 0 && (
+              <span className="ml-2 text-sm">
+                ({totalPacientes.toLocaleString('pt-BR')} {totalPacientes === 1 ? 'paciente' : 'pacientes'})
+              </span>
+            )}
+          </p>
         </div>
         <Link href="/pacientes/novo">
           <Button>
@@ -380,219 +312,140 @@ export default function Pacientes() {
                 placeholder="Digite nome, CPF ou ID do paciente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                className="pl-10"
               />
+              {isFetching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
             </div>
             {temFiltrosAtivos && (
-              <Button variant="outline" onClick={limparFiltros}>
-                <X className="h-4 w-4 mr-2" />
-                Limpar Filtros
+              <Button variant="ghost" size="icon" onClick={limparFiltros}>
+                <X className="h-4 w-4" />
               </Button>
             )}
           </div>
 
-          {/* Filtros por Coluna (simplificados - 2 linhas) */}
+          {/* Filtros Avançados */}
           {showFilters && (
-            <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-              {/* Primeira linha: Idade, Cidade, UF, Operadora, Status */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Idade</label>
-                  <Input
-                    type="number"
-                    placeholder="Idade..."
-                    value={filtroIdade}
-                    onChange={(e) => setFiltroIdade(e.target.value)}
-                    min="0"
-                    max="150"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Cidade</label>
-                  <Input
-                    placeholder="Filtrar por cidade..."
-                    value={filtroCidade}
-                    onChange={(e) => setFiltroCidade(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">UF</label>
-                  <Input
-                    placeholder="Filtrar por UF..."
-                    value={filtroUF}
-                    onChange={(e) => setFiltroUF(e.target.value)}
-                    maxLength={2}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Operadora</label>
-                  <Select value={filtroOperadora} onValueChange={setFiltroOperadora}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todas</SelectItem>
-                      {OPERADORAS.map((op) => (
-                        <SelectItem key={op} value={op}>
-                          {op}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
-                  <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos</SelectItem>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Óbito">Óbito</SelectItem>
-                      <SelectItem value="Perda de Seguimento">Perda de Seguimento</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4 bg-muted/30 rounded-lg">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Cidade</label>
+                <Input
+                  placeholder="Filtrar por cidade"
+                  value={filtroCidade}
+                  onChange={(e) => setFiltroCidade(e.target.value)}
+                />
               </div>
-
-              {/* Segunda linha: Diagnóstico, Data De, Data Até */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Diagnóstico</label>
-                  <Input
-                    placeholder="Filtrar por diagnóstico..."
-                    value={filtroDiagnostico}
-                    onChange={(e) => setFiltroDiagnostico(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Data Inclusão (De)</label>
-                  <Input
-                    type="date"
-                    value={filtroDataDe}
-                    onChange={(e) => setFiltroDataDe(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Data Inclusão (Até)</label>
-                  <Input
-                    type="date"
-                    value={filtroDataAte}
-                    onChange={(e) => setFiltroDataAte(e.target.value)}
-                  />
-                </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">UF</label>
+                <Input
+                  placeholder="Ex: RS"
+                  value={filtroUF}
+                  onChange={(e) => setFiltroUF(e.target.value)}
+                  maxLength={2}
+                />
               </div>
-
-              {/* Terceira linha: Total Atendimentos, Atendimentos 12m, Dias desde último atendimento */}
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Total de atendimentos (mínimo)</label>
-                  <Input
-                    type="number"
-                    placeholder="Ex: 5 (pacientes com 5+ atendimentos no histórico)"
-                    value={filtroTotalAtendimentos}
-                    onChange={(e) => setFiltroTotalAtendimentos(e.target.value)}
-                    min="0"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Atendimentos 12 meses (mínimo)</label>
-                  <Input
-                    type="number"
-                    placeholder="Ex: 1 (pacientes com pelo menos 1 atendimento)"
-                    value={filtroAtendimentos12m}
-                    onChange={(e) => setFiltroAtendimentos12m(e.target.value)}
-                    min="0"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Dias desde último atendimento (mínimo)</label>
-                  <Input
-                    type="number"
-                    placeholder="Ex: 180 (pacientes sem atendimento há 180+ dias)"
-                    value={filtroDiasDesdeUltimoAtend}
-                    onChange={(e) => setFiltroDiasDesdeUltimoAtend(e.target.value)}
-                    min="0"
-                  />
-                </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Convênio</label>
+                <Select value={filtroOperadora} onValueChange={setFiltroOperadora}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    {OPERADORAS.map((op) => (
+                      <SelectItem key={op} value={op}>{op}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Status</label>
+                <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Inativo">Inativo</SelectItem>
+                    <SelectItem value="Alta">Alta</SelectItem>
+                    <SelectItem value="Óbito">Óbito</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Diagnóstico</label>
+                <Input
+                  placeholder="Filtrar por diagnóstico"
+                  value={filtroDiagnostico}
+                  onChange={(e) => setFiltroDiagnostico(e.target.value)}
+                />
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
+      {/* Tabela de Pacientes */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Lista de Pacientes</CardTitle>
-              <CardDescription>
-                Mostrando {indiceInicio + 1} a {Math.min(indiceFim, pacientesFiltrados.length)} de {pacientesFiltrados.length} pacientes
-                {temFiltrosAtivos && ` (${pacientes?.length || 0} no total)`}
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Itens por página:</span>
-              <Select value={String(itensPorPagina)} onValueChange={(v) => { setItensPorPagina(Number(v)); setPaginaAtual(1); }}>
-                <SelectTrigger className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isLoading ? (
-            <p className="text-center py-8 text-muted-foreground">Carregando...</p>
-          ) : pacientesPaginados && pacientesPaginados.length > 0 ? (
-            <>
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <SortableHeader field="idPaciente">ID</SortableHeader>
-                      <SortableHeader field="nome">Nome</SortableHeader>
-                      <TableHead>Idade</TableHead>
-                      <SortableHeader field="cpf">CPF</SortableHeader>
-                      <SortableHeader field="telefone">Telefone</SortableHeader>
-                      <SortableHeader field="cidade">Cidade</SortableHeader>
-                      <SortableHeader field="uf">UF</SortableHeader>
-                      <SortableHeader field="operadora1">Convênio 1</SortableHeader>
-                      <SortableHeader field="operadora2">Convênio 2</SortableHeader>
-                      <SortableHeader field="diagnosticoEspecifico">Diagnóstico</SortableHeader>
-                      <SortableHeader field="totalAtendimentos">Total Atend.</SortableHeader>
-                      <SortableHeader field="atendimentos12m">Atend. 12m</SortableHeader>
-                      <SortableHeader field="diasDesdeUltimoAtendimento">Dias desde último atend.</SortableHeader>
-                      <SortableHeader field="primeiroAtendimento">1º Atend.</SortableHeader>
-                      <SortableHeader field="statusCaso">Status</SortableHeader>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pacientesPaginados.map((paciente) => (
-                      <TableRow key={paciente.id}>
-                        <TableCell className="font-medium">{paciente.idPaciente}</TableCell>
-                        <TableCell>
-                          <Link href={`/prontuario/${paciente.id}`} className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium">
-                            {paciente.nome}
-                          </Link>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableHeader field="idPaciente">ID</SortableHeader>
+                  <SortableHeader field="nome">Nome</SortableHeader>
+                  <TableHead>Idade</TableHead>
+                  <SortableHeader field="cpf">CPF</SortableHeader>
+                  <SortableHeader field="telefone">Telefone</SortableHeader>
+                  <SortableHeader field="cidade">Cidade</SortableHeader>
+                  <SortableHeader field="uf">UF</SortableHeader>
+                  <SortableHeader field="operadora1">Convênio 1</SortableHeader>
+                  <SortableHeader field="operadora2">Convênio 2</SortableHeader>
+                  <SortableHeader field="diagnosticoEspecifico">Diagnóstico</SortableHeader>
+                  <SortableHeader field="totalAtendimentos">Total Atend.</SortableHeader>
+                  <SortableHeader field="atendimentos12m">Atend. 12m</SortableHeader>
+                  <SortableHeader field="diasDesdeUltimoAtendimento">Dias desde último atend.</SortableHeader>
+                  <SortableHeader field="primeiroAtendimento">1º Atend.</SortableHeader>
+                  <SortableHeader field="statusCaso">Status</SortableHeader>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  // Skeleton loading
+                  Array.from({ length: itensPorPagina }).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array.from({ length: 16 }).map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton className="h-4 w-full" />
                         </TableCell>
-                        <TableCell>{paciente.idade ?? "-"}</TableCell>
-                        <TableCell>{paciente.cpf || "-"}</TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : pacientesOrdenados.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={16} className="text-center py-8 text-muted-foreground">
+                      {temFiltrosAtivos ? "Nenhum paciente encontrado com os filtros aplicados" : "Nenhum paciente cadastrado"}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  pacientesOrdenados.map((paciente) => {
+                    const metricas = getMetricas(paciente.id);
+                    const dias = metricas?.diasSemAtendimento;
+                    const isInativo = dias !== null && dias !== undefined && dias > 360;
+                    
+                    return (
+                      <TableRow 
+                        key={paciente.id} 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setLocation(`/prontuario/${paciente.id}`)}
+                      >
+                        <TableCell className="font-mono text-sm">{paciente.idPaciente}</TableCell>
+                        <TableCell className="font-medium max-w-[200px] truncate">{paciente.nome}</TableCell>
+                        <TableCell>{paciente.idade || "-"}</TableCell>
+                        <TableCell className="font-mono text-sm">{paciente.cpf || "-"}</TableCell>
                         <TableCell>{paciente.telefone || "-"}</TableCell>
                         <TableCell>{paciente.cidade || "-"}</TableCell>
                         <TableCell>{paciente.uf || "-"}</TableCell>
@@ -602,29 +455,23 @@ export default function Pacientes() {
                           {paciente.diagnosticoEspecifico || paciente.grupoDiagnostico || "-"}
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className={`font-medium ${(todasMetricas?.[paciente.id]?.totalAtendimentos || 0) > 0 ? 'text-blue-600' : 'text-muted-foreground'}`}>
-                            {todasMetricas?.[paciente.id]?.totalAtendimentos ?? "-"}
+                          <span className={`font-medium ${(metricas?.totalAtendimentos || 0) > 0 ? 'text-blue-600' : 'text-muted-foreground'}`}>
+                            {metricas?.totalAtendimentos ?? "-"}
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className={`font-medium ${(todasMetricas?.[paciente.id]?.atendimentos12m || 0) > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            {todasMetricas?.[paciente.id]?.atendimentos12m ?? "-"}
+                          <span className={`font-medium ${(metricas?.atendimentos12m || 0) > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                            {metricas?.atendimentos12m ?? "-"}
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          {(() => {
-                            const dias = todasMetricas?.[paciente.id]?.diasSemAtendimento;
-                            const isInativo = dias !== null && dias !== undefined && dias > 360;
-                            return (
-                              <span className={`font-medium ${isInativo ? 'text-red-600' : dias !== null && dias !== undefined && dias > 180 ? 'text-orange-500' : 'text-muted-foreground'}`}>
-                                {formatarDiasSemAtendimento(dias)}
-                              </span>
-                            );
-                          })()}
+                          <span className={`font-medium ${isInativo ? 'text-red-600' : dias !== null && dias !== undefined && dias > 180 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                            {formatarDiasSemAtendimento(dias)}
+                          </span>
                         </TableCell>
                         <TableCell className="text-center text-sm">
-                          {todasMetricas?.[paciente.id]?.primeiroAtendimento 
-                            ? new Date(todasMetricas[paciente.id].primeiroAtendimento!).toLocaleDateString('pt-BR')
+                          {metricas?.primeiroAtendimento 
+                            ? new Date(metricas.primeiroAtendimento).toLocaleDateString('pt-BR')
                             : "-"}
                         </TableCell>
                         <TableCell>
@@ -633,14 +480,13 @@ export default function Pacientes() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          {/* Ações: Editar + Novo Atendimento */}
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => setLocation(`/prontuario/${paciente.id}`)}
                               className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              title="Abrir prontuário"
+                              title="Ver Prontuário"
                             >
                               <ClipboardList className="h-4 w-4" />
                             </Button>
@@ -649,79 +495,95 @@ export default function Pacientes() {
                               size="sm"
                               onClick={() => handleEditar(paciente)}
                               className="h-8 w-8 p-0"
-                              title="Editar paciente"
+                              title="Editar"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setLocation(`/atendimentos/novo?pacienteId=${paciente.id}`)}
-                              className="h-8 w-8 p-0"
-                              title="Novo atendimento"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
                               onClick={() => handleExcluir(paciente)}
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              title="Excluir paciente"
+                              title="Excluir"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-              {/* Paginação */}
-              {totalPaginas > 1 && (
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    Página {paginaAtual} de {totalPaginas}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
-                      disabled={paginaAtual === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      Anterior
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
-                      disabled={paginaAtual === totalPaginas}
-                    >
-                      Próxima
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-center py-8 text-muted-foreground">
-              Nenhum paciente encontrado com os filtros aplicados
-            </p>
+          {/* Paginação */}
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Exibindo {((paginaAtual - 1) * itensPorPagina) + 1} - {Math.min(paginaAtual * itensPorPagina, totalPacientes)} de {totalPacientes.toLocaleString('pt-BR')}</span>
+                <Select
+                  value={itensPorPagina.toString()}
+                  onValueChange={(v) => {
+                    setItensPorPagina(Number(v));
+                    setPaginaAtual(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span>por página</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                  disabled={paginaAtual === 1 || isFetching}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </Button>
+                <span className="text-sm">
+                  Página {paginaAtual} de {totalPaginas}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                  disabled={paginaAtual === totalPaginas || isFetching}
+                >
+                  Próxima
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Modal de Edição */}
-      <EditarPacienteModal
-        paciente={pacienteSelecionado}
-        open={modalEditarAberto}
-        onOpenChange={setModalEditarAberto}
-      />
+      {pacienteSelecionado && (
+        <EditarPacienteModal
+          paciente={pacienteSelecionado}
+          open={modalEditarAberto}
+          onOpenChange={(open) => {
+            setModalEditarAberto(open);
+            if (!open) {
+              utils.pacientes.listPaginated.invalidate();
+              setPacienteSelecionado(null);
+            }
+          }}
+        />
+      )}
 
       {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={dialogExcluirAberto} onOpenChange={setDialogExcluirAberto}>
@@ -730,12 +592,7 @@ export default function Pacientes() {
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o paciente <strong>{pacienteParaExcluir?.nome}</strong>?
-              <br /><br />
-              ID: {pacienteParaExcluir?.idPaciente}
-              <br />
-              CPF: {pacienteParaExcluir?.cpf || "Não informado"}
-              <br /><br />
-              Esta ação pode ser revertida posteriormente pelo administrador.
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -743,9 +600,8 @@ export default function Pacientes() {
             <AlertDialogAction
               onClick={confirmarExclusao}
               className="bg-red-600 hover:bg-red-700"
-              disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
