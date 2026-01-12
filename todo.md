@@ -1757,3 +1757,13 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Cópia de campos de outros pacientes para o principal
 - [x] Migração de atendimentos para paciente principal
 - [x] Soft delete dos pacientes duplicados (status: Inativo - Duplicado)
+
+
+---
+
+## 🔍 INVESTIGAÇÃO IDs DUP (12/01/2026)
+
+- [x] Investigar pacientes com IDs no formato DUP
+- [x] Verificar se são duplicatas reais (comparar CPF e nome) - NÃO são duplicatas, são pacientes únicos
+- [x] Corrigir IDs inválidos para formato padrão (2026-0000055, 2026-0000056, 2026-0000057)
+- [x] Incluir duplicatas reais no relatório de merge - N/A (não eram duplicatas)
