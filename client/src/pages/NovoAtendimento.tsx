@@ -113,8 +113,24 @@ export default function NovoAtendimento() {
     const paciente = pacientes?.find((p) => p.id === pacienteId);
     if (paciente) {
       setPacienteSelecionado(paciente);
-      setFormData((prev) => ({ ...prev, pacienteId }));
+      
+      // Preencher automaticamente o convênio principal do paciente
+      const convenioAutomatico = paciente.operadora1 || "";
+      const planoAutomatico = paciente.planoModalidade1 || "";
+      
+      setFormData((prev) => ({ 
+        ...prev, 
+        pacienteId,
+        // Só preencher convênio se não estiver em modo duplicação (que já vem preenchido)
+        convenio: prev.convenio || convenioAutomatico,
+        plano: prev.plano || planoAutomatico,
+      }));
       setSearchPaciente("");
+      
+      // Notificar usuário sobre o preenchimento automático
+      if (convenioAutomatico && !isDuplicacao) {
+        toast.info(`Convênio preenchido: ${convenioAutomatico}${planoAutomatico ? ` - ${planoAutomatico}` : ""}`);
+      }
     }
   };
 

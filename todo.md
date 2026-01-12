@@ -1723,3 +1723,8 @@ A dashboard deve integrar **medicina e administração**:
 ## 🔧 MELHORIAS FORMULÁRIO PACIENTE (12/01/2026)
 - [x] Implementar busca automática de endereço por CEP (ViaCEP) - NovoPaciente e EditarPacienteModal
 - [x] Desabilitar campos de convênio quando operadora for "Particular", "Retorno de Particular" ou "Cortesia"
+
+
+## 🔧 VALIDAÇÕES E AUTOMAÇÕES (12/01/2026)
+- [x] Validação de dígitos verificadores do CPF no cadastro de pacientes
+- [x] Preenchimento automático de convênio ao selecionar paciente em Novo Atendimento

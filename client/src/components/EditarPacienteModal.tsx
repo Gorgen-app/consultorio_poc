@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { OPERADORAS } from "@/lib/operadoras";
+import { validarCPF } from "@/lib/validacoes";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, Clock, User, FileSpreadsheet, FileText } from "lucide-react";
@@ -234,6 +235,7 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
   const [outroOperadora1, setOutroOperadora1] = useState("");
   const [outroOperadora2, setOutroOperadora2] = useState("");
   const [buscandoCep, setBuscandoCep] = useState(false);
+  const [erroCpf, setErroCpf] = useState<string | null>(null);
 
   // Função para buscar endereço pelo CEP
   const buscarEnderecoPorCep = useCallback(async (cep: string) => {
@@ -293,6 +295,15 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!paciente) return;
+
+    // Validar CPF se preenchido
+    if (formData.cpf && formData.cpf.replace(/\D/g, "").length === 11) {
+      if (!validarCPF(formData.cpf)) {
+        setErroCpf("CPF inválido - dígitos verificadores incorretos");
+        toast.error("CPF inválido. Verifique os dígitos.");
+        return;
+      }
+    }
 
     // Converter campos Date para string
     const dataToSubmit = {
@@ -360,9 +371,23 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                       mask="cpf"
                       id="cpf"
                       value={formData.cpf || ""}
-                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, cpf: e.target.value });
+                        setErroCpf(null);
+                      }}
+                      onBlur={() => {
+                        if (formData.cpf && formData.cpf.replace(/\D/g, "").length === 11) {
+                          if (!validarCPF(formData.cpf)) {
+                            setErroCpf("CPF inválido - dígitos verificadores incorretos");
+                          } else {
+                            setErroCpf(null);
+                          }
+                        }
+                      }}
                       placeholder="000.000.000-00"
+                      className={erroCpf ? "border-red-500" : ""}
                     />
+                    {erroCpf && <p className="text-sm text-red-500 mt-1">{erroCpf}</p>}
                   </div>
 
                   <div className="space-y-2">

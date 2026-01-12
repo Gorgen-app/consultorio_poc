@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { MaskedInput } from "@/components/MaskedInput";
 import { OPERADORAS } from "@/lib/operadoras";
+import { validarCPF } from "@/lib/validacoes";
 
 export default function NovoPaciente() {
   const [, setLocation] = useLocation();
@@ -18,6 +19,7 @@ export default function NovoPaciente() {
   const { data: nextId, isLoading: loadingId } = trpc.pacientes.getNextId.useQuery();
 
   const [buscandoCep, setBuscandoCep] = useState(false);
+  const [erroCpf, setErroCpf] = useState<string | null>(null);
 
   // Função para buscar endereço pelo CEP
   const buscarEnderecoPorCep = useCallback(async (cep: string) => {
@@ -98,6 +100,14 @@ export default function NovoPaciente() {
     if (!formData.nome || !formData.idPaciente) {
       toast.error("Nome e ID do paciente são obrigatórios");
       return;
+    }
+    // Validar CPF se preenchido
+    if (formData.cpf && formData.cpf.replace(/\D/g, "").length === 11) {
+      if (!validarCPF(formData.cpf)) {
+        setErroCpf("CPF inválido - dígitos verificadores incorretos");
+        toast.error("CPF inválido. Verifique os dígitos.");
+        return;
+      }
     }
     try {
       const dataToSend = {
@@ -212,7 +222,27 @@ export default function NovoPaciente() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cpf">CPF</Label>
-                  <MaskedInput mask="cpf" id="cpf" value={formData.cpf} onChange={(e) => handleChange("cpf", e.target.value)} placeholder="000.000.000-00" />
+                  <MaskedInput 
+                    mask="cpf" 
+                    id="cpf" 
+                    value={formData.cpf} 
+                    onChange={(e) => {
+                      handleChange("cpf", e.target.value);
+                      setErroCpf(null);
+                    }}
+                    onBlur={() => {
+                      if (formData.cpf && formData.cpf.replace(/\D/g, "").length === 11) {
+                        if (!validarCPF(formData.cpf)) {
+                          setErroCpf("CPF inválido - dígitos verificadores incorretos");
+                        } else {
+                          setErroCpf(null);
+                        }
+                      }
+                    }}
+                    placeholder="000.000.000-00"
+                    className={erroCpf ? "border-red-500" : ""}
+                  />
+                  {erroCpf && <p className="text-sm text-red-500 mt-1">{erroCpf}</p>}
                 </div>
               </div>
             </CardContent>
