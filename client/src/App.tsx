@@ -20,6 +20,7 @@ import RelatorioPacientes from "./pages/RelatorioPacientes";
 import RelatorioDuplicados from "./pages/RelatorioDuplicados";
 import Relatorios from "./pages/Relatorios";
 import Performance from "./pages/Performance";
+import DashboardCustom from "./pages/DashboardCustom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function Router() {
@@ -33,6 +34,11 @@ function Router() {
       <Route path="/dashboard">
         <ProtectedRoute funcionalidade="dashboard">
           <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/custom">
+        <ProtectedRoute funcionalidade="dashboard">
+          <DashboardCustom />
         </ProtectedRoute>
       </Route>
       <Route path="/pacientes">

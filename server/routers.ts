@@ -6,6 +6,7 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import * as performance from "./performance";
+import * as dashboardMetricas from "./dashboardMetricas";
 
 // Schema de validação para Paciente
 const pacienteSchema = z.object({
@@ -188,6 +189,166 @@ export const appRouter = router({
           return performance.exportAggregatedMetricsToCSV();
         }
       }),
+  }),
+  
+  // Router de métricas do dashboard customizável
+  dashboardMetricas: router({
+    // Configuração do dashboard
+    getConfig: tenantProcedure
+      .query(async ({ ctx }) => {
+        const config = await dashboardMetricas.getDashboardConfig(ctx.tenant.tenantId, ctx.user.id);
+        return config;
+      }),
+    
+    saveConfig: tenantProcedure
+      .input(z.object({
+        metricasSelecionadas: z.array(z.string()),
+        ordemMetricas: z.array(z.string()).optional(),
+        periodoDefault: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']).optional(),
+        layoutColunas: z.number().min(1).max(4).optional(),
+        temaGraficos: z.enum(['padrao', 'escuro', 'colorido']).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await dashboardMetricas.saveDashboardConfig(
+          ctx.tenant.tenantId,
+          ctx.user.id,
+          input
+        );
+      }),
+    
+    // Métricas de População de Pacientes
+    pacTotalAtivos: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getPacientesTotalAtivos(ctx.tenant.tenantId)),
+    
+    pacNovosPeriodo: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getPacientesNovosPeriodo(ctx.tenant.tenantId, input.periodo)),
+    
+    pacDistribuicaoSexo: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getPacientesDistribuicaoSexo(ctx.tenant.tenantId)),
+    
+    pacFaixaEtaria: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getPacientesFaixaEtaria(ctx.tenant.tenantId)),
+    
+    pacDistribuicaoCidade: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getPacientesDistribuicaoCidade(ctx.tenant.tenantId)),
+    
+    pacTaxaRetencao: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getPacientesTaxaRetencao(ctx.tenant.tenantId, input.periodo)),
+    
+    pacTempoAcompanhamento: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getPacientesTempoAcompanhamento(ctx.tenant.tenantId)),
+    
+    pacInativos: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getPacientesInativos(ctx.tenant.tenantId)),
+    
+    pacObitos: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getPacientesObitos(ctx.tenant.tenantId, input.periodo)),
+    
+    pacDistribuicaoConvenio: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getPacientesDistribuicaoConvenio(ctx.tenant.tenantId)),
+    
+    // Métricas de Atendimentos
+    atdTotalPeriodo: tenantProcedure
+      .input(z.object({ 
+        periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']),
+        subcategoria: z.string().optional()
+      }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getAtendimentosTotalPeriodo(ctx.tenant.tenantId, input.periodo, input.subcategoria)),
+    
+    atdEvolucaoTemporal: tenantProcedure
+      .input(z.object({ 
+        periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']),
+        subcategoria: z.string().optional()
+      }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getAtendimentosEvolucaoTemporal(ctx.tenant.tenantId, input.periodo, input.subcategoria)),
+    
+    atdPorTipo: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getAtendimentosPorTipo(ctx.tenant.tenantId, input.periodo)),
+    
+    atdPorLocal: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getAtendimentosPorLocal(ctx.tenant.tenantId, input.periodo)),
+    
+    atdPorConvenio: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getAtendimentosPorConvenio(ctx.tenant.tenantId, input.periodo)),
+    
+    atdMediaDiaria: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getAtendimentosMediaDiaria(ctx.tenant.tenantId, input.periodo)),
+    
+    atdDiaSemana: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getAtendimentosDiaSemana(ctx.tenant.tenantId, input.periodo)),
+    
+    atdNovosVsRetorno: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getAtendimentosNovosVsRetorno(ctx.tenant.tenantId, input.periodo)),
+    
+    atdProcedimentos: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getAtendimentosProcedimentos(ctx.tenant.tenantId, input.periodo)),
+    
+    // Métricas Financeiras
+    finFaturamentoTotal: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getFaturamentoTotal(ctx.tenant.tenantId, input.periodo)),
+    
+    finEvolucaoFaturamento: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getFaturamentoEvolucao(ctx.tenant.tenantId, input.periodo)),
+    
+    finFaturamentoConvenio: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getFaturamentoPorConvenio(ctx.tenant.tenantId, input.periodo)),
+    
+    finTicketMedio: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getTicketMedio(ctx.tenant.tenantId, input.periodo)),
+    
+    finTaxaRecebimento: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getTaxaRecebimento(ctx.tenant.tenantId, input.periodo)),
+    
+    finGlosas: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getGlosas(ctx.tenant.tenantId, input.periodo)),
+    
+    finInadimplencia: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getInadimplencia(ctx.tenant.tenantId)),
+    
+    finFaturamentoPorTipo: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getFaturamentoPorTipo(ctx.tenant.tenantId, input.periodo)),
+    
+    finPrevisaoRecebimento: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getPrevisaoRecebimento(ctx.tenant.tenantId)),
+    
+    finComparativoMensal: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getComparativoMensal(ctx.tenant.tenantId)),
+    
+    // Métricas de Qualidade
+    quaDiagnosticosFrequentes: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getDiagnosticosFrequentes(ctx.tenant.tenantId, input.periodo)),
+    
+    quaTaxaRetorno: tenantProcedure
+      .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
+      .query(async ({ ctx, input }) => dashboardMetricas.getTaxaRetorno(ctx.tenant.tenantId, input.periodo)),
+    
+    // Métricas Diversas
+    divProximosAtendimentos: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getProximosAtendimentos(ctx.tenant.tenantId)),
+    
+    divAniversariantes: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getAniversariantesMes(ctx.tenant.tenantId)),
+    
+    divAlertasPendentes: tenantProcedure
+      .query(async ({ ctx }) => dashboardMetricas.getAlertasPendentes(ctx.tenant.tenantId)),
   }),
   
   // Router de notificações

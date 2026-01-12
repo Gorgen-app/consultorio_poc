@@ -1347,3 +1347,35 @@ export const examesFavoritos = mysqlTable("exames_favoritos", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
+
+
+/**
+ * Configuração de Dashboard Customizável
+ * Armazena as preferências de métricas de cada usuário
+ */
+export const dashboardConfigs = mysqlTable("dashboard_configs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
+  userId: int("user_id").notNull().references(() => users.id),
+  
+  // Métricas selecionadas para exibição (JSON array de IDs de métricas)
+  metricasSelecionadas: text("metricas_selecionadas").notNull(), // JSON array
+  
+  // Ordem de exibição das métricas (JSON array de IDs)
+  ordemMetricas: text("ordem_metricas"),
+  
+  // Período padrão selecionado
+  periodoDefault: mysqlEnum("periodo_default", ["7d", "30d", "3m", "6m", "1a", "3a", "5a", "todo"]).default("30d"),
+  
+  // Layout preferido (grid columns)
+  layoutColunas: int("layout_colunas").default(3),
+  
+  // Tema de cores
+  temaGraficos: mysqlEnum("tema_graficos", ["padrao", "escuro", "colorido"]).default("padrao"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DashboardConfig = typeof dashboardConfigs.$inferSelect;
+export type InsertDashboardConfig = typeof dashboardConfigs.$inferInsert;
