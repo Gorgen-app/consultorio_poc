@@ -529,11 +529,11 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
         className="sm:max-w-[95vw] w-[1400px] h-[85vh] max-h-[900px] p-0 gap-0 overflow-hidden bg-white"
         showCloseButton={false}
       >
-        <div className="flex h-full">
-          {/* Barra lateral */}
-          <div className="w-[300px] min-w-[300px] bg-slate-50/80 backdrop-blur-sm border-r flex flex-col">
-            {/* Busca */}
-            <div className="p-4 border-b">
+        <div className="flex flex-col h-full">
+          {/* Header unificado */}
+          <div className="flex border-b">
+            {/* Header da barra lateral */}
+            <div className="w-[300px] min-w-[300px] p-4 bg-slate-50/80">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -544,9 +544,39 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
                 />
               </div>
             </div>
-            
-            {/* Categorias */}
-            <ScrollArea className="flex-1">
+            {/* Header da área principal */}
+            <div className="flex-1 p-4 flex items-center justify-between border-l">
+              <div>
+                <h2 className="text-lg font-semibold">Galeria de Widgets</h2>
+                <p className="text-sm text-muted-foreground">
+                  Selecione os widgets para adicionar ao seu Dashboard
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className="text-sm">
+                  {widgets.length} widget{widgets.length !== 1 ? 's' : ''} selecionado{widgets.length !== 1 ? 's' : ''}
+                </Badge>
+                <Button onClick={handleSave}>
+                  Concluído
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => onOpenChange(false)}
+                  className="h-8 w-8"
+                >
+                  <XCircle className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Conteúdo */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Barra lateral */}
+            <div className="w-[300px] min-w-[300px] bg-slate-50/80 backdrop-blur-sm border-r flex flex-col">
+              {/* Categorias */}
+              <ScrollArea className="flex-1">
               <div className="p-2">
                 <button
                   onClick={() => setCategoriaAtiva('todas')}
@@ -622,33 +652,7 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
           </div>
           
           {/* Área principal */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            {/* Header */}
-            <div className="p-4 border-b flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Galeria de Widgets</h2>
-                <p className="text-sm text-muted-foreground">
-                  Selecione os widgets para adicionar ao seu Dashboard
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="text-sm">
-                  {widgets.length} widget{widgets.length !== 1 ? 's' : ''} selecionado{widgets.length !== 1 ? 's' : ''}
-                </Badge>
-                <Button onClick={handleSave}>
-                  Concluído
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => onOpenChange(false)}
-                  className="h-8 w-8"
-                >
-                  <XCircle className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-            
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden border-l">
             {/* Grid de widgets */}
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-8">
@@ -714,6 +718,7 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
                 Widgets micro ocupam 0.5 slot, pequeno 1 slot, médio 2 slots, grande 4 slots.
               </p>
             </div>
+          </div>
           </div>
         </div>
       </DialogContent>
