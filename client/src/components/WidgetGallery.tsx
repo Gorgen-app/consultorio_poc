@@ -530,44 +530,29 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
         showCloseButton={false}
       >
         <div className="flex flex-col h-full">
-          {/* Header unificado */}
-          <div className="flex border-b">
-            {/* Header da barra lateral */}
-            <div className="w-[300px] min-w-[300px] p-4 bg-slate-50/80">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar widgets..."
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  className="pl-9 bg-white"
-                />
-              </div>
+          {/* Header simplificado */}
+          <div className="flex items-center justify-between p-4 border-b bg-white">
+            <div>
+              <h2 className="text-lg font-semibold">Galeria de Widgets</h2>
+              <p className="text-sm text-muted-foreground">
+                Selecione os widgets para adicionar ao seu Dashboard
+              </p>
             </div>
-            {/* Header da área principal */}
-            <div className="flex-1 p-4 flex items-center justify-between border-l">
-              <div>
-                <h2 className="text-lg font-semibold">Galeria de Widgets</h2>
-                <p className="text-sm text-muted-foreground">
-                  Selecione os widgets para adicionar ao seu Dashboard
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="text-sm">
-                  {widgets.length} widget{widgets.length !== 1 ? 's' : ''} selecionado{widgets.length !== 1 ? 's' : ''}
-                </Badge>
-                <Button onClick={handleSave}>
-                  Concluído
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => onOpenChange(false)}
-                  className="h-8 w-8"
-                >
-                  <XCircle className="h-5 w-5" />
-                </Button>
-              </div>
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="text-sm">
+                {widgets.length} widget{widgets.length !== 1 ? 's' : ''} selecionado{widgets.length !== 1 ? 's' : ''}
+              </Badge>
+              <Button onClick={handleSave}>
+                Concluído
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => onOpenChange(false)}
+                className="h-8 w-8"
+              >
+                <XCircle className="h-5 w-5" />
+              </Button>
             </div>
           </div>
           

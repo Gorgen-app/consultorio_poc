@@ -2056,3 +2056,29 @@ A dashboard deve integrar **medicina e administração**:
   - [x] Aplicar em: Distribuição por Sexo
   - [x] Função auxiliar `agruparCategoriasOutros()` criada em dashboardMetricas.ts
 
+
+
+---
+
+## 🔄 REESTRUTURAÇÃO DASHBOARD v3.0 (13/01/2026)
+
+### Backend
+- [x] Aplicar agrupamento "Outros" (<5%) em distribuição por convênio (pacientes)
+- [x] Aplicar agrupamento "Outros" (<5%) em distribuição por convênio (atendimentos)
+- [x] Aplicar agrupamento "Outros" (<5%) em distribuição por convênio (faturamento)
+- [x] Aplicar agrupamento "Outros" (<5%) em distribuição por cidade
+- [x] Aplicar agrupamento "Outros" (<5%) em distribuição por sexo
+
+### Header
+- [x] Remover subtítulo (contador de widgets/slots)
+- [x] Ajustar tamanho do ícone de engrenagem para harmonizar com título
+
+### Galeria de Widgets
+- [x] Layout 1/4 barra lateral + 3/4 área de widgets
+- [x] Remover busca por nome (desnecessário)
+- [x] Mostrar todos os widgets em todas as variações de tamanho
+- [x] Sem categorização inicial
+- [x] Scroll funcionando corretamente
+
+### Formatação
+- [x] Valores monetários: R$ X.XXX,XX (ponto milhares, vírgula decimais)

@@ -738,26 +738,20 @@ export default function DashboardCustom() {
         onSave={handleSalvarConfig}
       />
 
-      {/* Cabeçalho */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            {widgetConfigs.length} widgets · {slotsUsados}/{MAX_SLOTS} slots utilizados
-          </p>
-        </div>
+      {/* Cabeçalho simplificado */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
         
-        <div className="flex items-center gap-2">
-          {/* Botão de configurações */}
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setDialogAberto(true)}
-            title="Configurar Widgets"
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
-        </div>
+        {/* Botão de configurações - tamanho harmonizado com título */}
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => setDialogAberto(true)}
+          title="Configurar Widgets"
+          className="h-8 w-8"
+        >
+          <Settings className="h-5 w-5" />
+        </Button>
       </div>
       
       {/* Instruções de uso */}

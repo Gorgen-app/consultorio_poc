@@ -327,7 +327,9 @@ export async function getPacientesDistribuicaoConvenio(tenantId: number) {
   `);
   
   const rows = (resultado[0] as unknown) as any[];
-  return { dados: rows.map(r => ({ nome: r.nome, valor: Number(r.valor) })) };
+  const dadosBrutos = rows.map(r => ({ nome: r.nome, valor: Number(r.valor) }));
+  // Aplicar agrupamento de categorias <5% como "Outros"
+  return { dados: agruparCategoriasOutros(dadosBrutos) };
 }
 
 // ========================================
