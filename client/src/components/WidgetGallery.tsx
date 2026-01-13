@@ -300,10 +300,10 @@ function WidgetPreview({
   };
 
   const tamanhoClasses: Record<TamanhoWidget, string> = {
-    micro: 'w-[120px] h-[60px]',
-    pequeno: 'w-[140px] h-[120px]',
-    medio: 'w-[200px] h-[140px]',
-    grande: 'w-[280px] h-[160px]',
+    micro: 'w-[120px] h-[80px]',
+    pequeno: 'w-[140px] h-[140px]',
+    medio: 'w-[200px] h-[160px]',
+    grande: 'w-[280px] h-[180px]',
   };
 
   return (
