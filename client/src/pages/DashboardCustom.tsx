@@ -1,12 +1,10 @@
-// Dashboard Customizável com Drag-and-Drop, Redimensionamento e Modo Tela Cheia
 // DashboardLayout é aplicado globalmente no App.tsx
 import { useState, useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -24,10 +22,6 @@ import {
   RefreshCw,
   GripVertical,
   Maximize2,
-  Minimize2,
-  X,
-  ChevronDown,
-  ChevronUp,
   Save
 } from 'lucide-react';
 import {
@@ -64,98 +58,18 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-// Tipos
-type PeriodoTempo = '7d' | '30d' | '3m' | '6m' | '1a' | '3a' | '5a' | 'todo';
-type TamanhoWidget = 'micro' | 'pequeno' | 'medio' | 'grande';
-
-type CategoriaMetrica = 
-  | 'populacao_pacientes'
-  | 'atendimentos'
-  | 'economico_financeiro'
-  | 'qualidade_atendimento'
-  | 'diversas';
-
-interface MetricaDefinicao {
-  id: string;
-  nome: string;
-  descricao: string;
-  categoria: CategoriaMetrica;
-  tipoGrafico: 'linha' | 'barra' | 'pizza' | 'area' | 'numero' | 'tabela' | 'gauge';
-  unidade?: string;
-  corPrimaria: string;
-  icone: string;
-  subcategorias?: string[];
-}
-
-interface WidgetConfig {
-  id: string;
-  tamanho: TamanhoWidget;
-  periodoIndividual?: PeriodoTempo;
-}
-
-// Definição das 50 métricas
-const todasMetricas: MetricaDefinicao[] = [
-  // POPULAÇÃO DE PACIENTES (10)
-  { id: 'pac_total_ativos', nome: 'Total de Pacientes Ativos', descricao: 'Número total de pacientes com status ativo', categoria: 'populacao_pacientes', tipoGrafico: 'numero', icone: 'Users', corPrimaria: '#3B82F6' },
-  { id: 'pac_novos_periodo', nome: 'Novos Pacientes', descricao: 'Pacientes cadastrados no período', categoria: 'populacao_pacientes', tipoGrafico: 'linha', icone: 'UserPlus', corPrimaria: '#10B981' },
-  { id: 'pac_distribuicao_sexo', nome: 'Distribuição por Sexo', descricao: 'Proporção masculino/feminino', categoria: 'populacao_pacientes', tipoGrafico: 'pizza', icone: 'PieChart', corPrimaria: '#8B5CF6' },
-  { id: 'pac_faixa_etaria', nome: 'Distribuição por Faixa Etária', descricao: 'Pacientes por faixa etária', categoria: 'populacao_pacientes', tipoGrafico: 'barra', icone: 'BarChart3', corPrimaria: '#F59E0B' },
-  { id: 'pac_distribuicao_cidade', nome: 'Distribuição Geográfica', descricao: 'Pacientes por cidade', categoria: 'populacao_pacientes', tipoGrafico: 'barra', icone: 'MapPin', corPrimaria: '#EF4444' },
-  { id: 'pac_taxa_retencao', nome: 'Taxa de Retenção', descricao: 'Pacientes que retornaram', categoria: 'populacao_pacientes', tipoGrafico: 'gauge', unidade: '%', icone: 'RefreshCw', corPrimaria: '#06B6D4' },
-  { id: 'pac_tempo_acompanhamento', nome: 'Tempo Médio de Acompanhamento', descricao: 'Tempo desde primeiro atendimento', categoria: 'populacao_pacientes', tipoGrafico: 'numero', unidade: 'anos', icone: 'Clock', corPrimaria: '#84CC16' },
-  { id: 'pac_inativos_periodo', nome: 'Pacientes Inativos', descricao: 'Sem atendimento há 360+ dias', categoria: 'populacao_pacientes', tipoGrafico: 'numero', icone: 'UserMinus', corPrimaria: '#F97316' },
-  { id: 'pac_obitos_periodo', nome: 'Óbitos no Período', descricao: 'Registro de óbitos', categoria: 'populacao_pacientes', tipoGrafico: 'linha', icone: 'Heart', corPrimaria: '#6B7280' },
-  { id: 'pac_distribuicao_convenio', nome: 'Distribuição por Convênio', descricao: 'Pacientes por operadora', categoria: 'populacao_pacientes', tipoGrafico: 'pizza', icone: 'Building2', corPrimaria: '#EC4899' },
-  
-  // ATENDIMENTOS (10)
-  { id: 'atd_total_periodo', nome: 'Total de Atendimentos', descricao: 'Quantidade no período', categoria: 'atendimentos', tipoGrafico: 'numero', icone: 'Calendar', corPrimaria: '#3B82F6', subcategorias: ['Todos', 'Consulta', 'Retorno', 'Cirurgia', 'Procedimento'] },
-  { id: 'atd_evolucao_temporal', nome: 'Evolução de Atendimentos', descricao: 'Tendência ao longo do tempo', categoria: 'atendimentos', tipoGrafico: 'area', icone: 'TrendingUp', corPrimaria: '#10B981', subcategorias: ['Todos', 'Consulta', 'Retorno', 'Cirurgia', 'Procedimento'] },
-  { id: 'atd_por_tipo', nome: 'Atendimentos por Tipo', descricao: 'Distribuição por tipo', categoria: 'atendimentos', tipoGrafico: 'pizza', icone: 'PieChart', corPrimaria: '#8B5CF6' },
-  { id: 'atd_por_local', nome: 'Atendimentos por Local', descricao: 'Distribuição por local', categoria: 'atendimentos', tipoGrafico: 'barra', icone: 'Building', corPrimaria: '#F59E0B' },
-  { id: 'atd_por_convenio', nome: 'Atendimentos por Convênio', descricao: 'Quantidade por operadora', categoria: 'atendimentos', tipoGrafico: 'barra', icone: 'CreditCard', corPrimaria: '#EF4444' },
-  { id: 'atd_media_diaria', nome: 'Média de Atendimentos/Dia', descricao: 'Média por dia útil', categoria: 'atendimentos', tipoGrafico: 'numero', icone: 'Activity', corPrimaria: '#06B6D4' },
-  { id: 'atd_dia_semana', nome: 'Atendimentos por Dia da Semana', descricao: 'Distribuição semanal', categoria: 'atendimentos', tipoGrafico: 'barra', icone: 'CalendarDays', corPrimaria: '#84CC16' },
-  { id: 'atd_hora_pico', nome: 'Horários de Pico', descricao: 'Distribuição por horário', categoria: 'atendimentos', tipoGrafico: 'area', icone: 'Clock', corPrimaria: '#F97316' },
-  { id: 'atd_novos_vs_retorno', nome: 'Novos vs Retornos', descricao: 'Proporção primeira consulta/retorno', categoria: 'atendimentos', tipoGrafico: 'pizza', icone: 'RefreshCw', corPrimaria: '#EC4899' },
-  { id: 'atd_procedimentos_realizados', nome: 'Procedimentos Realizados', descricao: 'Top procedimentos', categoria: 'atendimentos', tipoGrafico: 'barra', icone: 'Stethoscope', corPrimaria: '#14B8A6' },
-  
-  // ECONÔMICO-FINANCEIRO (10)
-  { id: 'fin_faturamento_total', nome: 'Faturamento Total', descricao: 'Valor faturado no período', categoria: 'economico_financeiro', tipoGrafico: 'numero', unidade: 'R$', icone: 'DollarSign', corPrimaria: '#10B981' },
-  { id: 'fin_evolucao_faturamento', nome: 'Evolução do Faturamento', descricao: 'Tendência do faturamento', categoria: 'economico_financeiro', tipoGrafico: 'area', unidade: 'R$', icone: 'TrendingUp', corPrimaria: '#3B82F6' },
-  { id: 'fin_faturamento_convenio', nome: 'Faturamento por Convênio', descricao: 'Receita por operadora', categoria: 'economico_financeiro', tipoGrafico: 'pizza', unidade: 'R$', icone: 'PieChart', corPrimaria: '#8B5CF6' },
-  { id: 'fin_ticket_medio', nome: 'Ticket Médio', descricao: 'Valor médio por atendimento', categoria: 'economico_financeiro', tipoGrafico: 'numero', unidade: 'R$', icone: 'Receipt', corPrimaria: '#F59E0B' },
-  { id: 'fin_taxa_recebimento', nome: 'Taxa de Recebimento', descricao: 'Percentual recebido', categoria: 'economico_financeiro', tipoGrafico: 'gauge', unidade: '%', icone: 'CheckCircle', corPrimaria: '#10B981' },
-  { id: 'fin_glosas', nome: 'Glosas', descricao: 'Valor de glosas', categoria: 'economico_financeiro', tipoGrafico: 'linha', unidade: 'R$', icone: 'XCircle', corPrimaria: '#EF4444' },
-  { id: 'fin_inadimplencia', nome: 'Inadimplência', descricao: 'Valor em aberto', categoria: 'economico_financeiro', tipoGrafico: 'numero', unidade: 'R$', icone: 'AlertTriangle', corPrimaria: '#F97316' },
-  { id: 'fin_faturamento_tipo', nome: 'Faturamento por Tipo', descricao: 'Receita por tipo de atendimento', categoria: 'economico_financeiro', tipoGrafico: 'barra', unidade: 'R$', icone: 'BarChart3', corPrimaria: '#06B6D4' },
-  { id: 'fin_comparativo_mensal', nome: 'Comparativo Mensal', descricao: 'Comparação mês a mês', categoria: 'economico_financeiro', tipoGrafico: 'barra', unidade: 'R$', icone: 'TrendingUp', corPrimaria: '#84CC16' },
-  { id: 'fin_projecao', nome: 'Projeção de Faturamento', descricao: 'Estimativa futura', categoria: 'economico_financeiro', tipoGrafico: 'area', unidade: 'R$', icone: 'Target', corPrimaria: '#EC4899' },
-  
-  // QUALIDADE DO ATENDIMENTO (10)
-  { id: 'qua_tempo_espera', nome: 'Tempo Médio de Espera', descricao: 'Tempo até atendimento', categoria: 'qualidade_atendimento', tipoGrafico: 'numero', unidade: 'min', icone: 'Clock', corPrimaria: '#3B82F6' },
-  { id: 'qua_duracao_consulta', nome: 'Duração Média da Consulta', descricao: 'Tempo de atendimento', categoria: 'qualidade_atendimento', tipoGrafico: 'numero', unidade: 'min', icone: 'Timer', corPrimaria: '#10B981' },
-  { id: 'qua_taxa_retorno', nome: 'Taxa de Retorno', descricao: 'Pacientes que retornaram', categoria: 'qualidade_atendimento', tipoGrafico: 'gauge', unidade: '%', icone: 'RefreshCw', corPrimaria: '#8B5CF6' },
-  { id: 'qua_taxa_falta', nome: 'Taxa de Faltas', descricao: 'Pacientes que faltaram', categoria: 'qualidade_atendimento', tipoGrafico: 'gauge', unidade: '%', icone: 'UserX', corPrimaria: '#EF4444' },
-  { id: 'qua_taxa_cancelamento', nome: 'Taxa de Cancelamento', descricao: 'Consultas canceladas', categoria: 'qualidade_atendimento', tipoGrafico: 'gauge', unidade: '%', icone: 'XCircle', corPrimaria: '#F97316' },
-  { id: 'qua_satisfacao', nome: 'Satisfação do Paciente', descricao: 'Avaliação média', categoria: 'qualidade_atendimento', tipoGrafico: 'gauge', unidade: '/5', icone: 'Star', corPrimaria: '#F59E0B' },
-  { id: 'qua_nps', nome: 'NPS', descricao: 'Net Promoter Score', categoria: 'qualidade_atendimento', tipoGrafico: 'numero', icone: 'ThumbsUp', corPrimaria: '#06B6D4' },
-  { id: 'qua_reclamacoes', nome: 'Reclamações', descricao: 'Quantidade de reclamações', categoria: 'qualidade_atendimento', tipoGrafico: 'linha', icone: 'MessageSquare', corPrimaria: '#84CC16' },
-  { id: 'qua_diagnosticos_frequentes', nome: 'Diagnósticos Frequentes', descricao: 'Top diagnósticos', categoria: 'qualidade_atendimento', tipoGrafico: 'barra', icone: 'FileText', corPrimaria: '#EC4899' },
-  { id: 'qua_encaminhamentos', nome: 'Encaminhamentos', descricao: 'Pacientes encaminhados', categoria: 'qualidade_atendimento', tipoGrafico: 'numero', icone: 'ArrowRight', corPrimaria: '#14B8A6' },
-  
-  // DIVERSAS (10)
-  { id: 'div_proximos_atendimentos', nome: 'Próximos Atendimentos', descricao: 'Agenda dos próximos dias', categoria: 'diversas', tipoGrafico: 'tabela', icone: 'Calendar', corPrimaria: '#3B82F6' },
-  { id: 'div_aniversariantes', nome: 'Aniversariantes do Mês', descricao: 'Pacientes que fazem aniversário', categoria: 'diversas', tipoGrafico: 'tabela', icone: 'Cake', corPrimaria: '#10B981' },
-  { id: 'div_alertas_pendentes', nome: 'Alertas Pendentes', descricao: 'Itens que requerem atenção', categoria: 'diversas', tipoGrafico: 'numero', icone: 'Bell', corPrimaria: '#EF4444' },
-  { id: 'div_tarefas', nome: 'Tarefas Pendentes', descricao: 'Lista de tarefas', categoria: 'diversas', tipoGrafico: 'tabela', icone: 'CheckSquare', corPrimaria: '#8B5CF6' },
-  { id: 'div_lembretes', nome: 'Lembretes', descricao: 'Lembretes ativos', categoria: 'diversas', tipoGrafico: 'tabela', icone: 'Bell', corPrimaria: '#F59E0B' },
-  { id: 'div_documentos_pendentes', nome: 'Documentos Pendentes', descricao: 'Documentos a assinar', categoria: 'diversas', tipoGrafico: 'numero', icone: 'FileText', corPrimaria: '#F97316' },
-  { id: 'div_exames_pendentes', nome: 'Exames Pendentes', descricao: 'Resultados aguardando', categoria: 'diversas', tipoGrafico: 'numero', icone: 'TestTube', corPrimaria: '#06B6D4' },
-  { id: 'div_prescricoes_vencendo', nome: 'Prescrições Vencendo', descricao: 'Receitas próximas do vencimento', categoria: 'diversas', tipoGrafico: 'tabela', icone: 'Pill', corPrimaria: '#84CC16' },
-  { id: 'div_retornos_agendados', nome: 'Retornos Agendados', descricao: 'Retornos programados', categoria: 'diversas', tipoGrafico: 'numero', icone: 'CalendarCheck', corPrimaria: '#EC4899' },
-  { id: 'div_ocupacao_agenda', nome: 'Ocupação da Agenda', descricao: 'Percentual de ocupação', categoria: 'diversas', tipoGrafico: 'gauge', unidade: '%', icone: 'CalendarDays', corPrimaria: '#14B8A6' },
-];
+import { 
+  WidgetGallery, 
+  todasMetricas, 
+  tamanhosPermitidos,
+  custoSlots,
+  MAX_SLOTS,
+  type MetricaDefinicao, 
+  type WidgetConfig, 
+  type TamanhoWidget, 
+  type CategoriaMetrica,
+  type PeriodoTempo 
+} from '@/components/WidgetGallery';
 
 const periodos: { valor: PeriodoTempo; label: string }[] = [
   { valor: '7d', label: '7 dias' },
@@ -220,6 +134,9 @@ function SortableWidget({ metrica, periodo, config, onChangeTamanho, onChangePer
 
   const periodoAtivo = config.periodoIndividual || periodo;
   const [showControls, setShowControls] = useState(false);
+  
+  // Obter tamanhos permitidos para esta métrica
+  const tamanhosDisponiveis = tamanhosPermitidos[metrica.id] || ['pequeno', 'medio', 'grande'];
 
   return (
     <div
@@ -245,16 +162,16 @@ function SortableWidget({ metrica, periodo, config, onChangeTamanho, onChangePer
             </SelectContent>
           </Select>
           
-          {/* Seletor de tamanho */}
+          {/* Seletor de tamanho - apenas tamanhos permitidos */}
           <Select value={config.tamanho} onValueChange={(v) => onChangeTamanho(v as TamanhoWidget)}>
             <SelectTrigger className="h-7 w-20 text-xs bg-background/80 backdrop-blur-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="micro">Micro</SelectItem>
-              <SelectItem value="pequeno">Pequeno</SelectItem>
-              <SelectItem value="medio">Médio</SelectItem>
-              <SelectItem value="grande">Grande</SelectItem>
+              {tamanhosDisponiveis.includes('micro') && <SelectItem value="micro">Micro</SelectItem>}
+              {tamanhosDisponiveis.includes('pequeno') && <SelectItem value="pequeno">Pequeno</SelectItem>}
+              {tamanhosDisponiveis.includes('medio') && <SelectItem value="medio">Médio</SelectItem>}
+              {tamanhosDisponiveis.includes('grande') && <SelectItem value="grande">Grande</SelectItem>}
             </SelectContent>
           </Select>
           
@@ -355,44 +272,9 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     { enabled: metrica.id === 'atd_total_periodo' }
   );
   
-  const { data: atdEvolucao } = trpc.dashboardMetricas.atdEvolucaoTemporal.useQuery(
+  const { data: atdEvolucaoTemporal } = trpc.dashboardMetricas.atdEvolucaoTemporal.useQuery(
     { periodo },
     { enabled: metrica.id === 'atd_evolucao_temporal' }
-  );
-  
-  const { data: atdPorTipo } = trpc.dashboardMetricas.atdPorTipo.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'atd_por_tipo' }
-  );
-  
-  const { data: atdPorLocal } = trpc.dashboardMetricas.atdPorLocal.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'atd_por_local' }
-  );
-  
-  const { data: atdPorConvenio } = trpc.dashboardMetricas.atdPorConvenio.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'atd_por_convenio' }
-  );
-  
-  const { data: atdMediaDiaria } = trpc.dashboardMetricas.atdMediaDiaria.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'atd_media_diaria' }
-  );
-  
-  const { data: atdDiaSemana } = trpc.dashboardMetricas.atdDiaSemana.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'atd_dia_semana' }
-  );
-  
-  const { data: atdNovosVsRetorno } = trpc.dashboardMetricas.atdNovosVsRetorno.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'atd_novos_vs_retorno' }
-  );
-  
-  const { data: atdProcedimentos } = trpc.dashboardMetricas.atdProcedimentos.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'atd_procedimentos_realizados' }
   );
   
   const { data: finFaturamentoTotal } = trpc.dashboardMetricas.finFaturamentoTotal.useQuery(
@@ -400,40 +282,12 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     { enabled: metrica.id === 'fin_faturamento_total' }
   );
   
-  const { data: finEvolucao } = trpc.dashboardMetricas.finEvolucaoFaturamento.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'fin_evolucao_faturamento' }
-  );
-  
-  const { data: finPorConvenio } = trpc.dashboardMetricas.finFaturamentoConvenio.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'fin_faturamento_convenio' }
-  );
-  
-  const { data: finTicketMedio } = trpc.dashboardMetricas.finTicketMedio.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'fin_ticket_medio' }
-  );
-  
   const { data: finTaxaRecebimento } = trpc.dashboardMetricas.finTaxaRecebimento.useQuery(
     { periodo },
     { enabled: metrica.id === 'fin_taxa_recebimento' }
   );
   
-  const { data: finInadimplencia } = trpc.dashboardMetricas.finInadimplencia.useQuery(undefined, {
-    enabled: metrica.id === 'fin_inadimplencia',
-  });
-  
-  const { data: finPorTipo } = trpc.dashboardMetricas.finFaturamentoPorTipo.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'fin_faturamento_tipo' }
-  );
-  
-  const { data: finComparativo } = trpc.dashboardMetricas.finComparativoMensal.useQuery(undefined, {
-    enabled: metrica.id === 'fin_comparativo_mensal',
-  });
-  
-  const { data: quaDiagnosticos } = trpc.dashboardMetricas.quaDiagnosticosFrequentes.useQuery(
+  const { data: quaDiagnosticosFrequentes } = trpc.dashboardMetricas.quaDiagnosticosFrequentes.useQuery(
     { periodo },
     { enabled: metrica.id === 'qua_diagnosticos_frequentes' }
   );
@@ -443,264 +297,243 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     { enabled: metrica.id === 'qua_taxa_retorno' }
   );
   
-  const { data: divProximos } = trpc.dashboardMetricas.divProximosAtendimentos.useQuery(undefined, {
-    enabled: metrica.id === 'div_proximos_atendimentos',
-  });
-  
-  const { data: divAniversariantes } = trpc.dashboardMetricas.divAniversariantes.useQuery(undefined, {
-    enabled: metrica.id === 'div_aniversariantes',
-  });
-  
-  const { data: divAlertas } = trpc.dashboardMetricas.divAlertasPendentes.useQuery(undefined, {
+  const { data: divAlertasPendentes } = trpc.dashboardMetricas.divAlertasPendentes.useQuery(undefined, {
     enabled: metrica.id === 'div_alertas_pendentes',
   });
-
-  const alturaGrafico = isFullscreen ? 450 : (tamanho === 'grande' ? 350 : tamanho === 'medio' ? 250 : tamanho === 'pequeno' ? 170 : 80);
-
-  // Métricas de número
-  if (metrica.tipoGrafico === 'numero') {
-    let valor: number | string = '-';
-    
-    if (metrica.id === 'pac_total_ativos' && pacTotalAtivos) valor = pacTotalAtivos.valor;
-    if (metrica.id === 'pac_tempo_acompanhamento' && pacTempoAcompanhamento) valor = pacTempoAcompanhamento.valor;
-    if (metrica.id === 'pac_inativos_periodo' && pacInativos) valor = pacInativos.valor;
-    if (metrica.id === 'atd_total_periodo' && atdTotalPeriodo) valor = atdTotalPeriodo.valor;
-    if (metrica.id === 'atd_media_diaria' && atdMediaDiaria) valor = atdMediaDiaria.valor;
-    if (metrica.id === 'fin_faturamento_total' && finFaturamentoTotal) valor = finFaturamentoTotal.valor;
-    if (metrica.id === 'fin_ticket_medio' && finTicketMedio) valor = finTicketMedio.valor;
-    if (metrica.id === 'fin_inadimplencia' && finInadimplencia) valor = finInadimplencia.valor;
-    if (metrica.id === 'div_alertas_pendentes' && divAlertas) valor = divAlertas.valor;
-    
-    const formatarValor = (v: number | string) => {
-      // Converter string para número se necessário
-      const numValue = typeof v === 'string' ? parseFloat(v) : v;
-      if (isNaN(numValue)) return v;
-      
-      if (metrica.unidade === 'R$') {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numValue);
-      }
-      return new Intl.NumberFormat('pt-BR').format(numValue) + (metrica.unidade ? ` ${metrica.unidade}` : '');
-    };
-    
-    const tamanhoFonte = isFullscreen ? 'text-6xl' : tamanho === 'grande' ? 'text-5xl' : tamanho === 'medio' ? 'text-4xl' : tamanho === 'pequeno' ? 'text-3xl' : 'text-2xl';
-    
+  
+  // Calcular altura do gráfico baseado no tamanho
+  const chartHeight = isFullscreen ? 500 : (tamanho === 'micro' ? 60 : tamanho === 'pequeno' ? 160 : tamanho === 'medio' ? 220 : 320);
+  const fontSize = tamanho === 'micro' ? 8 : tamanho === 'pequeno' ? 10 : 12;
+  
+  // Renderizar baseado no tipo de métrica
+  if (metrica.id === 'pac_total_ativos' && pacTotalAtivos?.valor !== undefined) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <span className={`font-bold ${tamanhoFonte}`} style={{ color: metrica.corPrimaria }}>
-          {formatarValor(valor)}
-        </span>
+        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
+          {pacTotalAtivos.valor.toLocaleString('pt-BR')}
+        </div>
+        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">pacientes ativos</div>}
       </div>
     );
   }
   
-  // Métricas de gauge
+  if (metrica.id === 'pac_inativos_periodo' && pacInativos?.valor !== undefined) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
+          {pacInativos.valor.toLocaleString('pt-BR')}
+        </div>
+        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">pacientes inativos</div>}
+      </div>
+    );
+  }
+  
+  if (metrica.id === 'pac_tempo_acompanhamento' && pacTempoAcompanhamento?.valor !== undefined) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
+          {pacTempoAcompanhamento.valor.toFixed(1)}
+        </div>
+        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">anos em média</div>}
+      </div>
+    );
+  }
+  
+  if (metrica.id === 'atd_total_periodo' && atdTotalPeriodo?.valor !== undefined) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
+          {atdTotalPeriodo.valor.toLocaleString('pt-BR')}
+        </div>
+        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">atendimentos no período</div>}
+      </div>
+    );
+  }
+  
+  if (metrica.id === 'fin_faturamento_total' && finFaturamentoTotal?.valor !== undefined) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className={`font-bold ${tamanho === 'micro' ? 'text-xl' : 'text-3xl'}`} style={{ color: metrica.corPrimaria }}>
+          R$ {finFaturamentoTotal.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </div>
+        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">faturamento no período</div>}
+      </div>
+    );
+  }
+  
+  if (metrica.id === 'div_alertas_pendentes' && divAlertasPendentes?.valor !== undefined) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
+          {divAlertasPendentes.valor.toLocaleString('pt-BR')}
+        </div>
+        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">alertas pendentes</div>}
+      </div>
+    );
+  }
+  
+  // Gauges
   if (metrica.tipoGrafico === 'gauge') {
     let valor = 0;
+    if (metrica.id === 'pac_taxa_retencao' && pacTaxaRetencao?.valor !== undefined) valor = pacTaxaRetencao.valor;
+    if (metrica.id === 'fin_taxa_recebimento' && finTaxaRecebimento?.valor !== undefined) valor = finTaxaRecebimento.valor;
+    if (metrica.id === 'qua_taxa_retorno' && quaTaxaRetorno?.valor !== undefined) valor = quaTaxaRetorno.valor;
     
-    if (metrica.id === 'fin_taxa_recebimento' && finTaxaRecebimento) valor = finTaxaRecebimento.valor;
-    if (metrica.id === 'qua_taxa_retorno' && quaTaxaRetorno) valor = quaTaxaRetorno.valor;
-    if (metrica.id === 'pac_taxa_retencao' && pacTaxaRetencao) valor = pacTaxaRetencao.valor;
-    
-    const tamanhoGauge = isFullscreen ? 200 : (tamanho === 'grande' ? 160 : tamanho === 'medio' ? 130 : tamanho === 'pequeno' ? 100 : 60);
+    const gaugeSize = tamanho === 'micro' ? 80 : tamanho === 'pequeno' ? 120 : tamanho === 'medio' ? 160 : 200;
+    const strokeWidth = tamanho === 'micro' ? 8 : 12;
     
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <div className="relative" style={{ width: tamanhoGauge, height: tamanhoGauge }}>
-          <svg className="w-full h-full" viewBox="0 0 100 100">
-            <circle
-              cx="50"
-              cy="50"
-              r="40"
-              fill="none"
-              stroke="#e5e7eb"
-              strokeWidth="8"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="40"
-              fill="none"
-              stroke={metrica.corPrimaria}
-              strokeWidth="8"
-              strokeDasharray={`${valor * 2.51} 251`}
-              strokeLinecap="round"
-              transform="rotate(-90 50 50)"
-            />
-            <text
-              x="50"
-              y="50"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className={`font-bold ${isFullscreen ? 'text-3xl' : tamanho === 'grande' ? 'text-2xl' : 'text-xl'}`}
-              fill={metrica.corPrimaria}
-            >
-              {valor}%
-            </text>
-          </svg>
+        <svg width={gaugeSize} height={gaugeSize * 0.6} viewBox="0 0 120 72">
+          <path
+            d="M 10 60 A 50 50 0 0 1 110 60"
+            fill="none"
+            stroke="#e5e7eb"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+          />
+          <path
+            d="M 10 60 A 50 50 0 0 1 110 60"
+            fill="none"
+            stroke={metrica.corPrimaria}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={`${(valor / 100) * 157} 157`}
+          />
+        </svg>
+        <div className={`font-bold ${tamanho === 'micro' ? 'text-lg' : 'text-2xl'} -mt-4`} style={{ color: metrica.corPrimaria }}>
+          {valor.toFixed(1)}%
         </div>
       </div>
     );
   }
   
-  // Gráficos de pizza
+  // Gráficos de Pizza
   if (metrica.tipoGrafico === 'pizza') {
     let dados: { nome: string; valor: number }[] = [];
     
-    if (metrica.id === 'pac_distribuicao_sexo' && pacDistribuicaoSexo && Array.isArray(pacDistribuicaoSexo.dados)) dados = pacDistribuicaoSexo.dados;
-    if (metrica.id === 'pac_distribuicao_convenio' && pacDistribuicaoConvenio && Array.isArray(pacDistribuicaoConvenio.dados)) dados = pacDistribuicaoConvenio.dados;
-    if (metrica.id === 'atd_por_tipo' && atdPorTipo && Array.isArray(atdPorTipo.dados)) dados = atdPorTipo.dados;
-    if (metrica.id === 'atd_novos_vs_retorno' && atdNovosVsRetorno && Array.isArray(atdNovosVsRetorno.dados)) dados = atdNovosVsRetorno.dados;
-    if (metrica.id === 'fin_faturamento_convenio' && finPorConvenio && Array.isArray(finPorConvenio.dados)) dados = finPorConvenio.dados;
-    
-    if (dados.length === 0) {
-      return <div className="flex items-center justify-center h-full text-muted-foreground">Sem dados</div>;
+    if (metrica.id === 'pac_distribuicao_sexo' && pacDistribuicaoSexo?.dados) {
+      dados = pacDistribuicaoSexo.dados as { nome: string; valor: number }[];
+    }
+    if (metrica.id === 'pac_distribuicao_convenio' && pacDistribuicaoConvenio?.dados) {
+      dados = pacDistribuicaoConvenio.dados as { nome: string; valor: number }[];
     }
     
+    if (dados.length === 0) {
+      return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Sem dados</div>;
+    }
+    
+    const outerRadius = tamanho === 'micro' ? 25 : tamanho === 'pequeno' ? 50 : tamanho === 'medio' ? 70 : 90;
+    
     return (
-      <ResponsiveContainer width="100%" height={alturaGrafico}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <RechartsPieChart>
           <Pie
             data={dados}
             cx="50%"
             cy="50%"
-            innerRadius={tamanho === 'pequeno' ? 30 : tamanho === 'medio' ? 50 : 60}
-            outerRadius={tamanho === 'pequeno' ? 60 : tamanho === 'medio' ? 80 : 100}
+            outerRadius={outerRadius}
+            fill="#8884d8"
             dataKey="valor"
             nameKey="nome"
-            label={tamanho !== 'pequeno' ? ({ nome, percent }) => `${nome}: ${(percent * 100).toFixed(0)}%` : false}
-            labelLine={tamanho !== 'pequeno'}
+            label={tamanho !== 'micro' ? ({ nome, percent }) => `${nome}: ${(percent * 100).toFixed(0)}%` : false}
+            labelLine={tamanho !== 'micro'}
           >
             {dados.map((_, index) => (
               <Cell key={`cell-${index}`} fill={CORES_GRAFICOS[index % CORES_GRAFICOS.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={(value: number) => metrica.unidade === 'R$' ? `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : value.toLocaleString('pt-BR')} />
-          {tamanho !== 'pequeno' && <Legend />}
+          {tamanho !== 'micro' && <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />}
+          {tamanho === 'grande' && <Legend />}
         </RechartsPieChart>
       </ResponsiveContainer>
     );
   }
   
-  // Gráficos de barra
+  // Gráficos de Barra
   if (metrica.tipoGrafico === 'barra') {
     let dados: { nome: string; valor: number }[] = [];
     
-    if (metrica.id === 'pac_faixa_etaria' && pacFaixaEtaria && Array.isArray(pacFaixaEtaria.dados)) dados = pacFaixaEtaria.dados;
-    if (metrica.id === 'pac_distribuicao_cidade' && pacDistribuicaoCidade && Array.isArray(pacDistribuicaoCidade.dados)) dados = pacDistribuicaoCidade.dados;
-    if (metrica.id === 'atd_por_local' && atdPorLocal && Array.isArray(atdPorLocal.dados)) dados = atdPorLocal.dados;
-    if (metrica.id === 'atd_por_convenio' && atdPorConvenio && Array.isArray(atdPorConvenio.dados)) dados = atdPorConvenio.dados;
-    if (metrica.id === 'atd_dia_semana' && atdDiaSemana && Array.isArray(atdDiaSemana.dados)) dados = atdDiaSemana.dados;
-    if (metrica.id === 'atd_procedimentos_realizados' && atdProcedimentos && Array.isArray(atdProcedimentos.dados)) dados = atdProcedimentos.dados;
-    if (metrica.id === 'fin_faturamento_tipo' && finPorTipo && Array.isArray(finPorTipo.dados)) dados = finPorTipo.dados;
-    if (metrica.id === 'fin_comparativo_mensal' && finComparativo && Array.isArray(finComparativo.dados)) dados = finComparativo.dados;
-    if (metrica.id === 'qua_diagnosticos_frequentes' && quaDiagnosticos && Array.isArray(quaDiagnosticos.dados)) dados = quaDiagnosticos.dados;
+    if (metrica.id === 'pac_faixa_etaria' && pacFaixaEtaria?.dados) {
+      dados = pacFaixaEtaria.dados as { nome: string; valor: number }[];
+    }
+    if (metrica.id === 'pac_distribuicao_cidade' && pacDistribuicaoCidade?.dados) {
+      dados = (pacDistribuicaoCidade.dados as { nome: string; valor: number }[]).slice(0, tamanho === 'micro' ? 3 : tamanho === 'pequeno' ? 5 : 10);
+    }
+    if (metrica.id === 'qua_diagnosticos_frequentes' && quaDiagnosticosFrequentes?.dados) {
+      dados = (quaDiagnosticosFrequentes.dados as { nome: string; valor: number }[]).slice(0, tamanho === 'micro' ? 3 : tamanho === 'pequeno' ? 5 : 10);
+    }
     
     if (dados.length === 0) {
-      return <div className="flex items-center justify-center h-full text-muted-foreground">Sem dados</div>;
+      return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Sem dados</div>;
     }
     
     return (
-      <ResponsiveContainer width="100%" height={alturaGrafico}>
-        <BarChart data={dados} layout="vertical" margin={{ left: tamanho === 'pequeno' ? 60 : 100, right: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" tickFormatter={(v) => metrica.unidade === 'R$' ? `R$ ${v.toLocaleString('pt-BR')}` : v.toLocaleString('pt-BR')} />
-          <YAxis type="category" dataKey="nome" width={tamanho === 'pequeno' ? 60 : 100} tick={{ fontSize: tamanho === 'pequeno' ? 9 : 11 }} />
-          <Tooltip formatter={(value: number) => metrica.unidade === 'R$' ? `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : value.toLocaleString('pt-BR')} />
+      <ResponsiveContainer width="100%" height={chartHeight}>
+        <BarChart data={dados} layout="vertical" margin={{ left: tamanho === 'micro' ? 40 : 60, right: 10 }}>
+          {tamanho !== 'micro' && <CartesianGrid strokeDasharray="3 3" />}
+          <XAxis type="number" tick={{ fontSize }} />
+          <YAxis dataKey="nome" type="category" tick={{ fontSize }} width={tamanho === 'micro' ? 35 : 55} />
+          <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
           <Bar dataKey="valor" fill={metrica.corPrimaria} radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
   }
   
-  // Gráficos de área
+  // Gráficos de Área
   if (metrica.tipoGrafico === 'area') {
     let dados: { data: string; valor: number }[] = [];
     
-    if (metrica.id === 'atd_evolucao_temporal' && atdEvolucao && Array.isArray(atdEvolucao.dados)) dados = atdEvolucao.dados;
-    if (metrica.id === 'fin_evolucao_faturamento' && finEvolucao && Array.isArray(finEvolucao.dados)) dados = finEvolucao.dados;
+    if (metrica.id === 'atd_evolucao_temporal' && atdEvolucaoTemporal?.dados) {
+      dados = atdEvolucaoTemporal.dados as { data: string; valor: number }[];
+    }
     
     if (dados.length === 0) {
-      return <div className="flex items-center justify-center h-full text-muted-foreground">Sem dados</div>;
+      return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Sem dados</div>;
     }
     
     return (
-      <ResponsiveContainer width="100%" height={alturaGrafico}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <AreaChart data={dados}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="data" tick={{ fontSize: 10 }} />
-          <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => metrica.unidade === 'R$' ? `R$ ${v.toLocaleString('pt-BR')}` : v.toLocaleString('pt-BR')} />
-          <Tooltip formatter={(value: number) => metrica.unidade === 'R$' ? `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : value.toLocaleString('pt-BR')} />
+          {tamanho !== 'micro' && <CartesianGrid strokeDasharray="3 3" />}
+          <XAxis dataKey="data" tick={{ fontSize }} />
+          <YAxis tick={{ fontSize }} />
+          <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
           <Area 
             type="monotone" 
             dataKey="valor" 
             stroke={metrica.corPrimaria} 
             fill={`${metrica.corPrimaria}40`}
+            strokeWidth={2}
           />
         </AreaChart>
       </ResponsiveContainer>
     );
   }
   
-  // Tabelas
-  if (metrica.tipoGrafico === 'tabela') {
-    let dados: any[] = [];
-    let colunas: string[] = [];
-    
-    if (metrica.id === 'div_proximos_atendimentos' && divProximos && Array.isArray(divProximos.dados)) {
-      dados = divProximos.dados;
-      colunas = ['data', 'paciente', 'tipo'];
-    }
-    if (metrica.id === 'div_aniversariantes' && divAniversariantes && Array.isArray(divAniversariantes.dados)) {
-      dados = divAniversariantes.dados;
-      colunas = ['nome', 'data', 'idade'];
-    }
-    
-    if (dados.length === 0) {
-      return <div className="flex items-center justify-center h-full text-muted-foreground">Sem dados</div>;
-    }
-    
-    return (
-      <div className="overflow-auto h-full">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b">
-              {colunas.map(col => (
-                <th key={col} className="text-left p-2 font-medium capitalize">{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {dados.slice(0, tamanho === 'grande' ? 10 : 5).map((item, i) => (
-              <tr key={i} className="border-b last:border-0">
-                {colunas.map(col => (
-                  <td key={col} className="p-2">{item[col]}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-  
-  // Gráficos de linha
+  // Gráficos de Linha
   if (metrica.tipoGrafico === 'linha') {
     let dados: { data: string; valor: number }[] = [];
     
-    if (metrica.id === 'pac_novos_periodo' && pacNovosPeriodo && Array.isArray(pacNovosPeriodo.dados)) dados = pacNovosPeriodo.dados;
-    if (metrica.id === 'pac_obitos_periodo' && pacObitos && Array.isArray(pacObitos.dados)) dados = pacObitos.dados;
+    if (metrica.id === 'pac_novos_periodo' && pacNovosPeriodo?.dados) {
+      dados = pacNovosPeriodo.dados as { data: string; valor: number }[];
+    }
+    if (metrica.id === 'pac_obitos_periodo' && pacObitos?.dados) {
+      dados = pacObitos.dados as { data: string; valor: number }[];
+    }
     
     if (dados.length === 0) {
-      return <div className="flex items-center justify-center h-full text-muted-foreground">Sem dados</div>;
+      return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Sem dados</div>;
     }
     
     return (
-      <ResponsiveContainer width="100%" height={alturaGrafico}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <LineChart data={dados}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="data" tick={{ fontSize: 10 }} />
-          <YAxis tick={{ fontSize: 10 }} />
-          <Tooltip />
+          {tamanho !== 'micro' && <CartesianGrid strokeDasharray="3 3" />}
+          <XAxis dataKey="data" tick={{ fontSize }} />
+          <YAxis tick={{ fontSize }} />
+          <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
           <Line 
             type="monotone" 
             dataKey="valor" 
@@ -719,38 +552,22 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
 // Componente principal
 export default function DashboardCustom() {
   const [periodo, setPeriodo] = useState<PeriodoTempo>('30d');
-  const [metricasSelecionadas, setMetricasSelecionadas] = useState<string[]>([
-    'pac_total_ativos',
-    'pac_novos_periodo',
-    'pac_distribuicao_sexo',
-    'pac_faixa_etaria',
-    'pac_distribuicao_cidade',
-    'pac_taxa_retencao',
-    'pac_tempo_acompanhamento',
-    'pac_inativos_periodo',
-    'pac_distribuicao_convenio',
-    'atd_total_periodo',
-    'atd_evolucao_temporal',
-    'fin_faturamento_total',
-    'fin_taxa_recebimento',
-    'qua_diagnosticos_frequentes',
-    'qua_taxa_retorno',
-    'div_alertas_pendentes',
+  const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([
+    { id: 'pac_total_ativos', tamanho: 'pequeno' },
+    { id: 'pac_novos_periodo', tamanho: 'pequeno' },
+    { id: 'pac_distribuicao_sexo', tamanho: 'pequeno' },
+    { id: 'pac_faixa_etaria', tamanho: 'pequeno' },
+    { id: 'atd_total_periodo', tamanho: 'pequeno' },
+    { id: 'fin_faturamento_total', tamanho: 'pequeno' },
   ]);
-  const [widgetConfigs, setWidgetConfigs] = useState<Record<string, WidgetConfig>>({});
   const [dialogAberto, setDialogAberto] = useState(false);
-  const [categoriaFiltro, setCategoriaFiltro] = useState<CategoriaMetrica | 'todas'>('todas');
   const [fullscreenWidget, setFullscreenWidget] = useState<string | null>(null);
   
   // Buscar configuração salva
   const { data: configSalva, isLoading: carregandoConfig } = trpc.dashboardMetricas.getConfig.useQuery();
   
   // Mutation para salvar configuração
-  const salvarConfig = trpc.dashboardMetricas.saveConfig.useMutation({
-    onSuccess: () => {
-      setDialogAberto(false);
-    },
-  });
+  const salvarConfig = trpc.dashboardMetricas.saveConfig.useMutation();
   
   // Sensors para drag-and-drop
   const sensors = useSensors(
@@ -770,32 +587,23 @@ export default function DashboardCustom() {
       try {
         const metricas = JSON.parse(configSalva.metricasSelecionadas);
         if (Array.isArray(metricas) && metricas.length > 0) {
-          setMetricasSelecionadas(metricas);
+          // Converter formato antigo (array de IDs) para novo formato (array de WidgetConfig)
+          const configs: WidgetConfig[] = [];
+          const sizes = configSalva.widgetSizes ? JSON.parse(configSalva.widgetSizes) : {};
+          const periods = configSalva.widgetPeriods ? JSON.parse(configSalva.widgetPeriods) : {};
+          
+          metricas.forEach((id: string) => {
+            configs.push({
+              id,
+              tamanho: (sizes[id] as TamanhoWidget) || 'pequeno',
+              periodoIndividual: periods[id] as PeriodoTempo | undefined,
+            });
+          });
+          
+          setWidgetConfigs(configs);
         }
         if (configSalva.periodoDefault) {
           setPeriodo(configSalva.periodoDefault as PeriodoTempo);
-        }
-        if (configSalva.widgetSizes) {
-          const sizes = JSON.parse(configSalva.widgetSizes);
-          const configs: Record<string, WidgetConfig> = {};
-          Object.entries(sizes).forEach(([id, tamanho]) => {
-            configs[id] = { id, tamanho: tamanho as TamanhoWidget };
-          });
-          setWidgetConfigs(configs);
-        }
-        if (configSalva.widgetPeriods) {
-          const periods = JSON.parse(configSalva.widgetPeriods);
-          setWidgetConfigs(prev => {
-            const updated = { ...prev };
-            Object.entries(periods).forEach(([id, periodo]) => {
-              if (updated[id]) {
-                updated[id].periodoIndividual = periodo as PeriodoTempo;
-              } else {
-                updated[id] = { id, tamanho: 'pequeno', periodoIndividual: periodo as PeriodoTempo };
-              }
-            });
-            return updated;
-          });
         }
       } catch (e) {
         console.error('Erro ao carregar configuração:', e);
@@ -803,65 +611,61 @@ export default function DashboardCustom() {
     }
   }, [configSalva]);
   
-  const toggleMetrica = (id: string) => {
-    setMetricasSelecionadas(prev => 
-      prev.includes(id) 
-        ? prev.filter(m => m !== id)
-        : [...prev, id]
-    );
-  };
+  // Calcular slots usados
+  const slotsUsados = useMemo(() => {
+    return widgetConfigs.reduce((acc, w) => acc + custoSlots[w.tamanho], 0);
+  }, [widgetConfigs]);
   
-  const metricasFiltradas = categoriaFiltro === 'todas' 
-    ? todasMetricas 
-    : todasMetricas.filter(m => m.categoria === categoriaFiltro);
-  
-  const metricasExibidas = metricasSelecionadas
-    .map(id => todasMetricas.find(m => m.id === id))
-    .filter((m): m is MetricaDefinicao => m !== undefined);
+  const metricasExibidas = widgetConfigs
+    .map(config => {
+      const metrica = todasMetricas.find(m => m.id === config.id);
+      return metrica ? { metrica, config } : null;
+    })
+    .filter((item): item is { metrica: MetricaDefinicao; config: WidgetConfig } => item !== null);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
-      setMetricasSelecionadas((items) => {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over.id as string);
+      setWidgetConfigs((items) => {
+        const oldIndex = items.findIndex(w => w.id === active.id);
+        const newIndex = items.findIndex(w => w.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
 
   const getWidgetConfig = (id: string): WidgetConfig => {
-    return widgetConfigs[id] || { id, tamanho: 'pequeno' };
+    return widgetConfigs.find(w => w.id === id) || { id, tamanho: 'pequeno' };
   };
 
   const updateWidgetTamanho = (id: string, tamanho: TamanhoWidget) => {
-    setWidgetConfigs(prev => ({
-      ...prev,
-      [id]: { ...getWidgetConfig(id), tamanho }
-    }));
+    setWidgetConfigs(prev => prev.map(w => 
+      w.id === id ? { ...w, tamanho } : w
+    ));
   };
 
-  const updateWidgetPeriodo = (id: string, periodo: PeriodoTempo | undefined) => {
-    setWidgetConfigs(prev => ({
-      ...prev,
-      [id]: { ...getWidgetConfig(id), periodoIndividual: periodo || undefined }
-    }));
+  const updateWidgetPeriodo = (id: string, periodoIndividual: PeriodoTempo | undefined) => {
+    setWidgetConfigs(prev => prev.map(w => 
+      w.id === id ? { ...w, periodoIndividual } : w
+    ));
   };
 
-  const handleSalvarConfig = () => {
+  const handleSalvarConfig = (newWidgets: WidgetConfig[]) => {
+    setWidgetConfigs(newWidgets);
+    
     const widgetSizes: Record<string, string> = {};
     const widgetPeriods: Record<string, string> = {};
     
-    Object.entries(widgetConfigs).forEach(([id, config]) => {
-      widgetSizes[id] = config.tamanho;
+    newWidgets.forEach((config) => {
+      widgetSizes[config.id] = config.tamanho;
       if (config.periodoIndividual) {
-        widgetPeriods[id] = config.periodoIndividual;
+        widgetPeriods[config.id] = config.periodoIndividual;
       }
     });
     
     salvarConfig.mutate({
-      metricasSelecionadas: JSON.stringify(metricasSelecionadas),
+      metricasSelecionadas: JSON.stringify(newWidgets.map(w => w.id)),
       periodoDefault: periodo,
       widgetSizes: JSON.stringify(widgetSizes),
       widgetPeriods: JSON.stringify(widgetPeriods),
@@ -926,12 +730,20 @@ export default function DashboardCustom() {
         </DialogContent>
       </Dialog>
 
+      {/* Widget Gallery Modal */}
+      <WidgetGallery
+        open={dialogAberto}
+        onOpenChange={setDialogAberto}
+        selectedWidgets={widgetConfigs}
+        onSave={handleSalvarConfig}
+      />
+
       {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
-            {metricasSelecionadas.length} métricas selecionadas de {todasMetricas.length} disponíveis
+            {widgetConfigs.length} widgets · {slotsUsados}/{MAX_SLOTS} slots utilizados
           </p>
         </div>
         
@@ -949,100 +761,18 @@ export default function DashboardCustom() {
           </Select>
           
           {/* Botão de configurar */}
-          <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
-                Configurar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Configurar Dashboard</DialogTitle>
-              </DialogHeader>
-              
-              {/* Filtro por categoria */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <Button 
-                  variant={categoriaFiltro === 'todas' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => setCategoriaFiltro('todas')}
-                >
-                  Todas
-                </Button>
-                {categorias.map(cat => (
-                  <Button 
-                    key={cat.valor}
-                    variant={categoriaFiltro === cat.valor ? 'default' : 'outline'} 
-                    size="sm"
-                    onClick={() => setCategoriaFiltro(cat.valor)}
-                    style={categoriaFiltro === cat.valor ? { backgroundColor: cat.cor } : {}}
-                  >
-                    {cat.icone}
-                    <span className="ml-1">{cat.label}</span>
-                  </Button>
-                ))}
-              </div>
-              
-              {/* Lista de métricas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {metricasFiltradas.map(metrica => (
-                  <div 
-                    key={metrica.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      metricasSelecionadas.includes(metrica.id) 
-                        ? 'border-primary bg-primary/5' 
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => toggleMetrica(metrica.id)}
-                  >
-                    <Checkbox 
-                      checked={metricasSelecionadas.includes(metrica.id)}
-                      onCheckedChange={() => toggleMetrica(metrica.id)}
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{metrica.nome}</div>
-                      <div className="text-xs text-muted-foreground">{metrica.descricao}</div>
-                    </div>
-                    <Badge 
-                      variant="outline" 
-                      style={{ borderColor: metrica.corPrimaria, color: metrica.corPrimaria }}
-                    >
-                      {metrica.tipoGrafico}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Botões de ação */}
-              <div className="flex justify-between mt-4 pt-4 border-t">
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setMetricasSelecionadas(todasMetricas.map(m => m.id))}
-                  >
-                    Selecionar Todas
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setMetricasSelecionadas([])}
-                  >
-                    Limpar Seleção
-                  </Button>
-                </div>
-                <Button onClick={handleSalvarConfig} disabled={salvarConfig.isPending}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {salvarConfig.isPending ? 'Salvando...' : 'Salvar Configuração'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button variant="outline" onClick={() => setDialogAberto(true)}>
+            <Settings className="h-4 w-4 mr-2" />
+            Configurar Widgets
+          </Button>
           
-          {/* Botão de atualizar */}
-          <Button variant="outline" size="icon">
-            <RefreshCw className="h-4 w-4" />
+          {/* Botão de salvar */}
+          <Button 
+            onClick={() => handleSalvarConfig(widgetConfigs)} 
+            disabled={salvarConfig.isPending}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {salvarConfig.isPending ? 'Salvando...' : 'Salvar'}
           </Button>
         </div>
       </div>
@@ -1051,19 +781,20 @@ export default function DashboardCustom() {
       <div className="mb-4 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
         <strong>Dica:</strong> Arraste os widgets pelo ícone <GripVertical className="h-4 w-4 inline" /> para reorganizar. 
         Passe o mouse sobre um widget para acessar controles de tamanho, período individual e tela cheia.
+        Clique em "Configurar Widgets" para adicionar ou remover widgets.
       </div>
       
       {/* Grid de métricas com Drag-and-Drop */}
       {metricasExibidas.length === 0 ? (
         <Card className="p-12 text-center">
           <LayoutGrid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">Nenhuma métrica selecionada</h3>
+          <h3 className="text-lg font-medium mb-2">Nenhum widget selecionado</h3>
           <p className="text-muted-foreground mb-4">
-            Clique em "Configurar" para selecionar as métricas que deseja visualizar.
+            Clique em "Configurar Widgets" para selecionar as métricas que deseja visualizar.
           </p>
           <Button onClick={() => setDialogAberto(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Adicionar Métricas
+            Adicionar Widgets
           </Button>
         </Card>
       ) : (
@@ -1072,14 +803,14 @@ export default function DashboardCustom() {
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={metricasSelecionadas} strategy={rectSortingStrategy}>
+          <SortableContext items={widgetConfigs.map(w => w.id)} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {metricasExibidas.map(metrica => (
+              {metricasExibidas.map(({ metrica, config }) => (
                 <SortableWidget
                   key={metrica.id}
                   metrica={metrica}
                   periodo={periodo}
-                  config={getWidgetConfig(metrica.id)}
+                  config={config}
                   onChangeTamanho={(t) => updateWidgetTamanho(metrica.id, t)}
                   onChangePeriodo={(p) => updateWidgetPeriodo(metrica.id, p)}
                   onOpenFullscreen={() => setFullscreenWidget(metrica.id)}
@@ -1096,8 +827,8 @@ export default function DashboardCustom() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {categorias.map(cat => {
             const qtdTotal = todasMetricas.filter(m => m.categoria === cat.valor).length;
-            const qtdSelecionadas = metricasSelecionadas.filter(id => 
-              todasMetricas.find(m => m.id === id)?.categoria === cat.valor
+            const qtdSelecionadas = widgetConfigs.filter(w => 
+              todasMetricas.find(m => m.id === w.id)?.categoria === cat.valor
             ).length;
             
             return (

@@ -2008,3 +2008,38 @@ A dashboard deve integrar **medicina e administração**:
 - [ ] Revisar cada métrica quanto ao tipo de gráfico adequado
 - [ ] Ajustar alturas dos gráficos para cada tamanho de widget
 
+
+
+---
+
+## 🚀 GORGEN 2.15 - Sistema de Widgets estilo macOS
+
+- [ ] Criar componente WidgetGallery com interface estilo macOS
+- [ ] Implementar barra lateral com lista de métricas por categoria
+- [ ] Criar área de preview de widgets disponíveis para cada métrica
+- [ ] Implementar sistema de slots com limite de 12 (equivalente a pequeno)
+- [ ] Permitir empilhamento de 2 widgets micro em 1 slot
+- [ ] Definir tamanhos permitidos para cada métrica (nem todas terão todos os tamanhos)
+- [ ] Implementar drag-and-drop da galeria para o dashboard
+- [ ] Adicionar campo de busca de widgets
+- [ ] Adicionar botão "Concluído" para fechar configuração
+
+
+---
+
+## 🚀 GORGEN 2.15 - Widget Gallery macOS
+
+### Interface de Configuração de Widgets
+- [x] Criar componente WidgetGallery estilo macOS
+- [x] Barra lateral (1/3) com lista de métricas por categoria
+- [x] Área principal (2/3) com preview dos widgets disponíveis
+- [x] Sistema de slots (limite de 12 slots)
+- [x] Custo por tamanho: micro (0.5), pequeno (1), médio (2), grande (4)
+- [x] Tamanhos permitidos por tipo de métrica
+- [x] Busca de métricas por nome/descrição
+- [x] Contador de slots utilizados com barra de progresso
+- [x] Preview visual de cada widget por tamanho
+- [x] Integração com DashboardCustom
+- [x] Persistência de configuração no banco de dados
+- [x] 249 testes passando
+
