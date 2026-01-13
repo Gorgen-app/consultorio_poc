@@ -1937,3 +1937,14 @@ A dashboard deve integrar **medicina e administração**:
   - Causa: DashboardLayout estava sendo usado duas vezes - uma vez no App.tsx (global) e novamente dentro do DashboardCustom.tsx
   - Solução: Remover DashboardLayout de dentro do DashboardCustom.tsx e CrossTenantAutorizacoes.tsx
   - Todos os 249 testes passando
+
+
+---
+
+## 🚀 GORGEN 2.13 - Melhorias do Dashboard (12/01/2026)
+
+- [ ] Implementar drag-and-drop para reorganizar widgets no Dashboard
+- [ ] Implementar redimensionamento de widgets (pequeno, médio, grande, extra grande)
+- [ ] Implementar modo tela cheia para cada widget
+- [ ] Implementar filtros de período individuais por widget
+- [ ] Revisar e corrigir fontes da página de Pacientes

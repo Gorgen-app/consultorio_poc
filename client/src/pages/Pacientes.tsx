@@ -424,8 +424,33 @@ export default function Pacientes() {
 
       {/* Tabela de Pacientes */}
       <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Lista de Pacientes</CardTitle>
+              <CardDescription>
+                Mostrando {((paginaAtual - 1) * itensPorPagina) + 1} a {Math.min(paginaAtual * itensPorPagina, totalPacientes)} de {totalPacientes.toLocaleString('pt-BR')} pacientes
+                {temFiltrosAtivos && ` (filtrado)`}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Itens por página:</span>
+              <Select value={String(itensPorPagina)} onValueChange={(v) => { setItensPorPagina(Number(v)); setPaginaAtual(1); }}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -555,51 +580,28 @@ export default function Pacientes() {
 
           {/* Paginação */}
           {totalPaginas > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Exibindo {((paginaAtual - 1) * itensPorPagina) + 1} - {Math.min(paginaAtual * itensPorPagina, totalPacientes)} de {totalPacientes.toLocaleString('pt-BR')}</span>
-                <Select
-                  value={itensPorPagina.toString()}
-                  onValueChange={(v) => {
-                    setItensPorPagina(Number(v));
-                    setPaginaAtual(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[80px] h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span>por página</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
-                  disabled={paginaAtual === 1 || isFetching}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Anterior
-                </Button>
-                <span className="text-sm">
-                  Página {paginaAtual} de {totalPaginas}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
-                  disabled={paginaAtual === totalPaginas || isFetching}
-                >
-                  Próxima
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                disabled={paginaAtual === 1 || isFetching}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Página {paginaAtual} de {totalPaginas}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                disabled={paginaAtual === totalPaginas || isFetching}
+              >
+                Próxima
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </CardContent>
