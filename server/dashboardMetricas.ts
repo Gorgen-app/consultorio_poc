@@ -124,14 +124,14 @@ export async function getPacientesFaixaEtaria(tenantId: number) {
     FROM pacientes
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
-    GROUP BY nome
+    GROUP BY 1
     ORDER BY 
-      CASE nome
-        WHEN '0-17 anos' THEN 1
-        WHEN '18-30 anos' THEN 2
-        WHEN '31-45 anos' THEN 3
-        WHEN '46-60 anos' THEN 4
-        WHEN '60+ anos' THEN 5
+      CASE 
+        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) < 18 THEN 1
+        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 18 AND 30 THEN 2
+        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 31 AND 45 THEN 3
+        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 46 AND 60 THEN 4
+        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) > 60 THEN 5
         ELSE 6
       END
   `);
@@ -151,7 +151,7 @@ export async function getPacientesDistribuicaoCidade(tenantId: number) {
     FROM pacientes
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
-    GROUP BY nome
+    GROUP BY COALESCE(cidade, 'Não informado')
     ORDER BY valor DESC
     LIMIT 10
   `);
@@ -272,7 +272,7 @@ export async function getPacientesDistribuicaoConvenio(tenantId: number) {
     FROM pacientes
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
-    GROUP BY nome
+    GROUP BY COALESCE(operadora_1, 'Particular')
     ORDER BY valor DESC
     LIMIT 10
   `);
