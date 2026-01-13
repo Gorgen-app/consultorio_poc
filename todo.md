@@ -1991,3 +1991,20 @@ A dashboard deve integrar **medicina e administração**:
 ### Bugs a Corrigir
 - [ ] Layouts dos gráficos não aparecem corretamente para cada tamanho de widget
 - [ ] Adicionar unidade "R$" nos valores de faturamento
+
+
+---
+
+## 🐛 GORGEN 2.14.2 - Revisão Completa do Dashboard
+
+- [ ] Criar tamanho "micro" (metade da altura padrão) para métricas numéricas
+- [ ] Corrigir gráfico "Distribuição por Convênio" - não mostra dados
+- [ ] Corrigir gráfico "Distribuição por Sexo" - não mostra dados
+- [ ] Corrigir gráfico "Distribuição por Faixa Etária" - não mostra dados
+- [ ] Corrigir gráfico "Distribuição Geográfica" - não mostra dados
+- [ ] Corrigir "Novos Pacientes" - mostra "Carregando..."
+- [ ] Corrigir "Óbitos no Período" - mostra "Carregando..."
+- [ ] Padronizar formatação: valor absoluto + unidade + métrica relativa (%, σ, IQR)
+- [ ] Revisar cada métrica quanto ao tipo de gráfico adequado
+- [ ] Ajustar alturas dos gráficos para cada tamanho de widget
+

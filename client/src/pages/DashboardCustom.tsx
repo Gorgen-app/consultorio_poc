@@ -67,7 +67,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 // Tipos
 type PeriodoTempo = '7d' | '30d' | '3m' | '6m' | '1a' | '3a' | '5a' | 'todo';
-type TamanhoWidget = 'pequeno' | 'medio' | 'grande';
+type TamanhoWidget = 'micro' | 'pequeno' | 'medio' | 'grande';
 
 type CategoriaMetrica = 
   | 'populacao_pacientes'
@@ -179,12 +179,14 @@ const categorias: { valor: CategoriaMetrica; label: string; cor: string; icone: 
 const CORES_GRAFICOS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#14B8A6'];
 
 const tamanhoClasses: Record<TamanhoWidget, string> = {
+  micro: 'col-span-1',
   pequeno: 'col-span-1',
   medio: 'col-span-1 md:col-span-2',
   grande: 'col-span-1 md:col-span-2 lg:col-span-3',
 };
 
 const tamanhoAlturas: Record<TamanhoWidget, string> = {
+  micro: 'h-[150px]',
   pequeno: 'h-[300px]',
   medio: 'h-[380px]',
   grande: 'h-[480px]',
@@ -249,6 +251,7 @@ function SortableWidget({ metrica, periodo, config, onChangeTamanho, onChangePer
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="micro">Micro</SelectItem>
               <SelectItem value="pequeno">Pequeno</SelectItem>
               <SelectItem value="medio">Médio</SelectItem>
               <SelectItem value="grande">Grande</SelectItem>
@@ -275,21 +278,25 @@ function SortableWidget({ metrica, periodo, config, onChangeTamanho, onChangePer
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
         
-        <CardHeader className="pb-2 pt-8">
+        <CardHeader className={`pb-2 ${config.tamanho === 'micro' ? 'pt-2 pb-1' : 'pt-8'}`}>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">{metrica.nome}</CardTitle>
-            <Badge variant="outline" style={{ borderColor: metrica.corPrimaria, color: metrica.corPrimaria }}>
-              {categorias.find(c => c.valor === metrica.categoria)?.label.split(' ')[0]}
-            </Badge>
-          </div>
-          <CardDescription className="text-xs">
-            {metrica.descricao}
-            {config.periodoIndividual && (
-              <span className="ml-2 text-primary">({periodos.find(p => p.valor === config.periodoIndividual)?.label})</span>
+            <CardTitle className={`font-medium ${config.tamanho === 'micro' ? 'text-xs' : 'text-sm'}`}>{metrica.nome}</CardTitle>
+            {config.tamanho !== 'micro' && (
+              <Badge variant="outline" style={{ borderColor: metrica.corPrimaria, color: metrica.corPrimaria }}>
+                {categorias.find(c => c.valor === metrica.categoria)?.label.split(' ')[0]}
+              </Badge>
             )}
-          </CardDescription>
+          </div>
+          {config.tamanho !== 'micro' && (
+            <CardDescription className="text-xs">
+              {metrica.descricao}
+              {config.periodoIndividual && (
+                <span className="ml-2 text-primary">({periodos.find(p => p.valor === config.periodoIndividual)?.label})</span>
+              )}
+            </CardDescription>
+          )}
         </CardHeader>
-        <CardContent className="h-[calc(100%-80px)]">
+        <CardContent className={`${config.tamanho === 'micro' ? 'h-[calc(100%-40px)]' : 'h-[calc(100%-80px)]'}`}>
           <MetricaConteudo metrica={metrica} periodo={periodoAtivo} tamanho={config.tamanho} />
         </CardContent>
       </Card>
@@ -327,6 +334,21 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
   const { data: pacInativos } = trpc.dashboardMetricas.pacInativos.useQuery(undefined, {
     enabled: metrica.id === 'pac_inativos_periodo',
   });
+  
+  const { data: pacNovosPeriodo } = trpc.dashboardMetricas.pacNovosPeriodo.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'pac_novos_periodo' }
+  );
+  
+  const { data: pacTaxaRetencao } = trpc.dashboardMetricas.pacTaxaRetencao.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'pac_taxa_retencao' }
+  );
+  
+  const { data: pacObitos } = trpc.dashboardMetricas.pacObitos.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'pac_obitos_periodo' }
+  );
   
   const { data: atdTotalPeriodo } = trpc.dashboardMetricas.atdTotalPeriodo.useQuery(
     { periodo },
@@ -433,7 +455,7 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     enabled: metrica.id === 'div_alertas_pendentes',
   });
 
-  const alturaGrafico = isFullscreen ? 450 : (tamanho === 'grande' ? 350 : tamanho === 'medio' ? 250 : 170);
+  const alturaGrafico = isFullscreen ? 450 : (tamanho === 'grande' ? 350 : tamanho === 'medio' ? 250 : tamanho === 'pequeno' ? 170 : 80);
 
   // Métricas de número
   if (metrica.tipoGrafico === 'numero') {
@@ -460,9 +482,11 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
       return new Intl.NumberFormat('pt-BR').format(numValue) + (metrica.unidade ? ` ${metrica.unidade}` : '');
     };
     
+    const tamanhoFonte = isFullscreen ? 'text-6xl' : tamanho === 'grande' ? 'text-5xl' : tamanho === 'medio' ? 'text-4xl' : tamanho === 'pequeno' ? 'text-3xl' : 'text-2xl';
+    
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <span className={`font-bold ${isFullscreen ? 'text-6xl' : tamanho === 'grande' ? 'text-5xl' : tamanho === 'medio' ? 'text-4xl' : 'text-3xl'}`} style={{ color: metrica.corPrimaria }}>
+        <span className={`font-bold ${tamanhoFonte}`} style={{ color: metrica.corPrimaria }}>
           {formatarValor(valor)}
         </span>
       </div>
@@ -475,8 +499,9 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     
     if (metrica.id === 'fin_taxa_recebimento' && finTaxaRecebimento) valor = finTaxaRecebimento.valor;
     if (metrica.id === 'qua_taxa_retorno' && quaTaxaRetorno) valor = quaTaxaRetorno.valor;
+    if (metrica.id === 'pac_taxa_retencao' && pacTaxaRetencao) valor = pacTaxaRetencao.valor;
     
-    const tamanhoGauge = isFullscreen ? 200 : (tamanho === 'grande' ? 160 : tamanho === 'medio' ? 130 : 100);
+    const tamanhoGauge = isFullscreen ? 200 : (tamanho === 'grande' ? 160 : tamanho === 'medio' ? 130 : tamanho === 'pequeno' ? 100 : 60);
     
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -655,6 +680,36 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
           </tbody>
         </table>
       </div>
+    );
+  }
+  
+  // Gráficos de linha
+  if (metrica.tipoGrafico === 'linha') {
+    let dados: { data: string; valor: number }[] = [];
+    
+    if (metrica.id === 'pac_novos_periodo' && pacNovosPeriodo && Array.isArray(pacNovosPeriodo.dados)) dados = pacNovosPeriodo.dados;
+    if (metrica.id === 'pac_obitos_periodo' && pacObitos && Array.isArray(pacObitos.dados)) dados = pacObitos.dados;
+    
+    if (dados.length === 0) {
+      return <div className="flex items-center justify-center h-full text-muted-foreground">Sem dados</div>;
+    }
+    
+    return (
+      <ResponsiveContainer width="100%" height={alturaGrafico}>
+        <LineChart data={dados}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="data" tick={{ fontSize: 10 }} />
+          <YAxis tick={{ fontSize: 10 }} />
+          <Tooltip />
+          <Line 
+            type="monotone" 
+            dataKey="valor" 
+            stroke={metrica.corPrimaria} 
+            strokeWidth={2}
+            dot={{ fill: metrica.corPrimaria, r: 3 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     );
   }
   

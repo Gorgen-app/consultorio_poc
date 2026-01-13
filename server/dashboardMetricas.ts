@@ -74,7 +74,7 @@ export async function getPacientesNovosPeriodo(tenantId: number, periodo: Period
   const resultado = await db.execute(sql`
     SELECT 
       DATE_FORMAT(created_at, '%Y-%m-%d') as data,
-      COUNT(*) as quantidade
+      COUNT(*) as valor
     FROM pacientes
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
@@ -83,7 +83,8 @@ export async function getPacientesNovosPeriodo(tenantId: number, periodo: Period
     ORDER BY data ASC
   `);
   
-  return { dados: resultado[0] || [] };
+  const rows = (resultado[0] as unknown) as any[];
+  return { dados: rows.map(r => ({ data: r.data, valor: Number(r.valor) })) };
 }
 
 export async function getPacientesDistribuicaoSexo(tenantId: number) {
@@ -92,16 +93,17 @@ export async function getPacientesDistribuicaoSexo(tenantId: number) {
   
   const resultado = await db.execute(sql`
     SELECT 
-      COALESCE(sexo, 'Não informado') as categoria,
-      COUNT(*) as quantidade
+      COALESCE(sexo, 'Não informado') as nome,
+      COUNT(*) as valor
     FROM pacientes
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
     GROUP BY sexo
-    ORDER BY quantidade DESC
+    ORDER BY valor DESC
   `);
   
-  return { dados: resultado[0] || [] };
+  const rows = (resultado[0] as unknown) as any[];
+  return { dados: rows.map(r => ({ nome: r.nome, valor: Number(r.valor) })) };
 }
 
 export async function getPacientesFaixaEtaria(tenantId: number) {
@@ -117,14 +119,14 @@ export async function getPacientesFaixaEtaria(tenantId: number) {
         WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 46 AND 60 THEN '46-60 anos'
         WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) > 60 THEN '60+ anos'
         ELSE 'Não informado'
-      END as faixa_etaria,
-      COUNT(*) as quantidade
+      END as nome,
+      COUNT(*) as valor
     FROM pacientes
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
-    GROUP BY faixa_etaria
+    GROUP BY nome
     ORDER BY 
-      CASE faixa_etaria
+      CASE nome
         WHEN '0-17 anos' THEN 1
         WHEN '18-30 anos' THEN 2
         WHEN '31-45 anos' THEN 3
@@ -134,7 +136,8 @@ export async function getPacientesFaixaEtaria(tenantId: number) {
       END
   `);
   
-  return { dados: resultado[0] || [] };
+  const rows = (resultado[0] as unknown) as any[];
+  return { dados: rows.map(r => ({ nome: r.nome, valor: Number(r.valor) })) };
 }
 
 export async function getPacientesDistribuicaoCidade(tenantId: number) {
@@ -143,17 +146,18 @@ export async function getPacientesDistribuicaoCidade(tenantId: number) {
   
   const resultado = await db.execute(sql`
     SELECT 
-      COALESCE(cidade, 'Não informado') as cidade,
-      COUNT(*) as quantidade
+      COALESCE(cidade, 'Não informado') as nome,
+      COUNT(*) as valor
     FROM pacientes
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
-    GROUP BY cidade
-    ORDER BY quantidade DESC
+    GROUP BY nome
+    ORDER BY valor DESC
     LIMIT 10
   `);
   
-  return { dados: resultado[0] || [] };
+  const rows = (resultado[0] as unknown) as any[];
+  return { dados: rows.map(r => ({ nome: r.nome, valor: Number(r.valor) })) };
 }
 
 export async function getPacientesTaxaRetencao(tenantId: number, periodo: PeriodoTempo) {
@@ -242,18 +246,19 @@ export async function getPacientesObitos(tenantId: number, periodo: PeriodoTempo
   
   const resultado = await db.execute(sql`
     SELECT 
-      DATE_FORMAT(updated_at, '%Y-%m') as mes,
-      COUNT(*) as quantidade
+      DATE_FORMAT(updated_at, '%Y-%m') as data,
+      COUNT(*) as valor
     FROM pacientes
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
       AND status_caso = 'Óbito'
       AND updated_at >= ${dataInicio}
     GROUP BY DATE_FORMAT(updated_at, '%Y-%m')
-    ORDER BY mes ASC
+    ORDER BY data ASC
   `);
   
-  return { dados: resultado[0] || [] };
+  const rows = (resultado[0] as unknown) as any[];
+  return { dados: rows.map(r => ({ data: r.data, valor: Number(r.valor) })) };
 }
 
 export async function getPacientesDistribuicaoConvenio(tenantId: number) {
@@ -262,17 +267,18 @@ export async function getPacientesDistribuicaoConvenio(tenantId: number) {
   
   const resultado = await db.execute(sql`
     SELECT 
-      COALESCE(operadora_1, 'Particular') as convenio,
-      COUNT(*) as quantidade
+      COALESCE(operadora_1, 'Particular') as nome,
+      COUNT(*) as valor
     FROM pacientes
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
-    GROUP BY operadora_1
-    ORDER BY quantidade DESC
+    GROUP BY nome
+    ORDER BY valor DESC
     LIMIT 10
   `);
   
-  return { dados: resultado[0] || [] };
+  const rows = (resultado[0] as unknown) as any[];
+  return { dados: rows.map(r => ({ nome: r.nome, valor: Number(r.valor) })) };
 }
 
 // ========================================
