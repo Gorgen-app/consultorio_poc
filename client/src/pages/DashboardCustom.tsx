@@ -354,7 +354,7 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <div className={`font-bold ${tamanho === 'micro' ? 'text-xl' : 'text-3xl'}`} style={{ color: metrica.corPrimaria }}>
-          R$ {finFaturamentoTotal.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finFaturamentoTotal.valor)}
         </div>
         {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">faturamento no período</div>}
       </div>

@@ -658,7 +658,6 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
               <div className="p-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {metricasFiltradas.map(metrica => {
-                    const isNoDashboard = isMetricaNosDashboard(metrica.id);
                     const isSelected = widgets.some(w => w.id === metrica.id);
                     const tamanhoAtual = widgets.find(w => w.id === metrica.id)?.tamanho || 'pequeno';
                     
