@@ -748,31 +748,14 @@ export default function DashboardCustom() {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Seletor de período global */}
-          <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoTempo)}>
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {periodos.map(p => (
-                <SelectItem key={p.valor} value={p.valor}>{p.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {/* Botão de configurar */}
-          <Button variant="outline" onClick={() => setDialogAberto(true)}>
-            <Settings className="h-4 w-4 mr-2" />
-            Configurar Widgets
-          </Button>
-          
-          {/* Botão de salvar */}
+          {/* Botão de configurações */}
           <Button 
-            onClick={() => handleSalvarConfig(widgetConfigs)} 
-            disabled={salvarConfig.isPending}
+            variant="ghost" 
+            size="icon"
+            onClick={() => setDialogAberto(true)}
+            title="Configurar Widgets"
           >
-            <Save className="h-4 w-4 mr-2" />
-            {salvarConfig.isPending ? 'Salvando...' : 'Salvar'}
+            <Settings className="h-5 w-5" />
           </Button>
         </div>
       </div>
@@ -780,8 +763,8 @@ export default function DashboardCustom() {
       {/* Instruções de uso */}
       <div className="mb-4 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
         <strong>Dica:</strong> Arraste os widgets pelo ícone <GripVertical className="h-4 w-4 inline" /> para reorganizar. 
-        Passe o mouse sobre um widget para acessar controles de tamanho, período individual e tela cheia.
-        Clique em "Configurar Widgets" para adicionar ou remover widgets.
+        Passe o mouse sobre um widget para acessar controles de tamanho, período e tela cheia.
+        Clique no ícone <Settings className="h-4 w-4 inline" /> para adicionar ou remover widgets.
       </div>
       
       {/* Grid de métricas com Drag-and-Drop */}
