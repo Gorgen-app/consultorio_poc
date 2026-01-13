@@ -525,10 +525,10 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[90vw] w-[1200px] h-[80vh] p-0 gap-0">
+      <DialogContent className="!max-w-[95vw] !w-[1400px] !h-[85vh] !max-h-[900px] p-0 gap-0 overflow-hidden fixed inset-0 m-auto z-[100]">
         <div className="flex h-full">
           {/* Barra lateral */}
-          <div className="w-[280px] bg-slate-50/80 backdrop-blur-sm border-r flex flex-col">
+          <div className="w-[300px] min-w-[300px] bg-slate-50/80 backdrop-blur-sm border-r flex flex-col">
             {/* Busca */}
             <div className="p-4 border-b">
               <div className="relative">
@@ -619,7 +619,7 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
           </div>
           
           {/* Área principal */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             {/* Header */}
             <div className="p-4 border-b flex items-center justify-between">
               <div>
@@ -639,8 +639,8 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
             </div>
             
             {/* Grid de widgets */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-8">
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-8">
                 {metricasFiltradas.map(metrica => {
                   const tamanhos = tamanhosPermitidos[metrica.id] || ['pequeno', 'medio', 'grande'];
                   const isNoDashboard = isMetricaNosDashboard(metrica.id);
