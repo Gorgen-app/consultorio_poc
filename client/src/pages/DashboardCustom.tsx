@@ -777,9 +777,9 @@ export default function DashboardCustom() {
           size="icon"
           onClick={() => setDialogAberto(true)}
           title="Configurar Widgets"
-          className="h-10 w-10"
+          className="h-12 w-12"
         >
-          <Settings className="h-7 w-7" />
+          <Settings className="h-9 w-9" />
         </Button>
       </div>
       
