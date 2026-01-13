@@ -525,7 +525,7 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-[95vw] !w-[1400px] !h-[85vh] !max-h-[900px] p-0 gap-0 overflow-hidden fixed inset-0 m-auto z-[100]">
+      <DialogContent className="!max-w-[95vw] !w-[1400px] !h-[85vh] !max-h-[900px] p-0 gap-0 overflow-hidden">
         <div className="flex h-full">
           {/* Barra lateral */}
           <div className="w-[300px] min-w-[300px] bg-slate-50/80 backdrop-blur-sm border-r flex flex-col">
