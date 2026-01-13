@@ -489,10 +489,10 @@ export default function Pacientes() {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => setLocation(`/prontuario/${paciente.id}`)}
                         >
-                        <TableCell className="text-sm">{paciente.idPaciente}</TableCell>
+                        <TableCell>{paciente.idPaciente}</TableCell>
                         <TableCell className="font-medium max-w-[200px] truncate text-blue-600 hover:text-blue-800 hover:underline">{paciente.nome}</TableCell>
                         <TableCell>{paciente.idade || "-"}</TableCell>
-                        <TableCell className="text-sm">{paciente.cpf || "-"}</TableCell>
+                        <TableCell>{paciente.cpf || "-"}</TableCell>
                         <TableCell>{paciente.telefone || "-"}</TableCell>
                         <TableCell>{paciente.cidade || "-"}</TableCell>
                         <TableCell>{paciente.uf || "-"}</TableCell>
@@ -516,7 +516,7 @@ export default function Pacientes() {
                             {formatarDiasSemAtendimento(dias)}
                           </span>
                         </TableCell>
-                        <TableCell className="text-center text-sm">
+                        <TableCell className="text-center">
                           {metricas?.primeiroAtendimento 
                             ? new Date(metricas.primeiroAtendimento).toLocaleDateString('pt-BR')
                             : "-"}
