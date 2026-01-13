@@ -120,12 +120,6 @@ export async function getPacientesFaixaEtaria(tenantId: number) {
         WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) > 60 THEN '60+ anos'
         ELSE 'Não informado'
       END as nome,
-      COUNT(*) as valor
-    FROM pacientes
-    WHERE tenant_id = ${tenantId}
-      AND deleted_at IS NULL
-    GROUP BY 1
-    ORDER BY 
       CASE 
         WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) < 18 THEN 1
         WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 18 AND 30 THEN 2
@@ -133,7 +127,13 @@ export async function getPacientesFaixaEtaria(tenantId: number) {
         WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 46 AND 60 THEN 4
         WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) > 60 THEN 5
         ELSE 6
-      END
+      END as ordem,
+      COUNT(*) as valor
+    FROM pacientes
+    WHERE tenant_id = ${tenantId}
+      AND deleted_at IS NULL
+    GROUP BY nome, ordem
+    ORDER BY ordem
   `);
   
   const rows = (resultado[0] as unknown) as any[];

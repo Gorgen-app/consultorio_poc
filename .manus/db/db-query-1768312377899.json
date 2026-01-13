@@ -1,0 +1,19 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'pacientes' AND (COLUMN_NAME LIKE '%nasc%' OR COLUMN_NAME LIKE '%birth%' OR COLUMN_NAME LIKE '%data%');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'pacientes' AND (COLUMN_NAME LIKE '%nasc%' OR COLUMN_NAME LIKE '%birth%' OR COLUMN_NAME LIKE '%data%');",
+  "rows": [
+    {
+      "COLUMN_NAME": "data_inclusao"
+    },
+    {
+      "COLUMN_NAME": "data_nascimento"
+    },
+    {
+      "COLUMN_NAME": "data_obito_last_fu"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\ndata_inclusao\ndata_nascimento\ndata_obito_last_fu\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}
