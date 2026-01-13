@@ -320,42 +320,43 @@ export default function Pacientes() {
         </Link>
       </div>
 
+      {/* Card de Busca e Filtros */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Buscar Pacientes</CardTitle>
-              <CardDescription>Buscar por nome, CPF ou ID do paciente</CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="pt-6 space-y-4">
           {/* Busca Global */}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 ref={searchInputRef}
-                placeholder="Digite nome, CPF ou ID do paciente..."
+                placeholder="Buscar por nome, CPF ou ID do paciente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
-              {isFetching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                  onClick={() => setSearchTerm("")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               )}
             </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
+            </Button>
             {temFiltrosAtivos && (
-              <Button variant="ghost" size="icon" onClick={limparFiltros}>
+              <Button variant="ghost" onClick={limparFiltros} className="gap-2">
                 <X className="h-4 w-4" />
+                Limpar Filtros
               </Button>
             )}
           </div>
