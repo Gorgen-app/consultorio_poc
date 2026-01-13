@@ -1923,3 +1923,17 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Corrigir espaço em branco à esquerda no Dashboard (removido p-4 do main no DashboardLayout)
 
 - [x] Corrigir queries de métricas financeiras (usar faturamento_previsto_final e pagamento_efetivado)
+
+- [ ] Corrigir espaço em branco persistente no Dashboard (investigar container e grid)
+
+
+---
+
+## 🚀 GORGEN 2.12 - Correção de Layout (12/01/2026)
+
+### Bug Corrigido
+- [x] **Espaço em branco persistente no Dashboard**
+  - Problema: Espaço em branco aparecia entre a sidebar e o conteúdo do Dashboard
+  - Causa: DashboardLayout estava sendo usado duas vezes - uma vez no App.tsx (global) e novamente dentro do DashboardCustom.tsx
+  - Solução: Remover DashboardLayout de dentro do DashboardCustom.tsx e CrossTenantAutorizacoes.tsx
+  - Todos os 249 testes passando
