@@ -112,28 +112,24 @@ export async function getPacientesFaixaEtaria(tenantId: number) {
   
   const resultado = await db.execute(sql`
     SELECT 
-      CASE 
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) < 18 THEN '0-17 anos'
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 18 AND 30 THEN '18-30 anos'
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 31 AND 45 THEN '31-45 anos'
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 46 AND 60 THEN '46-60 anos'
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) > 60 THEN '60+ anos'
-        ELSE 'Não informado'
-      END as nome,
-      CASE 
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) < 18 THEN 1
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 18 AND 30 THEN 2
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 31 AND 45 THEN 3
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 46 AND 60 THEN 4
-        WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) > 60 THEN 5
-        ELSE 6
-      END as ordem,
+      faixa_etaria as nome,
       COUNT(*) as valor
-    FROM pacientes
-    WHERE tenant_id = ${tenantId}
-      AND deleted_at IS NULL
-    GROUP BY nome, ordem
-    ORDER BY ordem
+    FROM (
+      SELECT 
+        CASE 
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) < 18 THEN '0-17 anos'
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 18 AND 30 THEN '18-30 anos'
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 31 AND 45 THEN '31-45 anos'
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 46 AND 60 THEN '46-60 anos'
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) > 60 THEN '60+ anos'
+          ELSE 'Não informado'
+        END as faixa_etaria
+      FROM pacientes
+      WHERE tenant_id = ${tenantId}
+        AND deleted_at IS NULL
+    ) as sub
+    GROUP BY faixa_etaria
+    ORDER BY FIELD(faixa_etaria, '0-17 anos', '18-30 anos', '31-45 anos', '46-60 anos', '60+ anos', 'Não informado')
   `);
   
   const rows = (resultado[0] as unknown) as any[];
