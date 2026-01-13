@@ -582,8 +582,8 @@ export default function DashboardCustom() {
       <DashboardLayout>
         <div className="p-6">
           <Skeleton className="h-8 w-64 mb-6" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map(i => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
               <Skeleton key={i} className="h-64" />
             ))}
           </div>
@@ -625,26 +625,29 @@ export default function DashboardCustom() {
                   Configurar
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
+              <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+                <DialogHeader className="flex-shrink-0">
                   <DialogTitle>Configurar Dashboard</DialogTitle>
                 </DialogHeader>
                 
                 {/* Filtro por categoria */}
-                <Tabs value={categoriaFiltro} onValueChange={(v) => setCategoriaFiltro(v as any)}>
-                  <TabsList className="grid grid-cols-6 w-full">
-                    <TabsTrigger value="todas">Todas</TabsTrigger>
+                <Tabs value={categoriaFiltro} onValueChange={(v) => setCategoriaFiltro(v as any)} className="flex-shrink-0">
+                  <TabsList className="flex flex-wrap gap-1 h-auto p-1">
+                    <TabsTrigger value="todas" className="text-xs px-3 py-1.5">
+                      Todas
+                    </TabsTrigger>
                     {categorias.map(cat => (
-                      <TabsTrigger key={cat.valor} value={cat.valor} className="text-xs">
+                      <TabsTrigger key={cat.valor} value={cat.valor} className="text-xs px-3 py-1.5">
                         {cat.icone}
-                        <span className="ml-1 hidden md:inline">{cat.label.split(' ')[0]}</span>
+                        <span className="ml-1">{cat.label.split(' ')[0]}</span>
                       </TabsTrigger>
                     ))}
                   </TabsList>
                 </Tabs>
                 
                 {/* Lista de métricas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
+                <div className="flex-1 overflow-y-auto mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {metricasFiltradas.map(metrica => (
                     <div 
                       key={metrica.id}
@@ -673,9 +676,10 @@ export default function DashboardCustom() {
                     </div>
                   ))}
                 </div>
+                </div>
                 
                 {/* Botões de ação */}
-                <div className="flex justify-between mt-4 pt-4 border-t">
+                <div className="flex-shrink-0 flex justify-between mt-4 pt-4 border-t">
                   <div className="text-sm text-muted-foreground">
                     {metricasSelecionadas.length} métricas selecionadas
                   </div>
@@ -722,7 +726,7 @@ export default function DashboardCustom() {
             </Button>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {metricasExibidas.map(metrica => (
               <MetricaWidget key={metrica.id} metrica={metrica} periodo={periodo} />
             ))}

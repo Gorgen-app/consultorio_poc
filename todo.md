@@ -1916,3 +1916,6 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Mover Performance para baixo na barra de navegação (após itens "Em breve")
 
 - [x] Corrigir formato de data nas queries de métricas do dashboard (valor_recebido, valor_total)
+
+- [x] Ajustar grid do Dashboard para 4 quadros por linha (xl:grid-cols-4)
+- [x] Corrigir modal de configuração de métricas (tabs com flex-wrap, scroll interno)
