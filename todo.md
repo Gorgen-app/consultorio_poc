@@ -1919,3 +1919,5 @@ A dashboard deve integrar **medicina e administração**:
 
 - [x] Ajustar grid do Dashboard para 4 quadros por linha (xl:grid-cols-4)
 - [x] Corrigir modal de configuração de métricas (tabs com flex-wrap, scroll interno)
+
+- [x] Corrigir espaço em branco à esquerda no Dashboard (removido p-4 do main no DashboardLayout)
