@@ -489,10 +489,10 @@ export default function Pacientes() {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => setLocation(`/prontuario/${paciente.id}`)}
                         >
-                        <TableCell className="font-mono text-sm">{paciente.idPaciente}</TableCell>
+                        <TableCell className="text-sm">{paciente.idPaciente}</TableCell>
                         <TableCell className="font-medium max-w-[200px] truncate">{paciente.nome}</TableCell>
                         <TableCell>{paciente.idade || "-"}</TableCell>
-                        <TableCell className="font-mono text-sm">{paciente.cpf || "-"}</TableCell>
+                        <TableCell className="text-sm">{paciente.cpf || "-"}</TableCell>
                         <TableCell>{paciente.telefone || "-"}</TableCell>
                         <TableCell>{paciente.cidade || "-"}</TableCell>
                         <TableCell>{paciente.uf || "-"}</TableCell>
