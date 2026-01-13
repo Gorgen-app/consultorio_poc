@@ -450,58 +450,44 @@ export default function Pacientes() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableHeader field="idPaciente">ID</SortableHeader>
-                  <SortableHeader field="nome">Nome</SortableHeader>
-                  <TableHead>Idade</TableHead>
-                  <SortableHeader field="cpf">CPF</SortableHeader>
-                  <SortableHeader field="telefone">Telefone</SortableHeader>
-                  <SortableHeader field="cidade">Cidade</SortableHeader>
-                  <SortableHeader field="uf">UF</SortableHeader>
-                  <SortableHeader field="operadora1">Convênio 1</SortableHeader>
-                  <SortableHeader field="operadora2">Convênio 2</SortableHeader>
-                  <SortableHeader field="diagnosticoEspecifico">Diagnóstico</SortableHeader>
-                  <SortableHeader field="totalAtendimentos">Total Atend.</SortableHeader>
-                  <SortableHeader field="atendimentos12m">Atend. 12m</SortableHeader>
-                  <SortableHeader field="diasDesdeUltimoAtendimento">Dias desde último atend.</SortableHeader>
-                  <SortableHeader field="primeiroAtendimento">1º Atend.</SortableHeader>
-                  <SortableHeader field="statusCaso">Status</SortableHeader>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  // Skeleton loading
-                  Array.from({ length: itensPorPagina }).map((_, i) => (
-                    <TableRow key={i}>
-                      {Array.from({ length: 16 }).map((_, j) => (
-                        <TableCell key={j}>
-                          <Skeleton className="h-4 w-full" />
-                        </TableCell>
-                      ))}
+          {isLoading ? (
+            <p className="text-center py-8 text-muted-foreground">Carregando...</p>
+          ) : pacientesOrdenados.length > 0 ? (
+            <>
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <SortableHeader field="idPaciente">ID</SortableHeader>
+                      <SortableHeader field="nome">Nome</SortableHeader>
+                      <TableHead>Idade</TableHead>
+                      <SortableHeader field="cpf">CPF</SortableHeader>
+                      <SortableHeader field="telefone">Telefone</SortableHeader>
+                      <SortableHeader field="cidade">Cidade</SortableHeader>
+                      <SortableHeader field="uf">UF</SortableHeader>
+                      <SortableHeader field="operadora1">Convênio 1</SortableHeader>
+                      <SortableHeader field="operadora2">Convênio 2</SortableHeader>
+                      <SortableHeader field="diagnosticoEspecifico">Diagnóstico</SortableHeader>
+                      <SortableHeader field="totalAtendimentos">Total Atend.</SortableHeader>
+                      <SortableHeader field="atendimentos12m">Atend. 12m</SortableHeader>
+                      <SortableHeader field="diasDesdeUltimoAtendimento">Dias desde último atend.</SortableHeader>
+                      <SortableHeader field="primeiroAtendimento">1º Atend.</SortableHeader>
+                      <SortableHeader field="statusCaso">Status</SortableHeader>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))
-                ) : pacientesOrdenados.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={16} className="text-center py-8 text-muted-foreground">
-                      {temFiltrosAtivos ? "Nenhum paciente encontrado com os filtros aplicados" : "Nenhum paciente cadastrado"}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  pacientesOrdenados.map((paciente) => {
-                    const metricas = getMetricas(paciente.id);
-                    const dias = metricas?.diasSemAtendimento;
-                    const isInativo = dias !== null && dias !== undefined && dias > 360;
-                    
-                    return (
-                      <TableRow 
-                        key={paciente.id} 
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setLocation(`/prontuario/${paciente.id}`)}
-                      >
+                  </TableHeader>
+                  <TableBody>
+                    {pacientesOrdenados.map((paciente) => {
+                      const metricas = getMetricas(paciente.id);
+                      const dias = metricas?.diasSemAtendimento;
+                      const isInativo = dias !== null && dias !== undefined && dias > 360;
+                      
+                      return (
+                        <TableRow 
+                          key={paciente.id} 
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setLocation(`/prontuario/${paciente.id}`)}
+                        >
                         <TableCell className="font-mono text-sm">{paciente.idPaciente}</TableCell>
                         <TableCell className="font-medium max-w-[200px] truncate">{paciente.nome}</TableCell>
                         <TableCell>{paciente.idade || "-"}</TableCell>
@@ -572,37 +558,42 @@ export default function Pacientes() {
                         </TableCell>
                       </TableRow>
                     );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
 
-          {/* Paginação */}
-          {totalPaginas > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
-                disabled={paginaAtual === 1 || isFetching}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Anterior
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Página {paginaAtual} de {totalPaginas}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
-                disabled={paginaAtual === totalPaginas || isFetching}
-              >
-                Próxima
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+              {/* Paginação */}
+              {totalPaginas > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                    disabled={paginaAtual === 1 || isFetching}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Página {paginaAtual} de {totalPaginas}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaAtual === totalPaginas || isFetching}
+                  >
+                    Próxima
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-center py-8 text-muted-foreground">
+              {temFiltrosAtivos ? "Nenhum paciente encontrado com os filtros aplicados" : "Nenhum paciente cadastrado"}
+            </p>
           )}
         </CardContent>
       </Card>
