@@ -2082,3 +2082,9 @@ A dashboard deve integrar **medicina e administração**:
 
 ### Formatação
 - [x] Valores monetários: R$ X.XXX,XX (ponto milhares, vírgula decimais)
+
+
+### Ajustes Adicionais (13/01/2026)
+- [x] Aumentar ícone de configurações em 50% para harmonizar com título (h-10 w-10, ícone h-7 w-7)
+- [x] Remover "Global" do dropdown de tempo, deixar "Todo o período" como padrão
+- [x] Permitir empilhar 2 widgets micro ocupando apenas 1 slot (função agruparWidgetsMicro)

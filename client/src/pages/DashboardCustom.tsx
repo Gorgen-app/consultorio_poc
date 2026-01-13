@@ -100,11 +100,41 @@ const tamanhoClasses: Record<TamanhoWidget, string> = {
 };
 
 const tamanhoAlturas: Record<TamanhoWidget, string> = {
-  micro: 'h-[150px]',
+  micro: 'h-[140px]',
   pequeno: 'h-[300px]',
   medio: 'h-[380px]',
   grande: 'h-[480px]',
 };
+
+// Agrupa widgets micro em pares para empilhamento
+function agruparWidgetsMicro(widgets: { metrica: MetricaDefinicao; config: WidgetConfig }[]): (typeof widgets[0] | { tipo: 'par_micro'; widgets: typeof widgets })[] {
+  const resultado: (typeof widgets[0] | { tipo: 'par_micro'; widgets: typeof widgets })[] = [];
+  let microBuffer: typeof widgets = [];
+  
+  for (const item of widgets) {
+    if (item.config.tamanho === 'micro') {
+      microBuffer.push(item);
+      if (microBuffer.length === 2) {
+        resultado.push({ tipo: 'par_micro', widgets: [...microBuffer] });
+        microBuffer = [];
+      }
+    } else {
+      // Se houver um micro sozinho no buffer, adiciona antes do widget atual
+      if (microBuffer.length > 0) {
+        resultado.push(microBuffer[0]);
+        microBuffer = [];
+      }
+      resultado.push(item);
+    }
+  }
+  
+  // Adiciona qualquer micro restante
+  if (microBuffer.length > 0) {
+    resultado.push(microBuffer[0]);
+  }
+  
+  return resultado;
+}
 
 // Componente de Widget Sortable
 interface SortableWidgetProps {
@@ -150,12 +180,11 @@ function SortableWidget({ metrica, periodo, config, onChangeTamanho, onChangePer
         {/* Controles do Widget */}
         <div className={`absolute top-2 right-2 z-10 flex items-center gap-1 transition-opacity ${showControls ? 'opacity-100' : 'opacity-0'}`}>
           {/* Seletor de período individual */}
-          <Select value={config.periodoIndividual || 'global'} onValueChange={(v) => onChangePeriodo(v === 'global' ? undefined : v as PeriodoTempo)}>
-            <SelectTrigger className="h-7 w-20 text-xs bg-background/80 backdrop-blur-sm">
-              <SelectValue placeholder="Global" />
+          <Select value={config.periodoIndividual || 'todo'} onValueChange={(v) => onChangePeriodo(v as PeriodoTempo)}>
+            <SelectTrigger className="h-7 w-24 text-xs bg-background/80 backdrop-blur-sm">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="global">Global</SelectItem>
               {periodos.map(p => (
                 <SelectItem key={p.valor} value={p.valor}>{p.label}</SelectItem>
               ))}
@@ -748,9 +777,9 @@ export default function DashboardCustom() {
           size="icon"
           onClick={() => setDialogAberto(true)}
           title="Configurar Widgets"
-          className="h-8 w-8"
+          className="h-10 w-10"
         >
-          <Settings className="h-5 w-5" />
+          <Settings className="h-7 w-7" />
         </Button>
       </div>
       
@@ -782,17 +811,39 @@ export default function DashboardCustom() {
         >
           <SortableContext items={widgetConfigs.map(w => w.id)} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {metricasExibidas.map(({ metrica, config }) => (
-                <SortableWidget
-                  key={metrica.id}
-                  metrica={metrica}
-                  periodo={periodo}
-                  config={config}
-                  onChangeTamanho={(t) => updateWidgetTamanho(metrica.id, t)}
-                  onChangePeriodo={(p) => updateWidgetPeriodo(metrica.id, p)}
-                  onOpenFullscreen={() => setFullscreenWidget(metrica.id)}
-                />
-              ))}
+              {agruparWidgetsMicro(metricasExibidas).map((item, index) => {
+                // Par de widgets micro empilhados
+                if ('tipo' in item && item.tipo === 'par_micro') {
+                  return (
+                    <div key={`micro-pair-${index}`} className="col-span-1 h-[300px] flex flex-col gap-2">
+                      {item.widgets.map(({ metrica, config }) => (
+                        <SortableWidget
+                          key={metrica.id}
+                          metrica={metrica}
+                          periodo={periodo}
+                          config={config}
+                          onChangeTamanho={(t) => updateWidgetTamanho(metrica.id, t)}
+                          onChangePeriodo={(p) => updateWidgetPeriodo(metrica.id, p)}
+                          onOpenFullscreen={() => setFullscreenWidget(metrica.id)}
+                        />
+                      ))}
+                    </div>
+                  );
+                }
+                // Widget normal (não-micro ou micro sozinho)
+                const { metrica, config } = item as { metrica: MetricaDefinicao; config: WidgetConfig };
+                return (
+                  <SortableWidget
+                    key={metrica.id}
+                    metrica={metrica}
+                    periodo={periodo}
+                    config={config}
+                    onChangeTamanho={(t) => updateWidgetTamanho(metrica.id, t)}
+                    onChangePeriodo={(p) => updateWidgetPeriodo(metrica.id, p)}
+                    onOpenFullscreen={() => setFullscreenWidget(metrica.id)}
+                  />
+                );
+              })}
             </div>
           </SortableContext>
         </DndContext>
