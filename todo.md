@@ -1982,3 +1982,12 @@ A dashboard deve integrar **medicina e administração**:
 - **Versão:** 2.14
 - **Testes:** 249 passando
 - **Data:** 12/01/2026
+
+
+---
+
+## 🐛 GORGEN 2.14.1 - Correções de Gráficos (12/01/2026)
+
+### Bugs a Corrigir
+- [ ] Layouts dos gráficos não aparecem corretamente para cada tamanho de widget
+- [ ] Adicionar unidade "R$" nos valores de faturamento

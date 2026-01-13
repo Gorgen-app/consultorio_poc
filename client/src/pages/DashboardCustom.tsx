@@ -185,9 +185,9 @@ const tamanhoClasses: Record<TamanhoWidget, string> = {
 };
 
 const tamanhoAlturas: Record<TamanhoWidget, string> = {
-  pequeno: 'h-[280px]',
-  medio: 'h-[320px]',
-  grande: 'h-[400px]',
+  pequeno: 'h-[300px]',
+  medio: 'h-[380px]',
+  grande: 'h-[480px]',
 };
 
 // Componente de Widget Sortable
@@ -433,7 +433,7 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     enabled: metrica.id === 'div_alertas_pendentes',
   });
 
-  const alturaGrafico = isFullscreen ? 400 : (tamanho === 'grande' ? 280 : tamanho === 'medio' ? 200 : 140);
+  const alturaGrafico = isFullscreen ? 450 : (tamanho === 'grande' ? 350 : tamanho === 'medio' ? 250 : 170);
 
   // Métricas de número
   if (metrica.tipoGrafico === 'numero') {
@@ -450,16 +450,19 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     if (metrica.id === 'div_alertas_pendentes' && divAlertas) valor = divAlertas.valor;
     
     const formatarValor = (v: number | string) => {
-      if (typeof v === 'string') return v;
+      // Converter string para número se necessário
+      const numValue = typeof v === 'string' ? parseFloat(v) : v;
+      if (isNaN(numValue)) return v;
+      
       if (metrica.unidade === 'R$') {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numValue);
       }
-      return new Intl.NumberFormat('pt-BR').format(v) + (metrica.unidade ? ` ${metrica.unidade}` : '');
+      return new Intl.NumberFormat('pt-BR').format(numValue) + (metrica.unidade ? ` ${metrica.unidade}` : '');
     };
     
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <span className={`font-bold ${isFullscreen ? 'text-6xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
+        <span className={`font-bold ${isFullscreen ? 'text-6xl' : tamanho === 'grande' ? 'text-5xl' : tamanho === 'medio' ? 'text-4xl' : 'text-3xl'}`} style={{ color: metrica.corPrimaria }}>
           {formatarValor(valor)}
         </span>
       </div>
@@ -473,7 +476,7 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     if (metrica.id === 'fin_taxa_recebimento' && finTaxaRecebimento) valor = finTaxaRecebimento.valor;
     if (metrica.id === 'qua_taxa_retorno' && quaTaxaRetorno) valor = quaTaxaRetorno.valor;
     
-    const tamanhoGauge = isFullscreen ? 160 : (tamanho === 'grande' ? 120 : tamanho === 'medio' ? 100 : 80);
+    const tamanhoGauge = isFullscreen ? 200 : (tamanho === 'grande' ? 160 : tamanho === 'medio' ? 130 : 100);
     
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -503,7 +506,7 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
               y="50"
               textAnchor="middle"
               dominantBaseline="middle"
-              className="text-xl font-bold"
+              className={`font-bold ${isFullscreen ? 'text-3xl' : tamanho === 'grande' ? 'text-2xl' : 'text-xl'}`}
               fill={metrica.corPrimaria}
             >
               {valor}%
@@ -535,17 +538,18 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
             data={dados}
             cx="50%"
             cy="50%"
-            innerRadius={tamanho === 'pequeno' ? 25 : 40}
-            outerRadius={tamanho === 'pequeno' ? 50 : 70}
+            innerRadius={tamanho === 'pequeno' ? 30 : tamanho === 'medio' ? 50 : 60}
+            outerRadius={tamanho === 'pequeno' ? 60 : tamanho === 'medio' ? 80 : 100}
             dataKey="valor"
             nameKey="nome"
-            label={tamanho !== 'pequeno'}
+            label={tamanho !== 'pequeno' ? ({ nome, percent }) => `${nome}: ${(percent * 100).toFixed(0)}%` : false}
+            labelLine={tamanho !== 'pequeno'}
           >
             {dados.map((_, index) => (
               <Cell key={`cell-${index}`} fill={CORES_GRAFICOS[index % CORES_GRAFICOS.length]} />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip formatter={(value: number) => metrica.unidade === 'R$' ? `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : value.toLocaleString('pt-BR')} />
           {tamanho !== 'pequeno' && <Legend />}
         </RechartsPieChart>
       </ResponsiveContainer>
@@ -572,11 +576,11 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     
     return (
       <ResponsiveContainer width="100%" height={alturaGrafico}>
-        <BarChart data={dados} layout="vertical" margin={{ left: tamanho === 'pequeno' ? 40 : 80 }}>
+        <BarChart data={dados} layout="vertical" margin={{ left: tamanho === 'pequeno' ? 60 : 100, right: 20 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" />
-          <YAxis type="category" dataKey="nome" width={tamanho === 'pequeno' ? 40 : 80} tick={{ fontSize: 10 }} />
-          <Tooltip />
+          <XAxis type="number" tickFormatter={(v) => metrica.unidade === 'R$' ? `R$ ${v.toLocaleString('pt-BR')}` : v.toLocaleString('pt-BR')} />
+          <YAxis type="category" dataKey="nome" width={tamanho === 'pequeno' ? 60 : 100} tick={{ fontSize: tamanho === 'pequeno' ? 9 : 11 }} />
+          <Tooltip formatter={(value: number) => metrica.unidade === 'R$' ? `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : value.toLocaleString('pt-BR')} />
           <Bar dataKey="valor" fill={metrica.corPrimaria} radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
@@ -599,8 +603,8 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
         <AreaChart data={dados}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="data" tick={{ fontSize: 10 }} />
-          <YAxis tick={{ fontSize: 10 }} />
-          <Tooltip />
+          <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => metrica.unidade === 'R$' ? `R$ ${v.toLocaleString('pt-BR')}` : v.toLocaleString('pt-BR')} />
+          <Tooltip formatter={(value: number) => metrica.unidade === 'R$' ? `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : value.toLocaleString('pt-BR')} />
           <Area 
             type="monotone" 
             dataKey="valor" 
