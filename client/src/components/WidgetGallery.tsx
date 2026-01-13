@@ -654,7 +654,7 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
           {/* Área principal */}
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden border-l">
             {/* Grid de widgets */}
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 h-full">
               <div className="p-4 space-y-8">
                 {metricasFiltradas.map(metrica => {
                   const tamanhos = tamanhosPermitidos[metrica.id] || ['pequeno', 'medio', 'grande'];
@@ -686,16 +686,22 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
                       </div>
                       
                       <div className="flex flex-wrap gap-3 pl-8">
-                        {tamanhos.map(tamanho => (
-                          <WidgetPreview
-                            key={`${metrica.id}-${tamanho}`}
-                            metrica={metrica}
-                            tamanho={tamanho}
-                            isSelected={isWidgetSelected(metrica.id, tamanho)}
-                            onClick={() => toggleWidget(metrica.id, tamanho)}
-                            disabled={!podeAdicionar(tamanho, metrica.id)}
-                          />
-                        ))}
+                        {tamanhos.map(tamanho => {
+                          const isSelected = isWidgetSelected(metrica.id, tamanho);
+                          const canAdd = podeAdicionar(tamanho, metrica.id);
+                          // Só mostrar se pode adicionar ou se já está selecionado
+                          if (!canAdd && !isSelected) return null;
+                          return (
+                            <WidgetPreview
+                              key={`${metrica.id}-${tamanho}`}
+                              metrica={metrica}
+                              tamanho={tamanho}
+                              isSelected={isSelected}
+                              onClick={() => toggleWidget(metrica.id, tamanho)}
+                              disabled={false}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   );
