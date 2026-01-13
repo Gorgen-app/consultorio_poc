@@ -202,11 +202,13 @@ export const appRouter = router({
     
     saveConfig: tenantProcedure
       .input(z.object({
-        metricasSelecionadas: z.array(z.string()),
-        ordemMetricas: z.array(z.string()).optional(),
+        metricasSelecionadas: z.string(), // JSON string
+        ordemMetricas: z.string().optional(), // JSON string
         periodoDefault: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']).optional(),
         layoutColunas: z.number().min(1).max(4).optional(),
         temaGraficos: z.enum(['padrao', 'escuro', 'colorido']).optional(),
+        widgetSizes: z.string().optional(), // JSON string
+        widgetPeriods: z.string().optional(), // JSON string
       }))
       .mutation(async ({ ctx, input }) => {
         return await dashboardMetricas.saveDashboardConfig(

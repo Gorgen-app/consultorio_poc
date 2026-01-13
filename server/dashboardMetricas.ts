@@ -877,11 +877,13 @@ export async function saveDashboardConfig(
   tenantId: number,
   userId: number,
   config: {
-    metricasSelecionadas: string[];
-    ordemMetricas?: string[];
+    metricasSelecionadas: string; // JSON string
+    ordemMetricas?: string; // JSON string
     periodoDefault?: string;
     layoutColunas?: number;
     temaGraficos?: string;
+    widgetSizes?: string; // JSON string
+    widgetPeriods?: string; // JSON string
   }
 ) {
   const db = await getDb();
@@ -893,22 +895,26 @@ export async function saveDashboardConfig(
     await db
       .update(dashboardConfigs)
       .set({
-        metricasSelecionadas: JSON.stringify(config.metricasSelecionadas),
-        ordemMetricas: config.ordemMetricas ? JSON.stringify(config.ordemMetricas) : null,
+        metricasSelecionadas: config.metricasSelecionadas,
+        ordemMetricas: config.ordemMetricas || null,
         periodoDefault: config.periodoDefault as any || '30d',
         layoutColunas: config.layoutColunas || 3,
         temaGraficos: config.temaGraficos as any || 'padrao',
+        widgetSizes: config.widgetSizes || null,
+        widgetPeriods: config.widgetPeriods || null,
       })
       .where(eq(dashboardConfigs.id, existente.id));
   } else {
     await db.insert(dashboardConfigs).values({
       tenantId,
       userId,
-      metricasSelecionadas: JSON.stringify(config.metricasSelecionadas),
-      ordemMetricas: config.ordemMetricas ? JSON.stringify(config.ordemMetricas) : null,
+      metricasSelecionadas: config.metricasSelecionadas,
+      ordemMetricas: config.ordemMetricas || null,
       periodoDefault: config.periodoDefault as any || '30d',
       layoutColunas: config.layoutColunas || 3,
       temaGraficos: config.temaGraficos as any || 'padrao',
+      widgetSizes: config.widgetSizes || null,
+      widgetPeriods: config.widgetPeriods || null,
     });
   }
   

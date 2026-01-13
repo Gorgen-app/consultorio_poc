@@ -1373,6 +1373,12 @@ export const dashboardConfigs = mysqlTable("dashboard_configs", {
   // Tema de cores
   temaGraficos: mysqlEnum("tema_graficos", ["padrao", "escuro", "colorido"]).default("padrao"),
   
+  // Tamanhos dos widgets (JSON object: { metricaId: 'pequeno' | 'medio' | 'grande' })
+  widgetSizes: text("widget_sizes"),
+  
+  // Períodos individuais dos widgets (JSON object: { metricaId: periodo })
+  widgetPeriods: text("widget_periods"),
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });

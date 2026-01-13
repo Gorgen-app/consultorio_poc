@@ -1948,3 +1948,37 @@ A dashboard deve integrar **medicina e administração**:
 - [ ] Implementar modo tela cheia para cada widget
 - [ ] Implementar filtros de período individuais por widget
 - [ ] Revisar e corrigir fontes da página de Pacientes
+
+
+---
+
+## 🚀 GORGEN 2.14 - Widgets Avançados do Dashboard
+
+- [ ] Implementar drag-and-drop para reorganizar widgets
+- [ ] Implementar redimensionamento de widgets
+- [ ] Implementar modo tela cheia para widgets
+- [ ] Implementar filtros de período individuais por widget
+- [ ] Salvar configurações de layout no banco de dados
+
+
+---
+
+## 🚀 GORGEN 2.14 - Widgets Avançados do Dashboard (12/01/2026)
+
+### Funcionalidades Implementadas
+- [x] **Drag-and-drop** para reorganizar widgets (@dnd-kit)
+- [x] **Redimensionamento** de widgets (pequeno/médio/grande)
+- [x] **Modo tela cheia** para visualização detalhada de cada widget
+- [x] **Filtros de período individuais** por widget (sobrescreve período global)
+- [x] **Persistência** de configurações no banco de dados (widgetSizes, widgetPeriods)
+- [x] **Dica de uso** no topo do Dashboard explicando as funcionalidades
+
+### Correções de Layout
+- [x] Corrigido layout da página de Pacientes (fonte monospace removida)
+- [x] Nomes dos pacientes em azul na tabela
+- [x] Layout consistente entre Pacientes e Atendimentos
+
+### Status
+- **Versão:** 2.14
+- **Testes:** 249 passando
+- **Data:** 12/01/2026
