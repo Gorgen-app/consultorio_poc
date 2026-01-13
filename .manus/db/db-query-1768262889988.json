@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'atendimentos' AND COLUMN_NAME LIKE '%valor%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'atendimentos' AND COLUMN_NAME LIKE '%valor%';",
+  "rows": [
+    {
+      "COLUMN_NAME": "registro_manual_valor_hm"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nregistro_manual_valor_hm\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

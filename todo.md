@@ -1921,3 +1921,5 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Corrigir modal de configuração de métricas (tabs com flex-wrap, scroll interno)
 
 - [x] Corrigir espaço em branco à esquerda no Dashboard (removido p-4 do main no DashboardLayout)
+
+- [x] Corrigir queries de métricas financeiras (usar faturamento_previsto_final e pagamento_efetivado)

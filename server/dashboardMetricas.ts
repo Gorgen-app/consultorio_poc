@@ -513,7 +513,7 @@ export async function getFaturamentoTotal(tenantId: number, periodo: PeriodoTemp
   const dataInicio = calcularDataInicio(periodo);
   
   const resultado = await db.execute(sql`
-    SELECT COALESCE(SUM(valor_total), 0) as total
+    SELECT COALESCE(SUM(faturamento_previsto_final), 0) as total
     FROM atendimentos
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
@@ -538,7 +538,7 @@ export async function getFaturamentoEvolucao(tenantId: number, periodo: PeriodoT
   const resultado = await db.execute(sql`
     SELECT 
       DATE_FORMAT(data_atendimento, ${dateFormat}) as data,
-      SUM(valor_total) as valor
+      SUM(faturamento_previsto_final) as valor
     FROM atendimentos
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
@@ -559,7 +559,7 @@ export async function getFaturamentoPorConvenio(tenantId: number, periodo: Perio
   const resultado = await db.execute(sql`
     SELECT 
       COALESCE(convenio, 'Particular') as convenio,
-      SUM(valor_total) as valor
+      SUM(faturamento_previsto_final) as valor
     FROM atendimentos
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
@@ -579,12 +579,12 @@ export async function getTicketMedio(tenantId: number, periodo: PeriodoTempo) {
   const dataInicio = calcularDataInicio(periodo);
   
   const resultado = await db.execute(sql`
-    SELECT AVG(valor_total) as ticket_medio
+    SELECT AVG(faturamento_previsto_final) as ticket_medio
     FROM atendimentos
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
       AND data_atendimento >= ${dataInicio}
-      AND valor_total > 0
+      AND faturamento_previsto_final > 0
   `);
   
   const rows = (resultado[0] as unknown) as any[];
@@ -599,7 +599,7 @@ export async function getTaxaRecebimento(tenantId: number, periodo: PeriodoTempo
   
   const resultado = await db.execute(sql`
     SELECT 
-      COALESCE(SUM(valor_recebido), 0) * 100.0 / NULLIF(SUM(valor_total), 0) as taxa
+      COALESCE(SUM(CASE WHEN pagamento_efetivado = 1 THEN faturamento_previsto_final ELSE 0 END), 0) * 100.0 / NULLIF(SUM(faturamento_previsto_final), 0) as taxa
     FROM atendimentos
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
@@ -639,11 +639,11 @@ export async function getInadimplencia(tenantId: number) {
   if (!db) return { valor: 0 };
   
   const resultado = await db.execute(sql`
-    SELECT COALESCE(SUM(valor_total - COALESCE(valor_recebido, 0)), 0) as inadimplencia
+    SELECT COALESCE(SUM(CASE WHEN pagamento_efetivado = 0 THEN faturamento_previsto_final ELSE 0 END), 0) as inadimplencia
     FROM atendimentos
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
-      AND status_pagamento IN ('Pendente', 'Parcial')
+      AND pagamento_efetivado = 0
       AND data_atendimento < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
   `);
   
@@ -660,7 +660,7 @@ export async function getFaturamentoPorTipo(tenantId: number, periodo: PeriodoTe
   const resultado = await db.execute(sql`
     SELECT 
       COALESCE(tipo_atendimento, 'Não informado') as tipo,
-      SUM(valor_total) as valor
+      SUM(faturamento_previsto_final) as valor
     FROM atendimentos
     WHERE tenant_id = ${tenantId}
       AND deleted_at IS NULL
@@ -679,17 +679,17 @@ export async function getPrevisaoRecebimento(tenantId: number) {
   const resultado = await db.execute(sql`
     SELECT 
       CASE 
-        WHEN DATEDIFF(data_previsao_pagamento, CURDATE()) <= 30 THEN '30 dias'
-        WHEN DATEDIFF(data_previsao_pagamento, CURDATE()) <= 60 THEN '60 dias'
-        WHEN DATEDIFF(data_previsao_pagamento, CURDATE()) <= 90 THEN '90 dias'
+        WHEN DATEDIFF(data_esperada_pagamento, CURDATE()) <= 30 THEN '30 dias'
+        WHEN DATEDIFF(data_esperada_pagamento, CURDATE()) <= 60 THEN '60 dias'
+        WHEN DATEDIFF(data_esperada_pagamento, CURDATE()) <= 90 THEN '90 dias'
         ELSE 'Mais de 90 dias'
       END as periodo,
-      SUM(valor_total - COALESCE(valor_recebido, 0)) as valor
+      SUM(CASE WHEN pagamento_efetivado = 0 THEN faturamento_previsto_final ELSE 0 END) as valor
     FROM atendimentos
     WHERE tenant_id = ${sql.raw(String(tenantId))}
       AND deleted_at IS NULL
-      AND status_pagamento IN ('Pendente', 'Parcial')
-      AND data_previsao_pagamento >= CURDATE()
+      AND pagamento_efetivado = 0
+      AND data_esperada_pagamento >= CURDATE()
     GROUP BY periodo
     ORDER BY 
       CASE periodo
@@ -710,7 +710,7 @@ export async function getComparativoMensal(tenantId: number) {
   const resultado = await db.execute(sql`
     SELECT 
       DATE_FORMAT(data_atendimento, '%Y-%m') as mes,
-      SUM(valor_total) as faturamento,
+      SUM(faturamento_previsto_final) as faturamento,
       COUNT(*) as atendimentos
     FROM atendimentos
     WHERE tenant_id = ${tenantId}
@@ -844,7 +844,7 @@ export async function getAlertasPendentes(tenantId: number) {
         SELECT COUNT(*) FROM atendimentos
         WHERE tenant_id = ${tenantId}
           AND deleted_at IS NULL
-          AND status_pagamento = 'Pendente'
+          AND pagamento_efetivado = 0
           AND data_atendimento < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
       ) as total_alertas
   `);
