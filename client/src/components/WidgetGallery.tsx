@@ -653,59 +653,92 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
           
           {/* Área principal */}
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden border-l">
-            {/* Grid de widgets */}
+            {/* Grid de widgets - todos lado a lado */}
             <ScrollArea className="flex-1 h-full">
-              <div className="p-4 space-y-8">
-                {metricasFiltradas.map(metrica => {
-                  const tamanhos = tamanhosPermitidos[metrica.id] || ['pequeno', 'medio', 'grande'];
-                  const isNoDashboard = isMetricaNosDashboard(metrica.id);
-                  
-                  return (
-                    <div key={metrica.id} className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="p-1.5 rounded"
-                          style={{ backgroundColor: `${metrica.corPrimaria}20` }}
-                        >
-                          <div style={{ color: metrica.corPrimaria }}>
-                            {iconeMap[metrica.icone] || <LayoutGrid className="h-4 w-4" />}
+              <div className="p-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {metricasFiltradas.map(metrica => {
+                    const isNoDashboard = isMetricaNosDashboard(metrica.id);
+                    const isSelected = widgets.some(w => w.id === metrica.id);
+                    const tamanhoAtual = widgets.find(w => w.id === metrica.id)?.tamanho || 'pequeno';
+                    
+                    return (
+                      <div 
+                        key={metrica.id} 
+                        className={`relative p-3 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md ${
+                          isSelected 
+                            ? 'border-blue-500 bg-blue-50' 
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}
+                        onClick={() => {
+                          if (isSelected) {
+                            // Remove
+                            setWidgets(widgets.filter(w => w.id !== metrica.id));
+                          } else {
+                            // Adiciona com tamanho padrão
+                            const tamanhoDefault = (tamanhosPermitidos[metrica.id] || ['pequeno'])[0];
+                            const custo = custoSlots[tamanhoDefault];
+                            if (slotsDisponiveis >= custo) {
+                              setWidgets([...widgets, { id: metrica.id, tamanho: tamanhoDefault }]);
+                            }
+                          }
+                        }}
+                      >
+                        {/* Indicador de selecionado */}
+                        {isSelected && (
+                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                            <Check className="h-4 w-4 text-white" />
+                          </div>
+                        )}
+                        
+                        {/* Ícone e nome */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <div 
+                            className="p-2 rounded-lg"
+                            style={{ backgroundColor: `${metrica.corPrimaria}20` }}
+                          >
+                            <div style={{ color: metrica.corPrimaria }}>
+                              {iconeMap[metrica.icone] || <LayoutGrid className="h-4 w-4" />}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm truncate">{metrica.nome}</h3>
+                            <p className="text-xs text-muted-foreground truncate">{metrica.descricao}</p>
                           </div>
                         </div>
-                        <div>
-                          <h3 className="font-medium flex items-center gap-2">
-                            {metrica.nome}
-                            {isNoDashboard && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Check className="h-3 w-3 mr-1" />
-                                No Dashboard
-                              </Badge>
-                            )}
-                          </h3>
-                          <p className="text-xs text-muted-foreground">{metrica.descricao}</p>
+                        
+                        {/* Preview do gráfico */}
+                        <div className="h-16 flex items-center justify-center bg-slate-50 rounded-lg">
+                          <div style={{ color: metrica.corPrimaria, opacity: 0.5 }}>
+                            {metrica.tipoGrafico === 'numero' && <span className="text-2xl font-bold">123</span>}
+                            {metrica.tipoGrafico === 'pizza' && <PieChart className="h-8 w-8" />}
+                            {metrica.tipoGrafico === 'barra' && <BarChart3 className="h-8 w-8" />}
+                            {metrica.tipoGrafico === 'linha' && <TrendingUp className="h-8 w-8" />}
+                            {metrica.tipoGrafico === 'area' && <Activity className="h-8 w-8" />}
+                            {metrica.tipoGrafico === 'gauge' && <Activity className="h-8 w-8" />}
+                            {metrica.tipoGrafico === 'tabela' && <LayoutGrid className="h-8 w-8" />}
+                          </div>
+                        </div>
+                        
+                        {/* Badge de categoria */}
+                        <div className="mt-2 flex items-center justify-between">
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs"
+                            style={{ borderColor: metrica.corPrimaria, color: metrica.corPrimaria }}
+                          >
+                            {categorias.find(c => c.valor === metrica.categoria)?.label || metrica.categoria}
+                          </Badge>
+                          {isSelected && (
+                            <span className="text-xs text-muted-foreground">
+                              {custoSlots[tamanhoAtual]} slot{custoSlots[tamanhoAtual] !== 1 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      
-                      <div className="flex flex-wrap gap-3 pl-8">
-                        {tamanhos.map(tamanho => {
-                          const isSelected = isWidgetSelected(metrica.id, tamanho);
-                          const canAdd = podeAdicionar(tamanho, metrica.id);
-                          // Só mostrar se pode adicionar ou se já está selecionado
-                          if (!canAdd && !isSelected) return null;
-                          return (
-                            <WidgetPreview
-                              key={`${metrica.id}-${tamanho}`}
-                              metrica={metrica}
-                              tamanho={tamanho}
-                              isSelected={isSelected}
-                              onClick={() => toggleWidget(metrica.id, tamanho)}
-                              disabled={false}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
                 
                 {metricasFiltradas.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
