@@ -525,7 +525,10 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-[95vw] !w-[1400px] !h-[85vh] !max-h-[900px] p-0 gap-0 overflow-hidden">
+      <DialogContent 
+        className="sm:max-w-[95vw] w-[1400px] h-[85vh] max-h-[900px] p-0 gap-0 overflow-hidden bg-white"
+        showCloseButton={false}
+      >
         <div className="flex h-full">
           {/* Barra lateral */}
           <div className="w-[300px] min-w-[300px] bg-slate-50/80 backdrop-blur-sm border-r flex flex-col">
@@ -628,12 +631,20 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
                   Selecione os widgets para adicionar ao seu Dashboard
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Badge variant="outline" className="text-sm">
                   {widgets.length} widget{widgets.length !== 1 ? 's' : ''} selecionado{widgets.length !== 1 ? 's' : ''}
                 </Badge>
                 <Button onClick={handleSave}>
                   Concluído
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => onOpenChange(false)}
+                  className="h-8 w-8"
+                >
+                  <XCircle className="h-5 w-5" />
                 </Button>
               </div>
             </div>
