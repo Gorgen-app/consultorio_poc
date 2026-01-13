@@ -2043,3 +2043,16 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Persistência de configuração no banco de dados
 - [x] 249 testes passando
 
+
+
+---
+
+## 📋 PADRÕES DE CONDUTA - GORGEN
+
+### Tratamento de Dados Categóricos
+- [x] **Regra de Agrupamento "Outros"**: Sempre que uma variável categórica tiver categorias com menos de 5% do total, agrupar essas categorias sob o nome "Outros". Isso evita poluição visual nos gráficos e foca nos dados relevantes.
+  - [x] Aplicar em: Distribuição por Convênio (atendimentos e faturamento)
+  - [x] Aplicar em: Distribuição por Cidade
+  - [x] Aplicar em: Distribuição por Sexo
+  - [x] Função auxiliar `agruparCategoriasOutros()` criada em dashboardMetricas.ts
+

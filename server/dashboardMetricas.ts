@@ -46,6 +46,56 @@ function calcularDataInicio(periodo: PeriodoTempo): string {
 }
 
 // ========================================
+// FUNÇÃO AUXILIAR PARA AGRUPAMENTO DE CATEGORIAS
+// ========================================
+
+/**
+ * Agrupa categorias com menos de 5% do total sob o nome "Outros"
+ * Padrão de conduta do Gorgen para evitar poluição visual nos gráficos
+ */
+function agruparCategoriasOutros<T extends { nome?: string; convenio?: string; valor?: number; quantidade?: number }>(
+  dados: T[],
+  limitePercentual: number = 5
+): T[] {
+  if (!dados || dados.length === 0) return dados;
+  
+  // Calcular total
+  const total = dados.reduce((acc, item) => {
+    const valor = item.valor ?? item.quantidade ?? 0;
+    return acc + Number(valor);
+  }, 0);
+  
+  if (total === 0) return dados;
+  
+  const limiteAbsoluto = (limitePercentual / 100) * total;
+  
+  const categoriasGrandes: T[] = [];
+  let somaOutros = 0;
+  
+  for (const item of dados) {
+    const valor = Number(item.valor ?? item.quantidade ?? 0);
+    if (valor >= limiteAbsoluto) {
+      categoriasGrandes.push(item);
+    } else {
+      somaOutros += valor;
+    }
+  }
+  
+  // Se houver categorias agrupadas em "Outros", adicionar
+  if (somaOutros > 0) {
+    const outrosItem = {
+      nome: 'Outros',
+      convenio: 'Outros',
+      valor: somaOutros,
+      quantidade: somaOutros
+    } as T;
+    categoriasGrandes.push(outrosItem);
+  }
+  
+  return categoriasGrandes;
+}
+
+// ========================================
 // MÉTRICAS DE POPULAÇÃO DE PACIENTES
 // ========================================
 
@@ -103,7 +153,9 @@ export async function getPacientesDistribuicaoSexo(tenantId: number) {
   `);
   
   const rows = (resultado[0] as unknown) as any[];
-  return { dados: rows.map(r => ({ nome: r.nome, valor: Number(r.valor) })) };
+  const dados = rows.map(r => ({ nome: r.nome, valor: Number(r.valor) }));
+  // Aplicar regra de agrupamento: categorias < 5% viram "Outros"
+  return { dados: agruparCategoriasOutros(dados) };
 }
 
 export async function getPacientesFaixaEtaria(tenantId: number) {
@@ -149,11 +201,12 @@ export async function getPacientesDistribuicaoCidade(tenantId: number) {
       AND deleted_at IS NULL
     GROUP BY COALESCE(cidade, 'Não informado')
     ORDER BY valor DESC
-    LIMIT 10
   `);
   
   const rows = (resultado[0] as unknown) as any[];
-  return { dados: rows.map(r => ({ nome: r.nome, valor: Number(r.valor) })) };
+  const dados = rows.map(r => ({ nome: r.nome, valor: Number(r.valor) }));
+  // Aplicar regra de agrupamento: categorias < 5% viram "Outros"
+  return { dados: agruparCategoriasOutros(dados) };
 }
 
 export async function getPacientesTaxaRetencao(tenantId: number, periodo: PeriodoTempo) {
@@ -412,10 +465,12 @@ export async function getAtendimentosPorConvenio(tenantId: number, periodo: Peri
       AND data_atendimento >= ${dataInicio}
     GROUP BY convenio
     ORDER BY quantidade DESC
-    LIMIT 10
   `);
   
-  return { dados: resultado[0] || [] };
+  const rows = (resultado[0] as unknown) as any[];
+  const dados = rows.map(r => ({ convenio: r.convenio, quantidade: Number(r.quantidade) }));
+  // Aplicar regra de agrupamento: categorias < 5% viram "Outros"
+  return { dados: agruparCategoriasOutros(dados) };
 }
 
 export async function getAtendimentosMediaDiaria(tenantId: number, periodo: PeriodoTempo) {
@@ -568,10 +623,12 @@ export async function getFaturamentoPorConvenio(tenantId: number, periodo: Perio
       AND data_atendimento >= ${dataInicio}
     GROUP BY convenio
     ORDER BY valor DESC
-    LIMIT 10
   `);
   
-  return { dados: resultado[0] || [] };
+  const rows = (resultado[0] as unknown) as any[];
+  const dados = rows.map(r => ({ convenio: r.convenio, valor: Number(r.valor) }));
+  // Aplicar regra de agrupamento: categorias < 5% viram "Outros"
+  return { dados: agruparCategoriasOutros(dados) };
 }
 
 export async function getTicketMedio(tenantId: number, periodo: PeriodoTempo) {
