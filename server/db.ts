@@ -2009,36 +2009,48 @@ export async function listAgendamentos(filters?: {
   const db = await getDb();
   if (!db) return [];
   
-  
-  
-  // Buscar todos os agendamentos ordenados por data
-  const result = await db.select().from(agendamentos).orderBy(asc(agendamentos.dataHoraInicio));
-  
-  console.log('[listAgendamentos] Encontrados:', result.length, 'agendamentos');
-  
-  // Filtrar no JavaScript para garantir que funciona
-  let filtered = result;
+  // Construir condições SQL para filtrar no banco (muito mais rápido)
+  const conditions = [eq(agendamentos.tenantId, 1)];
   
   if (filters?.dataInicio) {
-    const inicio = new Date(filters.dataInicio).getTime();
-    filtered = filtered.filter(ag => new Date(ag.dataHoraInicio).getTime() >= inicio);
+    conditions.push(gte(agendamentos.dataHoraInicio, filters.dataInicio));
   }
   if (filters?.dataFim) {
-    const fim = new Date(filters.dataFim).getTime();
-    filtered = filtered.filter(ag => new Date(ag.dataHoraInicio).getTime() <= fim);
+    conditions.push(lte(agendamentos.dataHoraInicio, filters.dataFim));
   }
   if (filters?.pacienteId) {
-    filtered = filtered.filter(ag => ag.pacienteId === filters.pacienteId);
+    conditions.push(eq(agendamentos.pacienteId, filters.pacienteId));
   }
   if (filters?.tipo) {
-    filtered = filtered.filter(ag => ag.tipoCompromisso === filters.tipo);
+    conditions.push(eq(agendamentos.tipoCompromisso, filters.tipo as any));
   }
   if (filters?.status) {
-    filtered = filtered.filter(ag => ag.status === filters.status);
+    conditions.push(eq(agendamentos.status, filters.status as any));
   }
   
-  console.log('[listAgendamentos] Após filtros:', filtered.length, 'agendamentos');
-  return filtered;
+  // Query otimizada com filtros SQL e limite de campos
+  const result = await db.select({
+    id: agendamentos.id,
+    idAgendamento: agendamentos.idAgendamento,
+    tipoCompromisso: agendamentos.tipoCompromisso,
+    pacienteId: agendamentos.pacienteId,
+    pacienteNome: agendamentos.pacienteNome,
+    dataHoraInicio: agendamentos.dataHoraInicio,
+    dataHoraFim: agendamentos.dataHoraFim,
+    status: agendamentos.status,
+    local: agendamentos.local,
+    titulo: agendamentos.titulo,
+    descricao: agendamentos.descricao,
+    convenio: agendamentos.convenio,
+    telefonePaciente: agendamentos.telefonePaciente,
+    cpfPaciente: agendamentos.cpfPaciente,
+  })
+    .from(agendamentos)
+    .where(and(...conditions))
+    .orderBy(asc(agendamentos.dataHoraInicio))
+    .limit(500); // Limitar para performance
+  
+  return result;
 }
 
 // Cancelar agendamento (não apaga, apenas marca como cancelado)
@@ -4408,4 +4420,72 @@ export async function listAgendamentosPendentesVinculacao() {
     )
     .orderBy(desc(agendamentos.dataHoraInicio))
     .limit(500);
+}
+
+
+// ===== BUSCA RÁPIDA DE PACIENTES (AUTOCOMPLETE) =====
+
+/**
+ * Busca rápida de pacientes para autocomplete
+ * Retorna apenas campos essenciais para performance
+ */
+export async function searchPacientesRapido(termo: string, limit: number = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (!termo || termo.length < 2) return [];
+  
+  const termoLower = termo.toLowerCase().trim();
+  const termoNumerico = termo.replace(/\D/g, '');
+  
+  // Buscar por ID se for número
+  if (termoNumerico && termoNumerico.length > 0) {
+    const byId = await db.select({
+      id: pacientes.id,
+      idPaciente: pacientes.idPaciente,
+      nome: pacientes.nome,
+      cpf: pacientes.cpf,
+      dataNascimento: pacientes.dataNascimento,
+      telefone: pacientes.telefone,
+      convenio: pacientes.operadora1,
+      email: pacientes.email,
+    })
+      .from(pacientes)
+      .where(
+        and(
+          eq(pacientes.tenantId, 1),
+          or(
+            eq(pacientes.id, parseInt(termoNumerico)),
+            like(pacientes.idPaciente, `%${termoNumerico}%`),
+            like(pacientes.cpf, `%${termoNumerico}%`)
+          )
+        )
+      )
+      .limit(limit);
+    
+    if (byId.length > 0) return byId;
+  }
+  
+  // Buscar por nome
+  const byNome = await db.select({
+    id: pacientes.id,
+    idPaciente: pacientes.idPaciente,
+    nome: pacientes.nome,
+    cpf: pacientes.cpf,
+    dataNascimento: pacientes.dataNascimento,
+    telefone: pacientes.telefone,
+    convenio: pacientes.operadora1,
+    email: pacientes.email,
+  })
+    .from(pacientes)
+    .where(
+      and(
+        eq(pacientes.tenantId, 1),
+        like(sql`LOWER(${pacientes.nome})`, `%${termoLower}%`)
+      )
+    )
+    .orderBy(pacientes.nome)
+    .limit(limit);
+  
+  return byNome;
 }

@@ -2245,3 +2245,14 @@ A dashboard deve integrar **medicina e administração**:
 - [x] BUG: Eventos com emoji X ou sirene devem ser classificados como "Falta" (195 eventos atualizados)
 - [x] BUG: Eventos importados corretamente (9 eventos em 14/01, 9 em 09/01) - problema era de visualização
 
+
+### Melhorias de Performance e UX - 14/01/2026
+- [x] Otimizar performance das queries de agenda (filtros SQL + limite de campos)
+- [x] Otimizar performance da função copiar atendimento (searchRapido)
+- [x] Adicionar ícones de status para consultas (agendada, confirmada, aguardando, em consulta, finalizada)
+- [x] Adicionar ícones de status para cirurgias (agendada, autorizada, confirmada, realizada)
+- [x] Redesenhar modal de agendamento inspirado no Google Calendar
+- [x] Dropdown para tipo de atendimento no modal (já existia)
+- [x] Busca inteligente de paciente (ID/nome/CPF) com preenchimento automático
+- [x] Criar paciente automaticamente se não existir no sistema
+

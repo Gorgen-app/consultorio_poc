@@ -21,7 +21,21 @@ import {
   Check,
   AlertCircle,
   Ban,
-  Lock
+  Lock,
+  // Ícones de status para consultas
+  CalendarCheck,
+  CalendarClock,
+  UserCheck,
+  Stethoscope,
+  CheckCircle2,
+  XCircle,
+  // Ícones de status para cirurgias
+  FileCheck,
+  ClipboardCheck,
+  Scissors,
+  // Ícones gerais
+  Search,
+  Loader2
 } from "lucide-react";
 
 // Tipos de compromisso
@@ -124,11 +138,44 @@ function getFeriado(data: Date): string | null {
 const CORES_STATUS: Record<string, string> = {
   "Agendado": "border-l-4 border-l-blue-500",
   "Confirmado": "border-l-4 border-l-green-500",
+  "Aguardando": "border-l-4 border-l-yellow-500",
+  "Em atendimento": "border-l-4 border-l-purple-500",
   "Realizado": "border-l-4 border-l-gray-400",
   "Cancelado": "border-l-4 border-l-red-500 opacity-50",
-  "Reagendado": "border-l-4 border-l-yellow-500 opacity-50",
+  "Reagendado": "border-l-4 border-l-amber-500 opacity-50",
   "Faltou": "border-l-4 border-l-orange-500 opacity-50",
+  // Status de cirurgia
+  "Autorizada": "border-l-4 border-l-teal-500",
 };
+
+// Ícones de status para consultas
+const ICONES_STATUS_CONSULTA: Record<string, { icon: React.ElementType; color: string; label: string }> = {
+  "Agendado": { icon: CalendarCheck, color: "text-blue-500", label: "Agendada" },
+  "Confirmado": { icon: UserCheck, color: "text-green-500", label: "Confirmada" },
+  "Aguardando": { icon: CalendarClock, color: "text-yellow-500", label: "Aguardando" },
+  "Em atendimento": { icon: Stethoscope, color: "text-purple-500", label: "Em Consulta" },
+  "Realizado": { icon: CheckCircle2, color: "text-gray-500", label: "Finalizada" },
+  "Cancelado": { icon: XCircle, color: "text-red-400", label: "Cancelada" },
+  "Reagendado": { icon: RefreshCw, color: "text-amber-500", label: "Reagendada" },
+  "Faltou": { icon: Ban, color: "text-orange-500", label: "Faltou" },
+};
+
+// Ícones de status para cirurgias
+const ICONES_STATUS_CIRURGIA: Record<string, { icon: React.ElementType; color: string; label: string }> = {
+  "Agendado": { icon: CalendarCheck, color: "text-blue-500", label: "Agendada" },
+  "Autorizada": { icon: FileCheck, color: "text-teal-500", label: "Autorizada" },
+  "Confirmado": { icon: ClipboardCheck, color: "text-green-500", label: "Confirmada" },
+  "Realizado": { icon: Scissors, color: "text-gray-500", label: "Realizada" },
+  "Cancelado": { icon: XCircle, color: "text-red-400", label: "Cancelada" },
+};
+
+// Função para obter ícone de status
+function getStatusIcon(status: string, tipo: string) {
+  if (tipo === "Cirurgia") {
+    return ICONES_STATUS_CIRURGIA[status] || ICONES_STATUS_CONSULTA[status];
+  }
+  return ICONES_STATUS_CONSULTA[status];
+}
 
 export default function Agenda() {
   // toast from sonner
@@ -169,9 +216,25 @@ export default function Agenda() {
     descricao: "",
   });
 
-  // Busca de pacientes
+  // Busca de pacientes - otimizada com searchRapido
   const [buscaPaciente, setBuscaPaciente] = useState("");
-  const { data: pacientes } = trpc.pacientes.list.useQuery({});
+  const [buscaPacienteDebounced, setBuscaPacienteDebounced] = useState("");
+  const [showPacienteDropdown, setShowPacienteDropdown] = useState(false);
+  const [pacienteSelecionadoInfo, setPacienteSelecionadoInfo] = useState<any>(null);
+  
+  // Debounce da busca de pacientes (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setBuscaPacienteDebounced(buscaPaciente);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [buscaPaciente]);
+  
+  // Query otimizada - só busca quando tem pelo menos 2 caracteres
+  const { data: pacientesSearch, isLoading: isSearchingPacientes } = trpc.pacientes.searchRapido.useQuery(
+    { termo: buscaPacienteDebounced, limit: 15 },
+    { enabled: buscaPacienteDebounced.length >= 2 }
+  );
 
   // Calcular período baseado na visualização
   const periodo = useMemo(() => {
@@ -372,18 +435,8 @@ export default function Agenda() {
   // Horários do dia (7h às 20h)
   const horarios = Array.from({ length: 14 }, (_, i) => i + 7);
 
-  // Filtrar pacientes para autocomplete
-  const pacientesFiltrados = useMemo(() => {
-    if (!buscaPaciente || buscaPaciente.length < 2) return [];
-    const termo = buscaPaciente.toLowerCase();
-    return (pacientes || [])
-      .filter((p: any) => 
-        p.nome?.toLowerCase().includes(termo) || 
-        p.cpf?.includes(termo) ||
-        p.idPaciente?.includes(termo)
-      )
-      .slice(0, 10);
-  }, [buscaPaciente, pacientes]);
+  // Usar resultados da busca rápida otimizada
+  const pacientesFiltrados = pacientesSearch || [];
 
   // Agrupar agendamentos por dia e hora
   const agendamentosPorDia = useMemo(() => {
@@ -407,9 +460,26 @@ export default function Agenda() {
       toast.error("Preencha data e horários");
       return;
     }
+    
+    // Validar paciente para tipos que exigem
+    if (novoAgendamento.tipoCompromisso !== "Reunião" && !novoAgendamento.pacienteId && !novoAgendamento.pacienteNome) {
+      toast.error("Selecione um paciente ou digite o nome para criar um novo");
+      return;
+    }
 
     const dataHoraInicio = new Date(`${novoAgendamento.data}T${novoAgendamento.horaInicio}`);
     const dataHoraFim = new Date(`${novoAgendamento.data}T${novoAgendamento.horaFim}`);
+    
+    // Preparar dados do novo paciente se necessário
+    const novoPaciente = !novoAgendamento.pacienteId && novoAgendamento.pacienteNome && novoAgendamento.tipoCompromisso !== "Reunião"
+      ? {
+          nome: novoAgendamento.pacienteNome,
+          telefone: undefined,
+          email: undefined,
+          cpf: undefined,
+          convenio: undefined,
+        }
+      : undefined;
 
     createAgendamento.mutate({
       idAgendamento: nextAgendamentoId || `AG-${new Date().getFullYear()}-00001`,
@@ -421,6 +491,7 @@ export default function Agenda() {
       local: novoAgendamento.local || null,
       titulo: novoAgendamento.titulo || null,
       descricao: novoAgendamento.descricao || null,
+      novoPaciente,
     });
   };
 
@@ -484,6 +555,8 @@ export default function Agenda() {
   // Renderizar agendamento no calendário
   const renderAgendamento = (ag: any) => {
     const isCancelado = ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou";
+    const statusInfo = getStatusIcon(ag.status, ag.tipoCompromisso);
+    const StatusIcon = statusInfo?.icon;
     
     // Calcular duração em minutos para definir altura proporcional
     const inicio = new Date(ag.dataHoraInicio);
@@ -505,9 +578,11 @@ export default function Agenda() {
           ${isCancelado ? "opacity-40 line-through" : "hover:opacity-90"}
           ${CORES_STATUS[ag.status]}
         `}
+        title={statusInfo?.label || ag.status}
       >
-        <div className="font-medium truncate">
-          {formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
+        <div className="font-medium truncate flex items-center gap-0.5">
+          {StatusIcon && <StatusIcon className="w-3 h-3 flex-shrink-0" />}
+          <span>{formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}</span>
         </div>
         {duracaoMinutos >= 30 && ag.local && <div className="text-[9px] opacity-80 truncate">{ag.local}</div>}
       </div>
@@ -823,27 +898,113 @@ export default function Agenda() {
             </div>
 
             {novoAgendamento.tipoCompromisso !== "Reunião" && (
-              <div>
+              <div className="space-y-2">
                 <Label>Paciente</Label>
-                <Input
-                  placeholder="Buscar por nome, CPF ou ID..."
-                  value={buscaPaciente}
-                  onChange={(e) => setBuscaPaciente(e.target.value)}
-                />
-                {pacientesFiltrados.length > 0 && (
-                  <div className="mt-1 border rounded max-h-40 overflow-y-auto">
-                    {pacientesFiltrados.map((p: any) => (
-                      <div
-                        key={p.id}
-                        className="p-2 hover:bg-muted cursor-pointer"
-                        onClick={() => selecionarPaciente(p)}
-                      >
-                        <div className="font-medium">{p.nome}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {p.idPaciente} | {p.cpf}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome, CPF ou ID..."
+                    value={buscaPaciente}
+                    onChange={(e) => {
+                      setBuscaPaciente(e.target.value);
+                      setShowPacienteDropdown(true);
+                      // Limpar seleção se o usuário editar o campo
+                      if (pacienteSelecionadoInfo && e.target.value !== pacienteSelecionadoInfo.nome) {
+                        setPacienteSelecionadoInfo(null);
+                        setNovoAgendamento(prev => ({ ...prev, pacienteId: null, pacienteNome: "" }));
+                      }
+                    }}
+                    onFocus={() => setShowPacienteDropdown(true)}
+                    className="pl-9 pr-8"
+                  />
+                  {isSearchingPacientes && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+                
+                {/* Card do paciente selecionado */}
+                {pacienteSelecionadoInfo && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-green-800">{pacienteSelecionadoInfo.nome}</div>
+                        <div className="text-xs text-green-600">
+                          ID: {pacienteSelecionadoInfo.idPaciente} | CPF: {pacienteSelecionadoInfo.cpf || "N/A"}
                         </div>
+                        {pacienteSelecionadoInfo.telefone && (
+                          <div className="text-xs text-green-600">Tel: {pacienteSelecionadoInfo.telefone}</div>
+                        )}
+                        {pacienteSelecionadoInfo.operadora1 && (
+                          <div className="text-xs text-green-600">Convênio: {pacienteSelecionadoInfo.operadora1}</div>
+                        )}
                       </div>
-                    ))}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setPacienteSelecionadoInfo(null);
+                          setBuscaPaciente("");
+                          setNovoAgendamento(prev => ({ ...prev, pacienteId: null, pacienteNome: "" }));
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Dropdown de resultados */}
+                {showPacienteDropdown && !pacienteSelecionadoInfo && buscaPaciente.length >= 2 && (
+                  <div className="border rounded-lg shadow-lg max-h-48 overflow-y-auto bg-background">
+                    {isSearchingPacientes ? (
+                      <div className="p-4 text-center text-muted-foreground">
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                        Buscando pacientes...
+                      </div>
+                    ) : pacientesFiltrados.length > 0 ? (
+                      pacientesFiltrados.map((p: any) => (
+                        <div
+                          key={p.id}
+                          className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 transition-colors"
+                          onClick={() => {
+                            selecionarPaciente(p);
+                            setPacienteSelecionadoInfo(p);
+                            setShowPacienteDropdown(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <User className="w-4 h-4 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{p.nome}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {p.idPaciente} {p.cpf && `| CPF: ${p.cpf}`} {p.operadora1 && `| ${p.operadora1}`}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center">
+                        <div className="text-muted-foreground mb-2">Nenhum paciente encontrado</div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Criar novo paciente com o nome digitado
+                            setNovoAgendamento(prev => ({ ...prev, pacienteNome: buscaPaciente }));
+                            setShowPacienteDropdown(false);
+                            toast.info("Paciente será criado automaticamente ao salvar o agendamento");
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Criar novo paciente: "{buscaPaciente}"
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -537,6 +537,16 @@ export const appRouter = router({
         return { inativados: count };
       }),
 
+    // Busca rápida de pacientes para autocomplete (otimizada)
+    searchRapido: protectedProcedure
+      .input(z.object({
+        termo: z.string(),
+        limit: z.number().optional().default(20),
+      }))
+      .query(async ({ input }) => {
+        return await db.searchPacientesRapido(input.termo, input.limit);
+      }),
+
     // Buscar pacientes ativos com 360+ dias sem atendimento (para notificação)
     buscarPacientesInativos: tenantProcedure
       .query(async ({ ctx }) => {
@@ -1491,10 +1501,59 @@ export const appRouter = router({
         local: z.string().optional().nullable(),
         titulo: z.string().optional().nullable(),
         descricao: z.string().optional().nullable(),
+        // Dados para criação automática de paciente
+        novoPaciente: z.object({
+          nome: z.string(),
+          telefone: z.string().optional(),
+          email: z.string().optional(),
+          cpf: z.string().optional(),
+          convenio: z.string().optional(),
+        }).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        let pacienteId = input.pacienteId;
+        let pacienteNome = input.pacienteNome;
+        
+        // Se não tem pacienteId mas tem novoPaciente, criar automaticamente
+        if (!pacienteId && input.novoPaciente && input.tipoCompromisso !== "Reunião") {
+          // Gerar próximo ID de paciente
+          const nextId = await db.getNextPacienteId(1); // tenantId padrão
+          
+          // Criar paciente com dados mínimos
+          const novoPaciente = await db.createPaciente(1, {
+            idPaciente: nextId,
+            nome: input.novoPaciente.nome,
+            telefone: input.novoPaciente.telefone || null,
+            email: input.novoPaciente.email || null,
+            cpf: input.novoPaciente.cpf || null,
+            operadora1: input.novoPaciente.convenio || null,
+            dataInclusao: new Date().toISOString().split('T')[0],
+          } as any);
+          
+          pacienteId = novoPaciente.id;
+          pacienteNome = input.novoPaciente.nome;
+          
+          // Registrar auditoria da criação automática
+          await db.createAuditLog(
+            "CREATE",
+            "paciente",
+            novoPaciente.id,
+            nextId,
+            null,
+            { ...input.novoPaciente, origem: "agendamento_automatico" },
+            {
+              userId: ctx.user?.id,
+              userName: ctx.user?.name || undefined,
+              userEmail: ctx.user?.email || undefined,
+              tenantId: 1,
+            }
+          );
+        }
+        
         return await db.createAgendamento({
           ...input,
+          pacienteId,
+          pacienteNome,
           criadoPor: ctx.user?.name || "Sistema",
         } as any);
       }),
