@@ -800,12 +800,11 @@ export default function Agenda() {
                     // Usar data local para a chave (YYYY-MM-DD)
                     const chave = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
                     const agendamentosDia = agendamentosPorDia[chave] || [];
-                    // Filtrar agendamentos que começam nesta hora (00 ou 30 minutos)
+                    // Filtrar agendamentos que começam nesta hora (qualquer minuto)
                     const agendamentosHora = agendamentosDia.filter((ag: any) => {
                       const dataAg = new Date(ag.dataHoraInicio);
                       const horaAg = dataAg.getHours();
-                      const minutosAg = dataAg.getMinutes();
-                      return horaAg === hora && (minutosAg === 0 || minutosAg === 30);
+                      return horaAg === hora;
                     });
                     const feriado = getFeriado(dia);
                     const isHoje = dia.toDateString() === new Date().toDateString();
