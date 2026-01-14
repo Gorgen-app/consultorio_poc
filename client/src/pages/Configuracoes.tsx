@@ -419,8 +419,8 @@ export default function Configuracoes() {
             </Button>
           </Link>
           
-          {/* Botão para Backup */}
-          {(currentPerfil === "admin_master" || currentPerfil === "medico") && (
+          {/* Botão para Backup - Apenas Admin Master */}
+          {currentPerfil === "admin_master" && (
             <Link href="/configuracoes/backup">
               <Button
                 variant="ghost"

@@ -35,6 +35,7 @@ export type Funcionalidade =
   | 'relatorios.financeiro'
   | 'configuracoes'
   | 'configuracoes.sistema'
+  | 'configuracoes.backup'
   | 'usuarios'
   | 'usuarios.criar'
   | 'usuarios.editar'
@@ -67,6 +68,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'relatorios.financeiro': true,
     configuracoes: true,
     'configuracoes.sistema': true,
+    'configuracoes.backup': true,
     usuarios: true,
     'usuarios.criar': true,
     'usuarios.editar': true,
@@ -97,6 +99,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'relatorios.financeiro': false, // Médico não vê relatórios financeiros
     configuracoes: true,
     'configuracoes.sistema': false,
+    'configuracoes.backup': false, // Backup apenas para Admin Master
     usuarios: false,
     'usuarios.criar': false,
     'usuarios.editar': false,
@@ -127,6 +130,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'relatorios.financeiro': false,
     configuracoes: true,
     'configuracoes.sistema': false,
+    'configuracoes.backup': false, // Backup apenas para Admin Master
     usuarios: false,
     'usuarios.criar': false,
     'usuarios.editar': false,
@@ -157,6 +161,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'relatorios.financeiro': true, // Pode ver relatórios financeiros
     configuracoes: true,
     'configuracoes.sistema': false,
+    'configuracoes.backup': false, // Backup apenas para Admin Master
     usuarios: false,
     'usuarios.criar': false,
     'usuarios.editar': false,
@@ -187,6 +192,7 @@ export const permissoesPorPerfil: Record<PerfilType, Record<Funcionalidade, bool
     'relatorios.financeiro': false,
     configuracoes: true, // Pode acessar suas configurações
     'configuracoes.sistema': false,
+    'configuracoes.backup': false, // Backup apenas para Admin Master
     usuarios: false,
     'usuarios.criar': false,
     'usuarios.editar': false,

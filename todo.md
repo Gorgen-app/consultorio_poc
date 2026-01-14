@@ -2166,6 +2166,7 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Alerta sobre importância do backup offline mensal
 
 ### Pendente
+- [x] Restringir acesso ao backup apenas para Admin Master
 - [ ] Testes automatizados (vitest) para funções de backup
 - [ ] Cron job real para backups automáticos (agendamento via Manus)
 - [ ] Página de restauração de backup

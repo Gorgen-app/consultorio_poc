@@ -108,7 +108,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/configuracoes/backup">
-        <ProtectedRoute funcionalidade="configuracoes">
+        <ProtectedRoute funcionalidade="configuracoes.backup">
           <BackupSettings />
         </ProtectedRoute>
       </Route>
