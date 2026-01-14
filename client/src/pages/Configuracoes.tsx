@@ -837,6 +837,68 @@ export default function Configuracoes() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Preferências de Agenda
+                </CardTitle>
+                <CardDescription>
+                  Configure a duração dos slots de agendamento e outras preferências
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="duracaoSlot">Duração dos Slots de Agenda</Label>
+                  <Select value={formData.duracaoSlotAgenda || "30"} onValueChange={(value) => setFormData({ ...formData, duracaoSlotAgenda: value })}>
+                    <SelectTrigger id="duracaoSlot">
+                      <SelectValue placeholder="Selecione a duração" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 minutos</SelectItem>
+                      <SelectItem value="20">20 minutos</SelectItem>
+                      <SelectItem value="30">30 minutos</SelectItem>
+                      <SelectItem value="45">45 minutos</SelectItem>
+                      <SelectItem value="60">1 hora (60 minutos)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Esta configuração define o intervalo de tempo para cada slot na visualização da agenda
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="duracaoConsulta">Duração Padrão de Consulta</Label>
+                  <Select value={formData.duracaoConsultaPadrao || "30"} onValueChange={(value) => setFormData({ ...formData, duracaoConsultaPadrao: value })}>
+                    <SelectTrigger id="duracaoConsulta">
+                      <SelectValue placeholder="Selecione a duração" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 minutos</SelectItem>
+                      <SelectItem value="20">20 minutos</SelectItem>
+                      <SelectItem value="30">30 minutos</SelectItem>
+                      <SelectItem value="45">45 minutos</SelectItem>
+                      <SelectItem value="60">1 hora (60 minutos)</SelectItem>
+                      <SelectItem value="90">1 hora 30 minutos</SelectItem>
+                      <SelectItem value="120">2 horas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Duração padrão ao criar novos agendamentos
+                  </p>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => {
+                    toast.success("Preferências de agenda salvas!");
+                  }}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar Preferências
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 

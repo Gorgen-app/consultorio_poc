@@ -1651,6 +1651,7 @@ export const profissionais = mysqlTable("profissionais", {
   // Configurações de agenda
   corAgenda: varchar("cor_agenda", { length: 7 }).default("#3B82F6"), // Cor hex para identificação visual
   duracaoConsultaPadrao: int("duracao_consulta_padrao").default(30), // minutos
+  duracaoSlotAgenda: int("duracao_slot_agenda").default(30), // minutos - duração dos slots na agenda (15, 20, 30, 45, 60)
   
   // Status
   ativo: boolean("ativo").default(true),

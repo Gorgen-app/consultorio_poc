@@ -305,6 +305,10 @@ export default function Agenda() {
       gcTime: 10 * 60 * 1000, // Manter em cache por 10 minutos
     }
   );
+  
+  // Buscar a duração de slot do profissional selecionado
+  const profissionalAtual = profissionais?.find(p => String(p.id) === profissionalSelecionado);
+  const duracaoSlotProfissional = profissionalAtual?.duracaoSlotAgenda || 30;
 
   // Mutations
   const createAgendamento = trpc.agenda.create.useMutation({
@@ -459,7 +463,28 @@ export default function Agenda() {
     return dias;
   }, [periodo.inicio]);
 
-  // Horários do dia (7h às 20h)
+  // Gerar slots baseado na duração configurada do profissional
+  // Se não houver profissional selecionado, usar 30 minutos como padrão
+  const duracaoSlot = duracaoSlotProfissional || 30;
+  
+  // Gerar array de slots (hora:minuto) de 7:00 até 20:00
+  const slots = useMemo(() => {
+    const slotsArray = [];
+    let hora = 7;
+    let minuto = 0;
+    
+    while (hora < 20 || (hora === 20 && minuto === 0)) {
+      slotsArray.push({ hora, minuto, label: `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}` });
+      minuto += duracaoSlot;
+      if (minuto >= 60) {
+        hora += Math.floor(minuto / 60);
+        minuto = minuto % 60;
+      }
+    }
+    return slotsArray;
+  }, [duracaoSlot]);
+  
+  // Manter compatibilidade com código existente que usa apenas horas
   const horarios = Array.from({ length: 14 }, (_, i) => i + 7);
 
   // Usar resultados da busca rápida otimizada
@@ -765,14 +790,21 @@ export default function Agenda() {
               {horarios.map((hora) => (
                 <div key={hora} className="grid grid-cols-8 border-b h-12">
                   <div className="px-1 py-0.5 text-center text-xs text-muted-foreground border-r bg-muted flex items-center justify-center">
-                    {hora.toString().padStart(2, "0")}:00
+                    <div className="flex flex-col items-center">
+                      <div>{hora.toString().padStart(2, "0")}:00</div>
+                      <div className="text-[9px] opacity-60">-{(hora + 1).toString().padStart(2, "0")}:00</div>
+                    </div>
                   </div>
                   {diasSemana.map((dia, i) => {
                     // Usar data local para a chave (YYYY-MM-DD)
                     const chave = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
                     const agendamentosDia = agendamentosPorDia[chave] || [];
                     const agendamentosHora = agendamentosDia.filter((ag: any) => {
-                      const horaAg = new Date(ag.dataHoraInicio).getHours();
+                      const dataAg = new Date(ag.dataHoraInicio);
+                      const horaAg = dataAg.getHours();
+                      const minutosAg = dataAg.getMinutes();
+                      // Agendamento está neste slot de hora se começa nesta hora
+                      // (considerando que cada slot é de 1 hora)
                       return horaAg === hora;
                     });
                     const feriado = getFeriado(dia);
