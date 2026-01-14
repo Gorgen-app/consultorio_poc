@@ -3250,6 +3250,36 @@ Retorne um JSON válido com a estrutura:
       .mutation(async ({ ctx }) => {
         return await backup.generateMonthlyAuditReport(ctx.tenant.tenantId);
       }),
+
+    // Executar teste de restauração em ambiente isolado
+    runRestoreTest: tenantProcedure
+      .input(z.object({
+        backupId: z.number().optional(), // Se não informado, usa o backup mais recente
+      }).optional())
+      .mutation(async ({ ctx, input }) => {
+        const auditInfo = {
+          userId: ctx.user?.id?.toString(),
+          userIp: ctx.req.ip || ctx.req.headers['x-forwarded-for']?.toString() || ctx.req.socket.remoteAddress || 'unknown',
+        };
+        return await backup.runRestoreTest(
+          ctx.tenant.tenantId,
+          input?.backupId,
+          auditInfo.userId,
+          auditInfo.userIp
+        );
+      }),
+
+    // Obter histórico de testes de restauração
+    getRestoreTestHistory: tenantProcedure
+      .input(z.object({
+        limit: z.number().default(10),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await backup.getRestoreTestHistory(
+          ctx.tenant.tenantId,
+          input?.limit || 10
+        );
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

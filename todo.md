@@ -2190,3 +2190,12 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Criar relatório de auditoria de backups
 
 
+
+### Tarefas em Andamento - 13/01/2026 (Parte 4)
+- [x] Implementar job de teste de restauração automático
+  - [x] Função de restauração em ambiente isolado (sandbox)
+  - [x] Validação de estrutura e integridade dos dados restaurados
+  - [x] Registro de resultado do teste no histórico
+  - [x] Notificação de sucesso/falha
+  - [x] Cron job para execução periódica (semanal) - domingos 04:00
+

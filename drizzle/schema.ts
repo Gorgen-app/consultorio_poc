@@ -1437,6 +1437,10 @@ export const backupHistory = mysqlTable("backup_history", {
   isEncrypted: boolean("is_encrypted").default(false), // Indica se o backup está criptografado
   encryptionAlgorithm: varchar("encryption_algorithm", { length: 50 }), // Ex: AES-256-GCM
   
+  // Verificação de integridade
+  lastVerifiedAt: timestamp("last_verified_at"), // Última verificação de integridade
+  verificationStatus: mysqlEnum("verification_status", ["pending", "valid", "invalid", "error"]).default("pending"),
+  
   // Timestamps de auditoria
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),

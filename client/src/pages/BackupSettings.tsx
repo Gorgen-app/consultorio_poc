@@ -36,7 +36,9 @@ import {
   TrendingUp,
   Activity,
   ClipboardList,
-  Download
+  Download,
+  FlaskConical,
+  Play
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -64,6 +66,10 @@ export default function BackupSettings() {
   // Estado para relatório de auditoria
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [auditReport, setAuditReport] = useState<any>(null);
+  
+  // Estado para teste de restauração
+  const [isRunningRestoreTest, setIsRunningRestoreTest] = useState(false);
+  const [restoreTestResult, setRestoreTestResult] = useState<any>(null);
   const [reportStartDate, setReportStartDate] = useState(() => {
     const d = new Date();
     d.setMonth(d.getMonth() - 1);
@@ -200,6 +206,26 @@ export default function BackupSettings() {
     },
   });
 
+  const runRestoreTestMutation = trpc.backup.runRestoreTest.useMutation({
+    onSuccess: (result) => {
+      setIsRunningRestoreTest(false);
+      setRestoreTestResult(result);
+      if (result.success) {
+        toast.success("Teste de restauração APROVADO!", {
+          description: `${result.summary?.passedValidations}/${result.summary?.totalValidations} validações aprovadas.`
+        });
+      } else {
+        toast.error("Teste de restauração FALHOU", {
+          description: result.error || `${result.summary?.failedValidations} validações falharam.`
+        });
+      }
+    },
+    onError: (error) => {
+      setIsRunningRestoreTest(false);
+      toast.error("Erro ao executar teste", { description: error.message });
+    },
+  });
+
   const generateAuditReportMutation = trpc.backup.generateAuditReport.useMutation({
     onSuccess: (result) => {
       setIsGeneratingReport(false);
@@ -279,6 +305,11 @@ export default function BackupSettings() {
     runIntegrityCheckMutation.mutate({ daysBack: 30 });
   };
 
+  const handleRunRestoreTest = () => {
+    setIsRunningRestoreTest(true);
+    runRestoreTestMutation.mutate({});
+  };
+
   const handleGenerateAuditReport = () => {
     setIsGeneratingReport(true);
     setAuditReport(null);
@@ -347,7 +378,7 @@ export default function BackupSettings() {
 
       {/* Tabs: Backup / Restauração / Integridade / Auditoria */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+        <TabsList className="grid w-full grid-cols-5 max-w-3xl">
           <TabsTrigger value="backup" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
             Backup
@@ -363,6 +394,10 @@ export default function BackupSettings() {
           <TabsTrigger value="audit" className="flex items-center gap-2">
             <ClipboardList className="h-4 w-4" />
             Auditoria
+          </TabsTrigger>
+          <TabsTrigger value="restore-test" className="flex items-center gap-2">
+            <FlaskConical className="h-4 w-4" />
+            Teste DR
           </TabsTrigger>
         </TabsList>
 
@@ -1107,6 +1142,201 @@ export default function BackupSettings() {
                 </CardContent>
               </Card>
             )}
+          </div>
+        </TabsContent>
+
+        {/* Tab: Teste de Restauração (DR) */}
+        <TabsContent value="restore-test" className="space-y-6">
+          <Alert className="border-purple-500 bg-purple-50 dark:bg-purple-950">
+            <FlaskConical className="h-4 w-4 text-purple-500" />
+            <AlertTitle className="text-purple-700 dark:text-purple-300">Teste de Disaster Recovery</AlertTitle>
+            <AlertDescription className="text-purple-600 dark:text-purple-400">
+              Validação automática que simula a restauração de um backup em ambiente isolado,
+              sem afetar os dados de produção. Essencial para garantir que os backups são recuperáveis.
+            </AlertDescription>
+          </Alert>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FlaskConical className="h-5 w-5" />
+                  Executar Teste de Restauração
+                </CardTitle>
+                <CardDescription>
+                  Simula a restauração do backup mais recente em ambiente isolado
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  O teste de restauração executa as seguintes validações:
+                </p>
+                <ul className="text-sm space-y-2 ml-4">
+                  <li className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    Descriptografia AES-256-GCM
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <FileArchive className="h-4 w-4 text-muted-foreground" />
+                    Descompressão GZIP
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    Parsing JSON
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                    Verificação de Checksum SHA-256
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Database className="h-4 w-4 text-muted-foreground" />
+                    Validação de Schema
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    Integridade dos Dados
+                  </li>
+                </ul>
+                <Button 
+                  onClick={handleRunRestoreTest}
+                  disabled={isRunningRestoreTest}
+                  className="w-full"
+                >
+                  {isRunningRestoreTest ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Executando teste...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="mr-2 h-4 w-4" />
+                      Executar Teste de Restauração
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Execução automática agendada para domingos às 04:00
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Resultado do Teste
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {restoreTestResult ? (
+                  <div className="space-y-4">
+                    {/* Status Geral */}
+                    <div className={`p-4 rounded-lg ${restoreTestResult.success ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
+                      <div className="flex items-center gap-2">
+                        {restoreTestResult.success ? (
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-600" />
+                        )}
+                        <span className={`font-medium ${restoreTestResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                          {restoreTestResult.success ? 'Teste APROVADO' : 'Teste FALHOU'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Resumo */}
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-xl font-bold">{restoreTestResult.summary?.totalValidations || 6}</p>
+                        <p className="text-xs text-muted-foreground">Validações</p>
+                      </div>
+                      <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                        <p className="text-xl font-bold text-green-600">{restoreTestResult.summary?.passedValidations || 0}</p>
+                        <p className="text-xs text-green-600">Aprovadas</p>
+                      </div>
+                      <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+                        <p className="text-xl font-bold text-red-600">{restoreTestResult.summary?.failedValidations || 0}</p>
+                        <p className="text-xs text-red-600">Falhas</p>
+                      </div>
+                    </div>
+
+                    {/* Detalhes das Validações */}
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Detalhes das Validações</h4>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Descriptografia</span>
+                          {restoreTestResult.validations?.decryption?.success ? (
+                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                          ) : (
+                            <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Descompressão</span>
+                          {restoreTestResult.validations?.decompression?.success ? (
+                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                          ) : (
+                            <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Parsing JSON</span>
+                          {restoreTestResult.validations?.jsonParsing?.success ? (
+                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                          ) : (
+                            <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Checksum</span>
+                          {restoreTestResult.validations?.checksumVerification?.success ? (
+                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                          ) : (
+                            <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Schema</span>
+                          {restoreTestResult.validations?.schemaValidation?.success ? (
+                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                          ) : (
+                            <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Integridade</span>
+                          {restoreTestResult.validations?.dataIntegrity?.success ? (
+                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                          ) : (
+                            <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Estatísticas */}
+                    {restoreTestResult.validations?.dataIntegrity && (
+                      <div className="text-sm text-muted-foreground">
+                        <p>Tabelas verificadas: {restoreTestResult.validations.dataIntegrity.tablesChecked}</p>
+                        <p>Registros verificados: {restoreTestResult.validations.dataIntegrity.recordsVerified?.toLocaleString("pt-BR")}</p>
+                      </div>
+                    )}
+
+                    {/* Duração */}
+                    <p className="text-xs text-muted-foreground text-center">
+                      Duração: {restoreTestResult.duration}ms | 
+                      Testado em: {restoreTestResult.testCompletedAt ? format(new Date(restoreTestResult.testCompletedAt), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "-"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                    <FlaskConical className="h-12 w-12 mb-4 opacity-50" />
+                    <p className="text-sm">Execute um teste para ver os resultados</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>

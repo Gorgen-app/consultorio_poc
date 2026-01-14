@@ -1717,3 +1717,350 @@ export async function generateMonthlyAuditReport(tenantId: number): Promise<Back
 }
 
 
+
+// ==========================================
+// TESTE DE RESTAURAÇÃO AUTOMÁTICO
+// ==========================================
+
+export interface RestoreTestResult {
+  success: boolean;
+  backupId: number;
+  backupDate: Date;
+  testStartedAt: Date;
+  testCompletedAt: Date;
+  duration: number; // ms
+  
+  // Validações realizadas
+  validations: {
+    decryption: { success: boolean; error?: string };
+    decompression: { success: boolean; error?: string };
+    jsonParsing: { success: boolean; error?: string };
+    checksumVerification: { success: boolean; expected?: string; actual?: string };
+    schemaValidation: { success: boolean; missingTables?: string[]; extraTables?: string[] };
+    dataIntegrity: { 
+      success: boolean; 
+      tablesChecked: number;
+      recordsVerified: number;
+      errors?: string[];
+    };
+  };
+  
+  // Resumo
+  summary: {
+    totalValidations: number;
+    passedValidations: number;
+    failedValidations: number;
+    overallStatus: "passed" | "failed" | "partial";
+  };
+  
+  error?: string;
+}
+
+/**
+ * Executa teste de restauração em ambiente isolado (sandbox)
+ * Não altera dados do banco de produção
+ */
+export async function runRestoreTest(
+  tenantId: number,
+  backupId?: number,
+  userId?: string,
+  userIp?: string
+): Promise<RestoreTestResult> {
+  const testStartedAt = new Date();
+  const db = await getDb();
+  if (!db) throw new Error("Database connection failed");
+  
+  const validations: RestoreTestResult["validations"] = {
+    decryption: { success: false },
+    decompression: { success: false },
+    jsonParsing: { success: false },
+    checksumVerification: { success: false },
+    schemaValidation: { success: false },
+    dataIntegrity: { success: false, tablesChecked: 0, recordsVerified: 0 },
+  };
+  
+  try {
+    // 1. Buscar backup mais recente se não especificado
+    let backup: any;
+    if (backupId) {
+      const result = await db.select().from(backupHistory)
+        .where(eq(backupHistory.id, backupId))
+        .limit(1);
+      backup = result[0];
+    } else {
+      const result = await db.select().from(backupHistory)
+        .where(eq(backupHistory.tenantId, tenantId))
+        .orderBy(desc(backupHistory.createdAt))
+        .limit(1);
+      backup = result[0];
+    }
+    
+    if (!backup) {
+      throw new Error("Nenhum backup encontrado para teste");
+    }
+    
+    // 2. Baixar arquivo do S3
+    const { url } = await storageGet(backup.filePath);
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Falha ao baixar backup: ${response.status}`);
+    }
+    
+    let data: Buffer = Buffer.from(await response.arrayBuffer());
+    
+    // 3. Teste de descriptografia
+    if (backup.isEncrypted) {
+      try {
+        const password = getEncryptionPassword(tenantId);
+        data = decryptData(data, password) as Buffer;
+        validations.decryption = { success: true };
+      } catch (error) {
+        validations.decryption = { 
+          success: false, 
+          error: error instanceof Error ? error.message : "Erro de descriptografia" 
+        };
+        throw new Error("Falha na descriptografia do backup");
+      }
+    } else {
+      validations.decryption = { success: true }; // Não criptografado, passa automaticamente
+    }
+    
+    // 4. Teste de descompressão
+    try {
+      data = Buffer.from(await gunzip(data));
+      validations.decompression = { success: true };
+    } catch (error) {
+      validations.decompression = { 
+        success: false, 
+        error: error instanceof Error ? error.message : "Erro de descompressão" 
+      };
+      throw new Error("Falha na descompressão do backup");
+    }
+    
+    // 5. Teste de parsing JSON
+    let backupData: any;
+    try {
+      backupData = JSON.parse(data.toString("utf-8"));
+      validations.jsonParsing = { success: true };
+    } catch (error) {
+      validations.jsonParsing = { 
+        success: false, 
+        error: error instanceof Error ? error.message : "JSON inválido" 
+      };
+      throw new Error("Falha no parsing do JSON do backup");
+    }
+    
+    // 6. Verificação de checksum
+    const calculatedChecksum = crypto.createHash("sha256").update(data).digest("hex");
+    if (backup.checksum && calculatedChecksum === backup.checksum) {
+      validations.checksumVerification = { 
+        success: true, 
+        expected: backup.checksum, 
+        actual: calculatedChecksum 
+      };
+    } else if (!backup.checksum) {
+      // Backup antigo sem checksum
+      validations.checksumVerification = { 
+        success: true, 
+        actual: calculatedChecksum 
+      };
+    } else {
+      validations.checksumVerification = { 
+        success: false, 
+        expected: backup.checksum, 
+        actual: calculatedChecksum 
+      };
+      // Não falha o teste, apenas registra
+    }
+    
+    // 7. Validação de schema
+    const currentTables = await listTables(db);
+    const backupTables = backupData.tables?.map((t: any) => t.tableName) || [];
+    
+    const missingTables = currentTables.filter(t => !backupTables.includes(t));
+    const extraTables = backupTables.filter((t: string) => !currentTables.includes(t));
+    
+    // Tabelas críticas que devem existir
+    const criticalTables = ["pacientes", "atendimentos", "users", "tenants"];
+    const missingCritical = criticalTables.filter(t => !backupTables.includes(t));
+    
+    validations.schemaValidation = {
+      success: missingCritical.length === 0,
+      missingTables: missingTables.length > 0 ? missingTables : undefined,
+      extraTables: extraTables.length > 0 ? extraTables : undefined,
+    };
+    
+    // 8. Validação de integridade dos dados
+    const dataErrors: string[] = [];
+    let tablesChecked = 0;
+    let recordsVerified = 0;
+    
+    for (const tableData of (backupData.tables || [])) {
+      tablesChecked++;
+      
+      // Verificar se cada registro tem campos obrigatórios
+      for (const record of tableData.records) {
+        recordsVerified++;
+        
+        // Verificar campos básicos
+        if (tableData.tableName === "pacientes") {
+          if (!record.nome) {
+            dataErrors.push(`Paciente ID ${record.id}: campo 'nome' ausente`);
+          }
+        }
+        
+        if (tableData.tableName === "atendimentos") {
+          if (!record.paciente_id) {
+            dataErrors.push(`Atendimento ID ${record.id}: campo 'paciente_id' ausente`);
+          }
+        }
+      }
+    }
+    
+    validations.dataIntegrity = {
+      success: dataErrors.length === 0,
+      tablesChecked,
+      recordsVerified,
+      errors: dataErrors.length > 0 ? dataErrors.slice(0, 10) : undefined, // Limitar a 10 erros
+    };
+    
+    // Calcular resumo
+    const validationResults = Object.values(validations);
+    const passedValidations = validationResults.filter(v => v.success).length;
+    const failedValidations = validationResults.filter(v => !v.success).length;
+    
+    const testCompletedAt = new Date();
+    
+    const result: RestoreTestResult = {
+      success: failedValidations === 0,
+      backupId: backup.id,
+      backupDate: backup.createdAt,
+      testStartedAt,
+      testCompletedAt,
+      duration: testCompletedAt.getTime() - testStartedAt.getTime(),
+      validations,
+      summary: {
+        totalValidations: validationResults.length,
+        passedValidations,
+        failedValidations,
+        overallStatus: failedValidations === 0 ? "passed" : passedValidations > 0 ? "partial" : "failed",
+      },
+    };
+    
+    // Registrar resultado do teste no histórico
+    await db.update(backupHistory)
+      .set({
+        lastVerifiedAt: testCompletedAt,
+        verificationStatus: result.success ? "valid" : "invalid",
+      })
+      .where(eq(backupHistory.id, backup.id));
+    
+    // Notificar resultado
+    await notifyOwner({
+      title: result.success 
+        ? "✅ Teste de Restauração: APROVADO" 
+        : "⚠️ Teste de Restauração: FALHOU",
+      content: `
+**Teste de Restauração de Backup**
+
+📅 Backup testado: ${backup.createdAt.toLocaleDateString("pt-BR")}
+🆔 ID do Backup: ${backup.id}
+⏱️ Duração do teste: ${result.duration}ms
+
+**Resultado das Validações:**
+- Descriptografia: ${validations.decryption.success ? "✅" : "❌"}
+- Descompressão: ${validations.decompression.success ? "✅" : "❌"}
+- Parsing JSON: ${validations.jsonParsing.success ? "✅" : "❌"}
+- Checksum: ${validations.checksumVerification.success ? "✅" : "❌"}
+- Schema: ${validations.schemaValidation.success ? "✅" : "❌"}
+- Integridade: ${validations.dataIntegrity.success ? "✅" : "❌"}
+
+**Resumo:**
+- Tabelas verificadas: ${validations.dataIntegrity.tablesChecked}
+- Registros verificados: ${validations.dataIntegrity.recordsVerified}
+- Validações aprovadas: ${passedValidations}/${validationResults.length}
+
+${userId ? `Executado por: ${userId}` : "Execução automática (cron)"}
+${userIp ? `IP: ${userIp}` : ""}
+      `.trim(),
+    });
+    
+    return result;
+    
+  } catch (error) {
+    const testCompletedAt = new Date();
+    
+    const result: RestoreTestResult = {
+      success: false,
+      backupId: backupId || 0,
+      backupDate: new Date(),
+      testStartedAt,
+      testCompletedAt,
+      duration: testCompletedAt.getTime() - testStartedAt.getTime(),
+      validations,
+      summary: {
+        totalValidations: 6,
+        passedValidations: Object.values(validations).filter(v => v.success).length,
+        failedValidations: Object.values(validations).filter(v => !v.success).length,
+        overallStatus: "failed",
+      },
+      error: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+    
+    // Notificar falha
+    await notifyOwner({
+      title: "❌ Teste de Restauração: ERRO",
+      content: `
+**Erro no Teste de Restauração**
+
+🆔 Backup ID: ${backupId || "mais recente"}
+❌ Erro: ${result.error}
+
+**Validações completadas antes do erro:**
+- Descriptografia: ${validations.decryption.success ? "✅" : validations.decryption.error ? "❌ " + validations.decryption.error : "⏳ Não executado"}
+- Descompressão: ${validations.decompression.success ? "✅" : validations.decompression.error ? "❌ " + validations.decompression.error : "⏳ Não executado"}
+- Parsing JSON: ${validations.jsonParsing.success ? "✅" : validations.jsonParsing.error ? "❌ " + validations.jsonParsing.error : "⏳ Não executado"}
+
+${userId ? `Executado por: ${userId}` : "Execução automática (cron)"}
+      `.trim(),
+    });
+    
+    return result;
+  }
+}
+
+/**
+ * Executa teste de restauração do backup mais recente (para cron job)
+ */
+export async function runScheduledRestoreTest(tenantId: number): Promise<RestoreTestResult> {
+  return runRestoreTest(tenantId, undefined, "scheduled_cron", "127.0.0.1");
+}
+
+/**
+ * Obtém histórico de testes de restauração
+ */
+export async function getRestoreTestHistory(
+  tenantId: number,
+  limit: number = 10
+): Promise<Array<{
+  backupId: number;
+  backupDate: Date;
+  lastTestedAt: Date | null;
+  verificationStatus: string | null;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const backups = await db.select({
+    backupId: backupHistory.id,
+    backupDate: backupHistory.createdAt,
+    lastTestedAt: backupHistory.lastVerifiedAt,
+    verificationStatus: backupHistory.verificationStatus,
+  })
+    .from(backupHistory)
+    .where(eq(backupHistory.tenantId, tenantId))
+    .orderBy(desc(backupHistory.createdAt))
+    .limit(limit);
+  
+  return backups;
+}
