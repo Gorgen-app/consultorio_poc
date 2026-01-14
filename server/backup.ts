@@ -18,6 +18,7 @@ import { backupHistory, backupConfig, tenants, users } from "../drizzle/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import { storagePut, storageGet } from "./storage";
 import { notifyOwner } from "./_core/notification";
+import { notificarBackupCompleto } from "./_core/emailService";
 import crypto from "crypto";
 import zlib from "zlib";
 import { promisify } from "util";
@@ -326,6 +327,16 @@ export async function executeFullBackup(
         duration,
         encrypted: true,
       });
+    }
+    
+    // 12. Enviar email para o proprietário com detalhes do backup
+    try {
+      const dataBackup = new Date().toLocaleDateString("pt-BR");
+      const tamanhoBackup = `${(encryptedData.length / 1024 / 1024).toFixed(2)} MB`;
+      const emailProprietario = config?.notificationEmail || process.env.OWNER_EMAIL || "contato@andreagorgen.com.br";
+      await notificarBackupCompleto(emailProprietario, dataBackup, tamanhoBackup);
+    } catch (emailError) {
+      console.error("Erro ao enviar email de backup:", emailError);
     }
     
     return {
