@@ -787,25 +787,20 @@ export default function Agenda() {
               })}
             </div>
             <div>
-              {horarios.map((hora) => (
-                <div key={hora} className="grid grid-cols-8 border-b h-12">
-                  <div className="px-1 py-0.5 text-center text-xs text-muted-foreground border-r bg-muted flex items-center justify-center">
-                    <div className="flex flex-col items-center">
-                      <div>{hora.toString().padStart(2, "0")}:00</div>
-                      <div className="text-[9px] opacity-60">-{(hora + 1).toString().padStart(2, "0")}:00</div>
-                    </div>
+              {slots.map((slot) => (
+                <div key={`${slot.hora}-${slot.minuto}`} className="grid grid-cols-8 border-b h-12">
+                  <div className="px-0.5 py-0.5 text-center text-xs text-muted-foreground border-r bg-muted flex items-center justify-center min-w-[40px]">
+                    {slot.label}
                   </div>
                   {diasSemana.map((dia, i) => {
                     // Usar data local para a chave (YYYY-MM-DD)
                     const chave = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
                     const agendamentosDia = agendamentosPorDia[chave] || [];
-                    const agendamentosHora = agendamentosDia.filter((ag: any) => {
+                    const agendamentosSlot = agendamentosDia.filter((ag: any) => {
                       const dataAg = new Date(ag.dataHoraInicio);
                       const horaAg = dataAg.getHours();
                       const minutosAg = dataAg.getMinutes();
-                      // Agendamento está neste slot de hora se começa nesta hora
-                      // (considerando que cada slot é de 1 hora)
-                      return horaAg === hora;
+                      return horaAg === slot.hora && minutosAg === slot.minuto;
                     });
                     const feriado = getFeriado(dia);
                     const isHoje = dia.toDateString() === new Date().toDateString();
@@ -817,7 +812,7 @@ export default function Agenda() {
                           isHoje ? "bg-blue-50/50" : feriado ? "bg-amber-50" : ""
                         }`}
                       >
-                        {agendamentosHora.map(renderAgendamento)}
+                        {agendamentosSlot.map(renderAgendamento)}
                       </div>
                     );
                   })}
