@@ -2256,3 +2256,62 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Busca inteligente de paciente (ID/nome/CPF) com preenchimento automático
 - [x] Criar paciente automaticamente se não existir no sistema
 
+
+### Novas Funcionalidades - 14/01/2026 (Parte 2)
+- [ ] Implementar fluxo de agendamento cirúrgico completo
+  - [ ] Tabela de solicitações cirúrgicas com status (pendente_guias, guias_enviadas, autorizada, confirmada, realizada)
+  - [ ] Etapas: autorização de convênio, reserva de centro cirúrgico, confirmação
+  - [ ] Interface para gerenciar solicitações cirúrgicas
+- [ ] Adicionar campos extras no modal de novo paciente (telefone, CPF, convênio)
+- [ ] Criar filtro de agenda por profissional
+
+
+
+---
+
+## 🚀 GORGEN 3.5 - Fluxo Cirúrgico Completo (EM ANDAMENTO - 14/01/2026)
+
+### 1. Complete Surgical Scheduling Workflow
+- [ ] Create surgical request form (solicitação cirúrgica)
+- [ ] Implement state machine: Pendente de Guias → Guias Geradas → Guias Enviadas → Em Análise → Autorizada → Confirmada → Realizada
+- [ ] Generate surgical guides (guias) with insurance-specific formats
+  - [ ] UNIMED: Portal entry with authorization number
+  - [ ] BRADESCO: Password on guide
+  - [ ] IPE SAÚDE: Standard format
+  - [ ] PARTICULAR: Simplified format
+  - [ ] CASSI: Standard format
+  - [ ] SUL AMÉRICA: Standard format
+  - [ ] SAÚDE CAIXA: Standard format
+  - [ ] SAÚDE PAS: Standard format
+- [ ] Operating room reservation system
+- [ ] Surgical team assignment (cirurgião, auxiliares, anestesista)
+- [ ] Insurance authorization tracking
+- [ ] Link surgical request to appointment (agendamento)
+- [ ] Link surgical request to surgery record (cirurgia)
+- [ ] Audit trail for all status changes
+- [ ] tRPC procedures for CRUD operations
+- [ ] Unit tests for surgical workflow
+
+### 2. Enhanced New Patient Modal
+- [ ] Add phone field to new patient modal
+- [ ] Add CPF field to new patient modal
+- [ ] Add insurance provider dropdown (UNIMED, IPE SAÚDE, PARTICULAR, CASSI, BRADESCO SAÚDE, SUL AMÉRICA, SAÚDE CAIXA, SAÚDE PAS)
+- [ ] Add insurance plan field
+- [ ] Add insurance card number field
+- [ ] Validate CPF format
+- [ ] Validate phone format
+- [ ] Save insurance info to pacientes table
+- [ ] Update schema to include insurance fields if needed
+- [ ] Unit tests for new patient modal
+
+### 3. Agenda Filtering by Professional
+- [ ] Create profissionais table (already done in schema) ✅
+- [ ] Add professional selector dropdown to agenda view
+- [ ] Filter appointments by selected professional
+- [ ] Display professional name/color in calendar
+- [ ] Add professional management interface
+- [ ] Assign professionals to users
+- [ ] Set default consultation duration per professional
+- [ ] Color-code professionals in agenda view
+- [ ] tRPC procedures for professional CRUD
+- [ ] Unit tests for professional filtering

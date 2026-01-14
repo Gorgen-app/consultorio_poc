@@ -3474,5 +3474,130 @@ Retorne um JSON válido com a estrutura:
         );
       }),
   }),
+
+  // ===== SOLICITAÇÕES CIRÚRGICAS =====
+  solicitacoesCirurgicas: router({
+    getNextId: protectedProcedure
+      .query(async () => {
+        return await db.getNextSolicitacaoCirurgicaId();
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        idSolicitacao: z.string(),
+        pacienteId: z.number(),
+        pacienteNome: z.string().optional(),
+        procedimento: z.string().min(1),
+        codigoProcedimento: z.string().optional(),
+        lateralidade: z.enum(["Direita", "Esquerda", "Bilateral", "N/A"]).optional(),
+        convenio: z.string().optional(),
+        numeroCarteirinha: z.string().optional(),
+        plano: z.string().optional(),
+        hospital: z.string().optional(),
+        dataPrevista: z.date().optional(),
+        horaPrevistoInicio: z.string().optional(),
+        horaPrevistoFim: z.string().optional(),
+        tempoSalaMinutos: z.number().optional(),
+        cirurgiaoId: z.number().optional(),
+        cirurgiaoNome: z.string().optional(),
+        auxiliar1: z.string().optional(),
+        auxiliar2: z.string().optional(),
+        anestesista: z.string().optional(),
+        tipoAnestesia: z.string().optional(),
+        indicacaoCirurgica: z.string().optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.createSolicitacaoCirurgica({
+          ...input,
+          tenantId: 1,
+          criadoPor: ctx.user?.name || "Sistema",
+        });
+      }),
+
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getSolicitacaoCirurgicaById(input.id);
+      }),
+
+    list: protectedProcedure
+      .input(z.object({
+        pacienteId: z.number().optional(),
+        status: z.string().optional(),
+        dataInicio: z.date().optional(),
+        dataFim: z.date().optional(),
+        convenio: z.string().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.listSolicitacoesCirurgicas({
+          tenantId: 1,
+          ...input,
+        });
+      }),
+
+    updateStatus: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        novoStatus: z.string(),
+        observacao: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.updateSolicitacaoCirurgicaStatus(
+          input.id,
+          input.novoStatus,
+          input.observacao,
+          ctx.user?.name || "Sistema"
+        );
+      }),
+  }),
+
+  // ===== PROFISSIONAIS =====
+  profissionais: router({
+    create: protectedProcedure
+      .input(z.object({
+        nome: z.string().min(1),
+        crm: z.string().optional(),
+        especialidade: z.string().optional(),
+        userId: z.number().optional(),
+        corAgenda: z.string().optional(),
+        duracaoConsultaPadrao: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.createProfissional({
+          tenantId: 1,
+          ...input,
+        });
+      }),
+
+    list: protectedProcedure
+      .query(async () => {
+        return await db.listProfissionais(1);
+      }),
+
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getProfissionalById(input.id);
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        nome: z.string().optional(),
+        crm: z.string().optional(),
+        especialidade: z.string().optional(),
+        corAgenda: z.string().optional(),
+        duracaoConsultaPadrao: z.number().optional(),
+        ativo: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await db.updateProfissional(id, data);
+        return await db.getProfissionalById(id);
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

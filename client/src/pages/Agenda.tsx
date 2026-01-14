@@ -180,7 +180,8 @@ function getStatusIcon(status: string, tipo: string) {
 export default function Agenda() {
   // toast from sonner
   const [dataAtual, setDataAtual] = useState(new Date());
-  const [visualizacao, setVisualizacao] = useState<"semana" | "dia" | "mes">("semana");
+  const [visualizacao, setVisualizacao] = useState<"dia" | "semana" | "mes">("semana");
+  const [profissionalSelecionado, setProfissionalSelecionado] = useState<string | null>(null);
   const [modalNovoAberto, setModalNovoAberto] = useState(false);
   const [modalBloqueioAberto, setModalBloqueioAberto] = useState(false);
   const [modalDetalhesAberto, setModalDetalhesAberto] = useState(false);
@@ -197,6 +198,9 @@ export default function Agenda() {
     tipoCompromisso: "Consulta" as typeof TIPOS_COMPROMISSO[number],
     pacienteId: null as number | null,
     pacienteNome: "",
+    pacienteTelefone: "",
+    pacienteCpf: "",
+    pacienteSeguro: "",
     data: "",
     horaInicio: "",
     horaFim: "",
@@ -281,6 +285,7 @@ export default function Agenda() {
 
   const { data: nextAgendamentoId } = trpc.agenda.getNextId.useQuery();
   const { data: nextBloqueioId } = trpc.bloqueios.getNextId.useQuery();
+  const { data: profissionais } = trpc.profissionais.list.useQuery();
 
   // Mutations
   const createAgendamento = trpc.agenda.create.useMutation({
@@ -352,6 +357,9 @@ export default function Agenda() {
       tipoCompromisso: "Consulta",
       pacienteId: null,
       pacienteNome: "",
+      pacienteTelefone: "",
+      pacienteCpf: "",
+      pacienteSeguro: "",
       data: "",
       horaInicio: "",
       horaFim: "",
@@ -474,10 +482,10 @@ export default function Agenda() {
     const novoPaciente = !novoAgendamento.pacienteId && novoAgendamento.pacienteNome && novoAgendamento.tipoCompromisso !== "Reunião"
       ? {
           nome: novoAgendamento.pacienteNome,
-          telefone: undefined,
+          telefone: novoAgendamento.pacienteTelefone || undefined,
           email: undefined,
-          cpf: undefined,
-          convenio: undefined,
+          cpf: novoAgendamento.pacienteCpf || undefined,
+          convenio: novoAgendamento.pacienteSeguro || undefined,
         }
       : undefined;
 
@@ -642,6 +650,24 @@ export default function Agenda() {
               <span className="hidden lg:inline">Cancelado</span>
             </div>
           </div>
+          {/* Filtro de Profissional */}
+          <div className="flex items-center gap-2">
+            <Label className="text-xs whitespace-nowrap">Profissional:</Label>
+            <Select value={profissionalSelecionado || ""} onValueChange={(v) => setProfissionalSelecionado(v || null)}>
+              <SelectTrigger className="h-7 w-40">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos os profissionais</SelectItem>
+                {profissionais?.map((prof: any) => (
+                  <SelectItem key={prof.id} value={String(prof.id)}>
+                    {prof.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           {/* Botões de visualização */}
           <div className="flex gap-0.5">
             <Button 
@@ -1007,6 +1033,56 @@ export default function Agenda() {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Campos de novo paciente - aparecem quando paciente é criado automaticamente */}
+            {!novoAgendamento.pacienteId && novoAgendamento.pacienteNome && novoAgendamento.tipoCompromisso !== "Reunião" && (
+              <div className="space-y-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="text-sm font-medium text-blue-900">Dados do novo paciente</div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs">Telefone</Label>
+                    <Input
+                      type="tel"
+                      value={novoAgendamento.pacienteTelefone}
+                      onChange={(e) => setNovoAgendamento({...novoAgendamento, pacienteTelefone: e.target.value})}
+                      placeholder="(XX) XXXXX-XXXX"
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">CPF</Label>
+                    <Input
+                      type="text"
+                      value={novoAgendamento.pacienteCpf}
+                      onChange={(e) => setNovoAgendamento({...novoAgendamento, pacienteCpf: e.target.value})}
+                      placeholder="XXX.XXX.XXX-XX"
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Seguro</Label>
+                    <Select 
+                      value={novoAgendamento.pacienteSeguro} 
+                      onValueChange={(v) => setNovoAgendamento({...novoAgendamento, pacienteSeguro: v})}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="UNIMED">UNIMED</SelectItem>
+                        <SelectItem value="IPE SAUDE">IPE SAUDE</SelectItem>
+                        <SelectItem value="PARTICULAR">PARTICULAR</SelectItem>
+                        <SelectItem value="CASSI">CASSI</SelectItem>
+                        <SelectItem value="BRADESCO SAUDE">BRADESCO SAUDE</SelectItem>
+                        <SelectItem value="SUL AMERICA">SUL AMERICA</SelectItem>
+                        <SelectItem value="SAUDE CAIXA">SAUDE CAIXA</SelectItem>
+                        <SelectItem value="SAUDE PAS">SAUDE PAS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
             )}
 
