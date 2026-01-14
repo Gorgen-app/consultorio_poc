@@ -269,23 +269,42 @@ export default function Agenda() {
   }, [dataAtual, visualizacao]);
 
   // Queries
-  const { data: agendamentos, refetch: refetchAgendamentos, error: agendamentosError } = trpc.agenda.list.useQuery({
-    dataInicio: periodo.inicio,
-    dataFim: periodo.fim,
-    incluirCancelados: true,
-  });
+  // Usar staleTime de 30 segundos para cache
+  const { data: agendamentos, refetch: refetchAgendamentos, error: agendamentosError, isLoading: agendamentosLoading } = trpc.agenda.list.useQuery(
+    {
+      dataInicio: periodo.inicio,
+      dataFim: periodo.fim,
+      incluirCancelados: true,
+    },
+    {
+      staleTime: 30 * 1000, // Cache de 30 segundos
+      gcTime: 5 * 60 * 1000, // Manter em cache por 5 minutos
+    }
+  );
   
   
 
-  const { data: bloqueios, refetch: refetchBloqueios } = trpc.bloqueios.list.useQuery({
-    dataInicio: periodo.inicio,
-    dataFim: periodo.fim,
-    incluirCancelados: true,
-  });
+  const { data: bloqueios, refetch: refetchBloqueios } = trpc.bloqueios.list.useQuery(
+    {
+      dataInicio: periodo.inicio,
+      dataFim: periodo.fim,
+      incluirCancelados: true,
+    },
+    {
+      staleTime: 30 * 1000,
+      gcTime: 5 * 60 * 1000,
+    }
+  );
 
   const { data: nextAgendamentoId } = trpc.agenda.getNextId.useQuery();
   const { data: nextBloqueioId } = trpc.bloqueios.getNextId.useQuery();
-  const { data: profissionais } = trpc.profissionais.list.useQuery();
+  const { data: profissionais } = trpc.profissionais.list.useQuery(
+    undefined,
+    {
+      staleTime: 60 * 1000, // Cache de 1 minuto
+      gcTime: 10 * 60 * 1000, // Manter em cache por 10 minutos
+    }
+  );
 
   // Mutations
   const createAgendamento = trpc.agenda.create.useMutation({
@@ -653,12 +672,12 @@ export default function Agenda() {
           {/* Filtro de Profissional */}
           <div className="flex items-center gap-2">
             <Label className="text-xs whitespace-nowrap">Profissional:</Label>
-            <Select value={profissionalSelecionado || ""} onValueChange={(v) => setProfissionalSelecionado(v || null)}>
+            <Select value={profissionalSelecionado || "all"} onValueChange={(v) => setProfissionalSelecionado(v === "all" ? null : v)}>
               <SelectTrigger className="h-7 w-40">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os profissionais</SelectItem>
+                <SelectItem value="all">Todos os profissionais</SelectItem>
                 {profissionais?.map((prof: any) => (
                   <SelectItem key={prof.id} value={String(prof.id)}>
                     {prof.nome}

@@ -2028,6 +2028,11 @@ export async function listAgendamentos(filters?: {
     conditions.push(eq(agendamentos.status, filters.status as any));
   }
   
+  // Excluir cancelados por padrão para melhor performance
+  if (filters?.incluirCancelados !== true) {
+    conditions.push(ne(agendamentos.status, "Cancelado"));
+  }
+  
   // Query otimizada com filtros SQL e limite de campos
   const result = await db.select({
     id: agendamentos.id,
