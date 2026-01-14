@@ -29,6 +29,7 @@ import {
   Crown,
   AlertCircle,
   FlaskConical,
+  HardDrive,
 } from "lucide-react";
 import { Link } from "wouter";
 import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especialidadesMedicas";
@@ -417,6 +418,20 @@ export default function Configuracoes() {
               <span className="hidden sm:inline">Exames Favoritos</span>
             </Button>
           </Link>
+          
+          {/* Botão para Backup */}
+          {(currentPerfil === "admin_master" || currentPerfil === "medico") && (
+            <Link href="/configuracoes/backup">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <HardDrive className="h-4 w-4" />
+                <span className="hidden sm:inline">Backup</span>
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Conteúdo das abas */}

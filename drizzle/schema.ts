@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, date, boolean, json, datetime, index } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, date, boolean, json, datetime, index, bigint } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
 
 /**
@@ -1385,3 +1385,89 @@ export const dashboardConfigs = mysqlTable("dashboard_configs", {
 
 export type DashboardConfig = typeof dashboardConfigs.$inferSelect;
 export type InsertDashboardConfig = typeof dashboardConfigs.$inferInsert;
+
+
+// ==========================================
+// SISTEMA DE BACKUP AUTOMÁTICO
+// Pilar Fundamental: Imutabilidade e Preservação Histórica
+// ==========================================
+
+/**
+ * Histórico de Backups
+ * Registra todos os backups realizados no sistema
+ */
+export const backupHistory = mysqlTable("backup_history", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
+  
+  // Tipo de backup
+  backupType: mysqlEnum("backup_type", ["full", "incremental", "transactional", "offline"]).notNull(),
+  
+  // Status do backup
+  status: mysqlEnum("status", ["running", "success", "failed", "validating"]).notNull().default("running"),
+  
+  // Timestamps
+  startedAt: timestamp("started_at").notNull(),
+  completedAt: timestamp("completed_at"),
+  
+  // Informações do arquivo
+  filePath: varchar("file_path", { length: 500 }).notNull(),
+  fileSizeBytes: bigint("file_size_bytes", { mode: "number" }),
+  checksumSha256: varchar("checksum_sha256", { length: 64 }),
+  
+  // Destino do backup
+  destination: mysqlEnum("destination", ["s3_primary", "s3_secondary", "offline_hd"]).default("s3_primary"),
+  
+  // Metadados adicionais
+  databaseRecords: int("database_records"), // Total de registros no banco
+  filesCount: int("files_count"), // Total de arquivos no S3
+  
+  // Erro (se houver)
+  errorMessage: text("error_message"),
+  
+  // Quem iniciou o backup
+  triggeredBy: mysqlEnum("triggered_by", ["scheduled", "manual", "system"]).default("scheduled"),
+  createdByUserId: int("created_by_user_id").references(() => users.id),
+  
+  // Timestamps de auditoria
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BackupHistory = typeof backupHistory.$inferSelect;
+export type InsertBackupHistory = typeof backupHistory.$inferInsert;
+
+/**
+ * Configuração de Backup
+ * Armazena as configurações de backup de cada tenant
+ */
+export const backupConfig = mysqlTable("backup_config", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id).unique(),
+  
+  // Configurações de agendamento
+  backupEnabled: boolean("backup_enabled").default(true),
+  dailyBackupTime: varchar("daily_backup_time", { length: 5 }).default("03:00"), // HH:MM
+  weeklyBackupDay: int("weekly_backup_day").default(0), // 0 = Domingo
+  monthlyBackupDay: int("monthly_backup_day").default(1), // 1º dia do mês
+  
+  // Retenção
+  dailyRetentionDays: int("daily_retention_days").default(30),
+  weeklyRetentionWeeks: int("weekly_retention_weeks").default(12),
+  monthlyRetentionMonths: int("monthly_retention_months").default(12),
+  
+  // Notificações
+  notifyOnSuccess: boolean("notify_on_success").default(false),
+  notifyOnFailure: boolean("notify_on_failure").default(true),
+  notificationEmail: varchar("notification_email", { length: 255 }),
+  
+  // Backup offline
+  offlineBackupEnabled: boolean("offline_backup_enabled").default(true),
+  offlineBackupReminderDay: int("offline_backup_reminder_day").default(1), // 1º domingo do mês
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BackupConfig = typeof backupConfig.$inferSelect;
+export type InsertBackupConfig = typeof backupConfig.$inferInsert;

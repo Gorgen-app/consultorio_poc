@@ -1,0 +1,16 @@
+{
+  "query": "SHOW TABLES LIKE 'backup%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SHOW TABLES LIKE 'backup%';",
+  "rows": [
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7 (backup%)": "backup_config"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7 (backup%)": "backup_history"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_TyeFpW5ykZHTuZXuk6iMG7 (backup%)\nbackup_config\nbackup_history\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

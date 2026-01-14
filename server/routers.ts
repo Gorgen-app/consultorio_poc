@@ -7,6 +7,7 @@ import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
+import * as backup from "./backup";
 
 // Schema de validação para Paciente
 const pacienteSchema = z.object({
@@ -3051,6 +3052,95 @@ Retorne um JSON válido com a estrutura:
     atualizarExpiradas: tenantProcedure
       .mutation(async () => {
         return await db.atualizarAutorizacoesExpiradas();
+      }),
+  }),
+
+  // ==========================================
+  // BACKUP - Sistema de Backup Automático
+  // ==========================================
+  backup: router({
+    // Executar backup manual
+    executeBackup: tenantProcedure
+      .input(z.object({
+        type: z.enum(["full", "incremental"]).default("full"),
+      }).optional())
+      .mutation(async ({ ctx }) => {
+        return await backup.executeFullBackup(
+          ctx.tenant.tenantId,
+          "manual",
+          ctx.user?.id
+        );
+      }),
+
+    // Gerar backup para download offline (HD externo)
+    generateOfflineBackup: tenantProcedure
+      .mutation(async ({ ctx }) => {
+        if (!ctx.user?.id) throw new Error("User not authenticated");
+        return await backup.generateOfflineBackup(
+          ctx.tenant.tenantId,
+          ctx.user.id
+        );
+      }),
+
+    // Listar histórico de backups
+    listHistory: tenantProcedure
+      .input(z.object({
+        limit: z.number().default(50),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await backup.listBackupHistory(
+          ctx.tenant.tenantId,
+          input?.limit || 50
+        );
+      }),
+
+    // Obter último backup bem-sucedido
+    getLastBackup: tenantProcedure
+      .query(async ({ ctx }) => {
+        return await backup.getLastSuccessfulBackup(ctx.tenant.tenantId);
+      }),
+
+    // Obter configuração de backup
+    getConfig: tenantProcedure
+      .query(async ({ ctx }) => {
+        return await backup.getBackupConfig(ctx.tenant.tenantId);
+      }),
+
+    // Atualizar configuração de backup
+    updateConfig: tenantProcedure
+      .input(z.object({
+        backupEnabled: z.boolean().optional(),
+        dailyBackupTime: z.string().optional(),
+        weeklyBackupDay: z.number().min(0).max(6).optional(),
+        monthlyBackupDay: z.number().min(1).max(28).optional(),
+        dailyRetentionDays: z.number().min(7).max(365).optional(),
+        weeklyRetentionWeeks: z.number().min(4).max(52).optional(),
+        monthlyRetentionMonths: z.number().min(6).max(84).optional(),
+        notifyOnSuccess: z.boolean().optional(),
+        notifyOnFailure: z.boolean().optional(),
+        notificationEmail: z.string().email().optional(),
+        offlineBackupEnabled: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await backup.upsertBackupConfig(ctx.tenant.tenantId, input);
+        return { success: true };
+      }),
+
+    // Validar integridade de um backup
+    validateBackup: tenantProcedure
+      .input(z.object({
+        backupId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const isValid = await backup.validateBackup(input.backupId);
+        return { valid: isValid };
+      }),
+
+    // Limpar backups antigos (conforme política de retenção)
+    cleanupOldBackups: tenantProcedure
+      .mutation(async ({ ctx }) => {
+        const removed = await backup.cleanupOldBackups(ctx.tenant.tenantId);
+        return { removedCount: removed };
       }),
   }),
 });

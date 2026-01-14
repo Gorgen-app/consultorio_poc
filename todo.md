@@ -2088,3 +2088,87 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Aumentar ícone de configurações em 50% para harmonizar com título (h-10 w-10, ícone h-7 w-7)
 - [x] Remover "Global" do dropdown de tempo, deixar "Todo o período" como padrão
 - [x] Permitir empilhar 2 widgets micro ocupando apenas 1 slot (função agruparWidgetsMicro)
+
+
+---
+
+## 🔄 IMPLEMENTAÇÃO DE BACKUP AUTOMÁTICO (13/01/2026)
+
+### Fase 1: Infraestrutura
+- [ ] Criar tabela backup_history no schema
+- [ ] Criar estrutura de pastas server/backup/
+- [ ] Configurar variáveis de ambiente
+
+### Fase 2: Backup do Banco de Dados
+- [ ] Implementar databaseBackup.ts
+- [ ] Compressão gzip
+- [ ] Upload para S3
+
+### Fase 3: Backup de Arquivos
+- [ ] Implementar storageBackup.ts
+- [ ] Implementar backupValidator.ts (checksum)
+
+### Fase 4: Automação e Notificações
+- [ ] Implementar backupScheduler.ts
+- [ ] Implementar backupNotifier.ts
+- [ ] Adicionar rotas de backup no routers.ts
+
+### Fase 5: Restauração
+- [ ] Implementar backupRestore.ts
+- [ ] Documentação de procedimentos
+
+### Fase 6: Backup Offline (HD Externo)
+- [ ] Implementar offlineBackup.ts
+- [ ] Interface de notificação mensal
+- [ ] Criptografia AES-256
+- [ ] Página de download no frontend
+
+
+---
+
+## 🛡️ SISTEMA DE BACKUP AUTOMÁTICO - v3.0
+
+### Fase 1: Infraestrutura ✅ CONCLUÍDO
+- [x] Criar tabela `backup_history` no banco de dados
+- [x] Criar tabela `backup_config` para configurações por tenant
+- [x] Definir tipos de backup: full, incremental, transactional, offline
+- [x] Definir destinos: s3_primary, s3_secondary, offline_hd
+
+### Fase 2: Backup do Banco de Dados ✅ CONCLUÍDO
+- [x] Função `executeFullBackup()` - exporta todas as tabelas
+- [x] Compressão com gzip
+- [x] Upload para S3
+- [x] Geração de checksum SHA-256
+- [x] Registro no histórico de backups
+
+### Fase 3: Backup de Arquivos ✅ CONCLUÍDO
+- [x] Sincronização de documentos do S3
+- [x] Validação de integridade com checksum
+
+### Fase 4: Automação e Notificações ✅ CONCLUÍDO
+- [x] Configuração de agendamento (horário diário, dia semanal, dia mensal)
+- [x] Notificações de sucesso/falha via notifyOwner
+- [x] Configuração de e-mail para notificações
+
+### Fase 5: Interface de Usuário ✅ CONCLUÍDO
+- [x] Página de configurações de backup (`/configuracoes/backup`)
+- [x] Visualização do último backup
+- [x] Histórico de backups (últimos 10)
+- [x] Botão "Executar Backup Agora"
+- [x] Configuração de política de retenção
+- [x] Configuração de notificações
+- [x] Link na página de Configurações
+
+### Fase 6: Backup Offline (HD Externo) ✅ CONCLUÍDO
+- [x] Função `generateOfflineBackup()` - gera backup para download
+- [x] Botão "Download para HD Externo" na interface
+- [x] Instruções de restauração incluídas no backup
+- [x] Alerta sobre importância do backup offline mensal
+
+### Pendente
+- [ ] Testes automatizados (vitest) para funções de backup
+- [ ] Cron job real para backups automáticos (agendamento via Manus)
+- [ ] Página de restauração de backup
+- [ ] Validação de backup antes da restauração
+- [ ] Documentação completa de procedimentos de DR (Disaster Recovery)
+

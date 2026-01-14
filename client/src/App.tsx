@@ -20,6 +20,7 @@ import RelatorioPacientes from "./pages/RelatorioPacientes";
 import RelatorioDuplicados from "./pages/RelatorioDuplicados";
 import Relatorios from "./pages/Relatorios";
 import Performance from "./pages/Performance";
+import BackupSettings from "./pages/BackupSettings";
 import Dashboard from "./pages/DashboardCustom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -104,6 +105,11 @@ function Router() {
       <Route path="/performance">
         <ProtectedRoute funcionalidade="admin_tenants">
           <Performance />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/configuracoes/backup">
+        <ProtectedRoute funcionalidade="configuracoes">
+          <BackupSettings />
         </ProtectedRoute>
       </Route>
       <Route path="/config-simples">
