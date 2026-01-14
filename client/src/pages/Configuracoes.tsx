@@ -851,41 +851,27 @@ export default function Configuracoes() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="duracaoSlot">Duração dos Slots de Agenda</Label>
-                  <Select value={formData.duracaoSlotAgenda || "30"} onValueChange={(value) => setFormData({ ...formData, duracaoSlotAgenda: value })}>
-                    <SelectTrigger id="duracaoSlot">
-                      <SelectValue placeholder="Selecione a duração" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 minutos</SelectItem>
-                      <SelectItem value="20">20 minutos</SelectItem>
-                      <SelectItem value="30">30 minutos</SelectItem>
-                      <SelectItem value="45">45 minutos</SelectItem>
-                      <SelectItem value="60">1 hora (60 minutos)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Esta configuração define o intervalo de tempo para cada slot na visualização da agenda
-                  </p>
+                  <div className="px-3 py-2 bg-muted rounded border">
+                    <p className="font-medium">30 minutos (fixo)</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      O sistema utiliza slots de 30 minutos para a visualização da agenda
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="duracaoConsulta">Duração Padrão de Consulta</Label>
-                  <Select value={formData.duracaoConsultaPadrao || "30"} onValueChange={(value) => setFormData({ ...formData, duracaoConsultaPadrao: value })}>
-                    <SelectTrigger id="duracaoConsulta">
-                      <SelectValue placeholder="Selecione a duração" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 minutos</SelectItem>
-                      <SelectItem value="20">20 minutos</SelectItem>
-                      <SelectItem value="30">30 minutos</SelectItem>
-                      <SelectItem value="45">45 minutos</SelectItem>
-                      <SelectItem value="60">1 hora (60 minutos)</SelectItem>
-                      <SelectItem value="90">1 hora 30 minutos</SelectItem>
-                      <SelectItem value="120">2 horas</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="duracaoConsulta">Duração Padrão de Consulta (minutos)</Label>
+                  <Input
+                    id="duracaoConsulta"
+                    type="number"
+                    min="1"
+                    max="480"
+                    value={formData.duracaoConsultaPadrao || "30"}
+                    onChange={(e) => setFormData({ ...formData, duracaoConsultaPadrao: e.target.value })}
+                    placeholder="Digite a duração em minutos"
+                  />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Duração padrão ao criar novos agendamentos
+                    Duração padrão de cada consulta em minutos (ex: 8, 17, 30, 45, 60, etc). Pode ser qualquer valor entre 1 e 480 minutos
                   </p>
                 </div>
 
