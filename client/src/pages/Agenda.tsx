@@ -611,7 +611,7 @@ export default function Agenda() {
           {StatusIcon && <StatusIcon className="w-3 h-3 flex-shrink-0" />}
           <span>{formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}</span>
         </div>
-        {duracaoMinutos >= 30 && ag.local && <div className="text-[9px] opacity-80 truncate">{ag.local}</div>}
+        {/* Local removido da exibição principal - disponível ao clicar no agendamento */}
       </div>
     );
   };
