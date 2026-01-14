@@ -1429,6 +1429,10 @@ export const backupHistory = mysqlTable("backup_history", {
   triggeredBy: mysqlEnum("triggered_by", ["scheduled", "manual", "system"]).default("scheduled"),
   createdByUserId: int("created_by_user_id").references(() => users.id),
   
+  // Auditoria detalhada
+  userIpAddress: varchar("user_ip_address", { length: 45 }), // IPv4 ou IPv6
+  userAgent: varchar("user_agent", { length: 500 }), // Browser/Client info
+  
   // Timestamps de auditoria
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),

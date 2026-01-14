@@ -3065,10 +3065,16 @@ Retorne um JSON válido com a estrutura:
         type: z.enum(["full", "incremental"]).default("full"),
       }).optional())
       .mutation(async ({ ctx }) => {
+        // Capturar informações de auditoria
+        const auditInfo = {
+          ipAddress: ctx.req.ip || ctx.req.headers['x-forwarded-for']?.toString() || ctx.req.socket.remoteAddress || 'unknown',
+          userAgent: ctx.req.headers['user-agent'] || 'unknown',
+        };
         return await backup.executeFullBackup(
           ctx.tenant.tenantId,
           "manual",
-          ctx.user?.id
+          ctx.user?.id,
+          auditInfo
         );
       }),
 
@@ -3076,9 +3082,15 @@ Retorne um JSON válido com a estrutura:
     generateOfflineBackup: tenantProcedure
       .mutation(async ({ ctx }) => {
         if (!ctx.user?.id) throw new Error("User not authenticated");
+        // Capturar informações de auditoria
+        const auditInfo = {
+          ipAddress: ctx.req.ip || ctx.req.headers['x-forwarded-for']?.toString() || ctx.req.socket.remoteAddress || 'unknown',
+          userAgent: ctx.req.headers['user-agent'] || 'unknown',
+        };
         return await backup.generateOfflineBackup(
           ctx.tenant.tenantId,
-          ctx.user.id
+          ctx.user.id,
+          auditInfo
         );
       }),
 

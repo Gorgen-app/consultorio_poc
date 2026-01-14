@@ -2173,3 +2173,10 @@ A dashboard deve integrar **medicina e administração**:
 - [ ] Validação de backup antes da restauração
 - [ ] Documentação completa de procedimentos de DR (Disaster Recovery)
 
+
+
+### Tarefas em Andamento - 13/01/2026
+- [x] Configurar backup automático às 03:00 via cron job Manus
+- [x] Testar download de backup offline (módulo funcionando)
+- [x] Adicionar log de auditoria para backups (quem executou, quando, IP, user agent)
+

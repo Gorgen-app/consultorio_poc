@@ -151,13 +151,14 @@ function generateChecksum(data: Buffer): string {
 export async function executeFullBackup(
   tenantId: number,
   triggeredBy: "scheduled" | "manual" | "system" = "scheduled",
-  userId?: number
+  userId?: number,
+  auditInfo?: { ipAddress?: string; userAgent?: string }
 ): Promise<BackupResult> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const startTime = Date.now();
   
-  // Criar registro de backup em andamento
+  // Criar registro de backup em andamento com auditoria
   const [backupRecord] = await db.insert(backupHistory).values({
     tenantId,
     backupType: "full",
@@ -166,6 +167,8 @@ export async function executeFullBackup(
     filePath: "pending",
     triggeredBy,
     createdByUserId: userId,
+    userIpAddress: auditInfo?.ipAddress || null,
+    userAgent: auditInfo?.userAgent || null,
   });
   
   const backupId = backupRecord.insertId;
@@ -400,13 +403,14 @@ export async function validateBackup(backupId: number): Promise<boolean> {
  */
 export async function generateOfflineBackup(
   tenantId: number,
-  userId: number
+  userId: number,
+  auditInfo?: { ipAddress?: string; userAgent?: string }
 ): Promise<BackupResult> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const startTime = Date.now();
   
-  // Criar registro de backup offline
+  // Criar registro de backup offline com auditoria
   const [backupRecord] = await db.insert(backupHistory).values({
     tenantId,
     backupType: "offline",
@@ -416,6 +420,8 @@ export async function generateOfflineBackup(
     destination: "offline_hd",
     triggeredBy: "manual",
     createdByUserId: userId,
+    userIpAddress: auditInfo?.ipAddress || null,
+    userAgent: auditInfo?.userAgent || null,
   });
   
   const backupId = backupRecord.insertId;
