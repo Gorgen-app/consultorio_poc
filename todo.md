@@ -2208,3 +2208,28 @@ A dashboard deve integrar **medicina e administração**:
 - [x] BUG: Data do atendimento fica um dia a menos ao copiar atendimento (corrigido - timezone fix)
 - [x] BUG: Demora excessiva para carregar nome do paciente ao copiar atendimento (otimizado com getById)
 
+
+
+---
+
+## 🏥 JORNADA DO PACIENTE - ARQUITETURA (14/01/2026)
+
+### Documentação
+- [x] Criar documento de arquitetura da jornada do paciente (docs/JORNADA_PACIENTE.md)
+- [x] Registrar diagramas de relacionamento entre módulos
+
+### Próximos Passos de Implementação
+- [ ] Refatorar tabela de agendamentos para suportar tipos não-clínicos
+- [ ] Criar vínculo bidirecional entre agendamentos e atendimentos
+- [ ] Implementar fluxo de conversão agendamento → atendimento
+- [ ] Criar visualização unificada na agenda (todos os tipos)
+- [ ] Implementar linha de cuidado para monitoramento pós-atendimento
+- [ ] Criar fluxo de agendamento cirúrgico completo
+- [ ] Implementar pedido e acompanhamento de exames
+
+
+### Importação Google Calendar - 14/01/2026
+- [x] Analisar estrutura do arquivo ICS exportado
+- [x] Criar script de importação ICS para agenda do Gorgen
+- [x] Executar importação e validar dados (2.373 eventos importados)
+

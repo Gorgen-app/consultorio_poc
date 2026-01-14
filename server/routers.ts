@@ -1584,6 +1584,72 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getHistoricoAgendamento(input.agendamentoId);
       }),
+
+    // Importar eventos do Google Calendar (ICS)
+    importarICS: protectedProcedure
+      .input(z.object({
+        eventos: z.array(z.object({
+          uid: z.string(),
+          summary: z.string().optional().nullable(),
+          dataInicio: z.date(),
+          dataFim: z.date().optional().nullable(),
+          tipoAtendimento: z.enum(["Consulta", "Cirurgia", "Visita internado", "Procedimento em consultório", "Exame", "Reunião", "Bloqueio"]),
+          convenio: z.string().optional().nullable(),
+          nomePaciente: z.string().optional().nullable(),
+          cpf: z.string().optional().nullable(),
+          telefone: z.string().optional().nullable(),
+          email: z.string().optional().nullable(),
+          status: z.enum(["Agendado", "Confirmado", "Realizado", "Cancelado", "Reagendado", "Faltou"]),
+          local: z.string().optional().nullable(),
+          descricao: z.string().optional().nullable(),
+        })),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const results = { importados: 0, duplicados: 0, erros: 0, detalhes: [] as string[] };
+        
+        for (const evento of input.eventos) {
+          try {
+            // Verificar se já existe pelo UID
+            const existente = await db.getAgendamentoByGoogleUid(evento.uid);
+            if (existente) {
+              results.duplicados++;
+              continue;
+            }
+            
+            // Gerar ID de agendamento
+            const idAgendamento = await db.getNextAgendamentoId();
+            
+            // Criar agendamento
+            await db.createAgendamentoImportado({
+              idAgendamento,
+              googleUid: evento.uid,
+              tipoCompromisso: evento.tipoAtendimento,
+              pacienteNome: evento.nomePaciente,
+              dataHoraInicio: evento.dataInicio,
+              dataHoraFim: evento.dataFim || new Date(evento.dataInicio.getTime() + 30 * 60000),
+              local: evento.local,
+              titulo: evento.summary?.substring(0, 255),
+              descricao: evento.descricao?.substring(0, 5000),
+              status: evento.status,
+              convenio: evento.convenio,
+              cpfPaciente: evento.cpf,
+              telefonePaciente: evento.telefone,
+              emailPaciente: evento.email,
+              importadoDe: 'google_calendar',
+              criadoPor: ctx.user?.name || 'Importação ICS',
+            });
+            
+            results.importados++;
+          } catch (error: any) {
+            results.erros++;
+            if (results.detalhes.length < 10) {
+              results.detalhes.push(`Erro em ${evento.summary?.substring(0, 30)}: ${error.message}`);
+            }
+          }
+        }
+        
+        return results;
+      }),
   }),
 
   // ===== BLOQUEIOS DE HORÁRIO =====

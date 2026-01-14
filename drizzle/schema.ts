@@ -905,6 +905,14 @@ export const agendamentos = mysqlTable("agendamentos", {
   criadoPor: varchar("criado_por", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  
+  // Importação do Google Calendar
+  googleUid: varchar("google_uid", { length: 255 }),
+  importadoDe: varchar("importado_de", { length: 50 }), // 'google_calendar', 'manual', etc.
+  convenio: varchar("convenio", { length: 100 }),
+  cpfPaciente: varchar("cpf_paciente", { length: 14 }),
+  telefonePaciente: varchar("telefone_paciente", { length: 20 }),
+  emailPaciente: varchar("email_paciente", { length: 255 }),
 });
 
 export type Agendamento = typeof agendamentos.$inferSelect;

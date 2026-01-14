@@ -2211,6 +2211,80 @@ export async function marcarFaltaAgendamento(id: number, marcadoPor: string) {
   return getAgendamentoById(id);
 }
 
+// Buscar agendamento por Google UID
+export async function getAgendamentoByGoogleUid(googleUid: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select()
+    .from(agendamentos)
+    .where(eq(agendamentos.googleUid, googleUid))
+    .limit(1);
+  
+  return result[0];
+}
+
+// Criar agendamento importado (com campos extras)
+export async function createAgendamentoImportado(data: {
+  idAgendamento: string;
+  googleUid: string;
+  tipoCompromisso: string;
+  pacienteNome?: string | null;
+  dataHoraInicio: Date;
+  dataHoraFim: Date;
+  local?: string | null;
+  titulo?: string | null;
+  descricao?: string | null;
+  status: string;
+  convenio?: string | null;
+  cpfPaciente?: string | null;
+  telefonePaciente?: string | null;
+  emailPaciente?: string | null;
+  importadoDe: string;
+  criadoPor: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Obter tenantId padrão
+  const tenantResult = await db.select().from(tenants).limit(1);
+  const tenantId = tenantResult[0]?.id || 1;
+  
+  const result = await db.insert(agendamentos).values({
+    tenantId,
+    idAgendamento: data.idAgendamento,
+    googleUid: data.googleUid,
+    tipoCompromisso: data.tipoCompromisso as any,
+    pacienteNome: data.pacienteNome,
+    dataHoraInicio: data.dataHoraInicio,
+    dataHoraFim: data.dataHoraFim,
+    local: data.local,
+    titulo: data.titulo,
+    descricao: data.descricao,
+    status: data.status as any,
+    convenio: data.convenio,
+    cpfPaciente: data.cpfPaciente,
+    telefonePaciente: data.telefonePaciente,
+    emailPaciente: data.emailPaciente,
+    importadoDe: data.importadoDe,
+    criadoPor: data.criadoPor,
+  });
+  
+  const insertedId = Number(result[0].insertId);
+  
+  // Registrar no histórico
+  await db.insert(historicoAgendamentos).values({
+    tenantId,
+    agendamentoId: insertedId,
+    tipoAlteracao: "Criação",
+    descricaoAlteracao: `Agendamento importado do Google Calendar: ${data.tipoCompromisso}`,
+    valoresNovos: data as any,
+    realizadoPor: data.criadoPor,
+  });
+  
+  return getAgendamentoById(insertedId);
+}
+
 // ===== BLOQUEIOS DE HORÁRIO =====
 
 export async function createBloqueio(data: InsertBloqueioHorario) {
