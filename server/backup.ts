@@ -26,6 +26,74 @@ const gzip = promisify(zlib.gzip);
 const gunzip = promisify(zlib.gunzip);
 
 // ==========================================
+// CRIPTOGRAFIA AES-256
+// ==========================================
+
+const ENCRYPTION_ALGORITHM = "aes-256-gcm";
+const IV_LENGTH = 16; // 128 bits
+const AUTH_TAG_LENGTH = 16; // 128 bits
+const SALT_LENGTH = 32; // 256 bits
+const KEY_LENGTH = 32; // 256 bits para AES-256
+const PBKDF2_ITERATIONS = 100000; // Iterações para derivar chave
+
+/**
+ * Deriva uma chave de criptografia a partir de uma senha usando PBKDF2
+ */
+function deriveKey(password: string, salt: Buffer): Buffer {
+  return crypto.pbkdf2Sync(password, salt, PBKDF2_ITERATIONS, KEY_LENGTH, "sha512");
+}
+
+/**
+ * Criptografa dados usando AES-256-GCM
+ * Formato do resultado: [salt (32 bytes)][iv (16 bytes)][authTag (16 bytes)][dados criptografados]
+ */
+export function encryptData(data: Buffer, password: string): Buffer {
+  // Gerar salt e IV aleatórios
+  const salt = crypto.randomBytes(SALT_LENGTH);
+  const iv = crypto.randomBytes(IV_LENGTH);
+  
+  // Derivar chave da senha
+  const key = deriveKey(password, salt);
+  
+  // Criar cipher e criptografar
+  const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, iv);
+  const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  
+  // Concatenar: salt + iv + authTag + dados criptografados
+  return Buffer.concat([salt, iv, authTag, encrypted]);
+}
+
+/**
+ * Descriptografa dados criptografados com AES-256-GCM
+ */
+export function decryptData(encryptedData: Buffer, password: string): Buffer {
+  // Extrair componentes
+  const salt = encryptedData.subarray(0, SALT_LENGTH);
+  const iv = encryptedData.subarray(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
+  const authTag = encryptedData.subarray(SALT_LENGTH + IV_LENGTH, SALT_LENGTH + IV_LENGTH + AUTH_TAG_LENGTH);
+  const data = encryptedData.subarray(SALT_LENGTH + IV_LENGTH + AUTH_TAG_LENGTH);
+  
+  // Derivar chave da senha
+  const key = deriveKey(password, salt);
+  
+  // Criar decipher e descriptografar
+  const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, iv);
+  decipher.setAuthTag(authTag);
+  
+  return Buffer.concat([decipher.update(data), decipher.final()]);
+}
+
+/**
+ * Gera uma senha de criptografia segura para o tenant
+ * A senha é derivada do ID do tenant + uma chave secreta do sistema
+ */
+function getEncryptionPassword(tenantId: number): string {
+  const systemSecret = process.env.JWT_SECRET || "gorgen-default-secret-change-me";
+  return crypto.createHash("sha256").update(`${systemSecret}-tenant-${tenantId}-backup`).digest("hex");
+}
+
+// ==========================================
 // TIPOS E INTERFACES
 // ==========================================
 
@@ -205,38 +273,58 @@ export async function executeFullBackup(
     const jsonData = JSON.stringify(backupPayload, null, 2);
     const compressedData = await gzip(Buffer.from(jsonData, "utf-8"));
     
-    // 5. Gerar checksum
-    const checksum = generateChecksum(compressedData);
+    // 5. Criptografar com AES-256-GCM
+    const encryptionPassword = getEncryptionPassword(tenantId);
+    const encryptedData = encryptData(compressedData, encryptionPassword);
     
-    // 6. Gerar nome do arquivo
+    // 6. Gerar checksum do arquivo criptografado
+    const checksum = generateChecksum(encryptedData);
+    
+    // 7. Gerar nome do arquivo (extensão .enc indica criptografado)
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const fileName = `backup/tenant_${tenantId}/full_${timestamp}.json.gz`;
+    const fileName = `backup/tenant_${tenantId}/full_${timestamp}.json.gz.enc`;
     
-    // 7. Upload para S3
-    const { url } = await storagePut(fileName, compressedData, "application/gzip");
+    // 8. Upload para S3
+    const { url } = await storagePut(fileName, encryptedData, "application/octet-stream");
     
-    // 8. Atualizar registro de backup
+    // 9. Atualizar registro de backup
     await db
       .update(backupHistory)
       .set({
         status: "success",
         completedAt: new Date(),
         filePath: fileName,
-        fileSizeBytes: compressedData.length,
+        fileSizeBytes: encryptedData.length,
         checksumSha256: checksum,
         databaseRecords: totalRecords,
         destination: "s3_primary",
+        isEncrypted: true, // Marcar como criptografado
+        encryptionAlgorithm: "AES-256-GCM",
       })
       .where(eq(backupHistory.id, Number(backupId)));
     
     const duration = Date.now() - startTime;
     
-    // 9. Notificar sucesso (se configurado)
+    // 10. Notificar sucesso (se configurado)
     const config = await getBackupConfig(tenantId);
     if (config?.notifyOnSuccess) {
       await notifyOwner({
         title: "✅ Backup GORGEN concluído",
-        content: `Backup completo realizado com sucesso.\n\nRegistros: ${totalRecords}\nTamanho: ${(compressedData.length / 1024).toFixed(2)} KB\nDuração: ${(duration / 1000).toFixed(1)}s`,
+        content: `Backup completo realizado com sucesso.\n\nRegistros: ${totalRecords}\nTamanho: ${(encryptedData.length / 1024).toFixed(2)} KB\nDuração: ${(duration / 1000).toFixed(1)}s\nCriptografia: AES-256-GCM ✅`,
+      });
+    }
+    
+    // 11. Enviar e-mail de notificação (se configurado)
+    if (config?.notificationEmail) {
+      await sendBackupEmailNotification({
+        email: config.notificationEmail,
+        success: true,
+        tenantId,
+        backupType: "full",
+        records: totalRecords,
+        fileSize: encryptedData.length,
+        duration,
+        encrypted: true,
       });
     }
     
@@ -244,7 +332,7 @@ export async function executeFullBackup(
       success: true,
       backupId: Number(backupId),
       filePath: fileName,
-      fileSize: compressedData.length,
+      fileSize: encryptedData.length,
       checksum,
       duration,
     };
@@ -603,4 +691,340 @@ SUPORTE:
                     GORGEN - Aplicativo de Gestão em Saúde
 ================================================================================
 `;
+}
+
+
+// ==========================================
+// NOTIFICAÇÃO POR E-MAIL
+// ==========================================
+
+interface BackupEmailNotification {
+  email: string;
+  success: boolean;
+  tenantId: number;
+  backupType: string;
+  records?: number;
+  fileSize?: number;
+  duration?: number;
+  encrypted?: boolean;
+  errorMessage?: string;
+}
+
+/**
+ * Envia notificação por e-mail sobre o status do backup
+ */
+export async function sendBackupEmailNotification(params: BackupEmailNotification): Promise<boolean> {
+  try {
+    const { email, success, tenantId, backupType, records, fileSize, duration, encrypted, errorMessage } = params;
+    
+    // Usar a API de notificação do Manus para enviar e-mail
+    const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
+    const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
+    
+    if (!forgeApiUrl || !forgeApiKey) {
+      console.warn("[Backup Email] Forge API não configurada, pulando envio de e-mail");
+      return false;
+    }
+    
+    const subject = success 
+      ? `✅ GORGEN - Backup ${backupType.toUpperCase()} concluído com sucesso`
+      : `❌ GORGEN - Falha no backup ${backupType.toUpperCase()}`;
+    
+    const dateStr = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    
+    let body = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: ${success ? '#10b981' : '#ef4444'}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
+    .footer { background: #1f2937; color: #9ca3af; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 8px 8px; }
+    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+    .label { font-weight: bold; color: #6b7280; }
+    .value { color: #111827; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-error { background: #fee2e2; color: #991b1b; }
+    .badge-encrypted { background: #dbeafe; color: #1e40af; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${success ? '✅ Backup Concluído' : '❌ Falha no Backup'}</h1>
+    </div>
+    <div class="content">
+      <p>Olá,</p>
+      <p>${success 
+        ? 'O backup do sistema GORGEN foi realizado com sucesso.' 
+        : 'Houve uma falha durante o backup do sistema GORGEN.'}</p>
+      
+      <h3>Detalhes do Backup</h3>
+      <div class="info-row">
+        <span class="label">Data/Hora:</span>
+        <span class="value">${dateStr}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Tipo:</span>
+        <span class="value">${backupType.toUpperCase()}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Status:</span>
+        <span class="badge ${success ? 'badge-success' : 'badge-error'}">${success ? 'SUCESSO' : 'FALHA'}</span>
+      </div>`;
+    
+    if (success) {
+      body += `
+      <div class="info-row">
+        <span class="label">Registros:</span>
+        <span class="value">${records?.toLocaleString('pt-BR') || 'N/A'}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Tamanho:</span>
+        <span class="value">${fileSize ? (fileSize / 1024).toFixed(2) + ' KB' : 'N/A'}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Duração:</span>
+        <span class="value">${duration ? (duration / 1000).toFixed(1) + 's' : 'N/A'}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Criptografia:</span>
+        <span class="badge badge-encrypted">${encrypted ? 'AES-256-GCM ✅' : 'Não criptografado'}</span>
+      </div>`;
+    } else {
+      body += `
+      <div class="info-row">
+        <span class="label">Erro:</span>
+        <span class="value" style="color: #dc2626;">${errorMessage || 'Erro desconhecido'}</span>
+      </div>
+      <p style="margin-top: 15px; color: #dc2626;">
+        <strong>Ação necessária:</strong> Por favor, verifique o sistema e tente executar o backup novamente.
+      </p>`;
+    }
+    
+    body += `
+    </div>
+    <div class="footer">
+      <p>GORGEN - Aplicativo de Gestão em Saúde</p>
+      <p>Este é um e-mail automático, não responda.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    // Chamar API de notificação do Manus
+    const response = await fetch(`${forgeApiUrl}/notification/email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${forgeApiKey}`,
+      },
+      body: JSON.stringify({
+        to: email,
+        subject,
+        html: body,
+      }),
+    });
+    
+    if (!response.ok) {
+      console.error("[Backup Email] Erro ao enviar e-mail:", await response.text());
+      return false;
+    }
+    
+    console.log(`[Backup Email] E-mail enviado para ${email}`);
+    return true;
+  } catch (error) {
+    console.error("[Backup Email] Erro ao enviar notificação:", error);
+    return false;
+  }
+}
+
+// ==========================================
+// RESTAURAÇÃO DE BACKUP
+// ==========================================
+
+export interface RestoreResult {
+  success: boolean;
+  tablesRestored?: number;
+  recordsRestored?: number;
+  error?: string;
+  duration?: number;
+}
+
+/**
+ * Restaura um backup a partir de dados criptografados
+ * ATENÇÃO: Esta operação substitui TODOS os dados existentes!
+ */
+export async function restoreBackup(
+  tenantId: number,
+  encryptedData: Buffer,
+  userId: number,
+  auditInfo?: { ipAddress?: string; userAgent?: string }
+): Promise<RestoreResult> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const startTime = Date.now();
+  
+  try {
+    // 1. Descriptografar dados
+    const encryptionPassword = getEncryptionPassword(tenantId);
+    const compressedData = decryptData(encryptedData, encryptionPassword);
+    
+    // 2. Descomprimir
+    const jsonData = await gunzip(compressedData);
+    const backupPayload = JSON.parse(jsonData.toString("utf-8"));
+    
+    // 3. Validar estrutura do backup
+    if (!backupPayload.version || !backupPayload.tables) {
+      throw new Error("Formato de backup inválido");
+    }
+    
+    if (backupPayload.tenantId !== tenantId) {
+      throw new Error("Este backup pertence a outro tenant");
+    }
+    
+    // 4. Registrar início da restauração
+    console.log(`[Restore] Iniciando restauração para tenant ${tenantId}`);
+    console.log(`[Restore] Versão do backup: ${backupPayload.version}`);
+    console.log(`[Restore] Tabelas: ${Object.keys(backupPayload.tables).length}`);
+    
+    let tablesRestored = 0;
+    let recordsRestored = 0;
+    
+    // 5. Restaurar cada tabela
+    // NOTA: Em produção, isso deveria ser feito em uma transação
+    // e com mais validações de segurança
+    for (const [tableName, tableData] of Object.entries(backupPayload.tables)) {
+      const data = tableData as TableData;
+      if (data.records && data.records.length > 0) {
+        console.log(`[Restore] Restaurando ${tableName}: ${data.count} registros`);
+        
+        // Limpar tabela existente (apenas dados do tenant)
+        try {
+          // Verificar se a tabela tem tenant_id
+          const columnsResult = await db.execute(
+            sql.raw(`SHOW COLUMNS FROM \`${tableName}\` LIKE 'tenant_id'`)
+          ) as any;
+          
+          const hasTenantId = ((columnsResult[0] || []) as any[]).length > 0;
+          
+          if (hasTenantId) {
+            await db.execute(sql.raw(`DELETE FROM \`${tableName}\` WHERE tenant_id = ${tenantId}`));
+          }
+          
+          // Inserir novos dados
+          // NOTA: Isso é simplificado - em produção, usar batch inserts
+          for (const record of data.records) {
+            const columns = Object.keys(record).filter(k => record[k] !== null);
+            const values = columns.map(k => {
+              const val = record[k];
+              if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
+              if (val instanceof Date) return `'${val.toISOString()}'`;
+              return val;
+            });
+            
+            if (columns.length > 0) {
+              try {
+                await db.execute(
+                  sql.raw(`INSERT INTO \`${tableName}\` (${columns.join(", ")}) VALUES (${values.join(", ")})`)
+                );
+                recordsRestored++;
+              } catch (insertError) {
+                // Ignorar erros de inserção individual (pode ser duplicata)
+                console.warn(`[Restore] Erro ao inserir em ${tableName}:`, insertError);
+              }
+            }
+          }
+          
+          tablesRestored++;
+        } catch (tableError) {
+          console.error(`[Restore] Erro ao restaurar ${tableName}:`, tableError);
+        }
+      }
+    }
+    
+    const duration = Date.now() - startTime;
+    
+    // 6. Notificar conclusão
+    await notifyOwner({
+      title: "🔄 Restauração de Backup GORGEN",
+      content: `Restauração concluída.\n\nTabelas: ${tablesRestored}\nRegistros: ${recordsRestored}\nDuração: ${(duration / 1000).toFixed(1)}s`,
+    });
+    
+    return {
+      success: true,
+      tablesRestored,
+      recordsRestored,
+      duration,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    await notifyOwner({
+      title: "❌ Falha na Restauração GORGEN",
+      content: `A restauração do backup falhou.\n\nErro: ${errorMessage}`,
+    });
+    
+    return {
+      success: false,
+      error: errorMessage,
+      duration: Date.now() - startTime,
+    };
+  }
+}
+
+/**
+ * Valida um arquivo de backup antes da restauração
+ */
+export async function validateBackupFile(
+  tenantId: number,
+  encryptedData: Buffer
+): Promise<{ valid: boolean; error?: string; metadata?: any }> {
+  try {
+    // 1. Descriptografar
+    const encryptionPassword = getEncryptionPassword(tenantId);
+    const compressedData = decryptData(encryptedData, encryptionPassword);
+    
+    // 2. Descomprimir
+    const jsonData = await gunzip(compressedData);
+    const backupPayload = JSON.parse(jsonData.toString("utf-8"));
+    
+    // 3. Validar estrutura
+    if (!backupPayload.version) {
+      return { valid: false, error: "Versão do backup não encontrada" };
+    }
+    
+    if (!backupPayload.tables) {
+      return { valid: false, error: "Dados das tabelas não encontrados" };
+    }
+    
+    if (backupPayload.tenantId !== tenantId) {
+      return { valid: false, error: "Este backup pertence a outro tenant" };
+    }
+    
+    return {
+      valid: true,
+      metadata: {
+        version: backupPayload.version,
+        type: backupPayload.type,
+        createdAt: backupPayload.createdAt,
+        totalTables: backupPayload.metadata?.totalTables,
+        totalRecords: backupPayload.metadata?.totalRecords,
+        gorgenVersion: backupPayload.metadata?.gorgenVersion,
+      },
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Verificar se é erro de descriptografia
+    if (errorMessage.includes("Unsupported state") || errorMessage.includes("bad decrypt")) {
+      return { valid: false, error: "Falha na descriptografia. Verifique se o arquivo pertence a este tenant." };
+    }
+    
+    return { valid: false, error: errorMessage };
+  }
 }

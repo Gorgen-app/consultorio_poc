@@ -3154,6 +3154,41 @@ Retorne um JSON válido com a estrutura:
         const removed = await backup.cleanupOldBackups(ctx.tenant.tenantId);
         return { removedCount: removed };
       }),
+
+    // Validar arquivo de backup antes da restauração
+    validateBackupFile: tenantProcedure
+      .input(z.object({
+        fileData: z.string(), // Base64 encoded
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const buffer = Buffer.from(input.fileData, "base64");
+        return await backup.validateBackupFile(ctx.tenant.tenantId, buffer);
+      }),
+
+    // Restaurar backup
+    restoreBackup: tenantProcedure
+      .input(z.object({
+        fileData: z.string(), // Base64 encoded
+        confirmRestore: z.boolean(), // Confirmação explícita
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user?.id) throw new Error("User not authenticated");
+        if (!input.confirmRestore) throw new Error("Confirmação de restauração necessária");
+        
+        // Capturar informações de auditoria
+        const auditInfo = {
+          ipAddress: ctx.req.ip || ctx.req.headers['x-forwarded-for']?.toString() || ctx.req.socket.remoteAddress || 'unknown',
+          userAgent: ctx.req.headers['user-agent'] || 'unknown',
+        };
+        
+        const buffer = Buffer.from(input.fileData, "base64");
+        return await backup.restoreBackup(
+          ctx.tenant.tenantId,
+          buffer,
+          ctx.user.id,
+          auditInfo
+        );
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

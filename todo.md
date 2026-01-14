@@ -2180,3 +2180,9 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Testar download de backup offline (módulo funcionando)
 - [x] Adicionar log de auditoria para backups (quem executou, quando, IP, user agent)
 
+
+### Tarefas em Andamento - 13/01/2026 (Parte 2)
+- [x] Implementar criptografia AES-256 para backups
+- [x] Criar página de restauração de backup
+- [x] Implementar notificação por e-mail após backups
+

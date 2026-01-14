@@ -1433,6 +1433,10 @@ export const backupHistory = mysqlTable("backup_history", {
   userIpAddress: varchar("user_ip_address", { length: 45 }), // IPv4 ou IPv6
   userAgent: varchar("user_agent", { length: 500 }), // Browser/Client info
   
+  // Criptografia
+  isEncrypted: boolean("is_encrypted").default(false), // Indica se o backup está criptografado
+  encryptionAlgorithm: varchar("encryption_algorithm", { length: 50 }), // Ex: AES-256-GCM
+  
   // Timestamps de auditoria
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
