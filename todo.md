@@ -2239,3 +2239,9 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Implementar sincronização bidirecional com Google Calendar (APIs criadas)
 - [ ] Interface para revisar e confirmar vinculações
 
+
+### Bugs Reportados - 14/01/2026
+- [x] BUG: Consultas de 30min estão ocupando mais que metade do espaço de 1h na agenda (altura proporcional)
+- [x] BUG: Eventos com emoji X ou sirene devem ser classificados como "Falta" (195 eventos atualizados)
+- [x] BUG: Eventos importados corretamente (9 eventos em 14/01, 9 em 09/01) - problema era de visualização
+

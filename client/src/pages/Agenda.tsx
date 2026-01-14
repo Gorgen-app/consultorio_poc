@@ -485,12 +485,22 @@ export default function Agenda() {
   const renderAgendamento = (ag: any) => {
     const isCancelado = ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou";
     
+    // Calcular duração em minutos para definir altura proporcional
+    const inicio = new Date(ag.dataHoraInicio);
+    const fim = ag.dataHoraFim ? new Date(ag.dataHoraFim) : new Date(inicio.getTime() + 30 * 60000);
+    const duracaoMinutos = Math.max(15, Math.min(120, (fim.getTime() - inicio.getTime()) / 60000));
+    
+    // Altura proporcional: 60min = 48px (altura da célula h-12), 30min = 24px (metade)
+    // Cada minuto = 0.8px
+    const alturaPixels = Math.round(duracaoMinutos * 0.8);
+    
     return (
       <div
         key={ag.id}
         onClick={() => abrirDetalhes(ag)}
+        style={{ height: `${alturaPixels}px`, minHeight: '16px' }}
         className={`
-          px-1 py-0.5 rounded cursor-pointer text-white text-[10px] leading-tight
+          px-1 py-0.5 rounded cursor-pointer text-white text-[10px] leading-tight overflow-hidden
           ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
           ${isCancelado ? "opacity-40 line-through" : "hover:opacity-90"}
           ${CORES_STATUS[ag.status]}
@@ -499,7 +509,7 @@ export default function Agenda() {
         <div className="font-medium truncate">
           {formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
         </div>
-        {ag.local && <div className="text-[9px] opacity-80 truncate">{ag.local}</div>}
+        {duracaoMinutos >= 30 && ag.local && <div className="text-[9px] opacity-80 truncate">{ag.local}</div>}
       </div>
     );
   };
@@ -633,7 +643,7 @@ export default function Agenda() {
             </div>
             <div>
               {horarios.map((hora) => (
-                <div key={hora} className="grid grid-cols-8 border-b h-10">
+                <div key={hora} className="grid grid-cols-8 border-b h-12">
                   <div className="px-1 py-0.5 text-center text-xs text-muted-foreground border-r bg-muted flex items-center justify-center">
                     {hora.toString().padStart(2, "0")}:00
                   </div>

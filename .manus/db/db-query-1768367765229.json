@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, titulo, status FROM agendamentos WHERE titulo IS NOT NULL AND titulo != '' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, titulo, status FROM agendamentos WHERE titulo IS NOT NULL AND titulo != '' LIMIT 10;",
+  "rows": [
+    {
+      "id": "30001",
+      "titulo": "Consulta Dr. André Gorgen (ANDERSON CAETANO)",
+      "status": "Realizado"
+    },
+    {
+      "id": "30002",
+      "titulo": "CONSULTA (GLEISSON  SARTORI ) - UNIMED",
+      "status": "Realizado"
+    },
+    {
+      "id": "30003",
+      "titulo": "Consulta (Ana Helena Morosini)",
+      "status": "Realizado"
+    },
+    {
+      "id": "30004",
+      "titulo": "CONSULTA UNIMED (João Renato Rossetti)",
+      "status": "Realizado"
+    },
+    {
+      "id": "30005",
+      "titulo": "🚨❌🛄CONSULTA IPE (LISIANE ANDRÉA ZIMMER)",
+      "status": "Faltou"
+    },
+    {
+      "id": "30006",
+      "titulo": "Plantão Dr. André GHC",
+      "status": "Realizado"
+    },
+    {
+      "id": "30007",
+      "titulo": "🚨❌CONSULTA UNIMED(Andréa Regina Costa Gonçalves",
+      "status": "Faltou"
+    },
+    {
+      "id": "30008",
+      "titulo": "CONSULTA UNIMED(CRISTIAN REZENDE WINTERSCHIDT)",
+      "status": "Agendado"
+    },
+    {
+      "id": "30009",
+      "titulo": "Consulta (Claudia Piccoloto)",
+      "status": "Realizado"
+    },
+    {
+      "id": "30010",
+      "titulo": "✅Consulta IPE (Rafaela  Casagrande dos Santos )",
+      "status": "Realizado"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitulo\tstatus\n30001\tConsulta Dr. André Gorgen (ANDERSON CAETANO)\tRealizado\n30002\tCONSULTA (GLEISSON  SARTORI ) - UNIMED\tRealizado\n30003\tConsulta (Ana Helena Morosini)\tRealizado\n30004\tCONSULTA UNIMED (João Renato Rossetti)\tRealizado\n30005\t🚨❌🛄CONSULTA IPE (LISIANE ANDRÉA ZIMMER)\tFaltou\n30006\tPlantão Dr. André GHC\tRealizado\n30007\t🚨❌CONSULTA UNIMED(Andréa Regina Costa Gonçalves\tFaltou\n30008\tCONSULTA UNIMED(CRISTIAN REZENDE WINTERSCHIDT)\tAgendado\n30009\tConsulta (Claudia Piccoloto)\tRealizado\n30010\t✅Consulta IPE (Rafaela  Casagrande dos Santos )\tRealizado\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}
