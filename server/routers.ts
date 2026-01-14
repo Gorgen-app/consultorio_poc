@@ -3189,6 +3189,67 @@ Retorne um JSON válido com a estrutura:
           auditInfo
         );
       }),
+
+    // Executar backup incremental
+    executeIncrementalBackup: tenantProcedure
+      .mutation(async ({ ctx }) => {
+        if (!ctx.user?.id) throw new Error("User not authenticated");
+        
+        const auditInfo = {
+          ipAddress: ctx.req.ip || ctx.req.headers['x-forwarded-for']?.toString() || ctx.req.socket.remoteAddress || 'unknown',
+          userAgent: ctx.req.headers['user-agent'] || 'unknown',
+        };
+        
+        return await backup.executeIncrementalBackup(
+          ctx.tenant.tenantId,
+          "manual",
+          ctx.user.id,
+          auditInfo
+        );
+      }),
+
+    // Verificar integridade de um backup específico
+    verifyIntegrity: tenantProcedure
+      .input(z.object({
+        backupId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await backup.verifyBackupIntegrity(input.backupId);
+      }),
+
+    // Executar verificação de integridade em todos os backups recentes
+    runIntegrityCheck: tenantProcedure
+      .input(z.object({
+        daysBack: z.number().default(30),
+      }).optional())
+      .mutation(async ({ ctx, input }) => {
+        return await backup.runIntegrityCheck(
+          ctx.tenant.tenantId,
+          input?.daysBack || 30
+        );
+      }),
+
+    // Gerar relatório de auditoria de backups
+    generateAuditReport: tenantProcedure
+      .input(z.object({
+        startDate: z.string(), // ISO date string
+        endDate: z.string(), // ISO date string
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const userName = ctx.user?.name || "system";
+        return await backup.generateBackupAuditReport(
+          ctx.tenant.tenantId,
+          new Date(input.startDate),
+          new Date(input.endDate),
+          userName
+        );
+      }),
+
+    // Gerar relatório mensal de auditoria
+    generateMonthlyReport: tenantProcedure
+      .mutation(async ({ ctx }) => {
+        return await backup.generateMonthlyAuditReport(ctx.tenant.tenantId);
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

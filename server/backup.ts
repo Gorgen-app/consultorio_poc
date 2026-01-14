@@ -1028,3 +1028,692 @@ export async function validateBackupFile(
     return { valid: false, error: errorMessage };
   }
 }
+
+
+// ==========================================
+// BACKUP INCREMENTAL
+// ==========================================
+
+interface IncrementalBackupState {
+  lastBackupId: number;
+  lastBackupDate: Date;
+  lastChecksum: string;
+}
+
+/**
+ * Obtém o estado do último backup completo para backup incremental
+ */
+async function getLastFullBackupState(tenantId: number): Promise<IncrementalBackupState | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const [lastFull] = await db
+    .select()
+    .from(backupHistory)
+    .where(eq(backupHistory.tenantId, tenantId))
+    .orderBy(desc(backupHistory.completedAt))
+    .limit(1);
+  
+  if (!lastFull || lastFull.status !== "success") {
+    return null;
+  }
+  
+  return {
+    lastBackupId: lastFull.id,
+    lastBackupDate: lastFull.completedAt || lastFull.startedAt,
+    lastChecksum: lastFull.checksumSha256 || "",
+  };
+}
+
+/**
+ * Exporta apenas registros modificados desde uma data específica
+ */
+async function exportModifiedRecords(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  tableName: string,
+  tenantId: number,
+  sinceDate: Date
+): Promise<TableData & { modifiedCount: number; newCount: number }> {
+  // Verificar se a tabela tem colunas de auditoria
+  const columnsResult = await db.execute(
+    sql.raw(`SHOW COLUMNS FROM \`${tableName}\``)
+  ) as any;
+  
+  const columns = ((columnsResult[0] || []) as any[]).map((r: any) => r.Field);
+  const hasUpdatedAt = columns.includes("updated_at");
+  const hasCreatedAt = columns.includes("created_at");
+  const hasTenantId = columns.includes("tenant_id");
+  
+  if (!hasUpdatedAt && !hasCreatedAt) {
+    // Tabela sem campos de auditoria - exportar tudo
+    return {
+      ...(await exportTableData(db, tableName, tenantId)),
+      modifiedCount: 0,
+      newCount: 0,
+    };
+  }
+  
+  const sinceDateStr = sinceDate.toISOString().slice(0, 19).replace("T", " ");
+  let query: string;
+  
+  // Construir query para registros novos ou modificados
+  const conditions: string[] = [];
+  
+  if (hasTenantId) {
+    conditions.push(`tenant_id = ${tenantId}`);
+  }
+  
+  const dateConditions: string[] = [];
+  if (hasUpdatedAt) {
+    dateConditions.push(`updated_at >= '${sinceDateStr}'`);
+  }
+  if (hasCreatedAt) {
+    dateConditions.push(`created_at >= '${sinceDateStr}'`);
+  }
+  
+  if (dateConditions.length > 0) {
+    conditions.push(`(${dateConditions.join(" OR ")})`);
+  }
+  
+  query = `SELECT * FROM \`${tableName}\` WHERE ${conditions.join(" AND ")}`;
+  
+  const result = await db.execute(sql.raw(query)) as any;
+  const records = (result[0] || []) as any[];
+  
+  // Contar novos vs modificados
+  let newCount = 0;
+  let modifiedCount = 0;
+  
+  for (const record of records) {
+    if (hasCreatedAt && record.created_at >= sinceDate) {
+      newCount++;
+    } else {
+      modifiedCount++;
+    }
+  }
+  
+  return {
+    tableName,
+    records,
+    count: records.length,
+    modifiedCount,
+    newCount,
+  };
+}
+
+/**
+ * Executa backup incremental (apenas alterações desde o último backup)
+ */
+export async function executeIncrementalBackup(
+  tenantId: number,
+  triggeredBy: "scheduled" | "manual" | "system" = "scheduled",
+  userId?: number,
+  auditInfo?: { ipAddress?: string; userAgent?: string }
+): Promise<BackupResult> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const startTime = Date.now();
+  
+  // Verificar se existe backup completo anterior
+  const lastBackupState = await getLastFullBackupState(tenantId);
+  
+  if (!lastBackupState) {
+    // Não há backup completo - executar backup full
+    console.log("[Incremental] Nenhum backup completo encontrado, executando backup full");
+    return executeFullBackup(tenantId, triggeredBy, userId, auditInfo);
+  }
+  
+  // Criar registro de backup em andamento
+  const [backupRecord] = await db.insert(backupHistory).values({
+    tenantId,
+    backupType: "incremental",
+    status: "running",
+    startedAt: new Date(),
+    filePath: "pending",
+    triggeredBy,
+    createdByUserId: userId,
+    userIpAddress: auditInfo?.ipAddress || null,
+    userAgent: auditInfo?.userAgent || null,
+  });
+  
+  const backupId = backupRecord.insertId;
+  
+  try {
+    // 1. Listar todas as tabelas
+    const tables = await listTables(db);
+    
+    // 2. Exportar apenas registros modificados
+    const incrementalData: { [key: string]: any } = {};
+    let totalRecords = 0;
+    let totalModified = 0;
+    let totalNew = 0;
+    
+    for (const table of tables) {
+      const tableData = await exportModifiedRecords(
+        db,
+        table,
+        tenantId,
+        lastBackupState.lastBackupDate
+      );
+      
+      if (tableData.count > 0) {
+        incrementalData[table] = tableData;
+        totalRecords += tableData.count;
+        totalModified += tableData.modifiedCount;
+        totalNew += tableData.newCount;
+      }
+    }
+    
+    // Se não houver alterações, registrar backup vazio
+    if (totalRecords === 0) {
+      await db
+        .update(backupHistory)
+        .set({
+          status: "success",
+          completedAt: new Date(),
+          filePath: "no_changes",
+          fileSizeBytes: 0,
+          databaseRecords: 0,
+          destination: "s3_primary",
+          isEncrypted: false,
+        })
+        .where(eq(backupHistory.id, Number(backupId)));
+      
+      return {
+        success: true,
+        backupId: Number(backupId),
+        filePath: "no_changes",
+        fileSize: 0,
+        duration: Date.now() - startTime,
+      };
+    }
+    
+    // 3. Criar objeto de backup incremental
+    const backupPayload = {
+      version: "3.0",
+      type: "incremental",
+      tenantId,
+      createdAt: new Date().toISOString(),
+      baseBackupId: lastBackupState.lastBackupId,
+      baseBackupDate: lastBackupState.lastBackupDate.toISOString(),
+      baseChecksum: lastBackupState.lastChecksum,
+      tables: incrementalData,
+      metadata: {
+        totalTables: Object.keys(incrementalData).length,
+        totalRecords,
+        modifiedRecords: totalModified,
+        newRecords: totalNew,
+        gorgenVersion: "2.15",
+      },
+    };
+    
+    // 4. Serializar e comprimir
+    const jsonData = JSON.stringify(backupPayload, null, 2);
+    const compressedData = await gzip(Buffer.from(jsonData, "utf-8"));
+    
+    // 5. Criptografar
+    const encryptionPassword = getEncryptionPassword(tenantId);
+    const encryptedData = encryptData(compressedData, encryptionPassword);
+    
+    // 6. Gerar checksum
+    const checksum = generateChecksum(encryptedData);
+    
+    // 7. Upload para S3
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const fileName = `backup/tenant_${tenantId}/incremental_${timestamp}.json.gz.enc`;
+    
+    await storagePut(fileName, encryptedData, "application/octet-stream");
+    
+    // 8. Atualizar registro
+    await db
+      .update(backupHistory)
+      .set({
+        status: "success",
+        completedAt: new Date(),
+        filePath: fileName,
+        fileSizeBytes: encryptedData.length,
+        checksumSha256: checksum,
+        databaseRecords: totalRecords,
+        destination: "s3_primary",
+        isEncrypted: true,
+        encryptionAlgorithm: "AES-256-GCM",
+      })
+      .where(eq(backupHistory.id, Number(backupId)));
+    
+    const duration = Date.now() - startTime;
+    
+    // 9. Notificar sucesso
+    const config = await getBackupConfig(tenantId);
+    if (config?.notifyOnSuccess) {
+      await notifyOwner({
+        title: "✅ Backup Incremental GORGEN",
+        content: `Backup incremental concluído.\n\nRegistros alterados: ${totalRecords}\n- Novos: ${totalNew}\n- Modificados: ${totalModified}\nTamanho: ${(encryptedData.length / 1024).toFixed(2)} KB\nDuração: ${(duration / 1000).toFixed(1)}s`,
+      });
+    }
+    
+    // 10. Enviar e-mail
+    if (config?.notificationEmail) {
+      await sendBackupEmailNotification({
+        email: config.notificationEmail,
+        success: true,
+        tenantId,
+        backupType: "incremental",
+        records: totalRecords,
+        fileSize: encryptedData.length,
+        duration,
+        encrypted: true,
+      });
+    }
+    
+    return {
+      success: true,
+      backupId: Number(backupId),
+      filePath: fileName,
+      fileSize: encryptedData.length,
+      checksum,
+      duration,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    await db
+      .update(backupHistory)
+      .set({
+        status: "failed",
+        completedAt: new Date(),
+        errorMessage,
+      })
+      .where(eq(backupHistory.id, Number(backupId)));
+    
+    const config = await getBackupConfig(tenantId);
+    if (config?.notifyOnFailure) {
+      await notifyOwner({
+        title: "❌ Falha no Backup Incremental GORGEN",
+        content: `O backup incremental falhou.\n\nErro: ${errorMessage}`,
+      });
+    }
+    
+    return {
+      success: false,
+      backupId: Number(backupId),
+      error: errorMessage,
+      duration: Date.now() - startTime,
+    };
+  }
+}
+
+// ==========================================
+// VERIFICAÇÃO DE INTEGRIDADE PERIÓDICA
+// ==========================================
+
+export interface IntegrityCheckResult {
+  backupId: number;
+  valid: boolean;
+  error?: string;
+  checksumMatch?: boolean;
+  fileExists?: boolean;
+  decryptable?: boolean;
+}
+
+export interface IntegrityReportResult {
+  totalChecked: number;
+  validCount: number;
+  invalidCount: number;
+  results: IntegrityCheckResult[];
+  checkedAt: Date;
+}
+
+/**
+ * Verifica a integridade de um backup específico
+ */
+export async function verifyBackupIntegrity(backupId: number): Promise<IntegrityCheckResult> {
+  const db = await getDb();
+  if (!db) {
+    return { backupId, valid: false, error: "Database not available" };
+  }
+  
+  const [backup] = await db
+    .select()
+    .from(backupHistory)
+    .where(eq(backupHistory.id, backupId))
+    .limit(1);
+  
+  if (!backup) {
+    return { backupId, valid: false, error: "Backup não encontrado" };
+  }
+  
+  if (backup.status !== "success" || !backup.filePath || backup.filePath === "no_changes") {
+    return { 
+      backupId, 
+      valid: backup.filePath === "no_changes", 
+      error: backup.filePath === "no_changes" ? undefined : "Backup não foi concluído com sucesso" 
+    };
+  }
+  
+  try {
+    // 1. Verificar se o arquivo existe no S3
+    const { url } = await storageGet(backup.filePath);
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      return { backupId, valid: false, fileExists: false, error: "Arquivo não encontrado no S3" };
+    }
+    
+    const buffer = Buffer.from(await response.arrayBuffer());
+    
+    // 2. Verificar checksum
+    const currentChecksum = generateChecksum(buffer);
+    const checksumMatch = currentChecksum === backup.checksumSha256;
+    
+    if (!checksumMatch) {
+      return { 
+        backupId, 
+        valid: false, 
+        fileExists: true, 
+        checksumMatch: false, 
+        error: "Checksum não corresponde - arquivo pode estar corrompido" 
+      };
+    }
+    
+    // 3. Tentar descriptografar (se criptografado)
+    if (backup.isEncrypted) {
+      try {
+        const encryptionPassword = getEncryptionPassword(backup.tenantId);
+        const decrypted = decryptData(buffer, encryptionPassword);
+        
+        // Tentar descomprimir para validar estrutura
+        const uncompressed = await gunzip(decrypted);
+        const data = JSON.parse(uncompressed.toString("utf-8"));
+        
+        if (!data.version || !data.tables) {
+          return { 
+            backupId, 
+            valid: false, 
+            fileExists: true, 
+            checksumMatch: true, 
+            decryptable: true,
+            error: "Estrutura do backup inválida" 
+          };
+        }
+      } catch (decryptError) {
+        return { 
+          backupId, 
+          valid: false, 
+          fileExists: true, 
+          checksumMatch: true, 
+          decryptable: false,
+          error: "Falha na descriptografia" 
+        };
+      }
+    }
+    
+    return { 
+      backupId, 
+      valid: true, 
+      fileExists: true, 
+      checksumMatch: true, 
+      decryptable: backup.isEncrypted ? true : undefined 
+    };
+  } catch (error) {
+    return { 
+      backupId, 
+      valid: false, 
+      error: error instanceof Error ? error.message : String(error) 
+    };
+  }
+}
+
+/**
+ * Executa verificação de integridade em todos os backups recentes
+ */
+export async function runIntegrityCheck(
+  tenantId: number,
+  daysBack: number = 30
+): Promise<IntegrityReportResult> {
+  const db = await getDb();
+  if (!db) {
+    return {
+      totalChecked: 0,
+      validCount: 0,
+      invalidCount: 0,
+      results: [],
+      checkedAt: new Date(),
+    };
+  }
+  
+  // Buscar backups dos últimos N dias
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysBack);
+  
+  const backups = await db
+    .select()
+    .from(backupHistory)
+    .where(eq(backupHistory.tenantId, tenantId))
+    .orderBy(desc(backupHistory.completedAt))
+    .limit(100);
+  
+  const recentBackups = backups.filter(b => 
+    b.completedAt && new Date(b.completedAt) >= cutoffDate
+  );
+  
+  const results: IntegrityCheckResult[] = [];
+  let validCount = 0;
+  let invalidCount = 0;
+  
+  for (const backup of recentBackups) {
+    const result = await verifyBackupIntegrity(backup.id);
+    results.push(result);
+    
+    if (result.valid) {
+      validCount++;
+    } else {
+      invalidCount++;
+    }
+  }
+  
+  // Se houver backups inválidos, notificar
+  if (invalidCount > 0) {
+    await notifyOwner({
+      title: "⚠️ Alerta de Integridade - GORGEN Backup",
+      content: `A verificação de integridade encontrou ${invalidCount} backup(s) com problemas.\n\nTotal verificado: ${results.length}\nVálidos: ${validCount}\nInválidos: ${invalidCount}\n\nPor favor, verifique o sistema de backup.`,
+    });
+  }
+  
+  return {
+    totalChecked: results.length,
+    validCount,
+    invalidCount,
+    results,
+    checkedAt: new Date(),
+  };
+}
+
+// ==========================================
+// RELATÓRIO DE AUDITORIA DE BACKUPS
+// ==========================================
+
+export interface BackupAuditEntry {
+  id: number;
+  date: Date;
+  type: string;
+  status: string;
+  triggeredBy: string;
+  userId?: number;
+  userIp?: string;
+  userAgent?: string;
+  fileSize?: number;
+  records?: number;
+  encrypted: boolean;
+  duration?: number;
+  error?: string;
+}
+
+export interface BackupAuditReport {
+  tenantId: number;
+  reportPeriod: {
+    start: Date;
+    end: Date;
+  };
+  summary: {
+    totalBackups: number;
+    successfulBackups: number;
+    failedBackups: number;
+    fullBackups: number;
+    incrementalBackups: number;
+    offlineBackups: number;
+    totalDataProtected: number; // bytes
+    averageBackupSize: number;
+    averageDuration: number;
+    encryptedBackups: number;
+    encryptionRate: number; // percentual
+  };
+  entries: BackupAuditEntry[];
+  integrityStatus: {
+    lastCheck?: Date;
+    validBackups: number;
+    invalidBackups: number;
+  };
+  compliance: {
+    dailyBackupsMet: boolean;
+    weeklyBackupsMet: boolean;
+    monthlyBackupsMet: boolean;
+    encryptionCompliance: boolean;
+    retentionCompliance: boolean;
+  };
+  generatedAt: Date;
+  generatedBy: string;
+}
+
+/**
+ * Gera relatório de auditoria de backups para conformidade regulatória
+ */
+export async function generateBackupAuditReport(
+  tenantId: number,
+  startDate: Date,
+  endDate: Date,
+  generatedBy: string = "system"
+): Promise<BackupAuditReport> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar todos os backups no período
+  const backups = await db
+    .select()
+    .from(backupHistory)
+    .where(eq(backupHistory.tenantId, tenantId))
+    .orderBy(desc(backupHistory.completedAt));
+  
+  // Filtrar por período
+  const periodBackups = backups.filter(b => {
+    const backupDate = b.completedAt || b.startedAt;
+    return backupDate >= startDate && backupDate <= endDate;
+  });
+  
+  // Calcular estatísticas
+  const successfulBackups = periodBackups.filter(b => b.status === "success");
+  const failedBackups = periodBackups.filter(b => b.status === "failed");
+  const fullBackups = periodBackups.filter(b => b.backupType === "full");
+  const incrementalBackups = periodBackups.filter(b => b.backupType === "incremental");
+  const offlineBackups = periodBackups.filter(b => b.backupType === "offline");
+  const encryptedBackups = periodBackups.filter(b => b.isEncrypted);
+  
+  const totalSize = successfulBackups.reduce((sum, b) => sum + (b.fileSizeBytes || 0), 0);
+  const avgSize = successfulBackups.length > 0 ? totalSize / successfulBackups.length : 0;
+  
+  // Calcular duração média
+  const durations = successfulBackups
+    .filter(b => b.completedAt && b.startedAt)
+    .map(b => new Date(b.completedAt!).getTime() - new Date(b.startedAt).getTime());
+  const avgDuration = durations.length > 0 
+    ? durations.reduce((a, b) => a + b, 0) / durations.length 
+    : 0;
+  
+  // Verificar conformidade
+  const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const weeksDiff = Math.ceil(daysDiff / 7);
+  const monthsDiff = Math.ceil(daysDiff / 30);
+  
+  const dailyBackupsMet = successfulBackups.length >= daysDiff * 0.9; // 90% dos dias
+  const weeklyBackupsMet = fullBackups.length >= weeksDiff;
+  const monthlyBackupsMet = offlineBackups.length >= monthsDiff;
+  const encryptionCompliance = periodBackups.length === 0 || 
+    (encryptedBackups.length / periodBackups.length) >= 0.95; // 95% criptografados
+  
+  // Buscar configuração de retenção
+  const config = await getBackupConfig(tenantId);
+  const retentionCompliance = config?.monthlyRetentionMonths ? 
+    config.monthlyRetentionMonths >= 84 : false; // 7 anos mínimo
+  
+  // Criar entradas de auditoria
+  const entries: BackupAuditEntry[] = periodBackups.map(b => ({
+    id: b.id,
+    date: b.completedAt || b.startedAt,
+    type: b.backupType,
+    status: b.status,
+    triggeredBy: b.triggeredBy || "unknown",
+    userId: b.createdByUserId || undefined,
+    userIp: b.userIpAddress || undefined,
+    userAgent: b.userAgent || undefined,
+    fileSize: b.fileSizeBytes || undefined,
+    records: b.databaseRecords || undefined,
+    encrypted: b.isEncrypted || false,
+    duration: b.completedAt && b.startedAt 
+      ? new Date(b.completedAt).getTime() - new Date(b.startedAt).getTime()
+      : undefined,
+    error: b.errorMessage || undefined,
+  }));
+  
+  // Executar verificação de integridade
+  const integrityResult = await runIntegrityCheck(tenantId, daysDiff);
+  
+  return {
+    tenantId,
+    reportPeriod: {
+      start: startDate,
+      end: endDate,
+    },
+    summary: {
+      totalBackups: periodBackups.length,
+      successfulBackups: successfulBackups.length,
+      failedBackups: failedBackups.length,
+      fullBackups: fullBackups.length,
+      incrementalBackups: incrementalBackups.length,
+      offlineBackups: offlineBackups.length,
+      totalDataProtected: totalSize,
+      averageBackupSize: avgSize,
+      averageDuration: avgDuration,
+      encryptedBackups: encryptedBackups.length,
+      encryptionRate: periodBackups.length > 0 
+        ? (encryptedBackups.length / periodBackups.length) * 100 
+        : 100,
+    },
+    entries,
+    integrityStatus: {
+      lastCheck: integrityResult.checkedAt,
+      validBackups: integrityResult.validCount,
+      invalidBackups: integrityResult.invalidCount,
+    },
+    compliance: {
+      dailyBackupsMet,
+      weeklyBackupsMet,
+      monthlyBackupsMet,
+      encryptionCompliance,
+      retentionCompliance,
+    },
+    generatedAt: new Date(),
+    generatedBy,
+  };
+}
+
+/**
+ * Gera relatório de auditoria mensal (para uso em cron job)
+ */
+export async function generateMonthlyAuditReport(tenantId: number): Promise<BackupAuditReport> {
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 1);
+  
+  return generateBackupAuditReport(tenantId, startDate, endDate, "monthly_cron");
+}
+
+

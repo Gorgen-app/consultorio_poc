@@ -14,7 +14,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Progress } from "@/components/ui/progress";
 import { 
   Database, 
-  Download, 
   Clock, 
   Shield, 
   CheckCircle, 
@@ -32,7 +31,12 @@ import {
   RotateCcw,
   FileUp,
   ShieldCheck,
-  Mail
+  Mail,
+  FileText,
+  TrendingUp,
+  Activity,
+  ClipboardList,
+  Download
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,6 +44,7 @@ import { toast } from "sonner";
 
 export default function BackupSettings() {
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isIncrementalBackup, setIsIncrementalBackup] = useState(false);
   const [isGeneratingOffline, setIsGeneratingOffline] = useState(false);
   const [activeTab, setActiveTab] = useState("backup");
   
@@ -51,11 +56,27 @@ export default function BackupSettings() {
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
   const [restoreProgress, setRestoreProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Estado para verificação de integridade
+  const [isCheckingIntegrity, setIsCheckingIntegrity] = useState(false);
+  const [integrityResult, setIntegrityResult] = useState<any>(null);
+  
+  // Estado para relatório de auditoria
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [auditReport, setAuditReport] = useState<any>(null);
+  const [reportStartDate, setReportStartDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().split("T")[0];
+  });
+  const [reportEndDate, setReportEndDate] = useState(() => {
+    return new Date().toISOString().split("T")[0];
+  });
 
   // Queries
   const { data: config, refetch: refetchConfig } = trpc.backup.getConfig.useQuery();
   const { data: lastBackup, refetch: refetchLastBackup } = trpc.backup.getLastBackup.useQuery();
-  const { data: history, refetch: refetchHistory } = trpc.backup.listHistory.useQuery({ limit: 10 });
+  const { data: history, refetch: refetchHistory } = trpc.backup.listHistory.useQuery({ limit: 20 });
 
   // Mutations
   const executeBackupMutation = trpc.backup.executeBackup.useMutation({
@@ -63,13 +84,34 @@ export default function BackupSettings() {
       refetchLastBackup();
       refetchHistory();
       setIsBackingUp(false);
-      toast.success("Backup concluído com sucesso!", {
+      toast.success("Backup completo concluído!", {
         description: "Os dados foram criptografados com AES-256-GCM e salvos no S3."
       });
     },
     onError: (error) => {
       setIsBackingUp(false);
       toast.error("Erro ao executar backup", { description: error.message });
+    },
+  });
+
+  const executeIncrementalMutation = trpc.backup.executeIncrementalBackup.useMutation({
+    onSuccess: (result) => {
+      refetchLastBackup();
+      refetchHistory();
+      setIsIncrementalBackup(false);
+      if (result.filePath === "no_changes") {
+        toast.info("Nenhuma alteração detectada", {
+          description: "Não há registros modificados desde o último backup."
+        });
+      } else {
+        toast.success("Backup incremental concluído!", {
+          description: `${result.fileSize ? (result.fileSize / 1024).toFixed(2) + " KB" : ""} salvos.`
+        });
+      }
+    },
+    onError: (error) => {
+      setIsIncrementalBackup(false);
+      toast.error("Erro ao executar backup incremental", { description: error.message });
     },
   });
 
@@ -124,7 +166,6 @@ export default function BackupSettings() {
         toast.success("Restauração concluída!", {
           description: `${result.tablesRestored} tabelas e ${result.recordsRestored?.toLocaleString("pt-BR")} registros restaurados.`
         });
-        // Limpar estado
         setSelectedFile(null);
         setValidationResult(null);
         refetchHistory();
@@ -139,9 +180,48 @@ export default function BackupSettings() {
     },
   });
 
+  const runIntegrityCheckMutation = trpc.backup.runIntegrityCheck.useMutation({
+    onSuccess: (result) => {
+      setIsCheckingIntegrity(false);
+      setIntegrityResult(result);
+      if (result.invalidCount === 0) {
+        toast.success("Verificação de integridade concluída!", {
+          description: `${result.validCount} backups verificados, todos íntegros.`
+        });
+      } else {
+        toast.warning("Problemas de integridade detectados", {
+          description: `${result.invalidCount} de ${result.totalChecked} backups com problemas.`
+        });
+      }
+    },
+    onError: (error) => {
+      setIsCheckingIntegrity(false);
+      toast.error("Erro na verificação de integridade", { description: error.message });
+    },
+  });
+
+  const generateAuditReportMutation = trpc.backup.generateAuditReport.useMutation({
+    onSuccess: (result) => {
+      setIsGeneratingReport(false);
+      setAuditReport(result);
+      toast.success("Relatório de auditoria gerado!", {
+        description: `Período: ${format(new Date(result.reportPeriod.start), "dd/MM/yyyy")} a ${format(new Date(result.reportPeriod.end), "dd/MM/yyyy")}`
+      });
+    },
+    onError: (error) => {
+      setIsGeneratingReport(false);
+      toast.error("Erro ao gerar relatório", { description: error.message });
+    },
+  });
+
   const handleExecuteBackup = () => {
     setIsBackingUp(true);
     executeBackupMutation.mutate({ type: "full" });
+  };
+
+  const handleExecuteIncrementalBackup = () => {
+    setIsIncrementalBackup(true);
+    executeIncrementalMutation.mutate();
   };
 
   const handleGenerateOffline = () => {
@@ -159,8 +239,6 @@ export default function BackupSettings() {
     
     setSelectedFile(file);
     setValidationResult(null);
-    
-    // Validar automaticamente
     setIsValidating(true);
     
     try {
@@ -195,6 +273,21 @@ export default function BackupSettings() {
     }
   };
 
+  const handleRunIntegrityCheck = () => {
+    setIsCheckingIntegrity(true);
+    setIntegrityResult(null);
+    runIntegrityCheckMutation.mutate({ daysBack: 30 });
+  };
+
+  const handleGenerateAuditReport = () => {
+    setIsGeneratingReport(true);
+    setAuditReport(null);
+    generateAuditReportMutation.mutate({
+      startDate: reportStartDate,
+      endDate: reportEndDate,
+    });
+  };
+
   const formatBytes = (bytes: number | null | undefined) => {
     if (!bytes) return "0 B";
     const k = 1024;
@@ -211,6 +304,8 @@ export default function BackupSettings() {
         return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falhou</Badge>;
       case "running":
         return <Badge variant="secondary"><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Em execução</Badge>;
+      case "archived":
+        return <Badge variant="outline"><FileArchive className="w-3 h-3 mr-1" /> Arquivado</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -221,7 +316,7 @@ export default function BackupSettings() {
       case "full":
         return <Badge variant="outline"><Database className="w-3 h-3 mr-1" /> Completo</Badge>;
       case "incremental":
-        return <Badge variant="outline"><RefreshCw className="w-3 h-3 mr-1" /> Incremental</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200"><TrendingUp className="w-3 h-3 mr-1" /> Incremental</Badge>;
       case "offline":
         return <Badge variant="outline"><HardDrive className="w-3 h-3 mr-1" /> Offline</Badge>;
       default:
@@ -250,9 +345,9 @@ export default function BackupSettings() {
         </AlertDescription>
       </Alert>
 
-      {/* Tabs: Backup / Restauração */}
+      {/* Tabs: Backup / Restauração / Integridade / Auditoria */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
           <TabsTrigger value="backup" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
             Backup
@@ -260,6 +355,14 @@ export default function BackupSettings() {
           <TabsTrigger value="restore" className="flex items-center gap-2">
             <RotateCcw className="h-4 w-4" />
             Restauração
+          </TabsTrigger>
+          <TabsTrigger value="integrity" className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            Integridade
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="flex items-center gap-2">
+            <ClipboardList className="h-4 w-4" />
+            Auditoria
           </TabsTrigger>
         </TabsList>
 
@@ -326,7 +429,7 @@ export default function BackupSettings() {
               <CardContent className="space-y-3">
                 <Button 
                   onClick={handleExecuteBackup} 
-                  disabled={isBackingUp}
+                  disabled={isBackingUp || isIncrementalBackup}
                   className="w-full"
                 >
                   {isBackingUp ? (
@@ -337,10 +440,32 @@ export default function BackupSettings() {
                   ) : (
                     <>
                       <Database className="mr-2 h-4 w-4" />
-                      Executar Backup Agora
+                      Backup Completo
                     </>
                   )}
                 </Button>
+                
+                <Button 
+                  variant="secondary"
+                  onClick={handleExecuteIncrementalBackup} 
+                  disabled={isBackingUp || isIncrementalBackup}
+                  className="w-full"
+                >
+                  {isIncrementalBackup ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Executando...
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      Backup Incremental
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Salva apenas alterações desde o último backup
+                </p>
                 
                 <Separator />
                 
@@ -362,13 +487,10 @@ export default function BackupSettings() {
                     </>
                   )}
                 </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  Backup offline para armazenamento em HD externo (air-gapped)
-                </p>
               </CardContent>
             </Card>
 
-            {/* Próximo Backup Agendado */}
+            {/* Agendamento */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -525,9 +647,6 @@ export default function BackupSettings() {
                     value={config?.notificationEmail || ""}
                     onChange={(e) => handleConfigChange("notificationEmail", e.target.value)}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Receba notificações por e-mail além das notificações no sistema
-                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -541,7 +660,7 @@ export default function BackupSettings() {
                 Histórico de Backups
               </CardTitle>
               <CardDescription>
-                Últimos 10 backups realizados
+                Últimos 20 backups realizados
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -599,22 +718,10 @@ export default function BackupSettings() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Alerta sobre Backup Offline */}
-          <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <AlertTitle className="text-amber-700 dark:text-amber-300">Backup Offline Mensal Recomendado</AlertTitle>
-            <AlertDescription className="text-amber-600 dark:text-amber-400">
-              Para proteção máxima contra cenários catastróficos (ransomware, desastres naturais, etc.), 
-              recomendamos baixar um backup offline mensalmente e armazená-lo em HD externo desconectado da rede.
-              Este é o único backup verdadeiramente "à prova de holocausto zumbi".
-            </AlertDescription>
-          </Alert>
         </TabsContent>
 
         {/* Tab: Restauração */}
         <TabsContent value="restore" className="space-y-6">
-          {/* Alerta de Aviso */}
           <Alert variant="destructive" className="border-red-500">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Atenção: Operação Crítica</AlertTitle>
@@ -679,56 +786,39 @@ export default function BackupSettings() {
                   <ShieldCheck className="h-5 w-5" />
                   Validação do Backup
                 </CardTitle>
-                <CardDescription>
-                  Verificação de integridade e compatibilidade
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {isValidating ? (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                    <p className="text-sm text-muted-foreground">Validando arquivo de backup...</p>
-                    <p className="text-xs text-muted-foreground mt-2">Descriptografando e verificando integridade</p>
+                    <p className="text-sm text-muted-foreground">Validando arquivo...</p>
                   </div>
                 ) : validationResult ? (
                   validationResult.valid ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 text-green-600">
                         <CheckCircle className="h-5 w-5" />
-                        <span className="font-medium">Backup válido e pronto para restauração</span>
+                        <span className="font-medium">Backup válido</span>
                       </div>
                       <Separator />
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
                           <span className="text-muted-foreground">Versão:</span>
                           <span>{validationResult.metadata?.version}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Tipo:</span>
-                          <span className="capitalize">{validationResult.metadata?.type}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Data do backup:</span>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Data:</span>
                           <span>
                             {validationResult.metadata?.createdAt 
                               ? format(new Date(validationResult.metadata.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })
                               : "-"}
                           </span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Tabelas:</span>
-                          <span>{validationResult.metadata?.totalTables}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between">
                           <span className="text-muted-foreground">Registros:</span>
                           <span>{validationResult.metadata?.totalRecords?.toLocaleString("pt-BR")}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Versão GORGEN:</span>
-                          <span>{validationResult.metadata?.gorgenVersion}</span>
-                        </div>
                       </div>
-                      <Separator />
                       <Button 
                         className="w-full" 
                         variant="destructive"
@@ -742,10 +832,9 @@ export default function BackupSettings() {
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 text-red-600">
                         <XCircle className="h-5 w-5" />
-                        <span className="font-medium">Arquivo de backup inválido</span>
+                        <span className="font-medium">Backup inválido</span>
                       </div>
                       <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
                         <AlertDescription>{validationResult.error}</AlertDescription>
                       </Alert>
                     </div>
@@ -753,38 +842,272 @@ export default function BackupSettings() {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                     <Shield className="h-12 w-12 mb-4 opacity-50" />
-                    <p className="text-sm">Selecione um arquivo de backup para validar</p>
+                    <p className="text-sm">Selecione um arquivo para validar</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
 
-          {/* Instruções */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileArchive className="h-5 w-5" />
-                Instruções de Restauração
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                <li>Faça um backup atual do sistema antes de restaurar (para segurança)</li>
-                <li>Selecione o arquivo de backup (.json.gz.enc) que deseja restaurar</li>
-                <li>Aguarde a validação automática do arquivo</li>
-                <li>Verifique os metadados do backup (data, registros, versão)</li>
-                <li>Confirme a restauração digitando "RESTAURAR" no diálogo de confirmação</li>
-                <li>Aguarde a conclusão do processo (pode levar alguns minutos)</li>
-                <li>Após a restauração, verifique se os dados foram recuperados corretamente</li>
-              </ol>
-              <Separator className="my-4" />
-              <p className="text-xs text-muted-foreground">
-                <strong>Nota:</strong> O arquivo de backup deve ter sido gerado pelo mesmo tenant. 
-                Backups de outros tenants não podem ser restaurados por questões de segurança.
-              </p>
-            </CardContent>
-          </Card>
+        {/* Tab: Integridade */}
+        <TabsContent value="integrity" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5" />
+                  Verificação de Integridade
+                </CardTitle>
+                <CardDescription>
+                  Valida checksums e estrutura dos backups existentes
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  A verificação de integridade analisa todos os backups dos últimos 30 dias,
+                  validando checksums SHA-256, descriptografia e estrutura dos arquivos.
+                </p>
+                <Button 
+                  onClick={handleRunIntegrityCheck}
+                  disabled={isCheckingIntegrity}
+                  className="w-full"
+                >
+                  {isCheckingIntegrity ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="mr-2 h-4 w-4" />
+                      Executar Verificação
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Resultado da Verificação
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {integrityResult ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div className="p-4 bg-muted rounded-lg">
+                        <p className="text-2xl font-bold">{integrityResult.totalChecked}</p>
+                        <p className="text-xs text-muted-foreground">Verificados</p>
+                      </div>
+                      <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+                        <p className="text-2xl font-bold text-green-600">{integrityResult.validCount}</p>
+                        <p className="text-xs text-green-600">Íntegros</p>
+                      </div>
+                      <div className="p-4 bg-red-50 dark:bg-red-950 rounded-lg">
+                        <p className="text-2xl font-bold text-red-600">{integrityResult.invalidCount}</p>
+                        <p className="text-xs text-red-600">Com Problemas</p>
+                      </div>
+                    </div>
+                    
+                    {integrityResult.invalidCount > 0 && (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Atenção</AlertTitle>
+                        <AlertDescription>
+                          {integrityResult.invalidCount} backup(s) apresentam problemas de integridade.
+                          Verifique o armazenamento e considere executar um novo backup completo.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    <p className="text-xs text-muted-foreground text-center">
+                      Verificado em: {format(new Date(integrityResult.checkedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                    <ShieldCheck className="h-12 w-12 mb-4 opacity-50" />
+                    <p className="text-sm">Execute uma verificação para ver os resultados</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Tab: Auditoria */}
+        <TabsContent value="audit" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5" />
+                  Gerar Relatório
+                </CardTitle>
+                <CardDescription>
+                  Relatório de auditoria para conformidade regulatória
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Data Inicial</Label>
+                  <Input 
+                    type="date" 
+                    value={reportStartDate}
+                    onChange={(e) => setReportStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data Final</Label>
+                  <Input 
+                    type="date" 
+                    value={reportEndDate}
+                    onChange={(e) => setReportEndDate(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  onClick={handleGenerateAuditReport}
+                  disabled={isGeneratingReport}
+                  className="w-full"
+                >
+                  {isGeneratingReport ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Gerando...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Gerar Relatório
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {auditReport && (
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Relatório de Auditoria
+                  </CardTitle>
+                  <CardDescription>
+                    Período: {format(new Date(auditReport.reportPeriod.start), "dd/MM/yyyy")} a {format(new Date(auditReport.reportPeriod.end), "dd/MM/yyyy")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Resumo */}
+                  <div>
+                    <h4 className="font-medium mb-3">Resumo</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-3 bg-muted rounded-lg text-center">
+                        <p className="text-xl font-bold">{auditReport.summary.totalBackups}</p>
+                        <p className="text-xs text-muted-foreground">Total</p>
+                      </div>
+                      <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg text-center">
+                        <p className="text-xl font-bold text-green-600">{auditReport.summary.successfulBackups}</p>
+                        <p className="text-xs text-green-600">Sucesso</p>
+                      </div>
+                      <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg text-center">
+                        <p className="text-xl font-bold text-red-600">{auditReport.summary.failedBackups}</p>
+                        <p className="text-xs text-red-600">Falhas</p>
+                      </div>
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg text-center">
+                        <p className="text-xl font-bold text-blue-600">{auditReport.summary.encryptionRate.toFixed(0)}%</p>
+                        <p className="text-xs text-blue-600">Criptografados</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tipos de Backup */}
+                  <div>
+                    <h4 className="font-medium mb-3">Tipos de Backup</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{auditReport.summary.fullBackups} Completos</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm">{auditReport.summary.incrementalBackups} Incrementais</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <HardDrive className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{auditReport.summary.offlineBackups} Offline</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Conformidade */}
+                  <div>
+                    <h4 className="font-medium mb-3">Conformidade</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Backups Diários</span>
+                        {auditReport.compliance.dailyBackupsMet ? (
+                          <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
+                        ) : (
+                          <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Não Conforme</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Backups Semanais</span>
+                        {auditReport.compliance.weeklyBackupsMet ? (
+                          <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
+                        ) : (
+                          <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Não Conforme</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Criptografia (95%+)</span>
+                        {auditReport.compliance.encryptionCompliance ? (
+                          <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
+                        ) : (
+                          <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Não Conforme</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Retenção (7 anos)</span>
+                        {auditReport.compliance.retentionCompliance ? (
+                          <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
+                        ) : (
+                          <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Não Conforme</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Integridade */}
+                  <div>
+                    <h4 className="font-medium mb-3">Integridade</h4>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-muted-foreground">Última verificação:</span>
+                      <span className="text-sm">
+                        {auditReport.integrityStatus.lastCheck 
+                          ? format(new Date(auditReport.integrityStatus.lastCheck), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                          : "Nunca"}
+                      </span>
+                      <span className="text-sm text-green-600">{auditReport.integrityStatus.validBackups} íntegros</span>
+                      {auditReport.integrityStatus.invalidBackups > 0 && (
+                        <span className="text-sm text-red-600">{auditReport.integrityStatus.invalidBackups} com problemas</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <p className="text-xs text-muted-foreground">
+                    Relatório gerado em: {format(new Date(auditReport.generatedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })} por {auditReport.generatedBy}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
