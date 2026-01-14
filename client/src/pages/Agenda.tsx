@@ -463,28 +463,27 @@ export default function Agenda() {
     return dias;
   }, [periodo.inicio]);
 
-  // Gerar slots baseado na duração configurada do profissional
-  // Se não houver profissional selecionado, usar 30 minutos como padrão
-  const duracaoSlot = duracaoSlotProfissional || 30;
+  // Sistema de slots em background: sempre 30 minutos
+  const SLOT_DURATION = 30; // Sempre 30 minutos para slots
   
-  // Gerar array de slots (hora:minuto) de 7:00 até 20:00
-  const slots = useMemo(() => {
+  // Gerar array de slots de 30min em background (para lógica de posicionamento)
+  const slotsBackground = useMemo(() => {
     const slotsArray = [];
     let hora = 7;
     let minuto = 0;
     
     while (hora < 20 || (hora === 20 && minuto === 0)) {
       slotsArray.push({ hora, minuto, label: `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}` });
-      minuto += duracaoSlot;
+      minuto += SLOT_DURATION;
       if (minuto >= 60) {
         hora += Math.floor(minuto / 60);
         minuto = minuto % 60;
       }
     }
     return slotsArray;
-  }, [duracaoSlot]);
+  }, [SLOT_DURATION]);
   
-  // Manter compatibilidade com código existente que usa apenas horas
+  // Coluna de horários: apenas horas (07:00, 08:00, 09:00, etc)
   const horarios = Array.from({ length: 14 }, (_, i) => i + 7);
 
   // Usar resultados da busca rápida otimizada
@@ -619,11 +618,16 @@ export default function Agenda() {
     // Cada minuto = 0.8px
     const alturaPixels = Math.round(duracaoMinutos * 0.8);
     
+    // Calcular deslocamento vertical para slots de 30min
+    // Se minuto = 30, desloca para baixo (metade do intervalo)
+    const minutoInicio = inicio.getMinutes();
+    const deslocamentoPixels = minutoInicio === 30 ? 24 : 0; // 24px = metade de 48px
+    
     return (
       <div
         key={ag.id}
         onClick={() => abrirDetalhes(ag)}
-        style={{ height: `${alturaPixels}px`, minHeight: '16px' }}
+        style={{ height: `${alturaPixels}px`, minHeight: '16px', marginTop: `${deslocamentoPixels}px` }}
         className={`
           px-1 py-0.5 rounded cursor-pointer text-white text-[10px] leading-tight overflow-hidden
           ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
@@ -787,20 +791,21 @@ export default function Agenda() {
               })}
             </div>
             <div>
-              {slots.map((slot) => (
-                <div key={`${slot.hora}-${slot.minuto}`} className="grid grid-cols-8 border-b h-12">
+              {horarios.map((hora) => (
+                <div key={hora} className="grid grid-cols-8 border-b h-12">
                   <div className="px-0.5 py-0.5 text-center text-xs text-muted-foreground border-r bg-muted flex items-center justify-center min-w-[40px]">
-                    {slot.label}
+                    {hora.toString().padStart(2, "0")}:00
                   </div>
                   {diasSemana.map((dia, i) => {
                     // Usar data local para a chave (YYYY-MM-DD)
                     const chave = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
                     const agendamentosDia = agendamentosPorDia[chave] || [];
-                    const agendamentosSlot = agendamentosDia.filter((ag: any) => {
+                    // Filtrar agendamentos que começam nesta hora (00 ou 30 minutos)
+                    const agendamentosHora = agendamentosDia.filter((ag: any) => {
                       const dataAg = new Date(ag.dataHoraInicio);
                       const horaAg = dataAg.getHours();
                       const minutosAg = dataAg.getMinutes();
-                      return horaAg === slot.hora && minutosAg === slot.minuto;
+                      return horaAg === hora && (minutosAg === 0 || minutosAg === 30);
                     });
                     const feriado = getFeriado(dia);
                     const isHoje = dia.toDateString() === new Date().toDateString();
@@ -812,7 +817,7 @@ export default function Agenda() {
                           isHoje ? "bg-blue-50/50" : feriado ? "bg-amber-50" : ""
                         }`}
                       >
-                        {agendamentosSlot.map(renderAgendamento)}
+                        {agendamentosHora.map(renderAgendamento)}
                       </div>
                     );
                   })}
