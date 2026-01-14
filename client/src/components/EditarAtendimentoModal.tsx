@@ -98,12 +98,22 @@ export function EditarAtendimentoModal({ atendimento, open, onOpenChange }: Edit
     if (!atendimento) return;
 
     // Converter campos Date para o formato correto
+    // Corrigir timezone: criar data ao meio-dia local para evitar problemas de fuso horário
+    let dataAtendimentoLocal: Date;
+    if (formData.dataAtendimento) {
+      const dateStr = typeof formData.dataAtendimento === 'string' 
+        ? formData.dataAtendimento 
+        : formData.dataAtendimento.toISOString().split('T')[0];
+      const [year, month, day] = dateStr.split('-').map(Number);
+      dataAtendimentoLocal = new Date(year, month - 1, day, 12, 0, 0);
+    } else {
+      dataAtendimentoLocal = new Date();
+    }
+    
     const dataToSubmit = {
       ...formData,
       convenio: formData.convenio === "Outro" ? outroConvenio : formData.convenio,
-      dataAtendimento: formData.dataAtendimento 
-        ? new Date(formData.dataAtendimento) 
-        : new Date(),
+      dataAtendimento: dataAtendimentoLocal,
       dataEnvioFaturamento: formData.dataEnvioFaturamento instanceof Date 
         ? formData.dataEnvioFaturamento.toISOString().split('T')[0] 
         : formData.dataEnvioFaturamento,

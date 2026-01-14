@@ -14,7 +14,23 @@ import { TIPOS_ATENDIMENTO, LOCAIS_ATENDIMENTO, PROCEDIMENTOS_CBHPM, TABELA_HONO
 export default function NovoAtendimento() {
   const [, setLocation] = useLocation();
   const createMutation = trpc.atendimentos.create.useMutation();
-  const { data: pacientes } = trpc.pacientes.list.useQuery({ limit: 50000 });
+  
+  // Extrair pacienteId da URL para carregamento rápido na duplicação
+  const params = new URLSearchParams(window.location.search);
+  const pacienteIdFromUrl = parseInt(params.get('pacienteId') || '0');
+  const isDuplicacaoMode = params.get('duplicar') === 'true';
+  
+  // Buscar paciente específico rapidamente se vier de duplicação
+  const { data: pacienteRapido, isLoading: loadingPacienteRapido } = trpc.pacientes.getById.useQuery(
+    { id: pacienteIdFromUrl },
+    { enabled: pacienteIdFromUrl > 0 }
+  );
+  
+  // Buscar lista completa apenas para busca (lazy loading)
+  const { data: pacientes } = trpc.pacientes.list.useQuery(
+    { limit: 50000 },
+    { enabled: !isDuplicacaoMode } // Só carrega lista se NÃO for duplicação
+  );
 
   const [searchPaciente, setSearchPaciente] = useState("");
   const [pacienteSelecionado, setPacienteSelecionado] = useState<any>(null);
@@ -55,49 +71,54 @@ export default function NovoAtendimento() {
   }, [nextId]);
 
   // Pré-selecionar paciente e preencher dados se vier de duplicação
-  const [isDuplicacao, setIsDuplicacao] = useState(false);
+  const [isDuplicacao, setIsDuplicacao] = useState(isDuplicacaoMode);
   
+  // Efeito rápido: usar pacienteRapido quando disponível (duplicação)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const duplicar = params.get('duplicar');
-    const pacienteIdParam = params.get('pacienteId');
+    if (pacienteRapido && isDuplicacaoMode && !pacienteSelecionado) {
+      // Selecionar paciente imediatamente
+      setPacienteSelecionado(pacienteRapido);
+      
+      // Preencher formulário com dados do paciente e URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      setFormData(prev => ({
+        ...prev,
+        pacienteId: pacienteRapido.id,
+        tipoAtendimento: urlParams.get('tipoAtendimento') || '',
+        local: urlParams.get('local') || '',
+        convenio: urlParams.get('convenio') || pacienteRapido.operadora1 || '',
+        plano: pacienteRapido.planoModalidade1 || '',
+        faturamentoPrevistoInicial: urlParams.get('faturamentoPrevisto') || '',
+        faturamentoPrevistoFinal: urlParams.get('faturamentoPrevisto') || '',
+        observacoes: urlParams.get('observacoes') || '',
+        dataAtendimento: '', // Data em branco para preencher
+      }));
+    }
+  }, [pacienteRapido, isDuplicacaoMode, pacienteSelecionado]);
+  
+  // Efeito para fluxo normal (sem duplicação) - usa lista de pacientes
+  useEffect(() => {
+    if (isDuplicacaoMode) return; // Ignora se for duplicação
     
-    if (duplicar === 'true' && pacientes) {
-      setIsDuplicacao(true);
-      
-      // Preencher dados do atendimento duplicado
-      const pacienteId = parseInt(pacienteIdParam || '0');
-      const paciente = pacientes.find(p => p.id === pacienteId);
-      
-      if (paciente && !pacienteSelecionado) {
-        handlePacienteSelect(pacienteId);
-        
-        // Preencher demais campos (exceto data)
-        setFormData(prev => ({
-          ...prev,
-          tipoAtendimento: params.get('tipoAtendimento') || '',
-          local: params.get('local') || '',
-          convenio: params.get('convenio') || '',
-          faturamentoPrevistoInicial: params.get('faturamentoPrevisto') || '',
-          faturamentoPrevistoFinal: params.get('faturamentoPrevisto') || '',
-          observacoes: params.get('observacoes') || '',
-          dataAtendimento: '', // Data em branco para preencher
-        }));
-      }
-    } else if (pacienteIdParam && pacientes) {
-      // Fluxo normal - apenas pré-selecionar paciente
+    const urlParams = new URLSearchParams(window.location.search);
+    const pacienteIdParam = urlParams.get('pacienteId');
+    
+    if (pacienteIdParam && pacientes) {
       const pacienteId = parseInt(pacienteIdParam);
       const paciente = pacientes.find(p => p.id === pacienteId);
       if (paciente && !pacienteSelecionado) {
         handlePacienteSelect(pacienteId);
       }
     }
-  }, [pacientes]);
+  }, [pacientes, isDuplicacaoMode]);
 
-  const filteredPacientes = pacientes?.filter((p) =>
-    p.nome?.toLowerCase().includes(searchPaciente.toLowerCase()) ||
-    p.idPaciente?.toLowerCase().includes(searchPaciente.toLowerCase())
-  );
+  // No modo duplicação, usar pacienteRapido; senão, filtrar da lista
+  const filteredPacientes = isDuplicacaoMode 
+    ? (pacienteRapido ? [pacienteRapido] : [])
+    : pacientes?.filter((p) =>
+        p.nome?.toLowerCase().includes(searchPaciente.toLowerCase()) ||
+        p.idPaciente?.toLowerCase().includes(searchPaciente.toLowerCase())
+      );
 
   // Quando seleciona um paciente, carrega os convênios dele
   const conveniosDisponiveis = pacienteSelecionado
@@ -110,7 +131,9 @@ export default function NovoAtendimento() {
     : ["Particular", "Cortesia"];
 
   const handlePacienteSelect = (pacienteId: number) => {
-    const paciente = pacientes?.find((p) => p.id === pacienteId);
+    // Buscar paciente na lista ou usar pacienteRapido
+    const paciente = pacientes?.find((p) => p.id === pacienteId) || 
+                     (pacienteRapido?.id === pacienteId ? pacienteRapido : null);
     if (paciente) {
       setPacienteSelecionado(paciente);
       
@@ -174,9 +197,13 @@ export default function NovoAtendimento() {
       return;
     }
     try {
+      // Corrigir timezone: criar data ao meio-dia local para evitar problemas de fuso horário
+      const [year, month, day] = formData.dataAtendimento.split('-').map(Number);
+      const dataAtendimentoLocal = new Date(year, month - 1, day, 12, 0, 0);
+      
       const dataToSend = {
         ...formData,
-        dataAtendimento: new Date(formData.dataAtendimento),
+        dataAtendimento: dataAtendimentoLocal,
         dataFaturamento: formData.dataFaturamento || null,
         dataPagamento: formData.dataPagamento || null,
         faturamentoPrevistoInicial: formData.faturamentoPrevistoInicial || null,

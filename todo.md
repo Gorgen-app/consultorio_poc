@@ -2203,3 +2203,8 @@ A dashboard deve integrar **medicina e administração**:
 ### Tarefas em Andamento - 13/01/2026 (Parte 5)
 - [x] Implementar alertas por e-mail para falhas no teste DR
 
+
+### Bugs Reportados - 13/01/2026
+- [x] BUG: Data do atendimento fica um dia a menos ao copiar atendimento (corrigido - timezone fix)
+- [x] BUG: Demora excessiva para carregar nome do paciente ao copiar atendimento (otimizado com getById)
+
