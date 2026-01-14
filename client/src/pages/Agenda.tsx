@@ -80,7 +80,6 @@ const getNomeMes = (data: Date) => {
 };
 
 export default function Agenda() {
-  const { user } = useAuth();
   const [dataAtual, setDataAtual] = useState(new Date());
   const [visualizacao, setVisualizacao] = useState<"semana" | "dia">("semana");
   const [profissionalSelecionado, setProfissionalSelecionado] = useState<string | null>(null);
