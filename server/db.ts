@@ -1,4 +1,4 @@
-import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne, isNull, isNotNull } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -4288,4 +4288,124 @@ export async function getCrossTenantStats(tenantId: number) {
     pendentesAprovacao: pendentes?.count || 0,
     totalAcessosRegistrados: acessos?.count || 0,
   };
+}
+
+
+// ============================================
+// SINCRONIZAÇÃO COM GOOGLE CALENDAR
+// ============================================
+
+/**
+ * Atualiza o google_uid de um agendamento após criar evento no Google
+ */
+export async function atualizarAgendamentoGoogleUid(agendamentoId: number, googleUid: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(agendamentos)
+    .set({ 
+      googleUid,
+      updatedAt: new Date(),
+    })
+    .where(eq(agendamentos.id, agendamentoId));
+  
+  return { success: true };
+}
+
+/**
+ * Lista agendamentos não sincronizados com Google Calendar
+ */
+export async function listAgendamentosNaoSincronizados(filters?: {
+  dataInicio?: Date;
+  dataFim?: Date;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [
+    eq(agendamentos.tenantId, 1),
+    isNull(agendamentos.googleUid),
+    ne(agendamentos.status, 'Cancelado'),
+  ];
+  
+  if (filters?.dataInicio) {
+    conditions.push(gte(agendamentos.dataHoraInicio, filters.dataInicio));
+  }
+  if (filters?.dataFim) {
+    conditions.push(lte(agendamentos.dataHoraInicio, filters.dataFim));
+  }
+  
+  return await db.select()
+    .from(agendamentos)
+    .where(and(...conditions))
+    .orderBy(asc(agendamentos.dataHoraInicio))
+    .limit(100);
+}
+
+/**
+ * Vincular agendamento a paciente
+ */
+export async function vincularAgendamentoPaciente(
+  agendamentoId: number,
+  pacienteId: number,
+  vinculadoPor: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar nome do paciente
+  const paciente = await db.select({ nome: pacientes.nome })
+    .from(pacientes)
+    .where(eq(pacientes.id, pacienteId))
+    .limit(1);
+  
+  const nomePaciente = paciente[0]?.nome || null;
+  
+  await db.update(agendamentos)
+    .set({ 
+      pacienteId,
+      pacienteNome: nomePaciente,
+      updatedAt: new Date(),
+    })
+    .where(eq(agendamentos.id, agendamentoId));
+  
+  // Registrar no histórico
+  await db.insert(historicoAgendamentos).values({
+    tenantId: 1,
+    agendamentoId,
+    tipoAlteracao: 'Edição',
+    descricaoAlteracao: `Paciente vinculado: ID ${pacienteId} - ${nomePaciente}`,
+    realizadoPor: vinculadoPor,
+  });
+  
+  return { success: true, nomePaciente };
+}
+
+/**
+ * Lista agendamentos pendentes de vinculação (com nome mas sem paciente_id)
+ */
+export async function listAgendamentosPendentesVinculacao() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select({
+    id: agendamentos.id,
+    idAgendamento: agendamentos.idAgendamento,
+    pacienteNome: agendamentos.pacienteNome,
+    cpfPaciente: agendamentos.cpfPaciente,
+    dataHoraInicio: agendamentos.dataHoraInicio,
+    tipoCompromisso: agendamentos.tipoCompromisso,
+    convenio: agendamentos.convenio,
+  })
+    .from(agendamentos)
+    .where(
+      and(
+        eq(agendamentos.tenantId, 1),
+        isNull(agendamentos.pacienteId),
+        isNotNull(agendamentos.pacienteNome),
+        ne(agendamentos.pacienteNome, '')
+      )
+    )
+    .orderBy(desc(agendamentos.dataHoraInicio))
+    .limit(500);
 }

@@ -1650,6 +1650,74 @@ export const appRouter = router({
         
         return results;
       }),
+
+    // Sincronizar com Google Calendar - Exportar evento para Google
+    exportarParaGoogle: protectedProcedure
+      .input(z.object({
+        agendamentoId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const agendamento = await db.getAgendamentoById(input.agendamentoId);
+        if (!agendamento) {
+          throw new Error('Agendamento não encontrado');
+        }
+        
+        // Retornar dados formatados para o MCP criar o evento
+        const dataInicio = new Date(agendamento.dataHoraInicio);
+        const dataFim = agendamento.dataHoraFim 
+          ? new Date(agendamento.dataHoraFim) 
+          : new Date(dataInicio.getTime() + 30 * 60000);
+        
+        return {
+          summary: agendamento.titulo || `${agendamento.tipoCompromisso} - ${agendamento.pacienteNome || 'Sem paciente'}`,
+          description: agendamento.descricao || `ID: ${agendamento.idAgendamento}\nConvênio: ${agendamento.convenio || 'N/A'}`,
+          start_time: dataInicio.toISOString(),
+          end_time: dataFim.toISOString(),
+          location: agendamento.local || 'Consultório',
+          agendamentoId: agendamento.id,
+          idAgendamento: agendamento.idAgendamento,
+        };
+      }),
+
+    // Atualizar google_uid após criar evento no Google
+    atualizarGoogleUid: protectedProcedure
+      .input(z.object({
+        agendamentoId: z.number(),
+        googleUid: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.atualizarAgendamentoGoogleUid(input.agendamentoId, input.googleUid);
+      }),
+
+    // Listar agendamentos não sincronizados com Google
+    listNaoSincronizados: protectedProcedure
+      .input(z.object({
+        dataInicio: z.date().optional(),
+        dataFim: z.date().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.listAgendamentosNaoSincronizados(input);
+      }),
+
+    // Vincular agendamento a paciente
+    vincularPaciente: protectedProcedure
+      .input(z.object({
+        agendamentoId: z.number(),
+        pacienteId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.vincularAgendamentoPaciente(
+          input.agendamentoId,
+          input.pacienteId,
+          ctx.user?.name || 'Sistema'
+        );
+      }),
+
+    // Listar agendamentos pendentes de vinculação
+    listPendentesVinculacao: protectedProcedure
+      .query(async () => {
+        return await db.listAgendamentosPendentesVinculacao();
+      }),
   }),
 
   // ===== BLOQUEIOS DE HORÁRIO =====

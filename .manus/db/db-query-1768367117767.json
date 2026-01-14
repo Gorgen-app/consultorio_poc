@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_agendamentos,\n  SUM(CASE WHEN paciente_nome IS NOT NULL AND paciente_nome != '' THEN 1 ELSE 0 END) as com_nome,\n  SUM(CASE WHEN cpf_paciente IS NOT NULL AND cpf_paciente != '' THEN 1 ELSE 0 END) as com_cpf,\n  SUM(CASE WHEN paciente_id IS NOT NULL THEN 1 ELSE 0 END) as ja_vinculados\nFROM agendamentos\nWHERE importado_de = 'google_calendar';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT \n  COUNT(*) as total_agendamentos,\n  SUM(CASE WHEN paciente_nome IS NOT NULL AND paciente_nome != '' THEN 1 ELSE 0 END) as com_nome,\n  SUM(CASE WHEN cpf_paciente IS NOT NULL AND cpf_paciente != '' THEN 1 ELSE 0 END) as com_cpf,\n  SUM(CASE WHEN paciente_id IS NOT NULL THEN 1 ELSE 0 END) as ja_vinculados\nFROM agendamentos\nWHERE importado_de = 'google_calendar';",
+  "rows": [
+    {
+      "total_agendamentos": "2378",
+      "com_nome": "1576",
+      "com_cpf": "94",
+      "ja_vinculados": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_agendamentos\tcom_nome\tcom_cpf\tja_vinculados\n2378\t1576\t94\t0\n",
+  "stderr": "",
+  "execution_time_ms": 73
+}

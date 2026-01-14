@@ -2233,3 +2233,9 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Criar script de importação ICS para agenda do Gorgen
 - [x] Executar importação e validar dados (2.373 eventos importados)
 
+
+### Vinculação e Sincronização - 14/01/2026
+- [x] Criar rotina de vinculação de agendamentos a pacientes (1.148 vinculados)
+- [x] Implementar sincronização bidirecional com Google Calendar (APIs criadas)
+- [ ] Interface para revisar e confirmar vinculações
+
