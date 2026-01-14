@@ -14,7 +14,7 @@
  */
 
 import { getDb } from "./db";
-import { backupHistory, backupConfig, tenants } from "../drizzle/schema";
+import { backupHistory, backupConfig, tenants, users } from "../drizzle/schema";
 import { eq, sql, desc } from "drizzle-orm";
 import { storagePut, storageGet } from "./storage";
 import { notifyOwner } from "./_core/notification";
@@ -839,6 +839,206 @@ export async function sendBackupEmailNotification(params: BackupEmailNotificatio
     return true;
   } catch (error) {
     console.error("[Backup Email] Erro ao enviar notificação:", error);
+    return false;
+  }
+}
+
+// ==========================================
+// NOTIFICAÇÃO POR E-MAIL - TESTE DR
+// ==========================================
+
+interface RestoreTestEmailNotification {
+  email: string;
+  success: boolean;
+  tenantId: number;
+  backupId: number;
+  backupDate: Date;
+  testDuration: number;
+  validations: RestoreTestResult["validations"];
+  summary: RestoreTestResult["summary"];
+  errorMessage?: string;
+}
+
+/**
+ * Envia notificação por e-mail sobre o resultado do teste de restauração DR
+ */
+export async function sendRestoreTestEmailNotification(params: RestoreTestEmailNotification): Promise<boolean> {
+  try {
+    const { email, success, tenantId, backupId, backupDate, testDuration, validations, summary, errorMessage } = params;
+    
+    const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL;
+    const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY;
+    
+    if (!forgeApiUrl || !forgeApiKey) {
+      console.warn("[DR Test Email] Forge API não configurada, pulando envio de e-mail");
+      return false;
+    }
+    
+    const subject = success 
+      ? `✅ GORGEN - Teste de Restauração DR: APROVADO`
+      : `⚠️ GORGEN - ALERTA: Teste de Restauração DR FALHOU`;
+    
+    const dateStr = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    const backupDateStr = backupDate.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    
+    const getValidationIcon = (success: boolean) => success ? '✅' : '❌';
+    
+    let body = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: ${success ? '#10b981' : '#ef4444'}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .header p { margin: 5px 0 0; opacity: 0.9; }
+    .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
+    .footer { background: #1f2937; color: #9ca3af; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 8px 8px; }
+    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+    .label { font-weight: bold; color: #6b7280; }
+    .value { color: #111827; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-error { background: #fee2e2; color: #991b1b; }
+    .validation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .validation-item { background: white; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; }
+    .validation-name { font-size: 12px; color: #6b7280; }
+    .validation-status { font-size: 16px; margin-top: 4px; }
+    .alert-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 15px; margin-top: 15px; }
+    .alert-title { color: #991b1b; font-weight: bold; margin-bottom: 8px; }
+    .alert-text { color: #7f1d1d; font-size: 14px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+    .summary-item { text-align: center; padding: 15px; border-radius: 8px; }
+    .summary-number { font-size: 28px; font-weight: bold; }
+    .summary-label { font-size: 12px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${success ? '✅ Teste DR Aprovado' : '⚠️ Teste DR Falhou'}</h1>
+      <p>Disaster Recovery - Validação de Backup</p>
+    </div>
+    <div class="content">
+      ${!success ? `
+      <div class="alert-box">
+        <div class="alert-title">⚠️ AÇÃO NECESSÁRIA</div>
+        <div class="alert-text">
+          O teste de restauração de backup falhou. Isso significa que o backup pode não ser recuperável em caso de desastre.
+          <strong>Verifique imediatamente o sistema de backup e execute um novo backup completo.</strong>
+        </div>
+      </div>
+      ` : ''}
+      
+      <h3>Informações do Teste</h3>
+      <div class="info-row">
+        <span class="label">Data/Hora do Teste:</span>
+        <span class="value">${dateStr}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Backup Testado:</span>
+        <span class="value">ID ${backupId} - ${backupDateStr}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Duração:</span>
+        <span class="value">${testDuration}ms</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Status:</span>
+        <span class="badge ${success ? 'badge-success' : 'badge-error'}">${summary.overallStatus.toUpperCase()}</span>
+      </div>
+      
+      <h3>Resumo das Validações</h3>
+      <div class="summary-grid">
+        <div class="summary-item" style="background: #f3f4f6;">
+          <div class="summary-number">${summary.totalValidations}</div>
+          <div class="summary-label">Total</div>
+        </div>
+        <div class="summary-item" style="background: #d1fae5;">
+          <div class="summary-number" style="color: #065f46;">${summary.passedValidations}</div>
+          <div class="summary-label" style="color: #065f46;">Aprovadas</div>
+        </div>
+        <div class="summary-item" style="background: #fee2e2;">
+          <div class="summary-number" style="color: #991b1b;">${summary.failedValidations}</div>
+          <div class="summary-label" style="color: #991b1b;">Falhas</div>
+        </div>
+      </div>
+      
+      <h3>Detalhes das Validações</h3>
+      <div class="validation-grid">
+        <div class="validation-item">
+          <div class="validation-name">Descriptografia AES-256</div>
+          <div class="validation-status">${getValidationIcon(validations.decryption.success)} ${validations.decryption.success ? 'OK' : 'Falha'}</div>
+        </div>
+        <div class="validation-item">
+          <div class="validation-name">Descompressão GZIP</div>
+          <div class="validation-status">${getValidationIcon(validations.decompression.success)} ${validations.decompression.success ? 'OK' : 'Falha'}</div>
+        </div>
+        <div class="validation-item">
+          <div class="validation-name">Parsing JSON</div>
+          <div class="validation-status">${getValidationIcon(validations.jsonParsing.success)} ${validations.jsonParsing.success ? 'OK' : 'Falha'}</div>
+        </div>
+        <div class="validation-item">
+          <div class="validation-name">Checksum SHA-256</div>
+          <div class="validation-status">${getValidationIcon(validations.checksumVerification.success)} ${validations.checksumVerification.success ? 'OK' : 'Falha'}</div>
+        </div>
+        <div class="validation-item">
+          <div class="validation-name">Validação de Schema</div>
+          <div class="validation-status">${getValidationIcon(validations.schemaValidation.success)} ${validations.schemaValidation.success ? 'OK' : 'Falha'}</div>
+        </div>
+        <div class="validation-item">
+          <div class="validation-name">Integridade dos Dados</div>
+          <div class="validation-status">${getValidationIcon(validations.dataIntegrity.success)} ${validations.dataIntegrity.success ? 'OK' : 'Falha'}</div>
+        </div>
+      </div>
+      
+      ${validations.dataIntegrity.tablesChecked ? `
+      <p style="margin-top: 15px; font-size: 14px; color: #6b7280;">
+        Tabelas verificadas: ${validations.dataIntegrity.tablesChecked} | 
+        Registros verificados: ${validations.dataIntegrity.recordsVerified?.toLocaleString('pt-BR')}
+      </p>
+      ` : ''}
+      
+      ${errorMessage ? `
+      <div class="alert-box">
+        <div class="alert-title">Erro Detectado</div>
+        <div class="alert-text">${errorMessage}</div>
+      </div>
+      ` : ''}
+    </div>
+    <div class="footer">
+      <p><strong>GORGEN</strong> - Aplicativo de Gestão em Saúde</p>
+      <p>Pilar Fundamental: Imutabilidade e Preservação Histórica</p>
+      <p style="margin-top: 10px;">Este é um e-mail automático do sistema de Disaster Recovery.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const response = await fetch(`${forgeApiUrl}/notification/email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${forgeApiKey}`,
+      },
+      body: JSON.stringify({
+        to: email,
+        subject,
+        html: body,
+      }),
+    });
+    
+    if (!response.ok) {
+      console.error("[DR Test Email] Erro ao enviar e-mail:", await response.text());
+      return false;
+    }
+    
+    console.log(`[DR Test Email] E-mail enviado para ${email}`);
+    return true;
+  } catch (error) {
+    console.error("[DR Test Email] Erro ao enviar notificação:", error);
     return false;
   }
 }
@@ -1985,6 +2185,30 @@ ${userIp ? `IP: ${userIp}` : ""}
       `.trim(),
     });
     
+    // Enviar e-mail de notificação (especialmente importante para falhas)
+    try {
+      // Buscar e-mail do admin master
+      const adminUser = await db.select()
+        .from(users)
+        .where(sql`${users.role} = 'admin_master'`)
+        .limit(1);
+      
+      if (adminUser.length > 0 && adminUser[0].email) {
+        await sendRestoreTestEmailNotification({
+          email: adminUser[0].email,
+          success: result.success,
+          tenantId,
+          backupId: backup.id,
+          backupDate: backup.createdAt,
+          testDuration: result.duration,
+          validations: result.validations,
+          summary: result.summary,
+        });
+      }
+    } catch (emailError) {
+      console.error("[DR Test] Erro ao enviar e-mail:", emailError);
+    }
+    
     return result;
     
   } catch (error) {
@@ -2024,6 +2248,30 @@ ${userIp ? `IP: ${userIp}` : ""}
 ${userId ? `Executado por: ${userId}` : "Execução automática (cron)"}
       `.trim(),
     });
+    
+    // Enviar e-mail de alerta para falha crítica
+    try {
+      const adminUser = await db.select()
+        .from(users)
+        .where(sql`${users.role} = 'admin_master'`)
+        .limit(1);
+      
+      if (adminUser.length > 0 && adminUser[0].email) {
+        await sendRestoreTestEmailNotification({
+          email: adminUser[0].email,
+          success: false,
+          tenantId,
+          backupId: backupId || 0,
+          backupDate: new Date(),
+          testDuration: result.duration,
+          validations: result.validations,
+          summary: result.summary,
+          errorMessage: result.error,
+        });
+      }
+    } catch (emailError) {
+      console.error("[DR Test] Erro ao enviar e-mail de falha:", emailError);
+    }
     
     return result;
   }
