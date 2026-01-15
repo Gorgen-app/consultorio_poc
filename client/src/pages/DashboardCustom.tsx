@@ -417,75 +417,75 @@ function MetricaConteudo({
   isFullscreen?: boolean;
 }) {
   // Queries para buscar dados das métricas
-  const { data: pacTotalAtivos } = trpc.dashboardMetricas.getPacientesTotalAtivos.useQuery(
+  const { data: pacTotalAtivos } = trpc.dashboardMetricas.pacTotalAtivos.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_total_ativos' }
   );
-  const { data: pacNovosPeriodo } = trpc.dashboardMetricas.getPacientesNovosPeriodo.useQuery(
+  const { data: pacNovosPeriodo } = trpc.dashboardMetricas.pacNovosPeriodo.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_novos_periodo' }
   );
-  const { data: pacDistribuicaoSexo } = trpc.dashboardMetricas.getPacientesDistribuicaoSexo.useQuery(
+  const { data: pacDistribuicaoSexo } = trpc.dashboardMetricas.pacDistribuicaoSexo.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_distribuicao_sexo' }
   );
-  const { data: pacFaixaEtaria } = trpc.dashboardMetricas.getPacientesFaixaEtaria.useQuery(
+  const { data: pacFaixaEtaria } = trpc.dashboardMetricas.pacFaixaEtaria.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_faixa_etaria' }
   );
-  const { data: pacDistribuicaoCidade } = trpc.dashboardMetricas.getPacientesDistribuicaoCidade.useQuery(
+  const { data: pacDistribuicaoCidade } = trpc.dashboardMetricas.pacDistribuicaoCidade.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_distribuicao_cidade' }
   );
-  const { data: pacDistribuicaoConvenio } = trpc.dashboardMetricas.getPacientesDistribuicaoConvenio.useQuery(
+  const { data: pacDistribuicaoConvenio } = trpc.dashboardMetricas.pacDistribuicaoConvenio.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_distribuicao_convenio' }
   );
-  const { data: pacInativos } = trpc.dashboardMetricas.getPacientesInativos.useQuery(
+  const { data: pacInativos } = trpc.dashboardMetricas.pacInativos.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_inativos_periodo' }
   );
-  const { data: pacObitos } = trpc.dashboardMetricas.getPacientesObitos.useQuery(
+  const { data: pacObitos } = trpc.dashboardMetricas.pacObitos.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_obitos_periodo' }
   );
-  const { data: atdTotalPeriodo } = trpc.dashboardMetricas.getAtendimentosTotalPeriodo.useQuery(
+  const { data: atdTotalPeriodo } = trpc.dashboardMetricas.atdTotalPeriodo.useQuery(
     { periodo },
     { enabled: metrica.id === 'atd_total_periodo' }
   );
-  const { data: atdEvolucaoTemporal } = trpc.dashboardMetricas.getAtendimentosEvolucaoTemporal.useQuery(
+  const { data: atdEvolucaoTemporal } = trpc.dashboardMetricas.atdEvolucaoTemporal.useQuery(
     { periodo },
     { enabled: metrica.id === 'atd_evolucao_temporal' }
   );
-  const { data: atdPorTipo } = trpc.dashboardMetricas.getAtendimentosPorTipo.useQuery(
+  const { data: atdPorTipo } = trpc.dashboardMetricas.atdPorTipo.useQuery(
     { periodo },
     { enabled: metrica.id === 'atd_por_tipo' }
   );
-  const { data: atdPorLocal } = trpc.dashboardMetricas.getAtendimentosPorLocal.useQuery(
+  const { data: atdPorLocal } = trpc.dashboardMetricas.atdPorLocal.useQuery(
     { periodo },
     { enabled: metrica.id === 'atd_por_local' }
   );
-  const { data: atdPorConvenio } = trpc.dashboardMetricas.getAtendimentosPorConvenio.useQuery(
+  const { data: atdPorConvenio } = trpc.dashboardMetricas.atdPorConvenio.useQuery(
     { periodo },
     { enabled: metrica.id === 'atd_por_convenio' }
   );
-  const { data: finFaturamentoTotal } = trpc.dashboardMetricas.getFaturamentoTotal.useQuery(
+  const { data: finFaturamentoTotal } = trpc.dashboardMetricas.finFaturamentoTotal.useQuery(
     { periodo },
     { enabled: metrica.id === 'fin_faturamento_total' }
   );
-  const { data: finFaturamentoConvenio } = trpc.dashboardMetricas.getFaturamentoPorConvenio.useQuery(
+  const { data: finFaturamentoConvenio } = trpc.dashboardMetricas.finFaturamentoConvenio.useQuery(
     { periodo },
     { enabled: metrica.id === 'fin_faturamento_convenio' }
   );
-  const { data: finTicketMedio } = trpc.dashboardMetricas.getTicketMedio.useQuery(
+  const { data: finTicketMedio } = trpc.dashboardMetricas.finTicketMedio.useQuery(
     { periodo },
     { enabled: metrica.id === 'fin_ticket_medio' }
   );
-  const { data: finTaxaRecebimento } = trpc.dashboardMetricas.getTaxaRecebimento.useQuery(
+  const { data: finTaxaRecebimento } = trpc.dashboardMetricas.finTaxaRecebimento.useQuery(
     { periodo },
     { enabled: metrica.id === 'fin_taxa_recebimento' }
   );
-  const { data: quaDiagnosticosFrequentes } = trpc.dashboardMetricas.getDiagnosticosFrequentes.useQuery(
+  const { data: quaDiagnosticosFrequentes } = trpc.dashboardMetricas.quaDiagnosticosFrequentes.useQuery(
     { periodo },
     { enabled: metrica.id === 'qua_diagnosticos_frequentes' }
   );
