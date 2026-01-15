@@ -1,4 +1,4 @@
-import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, lt, inArray, ne, isNull, isNotNull } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne, isNull, isNotNull } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs } from "../drizzle/schema";
 import { ENV } from './_core/env';
