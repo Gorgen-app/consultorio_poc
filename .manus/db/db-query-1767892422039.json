@@ -1,9 +1,0 @@
-{
-  "query": "ALTER TABLE user_profiles \nADD COLUMN especialidade_principal VARCHAR(100) DEFAULT NULL,\nADD COLUMN especialidade_secundaria VARCHAR(100) DEFAULT NULL,\nADD COLUMN area_atuacao VARCHAR(100) DEFAULT NULL;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE user_profiles \nADD COLUMN especialidade_principal VARCHAR(100) DEFAULT NULL,\nADD COLUMN especialidade_secundaria VARCHAR(100) DEFAULT NULL,\nADD COLUMN area_atuacao VARCHAR(100) DEFAULT NULL;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 1371
-}

@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE IF NOT EXISTS historico_vinculo (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  vinculo_id INT NOT NULL,\n  acao ENUM('criado', 'renovado', 'expirado', 'cancelado') NOT NULL,\n  data_acao DATETIME DEFAULT CURRENT_TIMESTAMP,\n  observacao TEXT,\n  FOREIGN KEY (vinculo_id) REFERENCES vinculo_secretaria_medico(id)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS historico_vinculo (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  vinculo_id INT NOT NULL,\n  acao ENUM('criado', 'renovado', 'expirado', 'cancelado') NOT NULL,\n  data_acao DATETIME DEFAULT CURRENT_TIMESTAMP,\n  observacao TEXT,\n  FOREIGN KEY (vinculo_id) REFERENCES vinculo_secretaria_medico(id)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 612
-}

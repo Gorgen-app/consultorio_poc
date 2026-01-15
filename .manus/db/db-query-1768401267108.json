@@ -1,9 +1,0 @@
-{
-  "query": "ALTER TABLE profissionais ADD COLUMN duracao_slot_agenda INT DEFAULT 30 COMMENT 'Duração dos slots na agenda em minutos (15, 20, 30, 45, 60)';",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE profissionais ADD COLUMN duracao_slot_agenda INT DEFAULT 30 COMMENT 'Duração dos slots na agenda em minutos (15, 20, 30, 45, 60)';",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 575
-}

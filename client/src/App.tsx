@@ -4,131 +4,35 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import DashboardLayout from "./components/DashboardLayout";
-// Dashboard antiga removida - usando DashboardCustom como principal
-import Pacientes from "./pages/Pacientes";
-import NovoPaciente from "./pages/NovoPaciente";
-import Atendimentos from "./pages/Atendimentos";
-import NovoAtendimento from "./pages/NovoAtendimento";
-import Prontuario from "./pages/Prontuario";
-import Agenda from "./pages/Agenda";
-import Configuracoes from "./pages/Configuracoes";
-import ExamesFavoritos from "./pages/ExamesFavoritos";
-import AdminTenants from "./pages/AdminTenants";
-import CrossTenantAutorizacoes from "./pages/CrossTenantAutorizacoes";
-import RelatorioPacientes from "./pages/RelatorioPacientes";
-import RelatorioDuplicados from "./pages/RelatorioDuplicados";
-import Relatorios from "./pages/Relatorios";
-import Performance from "./pages/Performance";
-import BackupSettings from "./pages/BackupSettings";
-import Dashboard from "./pages/DashboardCustom";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import Home from "./pages/Home";
 
 function Router() {
+  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path="/">
-        <ProtectedRoute funcionalidade="dashboard">
-          <Dashboard />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/dashboard">
-        <ProtectedRoute funcionalidade="dashboard">
-          <Dashboard />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/pacientes">
-        <ProtectedRoute funcionalidade="pacientes">
-          <Pacientes />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/pacientes/novo">
-        <ProtectedRoute funcionalidade="pacientes.criar">
-          <NovoPaciente />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/pacientes/relatorio">
-        <ProtectedRoute funcionalidade="pacientes">
-          <RelatorioPacientes />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/pacientes/duplicados">
-        <ProtectedRoute funcionalidade="pacientes">
-          <RelatorioDuplicados />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/atendimentos">
-        <ProtectedRoute funcionalidade="atendimentos">
-          <Atendimentos />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/atendimentos/novo">
-        <ProtectedRoute funcionalidade="atendimentos.criar">
-          <NovoAtendimento />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/atendimentos/relatorios">
-        <ProtectedRoute funcionalidade="atendimentos">
-          <Relatorios />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/prontuario/:id">
-        <ProtectedRoute funcionalidade="prontuario">
-          <Prontuario />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/agenda">
-        <ProtectedRoute funcionalidade="agenda">
-          <Agenda />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/configuracoes">
-        <ProtectedRoute funcionalidade="configuracoes">
-          <Configuracoes />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/configuracoes/exames-favoritos">
-        <ProtectedRoute funcionalidade="configuracoes">
-          <ExamesFavoritos />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/admin/tenants">
-        <ProtectedRoute funcionalidade="admin_tenants">
-          <AdminTenants />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/compartilhamento">
-        <ProtectedRoute funcionalidade="compartilhamento">
-          <CrossTenantAutorizacoes />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/performance">
-        <ProtectedRoute funcionalidade="admin_tenants">
-          <Performance />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/configuracoes/backup">
-        <ProtectedRoute funcionalidade="configuracoes.backup">
-          <BackupSettings />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/config-simples">
-      </Route>
-      <Route path="/404" component={NotFound} />
+      <Route path={"/"} component={Home} />
+      <Route path={"/404"} component={NotFound} />
+      {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
+// NOTE: About Theme
+// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
+//   to keep consistent foreground/background color across components
+// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
+
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light" switchable>
+      <ThemeProvider
+        defaultTheme="light"
+        // switchable
+      >
         <TooltipProvider>
           <Toaster />
-          <DashboardLayout>
-            <Router />
-          </DashboardLayout>
+          <Router />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

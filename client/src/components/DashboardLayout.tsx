@@ -21,89 +21,15 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, ChevronLeft, Search, Share2, Receipt, Megaphone, UserCircle, Clock, FileSpreadsheet, AlertTriangle, Activity, LayoutGrid } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
-import { trpc } from "@/lib/trpc";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { temPermissao, type PerfilType, type Funcionalidade } from "../../../shared/permissions";
-import { TenantSelector } from "./TenantSelector";
-import { NotificacoesDropdown } from "./NotificacoesDropdown";
-import {
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
-// Mapeamento de perfis
-const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  admin_master: { label: "Admin Master", icon: <Shield className="h-4 w-4" />, color: "bg-red-500" },
-  medico: { label: "Médico", icon: <Stethoscope className="h-4 w-4" />, color: "bg-blue-500" },
-  secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-green-500" },
-  auditor: { label: "Auditor", icon: <DollarSign className="h-4 w-4" />, color: "bg-yellow-500" },
-  paciente: { label: "Paciente", icon: <Eye className="h-4 w-4" />, color: "bg-gray-500" },
-};
-
-// Menu items principais (sem subitens)
-const mainMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade; comingSoon?: boolean; adminOnly?: boolean }[] = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/", funcionalidade: "dashboard" },
-  { icon: Calendar, label: "Agenda", path: "/agenda", funcionalidade: "agenda" },
-  { icon: Share2, label: "Compartilhamento", path: "/compartilhamento", funcionalidade: "compartilhamento" },
-];
-
-// Menu items "Em breve" (funcionalidades futuras)
-const comingSoonItems: { icon: typeof LayoutDashboard; label: string; path: string }[] = [
-  { icon: Receipt, label: "Faturamento e Gestão", path: "/faturamento" },
-  { icon: Megaphone, label: "Leads e Marketing", path: "/marketing" },
-  { icon: UserCircle, label: "Portal do Paciente", path: "/portal-paciente" },
-];
-
-// Menu items de administração (apenas admin)
-const adminMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade }[] = [
-  { icon: Activity, label: "Performance", path: "/performance", funcionalidade: "admin_tenants" },
-];
-
-// Menu items com subitens
-const menuWithSubitems: {
-  icon: typeof Users;
-  label: string;
-  path: string;
-  funcionalidade: Funcionalidade;
-  subitems: { icon: typeof UserPlus; label: string; path: string; funcionalidade: Funcionalidade }[];
-}[] = [
-  {
-    icon: Users,
-    label: "Pacientes",
-    path: "/pacientes",
-    funcionalidade: "pacientes",
-    subitems: [
-      { icon: UserPlus, label: "Novo Paciente", path: "/pacientes/novo", funcionalidade: "pacientes.criar" },
-      { icon: Search, label: "Buscar Paciente", path: "/pacientes?buscar=true", funcionalidade: "pacientes" },
-      { icon: FileSpreadsheet, label: "Relatório", path: "/pacientes/relatorio", funcionalidade: "pacientes" },
-      { icon: AlertTriangle, label: "Duplicados", path: "/pacientes/duplicados", funcionalidade: "pacientes" },
-    ],
-  },
-  {
-    icon: Stethoscope,
-    label: "Atendimentos",
-    path: "/atendimentos",
-    funcionalidade: "atendimentos",
-    subitems: [
-      { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo", funcionalidade: "atendimentos.criar" },
-      { icon: Search, label: "Buscar Atendimento", path: "/atendimentos?buscar=true", funcionalidade: "atendimentos" },
-      { icon: FileSpreadsheet, label: "Relatórios", path: "/atendimentos/relatorios", funcionalidade: "atendimentos" },
-    ],
-  },
+const menuItems = [
+  { icon: LayoutDashboard, label: "Page 1", path: "/" },
+  { icon: Users, label: "Page 2", path: "/some-path" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -186,38 +112,8 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
-  
-  // Estados para controlar os dropdowns abertos
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
-  
-  // Queries de perfil
-  const { data: profile, refetch: refetchProfile } = trpc.perfil.me.useQuery(undefined, {
-    enabled: !!user,
-  });
-  const { data: availablePerfis } = trpc.perfil.getAvailablePerfis.useQuery(undefined, {
-    enabled: !!user,
-  });
-  const setPerfilAtivo = trpc.perfil.setPerfilAtivo.useMutation({
-    onSuccess: () => {
-      toast.success("Perfil alterado com sucesso!");
-      refetchProfile();
-    },
-    onError: (error) => {
-      toast.error(`Erro ao trocar perfil: ${error.message}`);
-    },
-  });
-  
-  const currentPerfil = profile?.perfilAtivo || "paciente";
-  const currentPerfilInfo = perfilInfo[currentPerfil];
-  
-  // Encontrar item ativo para o título mobile
-  const allItems = [
-    ...mainMenuItems,
-    ...menuWithSubitems.map(m => ({ ...m })),
-    ...menuWithSubitems.flatMap(m => m.subitems),
-  ];
-  const activeMenuItem = allItems.find(item => item.path === location);
 
   useEffect(() => {
     if (isCollapsed) {
@@ -255,13 +151,6 @@ function DashboardLayoutContent({
     };
   }, [isResizing, setSidebarWidth]);
 
-  const toggleMenu = (menuPath: string) => {
-    setOpenMenus(prev => ({
-      ...prev,
-      [menuPath]: !prev[menuPath],
-    }));
-  };
-
   return (
     <>
       <div className="relative" ref={sidebarRef}>
@@ -271,168 +160,44 @@ function DashboardLayoutContent({
           disableTransition={isResizing}
         >
           <SidebarHeader className="h-16 justify-center">
-            <div className="flex items-center justify-between px-2 transition-all w-full">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={toggleSidebar}
-                  className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
-                  aria-label="Toggle navigation"
-                >
-                  {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </button>
-                {!isCollapsed ? (
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-semibold tracking-tight truncate">
-                      Menu
-                    </span>
-                  </div>
-                ) : null}
-              </div>
-              {!isCollapsed && <NotificacoesDropdown />}
+            <div className="flex items-center gap-3 px-2 transition-all w-full">
+              <button
+                onClick={toggleSidebar}
+                className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                aria-label="Toggle navigation"
+              >
+                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+              </button>
+              {!isCollapsed ? (
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-semibold tracking-tight truncate">
+                    Navigation
+                  </span>
+                </div>
+              ) : null}
             </div>
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {/* Menu items principais */}
-              {mainMenuItems
-                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
-                .filter(item => !item.adminOnly || user?.role === 'admin')
-                .map(item => {
-                  const isActive = location === item.path;
-                  return (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        onClick={() => setLocation(item.path)}
-                        tooltip={item.label}
-                        className={`h-10 transition-all font-normal`}
-                      >
-                        <item.icon
-                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                        />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              
-              {/* Menu items com subitens */}
-              {menuWithSubitems
-                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
-                .map(item => {
-                  const isActive = location === item.path || item.subitems.some(sub => location === sub.path);
-                  const isOpen = openMenus[item.path] ?? false;
-                  const hasVisibleSubitems = item.subitems.some(sub => 
-                    temPermissao(currentPerfil as PerfilType, sub.funcionalidade)
-                  );
-                  
-                  return (
-                    <Collapsible
-                      key={item.path}
-                      open={isOpen && !isCollapsed}
+              {menuItems.map(item => {
+                const isActive = location === item.path;
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      onClick={() => setLocation(item.path)}
+                      tooltip={item.label}
+                      className={`h-10 transition-all font-normal`}
                     >
-                      <SidebarMenuItem>
-                        <div className="flex items-center w-full">
-                          <SidebarMenuButton
-                            isActive={location === item.path}
-                            onClick={() => setLocation(item.path)}
-                            tooltip={item.label}
-                            className={`h-10 transition-all font-normal flex-1`}
-                          >
-                            <item.icon
-                              className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                            />
-                            <span>{item.label}</span>
-                          </SidebarMenuButton>
-                          {hasVisibleSubitems && !isCollapsed && (
-                            <CollapsibleTrigger asChild>
-                              <button
-                                className="h-10 w-8 flex items-center justify-center hover:bg-accent rounded-r-lg transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleMenu(item.path);
-                                }}
-                              >
-                                <ChevronDown
-                                  className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
-                                />
-                              </button>
-                            </CollapsibleTrigger>
-                          )}
-                        </div>
-                      </SidebarMenuItem>
-                      
-                      <CollapsibleContent>
-                        {item.subitems
-                          .filter(sub => temPermissao(currentPerfil as PerfilType, sub.funcionalidade))
-                          .map(subitem => {
-                            const isSubActive = location === subitem.path;
-                            return (
-                              <SidebarMenuItem key={subitem.path}>
-                                <SidebarMenuButton
-                                  isActive={isSubActive}
-                                  onClick={() => setLocation(subitem.path)}
-                                  tooltip={subitem.label}
-                                  className={`h-9 transition-all font-normal ml-4 text-sm`}
-                                >
-                                  <subitem.icon
-                                    className={`h-3.5 w-3.5 ${isSubActive ? "text-primary" : ""}`}
-                                  />
-                                  <span>{subitem.label}</span>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            );
-                          })}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  );
-                })}
-              
-              {/* Menu items "Em breve" */}
-              {comingSoonItems.map(item => (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton
-                    onClick={() => toast.info(`${item.label} estará disponível em breve!`)}
-                    tooltip={`${item.label} (Em breve)`}
-                    className="h-10 transition-all font-normal"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                    {!isCollapsed && (
-                      <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 h-5">
-                        Em breve
-                      </Badge>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              
-              {/* Menu items de administração (apenas admin) */}
-              {user?.role === 'admin' && adminMenuItems
-                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
-                .map(item => {
-                  const isActive = location === item.path;
-                  return (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        onClick={() => setLocation(item.path)}
-                        tooltip={item.label}
-                        className={`h-10 transition-all font-normal`}
-                      >
-                        <item.icon
-                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                        />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                      <item.icon
+                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                      />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarContent>
 
@@ -455,74 +220,13 @@ function DashboardLayoutContent({
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {/* Perfil atual */}
-                <DropdownMenuLabel className="flex items-center gap-2">
-                  <Badge className={`${currentPerfilInfo?.color} text-white text-xs`}>
-                    {currentPerfilInfo?.icon}
-                    <span className="ml-1">{currentPerfilInfo?.label}</span>
-                  </Badge>
-                </DropdownMenuLabel>
-                
-                <DropdownMenuSeparator />
-                
-                {/* Configurações */}
-                {temPermissao(currentPerfil as PerfilType, "configuracoes") && (
-                  <DropdownMenuItem
-                    onClick={() => setLocation("/configuracoes")}
-                    className="cursor-pointer"
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Configurações</span>
-                  </DropdownMenuItem>
-                )}
-                
-                {/* Perfil - Trocar perfil de acesso */}
-                {availablePerfis && availablePerfis.length > 1 && (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="cursor-pointer">
-                      <UserCircle className="mr-2 h-4 w-4" />
-                      <span>Perfil</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      {availablePerfis.map((perfil) => {
-                        const info = perfilInfo[perfil];
-                        const isActive = perfil === currentPerfil;
-                        return (
-                          <DropdownMenuItem
-                            key={perfil}
-                            onClick={() => !isActive && setPerfilAtivo.mutate({ perfil: perfil as any })}
-                            className={`cursor-pointer ${isActive ? 'bg-accent' : ''}`}
-                            disabled={isActive || setPerfilAtivo.isPending}
-                          >
-                            {info?.icon}
-                            <span className="ml-2">{info?.label}</span>
-                            {isActive && <span className="ml-auto text-xs text-muted-foreground">(Ativo)</span>}
-                          </DropdownMenuItem>
-                        );
-                      })}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                )}
-                
-                {/* Conta - Seletor de Tenant */}
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="cursor-pointer">
-                    <Shield className="mr-2 h-4 w-4" />
-                    <span>Conta</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="p-2 min-w-[200px]">
-                    <TenantSelector className="w-full" />
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                
-                <DropdownMenuSeparator />
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
+                  <span>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -551,12 +255,9 @@ function DashboardLayoutContent({
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <NotificacoesDropdown />
-            </div>
           </div>
         )}
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
     </>
   );

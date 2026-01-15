@@ -1,9 +1,0 @@
-{
-  "query": "INSERT INTO resultados_laboratoriais (paciente_id, documento_externo_id, nome_exame_original, data_coleta, resultado, resultado_numerico, unidade, valor_referencia_texto, valor_referencia_min, valor_referencia_max, fora_referencia, tipo_alteracao, laboratorio, extraido_por_ia) VALUES (47, 90005, 'Hemoglobina', '2025-10-02', '14,2 g/dL', 14.2, 'g/dL', '11,7 a 14,9', 11.7, 14.9, false, 'Normal', 'Weinmann', true);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute INSERT INTO resultados_laboratoriais (paciente_id, documento_externo_id, nome_exame_original, data_coleta, resultado, resultado_numerico, unidade, valor_referencia_texto, valor_referencia_min, valor_referencia_max, fora_referencia, tipo_alteracao, laboratorio, extraido_por_ia) VALUES (47, 90005, 'Hemoglobina', '2025-10-02', '14,2 g/dL', 14.2, 'g/dL', '11,7 a 14,9', 11.7, 14.9, false, 'Normal', 'Weinmann', true);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 69
-}

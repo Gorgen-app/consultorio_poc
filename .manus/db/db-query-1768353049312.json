@@ -1,9 +1,0 @@
-{
-  "query": "ALTER TABLE backup_history ADD COLUMN user_ip_address VARCHAR(45) NULL AFTER created_by_user_id;\nALTER TABLE backup_history ADD COLUMN user_agent VARCHAR(500) NULL AFTER user_ip_address;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE backup_history ADD COLUMN user_ip_address VARCHAR(45) NULL AFTER created_by_user_id;\nALTER TABLE backup_history ADD COLUMN user_agent VARCHAR(500) NULL AFTER user_ip_address;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 894
-}

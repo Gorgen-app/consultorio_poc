@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE IF NOT EXISTS medicamentos_uso (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  medicamento VARCHAR(255) NOT NULL,\n  principio_ativo VARCHAR(255),\n  dosagem VARCHAR(100),\n  posologia VARCHAR(255),\n  via_administracao VARCHAR(50),\n  data_inicio DATE,\n  data_fim DATE,\n  motivo_uso VARCHAR(255),\n  prescrito_por VARCHAR(255),\n  ativo BOOLEAN DEFAULT TRUE NOT NULL,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS medicamentos_uso (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  medicamento VARCHAR(255) NOT NULL,\n  principio_ativo VARCHAR(255),\n  dosagem VARCHAR(100),\n  posologia VARCHAR(255),\n  via_administracao VARCHAR(50),\n  data_inicio DATE,\n  data_fim DATE,\n  motivo_uso VARCHAR(255),\n  prescrito_por VARCHAR(255),\n  ativo BOOLEAN DEFAULT TRUE NOT NULL,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 615
-}

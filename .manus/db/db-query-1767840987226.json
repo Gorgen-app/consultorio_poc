@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE IF NOT EXISTS cardiologia (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  data_exame DATE NOT NULL,\n  tipo_exame ENUM('ECG', 'Ecocardiograma', 'Teste Ergométrico', 'Holter 24h', 'MAPA', 'Cintilografia Miocárdica', 'Cateterismo', 'Angiotomografia', 'Outro') NOT NULL,\n  clinica_servico VARCHAR(255),\n  medico_executor VARCHAR(255),\n  indicacao TEXT,\n  descricao TEXT,\n  conclusao TEXT,\n  feve DECIMAL(4,1),\n  ddve DECIMAL(4,1),\n  dsve DECIMAL(4,1),\n  ae DECIMAL(4,1),\n  arquivo_laudo_url VARCHAR(500),\n  arquivo_exame_url VARCHAR(500),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS cardiologia (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  data_exame DATE NOT NULL,\n  tipo_exame ENUM('ECG', 'Ecocardiograma', 'Teste Ergométrico', 'Holter 24h', 'MAPA', 'Cintilografia Miocárdica', 'Cateterismo', 'Angiotomografia', 'Outro') NOT NULL,\n  clinica_servico VARCHAR(255),\n  medico_executor VARCHAR(255),\n  indicacao TEXT,\n  descricao TEXT,\n  conclusao TEXT,\n  feve DECIMAL(4,1),\n  ddve DECIMAL(4,1),\n  dsve DECIMAL(4,1),\n  ae DECIMAL(4,1),\n  arquivo_laudo_url VARCHAR(500),\n  arquivo_exame_url VARCHAR(500),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 595
-}

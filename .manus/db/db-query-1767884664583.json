@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE IF NOT EXISTS user_settings (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  user_profile_id INT NOT NULL,\n  categoria VARCHAR(50) NOT NULL,\n  chave VARCHAR(100) NOT NULL,\n  valor TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_setting (user_profile_id, categoria, chave)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS user_settings (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  user_profile_id INT NOT NULL,\n  categoria VARCHAR(50) NOT NULL,\n  chave VARCHAR(100) NOT NULL,\n  valor TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_setting (user_profile_id, categoria, chave)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 644
-}

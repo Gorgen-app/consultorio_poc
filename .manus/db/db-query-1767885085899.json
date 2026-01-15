@@ -1,9 +1,0 @@
-{
-  "query": "INSERT INTO user_profiles (\n  user_id, \n  cpf, \n  nome_completo, \n  email, \n  perfil_ativo,\n  is_admin_master, \n  is_medico, \n  is_secretaria, \n  is_financeiro, \n  is_visualizador,\n  crm,\n  especialidade\n) VALUES (\n  1,\n  '005.717.430-05',\n  'André Gorgen',\n  'contato@andregorgen.com.br',\n  'admin_master',\n  TRUE,\n  TRUE,\n  TRUE,\n  TRUE,\n  TRUE,\n  'CRM/RS 12345',\n  'Cirurgia Geral'\n) ON DUPLICATE KEY UPDATE\n  cpf = VALUES(cpf),\n  nome_completo = VALUES(nome_completo),\n  email = VALUES(email),\n  is_admin_master = VALUES(is_admin_master),\n  is_medico = VALUES(is_medico),\n  is_secretaria = VALUES(is_secretaria),\n  is_financeiro = VALUES(is_financeiro),\n  is_visualizador = VALUES(is_visualizador),\n  crm = VALUES(crm),\n  especialidade = VALUES(especialidade);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute INSERT INTO user_profiles (\n  user_id, \n  cpf, \n  nome_completo, \n  email, \n  perfil_ativo,\n  is_admin_master, \n  is_medico, \n  is_secretaria, \n  is_financeiro, \n  is_visualizador,\n  crm,\n  especialidade\n) VALUES (\n  1,\n  '005.717.430-05',\n  'André Gorgen',\n  'contato@andregorgen.com.br',\n  'admin_master',\n  TRUE,\n  TRUE,\n  TRUE,\n  TRUE,\n  TRUE,\n  'CRM/RS 12345',\n  'Cirurgia Geral'\n) ON DUPLICATE KEY UPDATE\n  cpf = VALUES(cpf),\n  nome_completo = VALUES(nome_completo),\n  email = VALUES(email),\n  is_admin_master = VALUES(is_admin_master),\n  is_medico = VALUES(is_medico),\n  is_secretaria = VALUES(is_secretaria),\n  is_financeiro = VALUES(is_financeiro),\n  is_visualizador = VALUES(is_visualizador),\n  crm = VALUES(crm),\n  especialidade = VALUES(especialidade);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 408
-}

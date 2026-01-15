@@ -1,8 +1,0 @@
-{
-  "query": "ALTER TABLE pacientes \nADD COLUMN responsavel_nome VARCHAR(255) AFTER nome_mae,\nADD COLUMN responsavel_parentesco VARCHAR(100) AFTER responsavel_nome,\nADD COLUMN responsavel_telefone VARCHAR(20) AFTER responsavel_parentesco,\nADD COLUMN responsavel_email VARCHAR(320) AFTER responsavel_telefone;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE pacientes \nADD COLUMN responsavel_nome VARCHAR(255) AFTER nome_mae,\nADD COLUMN responsavel_parentesco VARCHAR(100) AFTER responsavel_nome,\nADD COLUMN responsavel_telefone VARCHAR(20) AFTER responsavel_parentesco,\nADD COLUMN responsavel_email VARCHAR(320) AFTER responsavel_telefone;",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 1: Unknown column 'responsavel_nome' in 'pacientes'"
-  ]
-}

@@ -1,9 +1,0 @@
-{
-  "query": "ALTER TABLE audit_log \nADD COLUMN IF NOT EXISTS tenant_id INT NOT NULL DEFAULT 1 AFTER id,\nMODIFY COLUMN action ENUM('CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'VIEW', 'EXPORT', 'LOGIN', 'LOGOUT', 'AUTHORIZE', 'REVOKE') NOT NULL,\nMODIFY COLUMN entity_type ENUM('paciente', 'atendimento', 'user', 'prontuario', 'documento', 'autorizacao', 'tenant', 'session') NOT NULL;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE audit_log \nADD COLUMN IF NOT EXISTS tenant_id INT NOT NULL DEFAULT 1 AFTER id,\nMODIFY COLUMN action ENUM('CREATE', 'UPDATE', 'DELETE', 'RESTORE', 'VIEW', 'EXPORT', 'LOGIN', 'LOGOUT', 'AUTHORIZE', 'REVOKE') NOT NULL,\nMODIFY COLUMN entity_type ENUM('paciente', 'atendimento', 'user', 'prontuario', 'documento', 'autorizacao', 'tenant', 'session') NOT NULL;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 488
-}

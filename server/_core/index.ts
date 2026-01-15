@@ -7,9 +7,6 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { storagePut } from "../storage";
-import { recordEndpointMetric } from "../performance";
-import superjson from "superjson";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -36,64 +33,14 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  
-  // Middleware de coleta de métricas de performance
-  app.use((req, res, next) => {
-    const startTime = Date.now();
-    
-    // Interceptar o fim da resposta para registrar métricas
-    res.on('finish', () => {
-      const responseTime = Date.now() - startTime;
-      const endpoint = req.path;
-      const method = req.method;
-      const statusCode = res.statusCode;
-      
-      // Registrar métrica (ignorar assets estáticos)
-      if (!endpoint.startsWith('/@') && !endpoint.startsWith('/node_modules') && !endpoint.endsWith('.js') && !endpoint.endsWith('.css') && !endpoint.endsWith('.map')) {
-        recordEndpointMetric({
-          endpoint,
-          method,
-          responseTime,
-          statusCode,
-        });
-      }
-    });
-    
-    next();
-  });
-  
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
-
-  // Endpoint de upload de arquivos
-  app.post("/api/upload", async (req, res) => {
-    try {
-      const { fileKey, fileData, contentType } = req.body;
-      
-      if (!fileKey || !fileData) {
-        return res.status(400).json({ error: "fileKey e fileData são obrigatórios" });
-      }
-
-      // Converter base64 para buffer
-      const base64Data = fileData.replace(/^data:[^;]+;base64,/, "");
-      const buffer = Buffer.from(base64Data, "base64");
-
-      // Fazer upload para S3
-      const { url } = await storagePut(fileKey, buffer, contentType || "application/octet-stream");
-
-      res.json({ url });
-    } catch (error) {
-      console.error("Erro no upload:", error);
-      res.status(500).json({ error: "Erro ao fazer upload do arquivo" });
-    }
-  });
   // tRPC API
   app.use(
     "/api/trpc",
     createExpressMiddleware({
       router: appRouter,
       createContext,
-      transformer: superjson,
     })
   );
   // development mode uses Vite, production mode uses static files
