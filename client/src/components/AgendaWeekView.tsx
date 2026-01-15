@@ -6,11 +6,12 @@
  */
 
 import React, { useState, useMemo } from "react";
-import { format, addDays, startOfWeek, isSameDay } from "date-fns";
+import { format, addDays, startOfWeek, isSameDay, getWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 interface Event {
   id: string;
@@ -26,19 +27,23 @@ interface AgendaWeekViewProps {
   events: Event[];
   onEventClick?: (event: Event) => void;
   onSlotClick?: (date: Date, time: string) => void;
+  onSearch?: (query: string) => void;
 }
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const HOURS = Array.from({ length: 24 }, (_, i) => i); // 00:00 até 23:00
 const SLOT_HEIGHT = 60; // pixels por 30 minutos
 
 export function AgendaWeekView({
   events,
   onEventClick,
   onSlotClick,
+  onSearch,
 }: AgendaWeekViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [searchQuery, setSearchQuery] = useState("");
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const weekNumber = getWeek(currentDate, { weekStartsOn: 0 });
 
   const eventsByDay = useMemo(() => {
     const result: Record<string, Event[]> = {};
@@ -76,10 +81,16 @@ export function AgendaWeekView({
     setCurrentDate(addDays(currentDate, 7));
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    onSearch?.(query);
+  };
+
   return (
     <div className="w-full bg-white rounded-lg shadow-sm">
       {/* Header com navegação */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b gap-4">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
@@ -89,8 +100,8 @@ export function AgendaWeekView({
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h2 className="text-lg font-semibold min-w-[200px]">
-            {format(weekStart, "MMMM yyyy", { locale: ptBR })}
+          <h2 className="text-lg font-semibold min-w-[250px]">
+            {format(weekStart, "MMMM yyyy", { locale: ptBR })} - semana {weekNumber}
           </h2>
           <Button
             variant="outline"
@@ -100,6 +111,16 @@ export function AgendaWeekView({
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Search className="w-4 h-4 text-gray-500" />
+          <Input
+            type="text"
+            placeholder="Buscar eventos..."
+            value={searchQuery}
+            onChange={handleSearch}
+            className="w-64"
+          />
         </div>
       </div>
 
@@ -139,12 +160,19 @@ export function AgendaWeekView({
               {HOURS.map((hour) => (
                 <div
                   key={hour}
-                  className="border-b text-xs text-gray-600 p-1 text-center"
+                  className="border-b text-xs text-gray-600 p-1 text-center font-semibold"
                   style={{ height: `${SLOT_HEIGHT * 2}px` }}
                 >
                   {String(hour).padStart(2, "0")}:00
                 </div>
               ))}
+              {/* Linha para 23:30 */}
+              <div
+                className="border-b text-xs text-gray-600 p-1 text-center font-semibold"
+                style={{ height: `${SLOT_HEIGHT}px` }}
+              >
+                23:30
+              </div>
             </div>
 
             {/* Colunas de dias */}
@@ -174,6 +202,14 @@ export function AgendaWeekView({
                       />
                     </div>
                   ))}
+                  {/* Slot final 23:30 */}
+                  <div
+                    className="border-b relative cursor-pointer hover:bg-blue-50 transition-colors"
+                    style={{ height: `${SLOT_HEIGHT}px` }}
+                    onClick={() =>
+                      onSlotClick?.(day, "23:30")
+                    }
+                  />
 
                   {/* Eventos do dia */}
                   {dayEvents.map((event) => (
