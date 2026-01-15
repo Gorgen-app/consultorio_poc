@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as total_migrados FROM pacientes WHERE id_paciente LIKE 'MIG-%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT COUNT(*) as total_migrados FROM pacientes WHERE id_paciente LIKE 'MIG-%';",
+  "rows": [
+    {
+      "total_migrados": "1000"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_migrados\n1000\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}

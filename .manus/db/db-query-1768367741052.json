@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, titulo, status, paciente_nome FROM agendamentos WHERE status = 'Cancelado' LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, titulo, status, paciente_nome FROM agendamentos WHERE status = 'Cancelado' LIMIT 20;",
+  "rows": [
+    {
+      "id": "30316",
+      "titulo": "Cancelada Consulta (LUIS HENRIQUE PAIVA JAINNE ) - DOCTOR CLIN",
+      "status": "Cancelado",
+      "paciente_nome": "LUIS HENRIQUE PAIVA JAINNE"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitulo\tstatus\tpaciente_nome\n30316\tCancelada Consulta (LUIS HENRIQUE PAIVA JAINNE ) - DOCTOR CLIN\tCancelado\tLUIS HENRIQUE PAIVA JAINNE\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

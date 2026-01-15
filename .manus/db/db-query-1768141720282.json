@@ -1,0 +1,15 @@
+{
+  "query": "\nSELECT \n    LOWER(TRIM(nome)) as nome_norm,\n    COUNT(*) as qtd,\n    GROUP_CONCAT(CONCAT(id_paciente, ' (', COALESCE(DATE_FORMAT(data_nascimento, '%d/%m/%Y'), 'S/D'), ')') ORDER BY created_at SEPARATOR ' | ') as detalhes\nFROM pacientes \nWHERE deleted_at IS NULL\nGROUP BY LOWER(TRIM(nome))\nHAVING COUNT(*) > 1\nORDER BY qtd DESC, nome_norm\nLIMIT 50;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute \nSELECT \n    LOWER(TRIM(nome)) as nome_norm,\n    COUNT(*) as qtd,\n    GROUP_CONCAT(CONCAT(id_paciente, ' (', COALESCE(DATE_FORMAT(data_nascimento, '%d/%m/%Y'), 'S/D'), ')') ORDER BY created_at SEPARATOR ' | ') as detalhes\nFROM pacientes \nWHERE deleted_at IS NULL\nGROUP BY LOWER(TRIM(nome))\nHAVING COUNT(*) > 1\nORDER BY qtd DESC, nome_norm\nLIMIT 50;\n",
+  "rows": [
+    {
+      "nome_norm": "leticia uzeika",
+      "qtd": "2",
+      "detalhes": "2026-0000052 (01/06/1990) | 2025-0021337 (S/D)"
+    }
+  ],
+  "messages": [],
+  "stdout": "nome_norm\tqtd\tdetalhes\nleticia uzeika\t2\t2026-0000052 (01/06/1990) | 2025-0021337 (S/D)\n",
+  "stderr": "",
+  "execution_time_ms": 131
+}

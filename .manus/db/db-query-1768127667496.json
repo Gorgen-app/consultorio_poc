@@ -1,0 +1,28 @@
+{
+  "query": "SELECT \n  SUBSTRING(id_paciente, 1, 7) as prefixo,\n  COUNT(*) as total,\n  MIN(created_at) as primeiro_criado,\n  MAX(created_at) as ultimo_criado\nFROM pacientes \nWHERE tenant_id = 1 \n  AND id_paciente NOT LIKE 'MIG-%'\nGROUP BY SUBSTRING(id_paciente, 1, 7)\nORDER BY total DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT \n  SUBSTRING(id_paciente, 1, 7) as prefixo,\n  COUNT(*) as total,\n  MIN(created_at) as primeiro_criado,\n  MAX(created_at) as ultimo_criado\nFROM pacientes \nWHERE tenant_id = 1 \n  AND id_paciente NOT LIKE 'MIG-%'\nGROUP BY SUBSTRING(id_paciente, 1, 7)\nORDER BY total DESC\nLIMIT 20;",
+  "rows": [
+    {
+      "prefixo": "2025-00",
+      "total": "50",
+      "primeiro_criado": "2026-01-07 05:46:44",
+      "ultimo_criado": "2026-01-07 05:46:47"
+    },
+    {
+      "prefixo": "2026-00",
+      "total": "2",
+      "primeiro_criado": "2026-01-07 06:27:03",
+      "ultimo_criado": "2026-01-08 01:57:33"
+    },
+    {
+      "prefixo": "2026-TE",
+      "total": "1",
+      "primeiro_criado": "2026-01-07 13:48:47",
+      "ultimo_criado": "2026-01-07 13:48:47"
+    }
+  ],
+  "messages": [],
+  "stdout": "prefixo\ttotal\tprimeiro_criado\tultimo_criado\n2025-00\t50\t2026-01-07 05:46:44\t2026-01-07 05:46:47\n2026-00\t2\t2026-01-07 06:27:03\t2026-01-08 01:57:33\n2026-TE\t1\t2026-01-07 13:48:47\t2026-01-07 13:48:47\n",
+  "stderr": "",
+  "execution_time_ms": 65
+}

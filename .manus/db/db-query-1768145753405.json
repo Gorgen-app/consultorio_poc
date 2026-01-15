@@ -1,0 +1,18 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_atendimentos,\n  COUNT(DISTINCT paciente_id) as pacientes_distintos,\n  MIN(data_atendimento) as primeiro_atendimento,\n  MAX(data_atendimento) as ultimo_atendimento,\n  SUM(CASE WHEN pagamento_efetivado = 1 THEN 1 ELSE 0 END) as pagos,\n  SUM(faturamento_previsto_final) as faturamento_total\nFROM atendimentos \nWHERE tenant_id = 1 AND deleted_at IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT \n  COUNT(*) as total_atendimentos,\n  COUNT(DISTINCT paciente_id) as pacientes_distintos,\n  MIN(data_atendimento) as primeiro_atendimento,\n  MAX(data_atendimento) as ultimo_atendimento,\n  SUM(CASE WHEN pagamento_efetivado = 1 THEN 1 ELSE 0 END) as pagos,\n  SUM(faturamento_previsto_final) as faturamento_total\nFROM atendimentos \nWHERE tenant_id = 1 AND deleted_at IS NULL;",
+  "rows": [
+    {
+      "total_atendimentos": "1336",
+      "pacientes_distintos": "532",
+      "primeiro_atendimento": "2025-01-03 00:00:00",
+      "ultimo_atendimento": "2026-01-10 00:00:00",
+      "pagos": "1095",
+      "faturamento_total": "423761.45"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_atendimentos\tpacientes_distintos\tprimeiro_atendimento\tultimo_atendimento\tpagos\tfaturamento_total\n1336\t532\t2025-01-03 00:00:00\t2026-01-10 00:00:00\t1095\t423761.45\n",
+  "stderr": "",
+  "execution_time_ms": 212
+}

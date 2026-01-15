@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS obstetricia (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  tipo_registro ENUM('Pré-natal', 'Parto', 'Puerpério', 'Aborto') NOT NULL,\n  data_registro DATE NOT NULL,\n  dum DATE,\n  dpp DATE,\n  idade_gestacional VARCHAR(20),\n  tipo_parto ENUM('Normal', 'Cesárea', 'Fórceps', 'Vácuo'),\n  data_parto TIMESTAMP,\n  hospital VARCHAR(255),\n  peso_rn DECIMAL(5,0),\n  apgar_1 INT,\n  apgar_5 INT,\n  sexo_rn ENUM('M', 'F'),\n  observacoes TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS obstetricia (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  tipo_registro ENUM('Pré-natal', 'Parto', 'Puerpério', 'Aborto') NOT NULL,\n  data_registro DATE NOT NULL,\n  dum DATE,\n  dpp DATE,\n  idade_gestacional VARCHAR(20),\n  tipo_parto ENUM('Normal', 'Cesárea', 'Fórceps', 'Vácuo'),\n  data_parto TIMESTAMP,\n  hospital VARCHAR(255),\n  peso_rn DECIMAL(5,0),\n  apgar_1 INT,\n  apgar_5 INT,\n  sexo_rn ENUM('M', 'F'),\n  observacoes TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 609
+}

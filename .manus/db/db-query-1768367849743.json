@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as total FROM agendamentos WHERE google_uid IS NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT COUNT(*) as total FROM agendamentos WHERE google_uid IS NOT NULL;",
+  "rows": [
+    {
+      "total": "2378"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n2378\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

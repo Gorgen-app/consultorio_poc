@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id_paciente, codigo_legado, nome, email, cidade, operadora_1 FROM pacientes WHERE id_paciente LIKE 'MIG-%' ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id_paciente, codigo_legado, nome, email, cidade, operadora_1 FROM pacientes WHERE id_paciente LIKE 'MIG-%' ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id_paciente": "MIG-2025-0000973",
+      "codigo_legado": "2025-0000973",
+      "nome": "Anamaria Lima Correa",
+      "email": "anapcorea@outlook.com",
+      "cidade": "Santa Vitória do Palmar",
+      "operadora_1": "CASSI"
+    },
+    {
+      "id_paciente": "MIG-2025-0000972",
+      "codigo_legado": "2025-0000972",
+      "nome": "Anamaria Gasparin",
+      "email": "anamariagasparin@gmail.com",
+      "cidade": "Porto Alegre",
+      "operadora_1": "IPE"
+    },
+    {
+      "id_paciente": "MIG-2025-0000971",
+      "codigo_legado": "2025-0000971",
+      "nome": "Anamaria Garibotti Lapinscki",
+      "email": "anamaria-dg@hotmail.com",
+      "cidade": "Lajeado",
+      "operadora_1": "UNIMED"
+    },
+    {
+      "id_paciente": "MIG-2025-0000970",
+      "codigo_legado": "2025-0000970",
+      "nome": "Anamaria Freitag",
+      "email": "anamfreitag@yahoo.com.br",
+      "cidade": "Porto Alegre",
+      "operadora_1": "SAUDE CAIXA"
+    },
+    {
+      "id_paciente": "MIG-2025-0000969",
+      "codigo_legado": "2025-0000969",
+      "nome": "Analu Giacomolli Guedes",
+      "email": "analugiacomolli@gmail.com",
+      "cidade": "Canoas",
+      "operadora_1": "UNIMED"
+    }
+  ],
+  "messages": [],
+  "stdout": "id_paciente\tcodigo_legado\tnome\temail\tcidade\toperadora_1\nMIG-2025-0000973\t2025-0000973\tAnamaria Lima Correa\tanapcorea@outlook.com\tSanta Vitória do Palmar\tCASSI\nMIG-2025-0000972\t2025-0000972\tAnamaria Gasparin\tanamariagasparin@gmail.com\tPorto Alegre\tIPE\nMIG-2025-0000971\t2025-0000971\tAnamaria Garibotti Lapinscki\tanamaria-dg@hotmail.com\tLajeado\tUNIMED\nMIG-2025-0000970\t2025-0000970\tAnamaria Freitag\tanamfreitag@yahoo.com.br\tPorto Alegre\tSAUDE CAIXA\nMIG-2025-0000969\t2025-0000969\tAnalu Giacomolli Guedes\tanalugiacomolli@gmail.com\tCanoas\tUNIMED\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

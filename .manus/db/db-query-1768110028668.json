@@ -1,0 +1,15 @@
+{
+  "query": "SELECT \n  COUNT(DISTINCT id_paciente) as total_pacientes,\n  COUNT(DISTINCT CASE WHEN id_paciente LIKE 'MIG-%' THEN id_paciente END) as migrados,\n  COUNT(DISTINCT CASE WHEN id_paciente LIKE '2025-%' OR id_paciente LIKE '2026-%' THEN id_paciente END) as sistema_atual\nFROM pacientes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT \n  COUNT(DISTINCT id_paciente) as total_pacientes,\n  COUNT(DISTINCT CASE WHEN id_paciente LIKE 'MIG-%' THEN id_paciente END) as migrados,\n  COUNT(DISTINCT CASE WHEN id_paciente LIKE '2025-%' OR id_paciente LIKE '2026-%' THEN id_paciente END) as sistema_atual\nFROM pacientes;",
+  "rows": [
+    {
+      "total_pacientes": "22650",
+      "migrados": "21644",
+      "sistema_atual": "1001"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_pacientes\tmigrados\tsistema_atual\n22650\t21644\t1001\n",
+  "stderr": "",
+  "execution_time_ms": 72
+}

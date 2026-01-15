@@ -1,0 +1,6 @@
+nome;cpf;data_nascimento;telefone;email;sexo;endereco;cidade;uf;cep;convenio;diagnostico;status
+Maria Silva Santos;123.456.789-09;15/03/1985;(11) 98765-4321;maria.silva@email.com;F;Rua das Flores, 123;São Paulo;SP;01234-567;Unimed;Hipertensão arterial;Ativo
+João Pedro Oliveira;987.654.321-00;22/07/1970;(21) 99876-5432;joao.oliveira@email.com;M;Av. Brasil, 456;Rio de Janeiro;RJ;20000-000;Bradesco Saúde;Diabetes tipo 2;Ativo
+Ana Carolina Souza;456.789.123-45;10/12/1992;(31) 97654-3210;ana.souza@email.com;F;Rua Minas Gerais, 789;Belo Horizonte;MG;30000-000;SulAmérica;Asma brônquica;Ativo
+Carlos Eduardo Lima;789.123.456-78;05/09/1965;(41) 96543-2109;carlos.lima@email.com;M;Av. Paraná, 321;Curitiba;PR;80000-000;Particular;;Ativo
+Fernanda Costa Reis;321.654.987-12;28/01/1988;(51) 95432-1098;fernanda.reis@email.com;F;Rua Gaúcha, 654;Porto Alegre;RS;90000-000;Amil;Artrite reumatoide;Ativo

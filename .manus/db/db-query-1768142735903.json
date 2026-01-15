@@ -1,0 +1,34 @@
+{
+  "query": "SELECT id, atendimento, paciente_id, data_atendimento FROM atendimentos ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, atendimento, paciente_id, data_atendimento FROM atendimentos ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "90003",
+      "atendimento": "TESTE003",
+      "paciente_id": "90003",
+      "data_atendimento": "2026-01-10 09:00:00"
+    },
+    {
+      "id": "90002",
+      "atendimento": "TESTE002",
+      "paciente_id": "90002",
+      "data_atendimento": "2026-01-08 14:30:00"
+    },
+    {
+      "id": "90001",
+      "atendimento": "TESTE001",
+      "paciente_id": "90001",
+      "data_atendimento": "2026-01-05 10:00:00"
+    },
+    {
+      "id": "60001",
+      "atendimento": "2026-0000052-20260001",
+      "paciente_id": "60001",
+      "data_atendimento": "2026-01-08 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tatendimento\tpaciente_id\tdata_atendimento\n90003\tTESTE003\t90003\t2026-01-10 09:00:00\n90002\tTESTE002\t90002\t2026-01-08 14:30:00\n90001\tTESTE001\t90001\t2026-01-05 10:00:00\n60001\t2026-0000052-20260001\t60001\t2026-01-08 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 49
+}

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS vinculo_secretaria_medico (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  secretaria_user_id VARCHAR(255) NOT NULL,\n  medico_user_id VARCHAR(255) NOT NULL,\n  data_inicio DATETIME NOT NULL,\n  data_validade DATETIME NOT NULL,\n  status ENUM('ativo', 'pendente_renovacao', 'expirado', 'cancelado') DEFAULT 'ativo',\n  notificacao_enviada BOOLEAN DEFAULT FALSE,\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_vinculo (secretaria_user_id, medico_user_id)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS vinculo_secretaria_medico (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  secretaria_user_id VARCHAR(255) NOT NULL,\n  medico_user_id VARCHAR(255) NOT NULL,\n  data_inicio DATETIME NOT NULL,\n  data_validade DATETIME NOT NULL,\n  status ENUM('ativo', 'pendente_renovacao', 'expirado', 'cancelado') DEFAULT 'ativo',\n  notificacao_enviada BOOLEAN DEFAULT FALSE,\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_vinculo (secretaria_user_id, medico_user_id)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 532
+}

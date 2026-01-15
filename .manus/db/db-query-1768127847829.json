@@ -1,0 +1,16 @@
+{
+  "query": "SELECT p.id, p.id_paciente, p.nome, COUNT(a.id) as agendamentos\nFROM pacientes p\nLEFT JOIN agendamentos a ON a.paciente_id = p.id\nWHERE p.tenant_id = 1 \n  AND p.id_paciente NOT LIKE 'MIG-%'\n  AND p.id_paciente != '2026-0000052'\nGROUP BY p.id, p.id_paciente, p.nome\nHAVING COUNT(a.id) > 0;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT p.id, p.id_paciente, p.nome, COUNT(a.id) as agendamentos\nFROM pacientes p\nLEFT JOIN agendamentos a ON a.paciente_id = p.id\nWHERE p.tenant_id = 1 \n  AND p.id_paciente NOT LIKE 'MIG-%'\n  AND p.id_paciente != '2026-0000052'\nGROUP BY p.id, p.id_paciente, p.nome\nHAVING COUNT(a.id) > 0;",
+  "rows": [
+    {
+      "id": "30001",
+      "id_paciente": "2026-TESTE-001",
+      "nome": "Maria Silva Teste",
+      "agendamentos": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tid_paciente\tnome\tagendamentos\n30001\t2026-TESTE-001\tMaria Silva Teste\t2\n",
+  "stderr": "",
+  "execution_time_ms": 65
+}

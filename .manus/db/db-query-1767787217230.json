@@ -1,0 +1,31 @@
+{
+  "query": "SELECT atendimento, data_atendimento, tipo_atendimento, local, convenio FROM atendimentos LIMIT 3",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT atendimento, data_atendimento, tipo_atendimento, local, convenio FROM atendimentos LIMIT 3",
+  "rows": [
+    {
+      "atendimento": "20260000001",
+      "data_atendimento": "2025-10-23 04:00:00",
+      "tipo_atendimento": "procedimento em consultório",
+      "local": "HMV",
+      "convenio": "Golden Cross"
+    },
+    {
+      "atendimento": "20260000002",
+      "data_atendimento": "2025-11-21 05:00:00",
+      "tipo_atendimento": "cirurgia",
+      "local": "HMD CG",
+      "convenio": "SUL AMERICA"
+    },
+    {
+      "atendimento": "20260000003",
+      "data_atendimento": "2025-10-16 04:00:00",
+      "tipo_atendimento": "visita internado",
+      "local": "HMD CG",
+      "convenio": "SUL AMERICA"
+    }
+  ],
+  "messages": [],
+  "stdout": "atendimento\tdata_atendimento\ttipo_atendimento\tlocal\tconvenio\n20260000001\t2025-10-23 04:00:00\tprocedimento em consultório\tHMV\tGolden Cross\n20260000002\t2025-11-21 05:00:00\tcirurgia\tHMD CG\tSUL AMERICA\n20260000003\t2025-10-16 04:00:00\tvisita internado\tHMD CG\tSUL AMERICA\n",
+  "stderr": "",
+  "execution_time_ms": 396
+}

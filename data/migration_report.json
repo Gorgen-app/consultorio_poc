@@ -1,0 +1,13 @@
+{
+  "total": 21644,
+  "processed": 21644,
+  "inserted": 0,
+  "skipped": 0,
+  "warnings": [
+    "Datas de nascimento inv\u00e1lidas: 1",
+    "CPFs inv\u00e1lidos: 8",
+    "IDs duplicados tratados: 21"
+  ],
+  "start_time": "2026-01-11T00:29:37.883566",
+  "end_time": "2026-01-11T00:31:28.410394"
+}

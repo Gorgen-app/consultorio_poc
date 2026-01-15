@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, id_agendamento, tipo_compromisso, paciente_nome, data_hora_inicio, data_hora_fim, status FROM agendamentos;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, id_agendamento, tipo_compromisso, paciente_nome, data_hora_inicio, data_hora_fim, status FROM agendamentos;",
+  "rows": [
+    {
+      "id": "1",
+      "id_agendamento": "AG-2026-00001",
+      "tipo_compromisso": "Consulta",
+      "paciente_nome": "Maria Silva Teste",
+      "data_hora_inicio": "2026-01-09 10:00:00",
+      "data_hora_fim": "2026-01-09 10:30:00",
+      "status": "Agendado"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tid_agendamento\ttipo_compromisso\tpaciente_nome\tdata_hora_inicio\tdata_hora_fim\tstatus\n1\tAG-2026-00001\tConsulta\tMaria Silva Teste\t2026-01-09 10:00:00\t2026-01-09 10:30:00\tAgendado\n",
+  "stderr": "",
+  "execution_time_ms": 404
+}

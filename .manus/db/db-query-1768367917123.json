@@ -1,0 +1,118 @@
+{
+  "query": "SELECT id, id_agendamento, titulo, paciente_nome, tipo_compromisso, \n       data_hora_inicio, data_hora_fim, status, local, convenio\nFROM agendamentos \nWHERE DATE(data_hora_inicio) = '2026-01-14'\nORDER BY data_hora_inicio;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, id_agendamento, titulo, paciente_nome, tipo_compromisso, \n       data_hora_inicio, data_hora_fim, status, local, convenio\nFROM agendamentos \nWHERE DATE(data_hora_inicio) = '2026-01-14'\nORDER BY data_hora_inicio;",
+  "rows": [
+    {
+      "id": "32047",
+      "id_agendamento": "AG-2026-12056",
+      "titulo": "CONSULTA PARTICULAR(Cristiano da Silva Wachtel)",
+      "paciente_nome": "CRISTIANO DA SILVA WACHTEL",
+      "tipo_compromisso": "Consulta",
+      "data_hora_inicio": "2026-01-14 07:00:00",
+      "data_hora_fim": "2026-01-14 07:30:00",
+      "status": "Agendado",
+      "local": "Consultório",
+      "convenio": "Particular"
+    },
+    {
+      "id": "31986",
+      "id_agendamento": "AG-2026-11995",
+      "titulo": "CONSULTA UNIMED( MARIA LUIZA)",
+      "paciente_nome": "MARIA LUIZA",
+      "tipo_compromisso": "Consulta",
+      "data_hora_inicio": "2026-01-14 07:30:00",
+      "data_hora_fim": "2026-01-14 08:00:00",
+      "status": "Agendado",
+      "local": "Consultório",
+      "convenio": "UNIMED"
+    },
+    {
+      "id": "32117",
+      "id_agendamento": "AG-2026-12127",
+      "titulo": "CONSULTA CASSI(Antônio Cladir Tremarin)",
+      "paciente_nome": "ANTÔNIO CLADIR TREMARIN",
+      "tipo_compromisso": "Consulta",
+      "data_hora_inicio": "2026-01-14 08:00:00",
+      "data_hora_fim": "2026-01-14 08:30:00",
+      "status": "Agendado",
+      "local": "Consultório",
+      "convenio": "CASSI"
+    },
+    {
+      "id": "32222",
+      "id_agendamento": "AG-2026-12233",
+      "titulo": "CONSULTA UNIMED(Magdiele de Ávila Rodrigues)",
+      "paciente_nome": "MAGDIELE DE ÁVILA RODRIGUES",
+      "tipo_compromisso": "Consulta",
+      "data_hora_inicio": "2026-01-14 08:30:00",
+      "data_hora_fim": "2026-01-14 09:00:00",
+      "status": "Agendado",
+      "local": "Consultório",
+      "convenio": "UNIMED"
+    },
+    {
+      "id": "32035",
+      "id_agendamento": "AG-2026-12044",
+      "titulo": "CONSULTA UNIMED(Maria Helena Benatti)",
+      "paciente_nome": "MARIA HELENA BENATTI",
+      "tipo_compromisso": "Consulta",
+      "data_hora_inicio": "2026-01-14 09:00:00",
+      "data_hora_fim": "2026-01-14 09:30:00",
+      "status": "Agendado",
+      "local": "Consultório",
+      "convenio": "UNIMED"
+    },
+    {
+      "id": "32046",
+      "id_agendamento": "AG-2026-12055",
+      "titulo": "CONSULTA SULAMERICA( INEZ DOS SANTOS ANDRADE )",
+      "paciente_nome": "INEZ DOS SANTOS ANDRADE",
+      "tipo_compromisso": "Consulta",
+      "data_hora_inicio": "2026-01-14 09:30:00",
+      "data_hora_fim": "2026-01-14 10:00:00",
+      "status": "Agendado",
+      "local": "Consultório",
+      "convenio": "SUL AMÉRICA"
+    },
+    {
+      "id": "32185",
+      "id_agendamento": "AG-2026-12196",
+      "titulo": "CONSULTA UNIMED(Manuella Cardoso Leão da silva)",
+      "paciente_nome": "MANUELLA CARDOSO LEÃO DA SILVA",
+      "tipo_compromisso": "Consulta",
+      "data_hora_inicio": "2026-01-14 09:40:00",
+      "data_hora_fim": "2026-01-14 10:10:00",
+      "status": "Agendado",
+      "local": "Consultório",
+      "convenio": "UNIMED"
+    },
+    {
+      "id": "32133",
+      "id_agendamento": "AG-2026-12144",
+      "titulo": "CONSULTA ON-LINE(Sara Francisca Floriano Ribas)",
+      "paciente_nome": "SARA FRANCISCA FLORIANO RIBAS",
+      "tipo_compromisso": "Consulta",
+      "data_hora_inicio": "2026-01-14 12:00:00",
+      "data_hora_fim": "2026-01-14 12:30:00",
+      "status": "Agendado",
+      "local": "On-line",
+      "convenio": "NULL"
+    },
+    {
+      "id": "32162",
+      "id_agendamento": "AG-2026-12173",
+      "titulo": "Cortar cabelo",
+      "paciente_nome": "NULL",
+      "tipo_compromisso": "Consulta",
+      "data_hora_inicio": "2026-01-14 14:00:00",
+      "data_hora_fim": "2026-01-14 14:30:00",
+      "status": "Agendado",
+      "local": "Consultório",
+      "convenio": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tid_agendamento\ttitulo\tpaciente_nome\ttipo_compromisso\tdata_hora_inicio\tdata_hora_fim\tstatus\tlocal\tconvenio\n32047\tAG-2026-12056\tCONSULTA PARTICULAR(Cristiano da Silva Wachtel)\tCRISTIANO DA SILVA WACHTEL\tConsulta\t2026-01-14 07:00:00\t2026-01-14 07:30:00\tAgendado\tConsultório\tParticular\n31986\tAG-2026-11995\tCONSULTA UNIMED( MARIA LUIZA)\tMARIA LUIZA\tConsulta\t2026-01-14 07:30:00\t2026-01-14 08:00:00\tAgendado\tConsultório\tUNIMED\n32117\tAG-2026-12127\tCONSULTA CASSI(Antônio Cladir Tremarin)\tANTÔNIO CLADIR TREMARIN\tConsulta\t2026-01-14 08:00:00\t2026-01-14 08:30:00\tAgendado\tConsultório\tCASSI\n32222\tAG-2026-12233\tCONSULTA UNIMED(Magdiele de Ávila Rodrigues)\tMAGDIELE DE ÁVILA RODRIGUES\tConsulta\t2026-01-14 08:30:00\t2026-01-14 09:00:00\tAgendado\tConsultório\tUNIMED\n32035\tAG-2026-12044\tCONSULTA UNIMED(Maria Helena Benatti)\tMARIA HELENA BENATTI\tConsulta\t2026-01-14 09:00:00\t2026-01-14 09:30:00\tAgendado\tConsultório\tUNIMED\n32046\tAG-2026-12055\tCONSULTA SULAMERICA( INEZ DOS SANTOS ANDRADE )\tINEZ DOS SANTOS ANDRADE\tConsulta\t2026-01-14 09:30:00\t2026-01-14 10:00:00\tAgendado\tConsultório\tSUL AMÉRICA\n32185\tAG-2026-12196\tCONSULTA UNIMED(Manuella Cardoso Leão da silva)\tMANUELLA CARDOSO LEÃO DA SILVA\tConsulta\t2026-01-14 09:40:00\t2026-01-14 10:10:00\tAgendado\tConsultório\tUNIMED\n32133\tAG-2026-12144\tCONSULTA ON-LINE(Sara Francisca Floriano Ribas)\tSARA FRANCISCA FLORIANO RIBAS\tConsulta\t2026-01-14 12:00:00\t2026-01-14 12:30:00\tAgendado\tOn-line\tNULL\n32162\tAG-2026-12173\tCortar cabelo\tNULL\tConsulta\t2026-01-14 14:00:00\t2026-01-14 14:30:00\tAgendado\tConsultório\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

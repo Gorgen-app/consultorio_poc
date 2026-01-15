@@ -1,0 +1,22 @@
+{
+  "query": "SELECT CASE WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) < 18 THEN '0-17 anos' WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 18 AND 30 THEN '18-30 anos' ELSE 'Outro' END as nome, COUNT(*) as valor FROM pacientes WHERE tenant_id = 1 AND deleted_at IS NULL GROUP BY 1 LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT CASE WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) < 18 THEN '0-17 anos' WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 18 AND 30 THEN '18-30 anos' ELSE 'Outro' END as nome, COUNT(*) as valor FROM pacientes WHERE tenant_id = 1 AND deleted_at IS NULL GROUP BY 1 LIMIT 5;",
+  "rows": [
+    {
+      "nome": "18-30 anos",
+      "valor": "1905"
+    },
+    {
+      "nome": "0-17 anos",
+      "valor": "127"
+    },
+    {
+      "nome": "Outro",
+      "valor": "19615"
+    }
+  ],
+  "messages": [],
+  "stdout": "nome\tvalor\n18-30 anos\t1905\n0-17 anos\t127\nOutro\t19615\n",
+  "stderr": "",
+  "execution_time_ms": 72
+}

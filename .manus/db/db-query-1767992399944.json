@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, titulo, arquivo_original_url, arquivo_original_tipo FROM documentos_externos WHERE id IN (60001, 90001, 90002) ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, titulo, arquivo_original_url, arquivo_original_tipo FROM documentos_externos WHERE id IN (60001, 90001, 90002) ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "90002",
+      "titulo": "2752141913_Ocultado",
+      "arquivo_original_url": "https://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767992102106-xkcsz3.pdf",
+      "arquivo_original_tipo": "application/pdf"
+    },
+    {
+      "id": "90001",
+      "titulo": "2752141913_Ocultado",
+      "arquivo_original_url": "https://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767991822385-dngobc.pdf",
+      "arquivo_original_tipo": "application/pdf"
+    },
+    {
+      "id": "60001",
+      "titulo": "2760514757_Redacted",
+      "arquivo_original_url": "https://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767984363567-6w1nxk.pdf",
+      "arquivo_original_tipo": "application/pdf"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitulo\tarquivo_original_url\tarquivo_original_tipo\n90002\t2752141913_Ocultado\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767992102106-xkcsz3.pdf\tapplication/pdf\n90001\t2752141913_Ocultado\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767991822385-dngobc.pdf\tapplication/pdf\n60001\t2760514757_Redacted\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663277219875/TyeFpW5ykZHTuZXuk6iMG7/documentos/51/exame-laboratorial/1767984363567-6w1nxk.pdf\tapplication/pdf\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

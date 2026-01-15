@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS historico_medidas (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  data_medicao DATETIME NOT NULL,\n  peso DECIMAL(5,2) COMMENT 'Peso em kg',\n  altura DECIMAL(3,2) COMMENT 'Altura em metros',\n  imc DECIMAL(4,1) COMMENT 'IMC calculado automaticamente',\n  pressao_sistolica INT COMMENT 'Pressão sistólica em mmHg',\n  pressao_diastolica INT COMMENT 'Pressão diastólica em mmHg',\n  frequencia_cardiaca INT COMMENT 'FC em bpm',\n  temperatura DECIMAL(3,1) COMMENT 'Temperatura em °C',\n  saturacao INT COMMENT 'SpO2 em %',\n  observacoes TEXT,\n  registrado_por VARCHAR(255) NOT NULL,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  INDEX idx_paciente_data (paciente_id, data_medicao),\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS historico_medidas (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  data_medicao DATETIME NOT NULL,\n  peso DECIMAL(5,2) COMMENT 'Peso em kg',\n  altura DECIMAL(3,2) COMMENT 'Altura em metros',\n  imc DECIMAL(4,1) COMMENT 'IMC calculado automaticamente',\n  pressao_sistolica INT COMMENT 'Pressão sistólica em mmHg',\n  pressao_diastolica INT COMMENT 'Pressão diastólica em mmHg',\n  frequencia_cardiaca INT COMMENT 'FC em bpm',\n  temperatura DECIMAL(3,1) COMMENT 'Temperatura em °C',\n  saturacao INT COMMENT 'SpO2 em %',\n  observacoes TEXT,\n  registrado_por VARCHAR(255) NOT NULL,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  INDEX idx_paciente_data (paciente_id, data_medicao),\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 594
+}

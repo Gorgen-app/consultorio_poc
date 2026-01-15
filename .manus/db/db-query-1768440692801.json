@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Índices para otimizar queries de agendamentos\nCREATE INDEX idx_agendamentos_tenant_data ON agendamentos(tenant_id, data_hora_inicio);\nCREATE INDEX idx_agendamentos_status ON agendamentos(status);\nCREATE INDEX idx_agendamentos_paciente ON agendamentos(paciente_id);\nCREATE INDEX idx_agendamentos_profissional ON agendamentos(profissional_id);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute \n-- Índices para otimizar queries de agendamentos\nCREATE INDEX idx_agendamentos_tenant_data ON agendamentos(tenant_id, data_hora_inicio);\nCREATE INDEX idx_agendamentos_status ON agendamentos(status);\nCREATE INDEX idx_agendamentos_paciente ON agendamentos(paciente_id);\nCREATE INDEX idx_agendamentos_profissional ON agendamentos(profissional_id);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2357
+}

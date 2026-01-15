@@ -1,0 +1,1 @@
+ALTER TABLE `profissionais` ADD `duracao_slot_agenda` int DEFAULT 30;

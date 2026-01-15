@@ -1,0 +1,72 @@
+{
+  "query": "SELECT id, titulo, LEFT(texto_ocr, 500) as texto_ocr_preview FROM documentos_externos ORDER BY id DESC LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, titulo, LEFT(texto_ocr, 500) as texto_ocr_preview FROM documentos_externos ORDER BY id DESC LIMIT 3;",
+  "rows": [
+    {
+      "id": "90003",
+      "titulo": "Exames Outubro 26_Ocultado",
+      "texto_ocr_preview": "[OCR Extraído em 09/01/2026, 21:05:49]"
+    },
+    {
+      "id": "90002",
+      "titulo": "2752141913_Ocultado",
+      "texto_ocr_preview": "[OCR Extraído em 09/01/2026, 20:56:10]"
+    },
+    {
+      "id": "90001",
+      "titulo": "2752141913_Ocultado",
+      "texto_ocr_preview": "[OCR Extraído em 09/01/2026, 20:51:08]"
+    }
+  ],
+  "messages": [
+    "HEMOGRAMA, sangue total",
+    "RESULTADO",
+    "VALORES DE REFERÊNCIA",
+    "Fem: Maior ou igual a 18 anos",
+    "ERITRÓCITOS : 4,99 milhões/mm3 3,83 a 4,99",
+    "HEMOGLOBINA : 14,2 g/dL 11,7 a 14,9",
+    "HEMATÓCRITO : 40,8 % 35,1 a 44,1",
+    "HEMOGLOBINA CORPUSCULAR MÉDIA : 28,5 pg 27,7 a 32,7",
+    "VOLUME CORPUSCULAR MÉDIO : 81,8 fL 83,1 a 96,8",
+    "CONCENTRAÇÃO DE HEMOGLOBINA",
+    "CORPUSCULAR MÉDIA: 34,8 g/dL 32,0 a 35,2",
+    "COEFICIENTE DE VARIAÇÃO DO",
+    "VOLUME ERITROCITÁRIO (RDW): 13,1 % 11,8 a 14,2",
+    "CARACTERES MORFOL",
+    "Aqui está a transcrição de todo o texto visível no documento, mantendo a formatação original:",
+    "**Página 1 de 8**",
+    "Cli",
+    "Da",
+    "Mé",
+    "Da",
+    "responsável técnico:",
+    "TRANSAMINASE GLUTAMICO-PIRUVICA (TGP)",
+    "ALANINA AMINO TRANSFERASE (ALT), Atividade no plasma",
+    "Método: Cinético, UV",
+    "RESULTADO",
+    "708 U/L",
+    "VALORES DE REFERÊNCIA",
+    "maior que 1 ano: até 41 U/L",
+    "RECEBIDO/COLETADO EM: 06/01/2026 13:53 - LIBERADO EM: 06/01/2026 14:49 - CNES: 7962258",
+    "Liberado por: DANIELA MEIRELES TRINDADE CRB",
+    "Aqui está a transcrição completa do texto do documento, mantendo a formatação original:",
+    "**Página 1 de 8**",
+    "Cli",
+    "Da",
+    "Mé",
+    "Da",
+    "responsável técnico:",
+    "TRANSAMINASE GLUTAMICO-PIRUVICA (TGP)",
+    "ALANINA AMINO TRANSFERASE (ALT), Atividade no plasma",
+    "Método: Cinético, UV",
+    "RESULTADO",
+    "708 U/L",
+    "VALORES DE REFERÊNCIA",
+    "maior que 1 ano: até 41 U/L",
+    "RECEBIDO/COLETADO EM: 06/01/2026 13:53 - LIBERADO EM: 06/01/2026 14:49 - CNES: 7962258",
+    "Liberado por: DANIELA MEIRELES TRINDADE CRBM 729"
+  ],
+  "stdout": "id\ttitulo\ttexto_ocr_preview\n90003\tExames Outubro 26_Ocultado\t[OCR Extraído em 09/01/2026, 21:05:49]\n\nHEMOGRAMA, sangue total\n\nRESULTADO\nVALORES DE REFERÊNCIA\nFem: Maior ou igual a 18 anos\n\nERITRÓCITOS : 4,99 milhões/mm3 3,83 a 4,99\nHEMOGLOBINA : 14,2 g/dL 11,7 a 14,9\nHEMATÓCRITO : 40,8 % 35,1 a 44,1\nHEMOGLOBINA CORPUSCULAR MÉDIA : 28,5 pg 27,7 a 32,7\nVOLUME CORPUSCULAR MÉDIO : 81,8 fL 83,1 a 96,8\nCONCENTRAÇÃO DE HEMOGLOBINA\nCORPUSCULAR MÉDIA: 34,8 g/dL 32,0 a 35,2\nCOEFICIENTE DE VARIAÇÃO DO\nVOLUME ERITROCITÁRIO (RDW): 13,1 % 11,8 a 14,2\n\nCARACTERES MORFOL\n90002\t2752141913_Ocultado\t[OCR Extraído em 09/01/2026, 20:56:10]\n\nAqui está a transcrição de todo o texto visível no documento, mantendo a formatação original:\n\n**Página 1 de 8**\n\nCli\nDa\nMé\nDa\nresponsável técnico:\nTRANSAMINASE GLUTAMICO-PIRUVICA (TGP)\nALANINA AMINO TRANSFERASE (ALT), Atividade no plasma\nMétodo: Cinético, UV\n\nRESULTADO\n708 U/L\nVALORES DE REFERÊNCIA\nmaior que 1 ano: até 41 U/L\n\nRECEBIDO/COLETADO EM: 06/01/2026 13:53 - LIBERADO EM: 06/01/2026 14:49 - CNES: 7962258\nLiberado por: DANIELA MEIRELES TRINDADE CRB\n90001\t2752141913_Ocultado\t[OCR Extraído em 09/01/2026, 20:51:08]\n\nAqui está a transcrição completa do texto do documento, mantendo a formatação original:\n\n**Página 1 de 8**\n\nCli\nDa\nMé\nDa\nresponsável técnico:\nTRANSAMINASE GLUTAMICO-PIRUVICA (TGP)\nALANINA AMINO TRANSFERASE (ALT), Atividade no plasma\nMétodo: Cinético, UV\n\nRESULTADO\n708 U/L\n\nVALORES DE REFERÊNCIA\nmaior que 1 ano: até 41 U/L\n\nRECEBIDO/COLETADO EM: 06/01/2026 13:53 - LIBERADO EM: 06/01/2026 14:49 - CNES: 7962258\nLiberado por: DANIELA MEIRELES TRINDADE CRBM 729\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

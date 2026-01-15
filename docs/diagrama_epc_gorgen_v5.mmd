@@ -1,0 +1,217 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'primaryColor': '#e3f2fd', 'primaryTextColor': '#1565c0', 'primaryBorderColor': '#1976d2', 'lineColor': '#616161', 'secondaryColor': '#e8f5e9', 'tertiaryColor': '#fff8e1'}}}%%
+flowchart TB
+    %% ========================================
+    %% TÍTULO
+    %% ========================================
+    subgraph HEADER[" "]
+        direction LR
+        TITLE["🏥 <b>GORGEN - Sistema de Gestão em Saúde</b><br/>Diagrama EPC - Event-driven Process Chain v5"]
+    end
+
+    %% ========================================
+    %% FLUXO PRINCIPAL - JORNADA DO PACIENTE
+    %% ========================================
+    
+    %% ENTRADA
+    START([🔵 Paciente entra<br/>em contato])
+    
+    %% VERIFICAÇÃO INICIAL
+    subgraph VERIF["1️⃣ VERIFICAÇÃO INICIAL"]
+        V1{Paciente já<br/>cadastrado?}
+        V2{Cadastrado<br/>neste tenant?}
+    end
+    
+    %% CADASTRO (paciente novo)
+    subgraph CADASTRO["2️⃣ CADASTRO"]
+        C1[/📝 Cadastrar<br/>Paciente/]
+        C2([✅ Paciente<br/>registrado])
+    end
+    
+    %% COMPARTILHAMENTO PARCIAL AUTOMÁTICO
+    subgraph PARCIAL["3️⃣ COMPARTILHAMENTO PARCIAL<br/>🔓 Automático - Sem autorização"]
+        PA1[/📋 Importar Dados<br/>Cadastrais/]
+        PA2([✅ Cadastro<br/>importado])
+        PA3[/📅 Importar Timeline<br/>de Atendimentos/]
+        PA4([📊 Timeline<br/>visível<br/>sem conteúdo])
+        PA5[/⚠️ Importar<br/>Alergias/]
+        PA6[/💊 Importar<br/>Medicamentos/]
+        PA7([🔒 Dados de<br/>segurança<br/>disponíveis])
+    end
+    
+    %% SOLICITAÇÃO DE ACESSO COMPLETO
+    subgraph COMPLETO["4️⃣ ACESSO AO CONTEÚDO CLÍNICO<br/>🔐 Requer autorização LGPD"]
+        CT1{Médico precisa<br/>ver conteúdo?}
+        CT2[/📩 Solicitar Acesso<br/>ao Prontuário/]
+        CT3([🟡 Aguardando<br/>autorização])
+        CT4{Paciente<br/>autoriza?}
+        CT5[/✅ Aprovar com<br/>Consentimento LGPD/]
+        CT6([🔓 Conteúdo<br/>liberado])
+        CT7[/📖 Exibir<br/>Prontuário Completo/]
+        CT8([📋 Prontuário<br/>disponível])
+        CT9([❌ Acesso ao<br/>conteúdo negado])
+        CT10[/📝 Registrar<br/>Log Auditoria/]
+    end
+    
+    %% AGENDAMENTO
+    subgraph AGENDA["5️⃣ AGENDAMENTO"]
+        A1[/📅 Verificar<br/>Disponibilidade/]
+        A2{Horário<br/>livre?}
+        A3[/✅ Agendar<br/>Consulta/]
+        A4([📆 Consulta<br/>agendada])
+        A5[/📧 Enviar<br/>Confirmação/]
+    end
+    
+    %% ATENDIMENTO
+    subgraph ATEND["6️⃣ ATENDIMENTO"]
+        T1([🔵 Paciente<br/>chega])
+        T2[/📋 Iniciar<br/>Atendimento/]
+        T3[/📝 Registrar<br/>Evolução SOAP/]
+        T4{Exames?}
+        T5[/📄 Solicitar<br/>Exames/]
+        T6{Receita?}
+        T7[/💊 Emitir<br/>Prescrição/]
+        T8[/✅ Finalizar<br/>Atendimento/]
+        T9([🟢 Atendimento<br/>concluído])
+    end
+    
+    %% PRONTUÁRIO
+    subgraph PRONT["7️⃣ PRONTUÁRIO"]
+        P1[/📁 Atualizar<br/>Prontuário/]
+        P2[/📤 Upload<br/>Documentos/]
+        P3[/🤖 Extrair<br/>OCR/IA/]
+        P4([📊 Dados<br/>indexados])
+    end
+    
+    %% FATURAMENTO
+    subgraph FATUR["8️⃣ FATURAMENTO"]
+        F1[/💵 Calcular<br/>Honorários/]
+        F2[/📨 Enviar<br/>Fatura/]
+        F3{Pagamento<br/>recebido?}
+        F4[/✅ Registrar<br/>Pagamento/]
+        F5([💰 Faturamento<br/>concluído])
+    end
+    
+    %% AUDITORIA
+    subgraph AUDIT["9️⃣ AUDITORIA"]
+        AU1[/📝 Registrar<br/>Ações/]
+        AU2([🔒 Conformidade<br/>LGPD])
+    end
+
+    %% ========================================
+    %% CONEXÕES DO FLUXO PRINCIPAL
+    %% ========================================
+    
+    %% Entrada e verificação
+    START --> V1
+    
+    %% Paciente NÃO cadastrado → Cadastro novo
+    V1 -->|Não| C1 --> C2 --> A1
+    
+    %% Paciente JÁ cadastrado → verificar onde
+    V1 -->|Sim| V2
+    
+    %% Cadastrado NESTE tenant → direto para agendamento
+    V2 -->|Sim| A1
+    
+    %% Cadastrado em OUTRO tenant → Compartilhamento Parcial Automático
+    V2 -->|Não, em<br/>outro tenant| PA1
+    
+    %% ========================================
+    %% FLUXO DE COMPARTILHAMENTO PARCIAL
+    %% ========================================
+    PA1 --> PA2 --> PA3 --> PA4
+    PA2 --> PA5 --> PA7
+    PA2 --> PA6 --> PA7
+    PA4 --> CT1
+    PA7 --> CT1
+    
+    %% ========================================
+    %% FLUXO DE ACESSO AO CONTEÚDO CLÍNICO
+    %% ========================================
+    CT1 -->|Sim| CT2 --> CT3 --> CT4
+    CT1 -->|Não, dados<br/>básicos suficientes| A1
+    
+    CT4 -->|Sim| CT5 --> CT6 --> CT10 --> CT7 --> CT8 --> A1
+    CT4 -->|Não| CT9 --> A1
+    
+    %% ========================================
+    %% FLUXO DE AGENDAMENTO
+    %% ========================================
+    A1 --> A2
+    A2 -->|Sim| A3 --> A4 --> A5
+    A2 -->|Não| A1
+    
+    %% Dia da consulta
+    A5 -.->|Dia da consulta| T1
+    
+    %% ========================================
+    %% FLUXO DE ATENDIMENTO
+    %% ========================================
+    T1 --> T2 --> T3 --> T4
+    T4 -->|Sim| T5 --> T6
+    T4 -->|Não| T6
+    T6 -->|Sim| T7 --> T8
+    T6 -->|Não| T8
+    T8 --> T9
+    
+    %% ========================================
+    %% PÓS-ATENDIMENTO
+    %% ========================================
+    T9 --> P1
+    P1 --> P2
+    P2 --> P3 --> P4
+    
+    T9 --> F1
+    F1 --> F2 --> F3
+    F3 -->|Sim| F4 --> F5
+    F3 -->|Não| F2
+    
+    %% ========================================
+    %% AUDITORIA
+    %% ========================================
+    T9 --> AU1 --> AU2
+    CT10 --> AU2
+
+    %% ========================================
+    %% LEGENDA
+    %% ========================================
+    subgraph LEG["📖 LEGENDA"]
+        direction LR
+        L1([🔵 Evento<br/>Inicial])
+        L2([🟢 Evento<br/>Final])
+        L3([🟡 Aguardando])
+        L4([🔓 Liberado])
+        L5([🔒 Protegido])
+        L6[/📝 Função/]
+        L7{Decisão}
+    end
+
+    %% ========================================
+    %% QUADRO DE DADOS
+    %% ========================================
+    subgraph DADOS["📊 NÍVEIS DE COMPARTILHAMENTO"]
+        direction TB
+        D1["🔓 <b>AUTOMÁTICO</b><br/>• Dados cadastrais<br/>• Alergias<br/>• Medicamentos em uso<br/>• Timeline (datas)"]
+        D2["🔐 <b>COM AUTORIZAÇÃO</b><br/>• Evoluções SOAP<br/>• Diagnósticos/CID<br/>• Resultados de exames<br/>• Laudos e documentos"]
+    end
+
+    %% ========================================
+    %% ESTILOS
+    %% ========================================
+    classDef eventoInicial fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#0d47a1
+    classDef eventoFinal fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20
+    classDef eventoPendente fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#e65100
+    classDef eventoLiberado fill:#e8f5e9,stroke:#43a047,stroke-width:2px,color:#1b5e20
+    classDef eventoProtegido fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1
+    classDef eventoErro fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#b71c1c
+    classDef funcao fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#e65100
+    classDef decisao fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+    classDef dados fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px,color:#1a237e
+    
+    class START,T1 eventoInicial
+    class C2,PA2,PA4,PA7,CT6,CT8,A4,T9,P4,F5,AU2 eventoFinal
+    class CT3 eventoPendente
+    class CT9 eventoErro
+    class C1,A1,A3,A5,T2,T3,T5,T7,T8,P1,P2,P3,F1,F2,F4,PA1,PA3,PA5,PA6,CT2,CT5,CT7,CT10,AU1 funcao
+    class V1,V2,A2,T4,T6,F3,CT1,CT4 decisao
+    class D1,D2 dados

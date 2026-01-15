@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS terapias (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  data_terapia TIMESTAMP NOT NULL,\n  tipo_terapia ENUM('Quimioterapia', 'Imunoterapia', 'Terapia Alvo', 'Imunobiológico', 'Infusão', 'Transfusão', 'Outro') NOT NULL,\n  protocolo VARCHAR(255),\n  ciclo INT,\n  dia INT,\n  medicamentos TEXT,\n  local VARCHAR(255),\n  pre_quimio TEXT,\n  intercorrencias TEXT,\n  observacoes TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS terapias (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  data_terapia TIMESTAMP NOT NULL,\n  tipo_terapia ENUM('Quimioterapia', 'Imunoterapia', 'Terapia Alvo', 'Imunobiológico', 'Infusão', 'Transfusão', 'Outro') NOT NULL,\n  protocolo VARCHAR(255),\n  ciclo INT,\n  dia INT,\n  medicamentos TEXT,\n  local VARCHAR(255),\n  pre_quimio TEXT,\n  intercorrencias TEXT,\n  observacoes TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 654
+}

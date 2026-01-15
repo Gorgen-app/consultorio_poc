@@ -1,0 +1,234 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e8f4f8', 'primaryTextColor': '#1a365d', 'primaryBorderColor': '#2c5282', 'lineColor': '#4a5568', 'secondaryColor': '#f0fff4', 'tertiaryColor': '#fef3c7'}}}%%
+flowchart TB
+    subgraph TITULO["🏥 GORGEN - Sistema de Gestão em Saúde<br/>Diagrama EPC (Event-driven Process Chain)"]
+    end
+
+    %% ========================================
+    %% PROCESSO 1: GESTÃO DE PACIENTES
+    %% ========================================
+    subgraph GP["📋 GESTÃO DE PACIENTES"]
+        direction TB
+        
+        E1([🔵 Novo paciente<br/>chega ao consultório])
+        F1[/📝 Cadastrar<br/>Paciente/]
+        E2([🟢 Paciente<br/>cadastrado])
+        
+        E3([🔵 Dados do paciente<br/>precisam atualização])
+        F2[/✏️ Editar<br/>Paciente/]
+        E4([🟢 Dados<br/>atualizados])
+        
+        E5([🔵 Busca por<br/>paciente necessária])
+        F3[/🔍 Buscar/Filtrar<br/>Pacientes/]
+        E6([🟢 Paciente<br/>localizado])
+        
+        E1 --> F1 --> E2
+        E3 --> F2 --> E4
+        E5 --> F3 --> E6
+    end
+
+    %% ========================================
+    %% PROCESSO 2: AGENDAMENTO
+    %% ========================================
+    subgraph AG["📅 AGENDAMENTO"]
+        direction TB
+        
+        E7([🔵 Solicitação de<br/>consulta recebida])
+        F4[/📆 Verificar<br/>Disponibilidade/]
+        X1{Horário<br/>disponível?}
+        F5[/✅ Agendar<br/>Consulta/]
+        E8([🟢 Consulta<br/>agendada])
+        F6[/📧 Enviar<br/>Confirmação/]
+        E9([🟢 Paciente<br/>notificado])
+        
+        E10([🔵 Paciente solicita<br/>cancelamento])
+        F7[/❌ Cancelar<br/>Agendamento/]
+        E11([🟢 Agendamento<br/>cancelado])
+        
+        E7 --> F4 --> X1
+        X1 -->|Sim| F5 --> E8 --> F6 --> E9
+        X1 -->|Não| E7
+        E10 --> F7 --> E11
+    end
+
+    %% ========================================
+    %% PROCESSO 3: ATENDIMENTO MÉDICO
+    %% ========================================
+    subgraph AT["🩺 ATENDIMENTO MÉDICO"]
+        direction TB
+        
+        E12([🔵 Paciente chega<br/>para consulta])
+        F8[/📋 Registrar<br/>Atendimento/]
+        E13([🟢 Atendimento<br/>iniciado])
+        
+        F9[/📝 Preencher<br/>Evolução SOAP/]
+        E14([🟢 Evolução<br/>registrada])
+        
+        X2{Exames<br/>necessários?}
+        F10[/📄 Solicitar<br/>Exames/]
+        E15([🟢 Solicitação<br/>gerada])
+        
+        X3{Prescrição<br/>necessária?}
+        F11[/💊 Emitir<br/>Receita/]
+        E16([🟢 Receita<br/>emitida])
+        
+        F12[/📋 Finalizar<br/>Atendimento/]
+        E17([🟢 Atendimento<br/>concluído])
+        
+        E12 --> F8 --> E13 --> F9 --> E14
+        E14 --> X2
+        X2 -->|Sim| F10 --> E15 --> X3
+        X2 -->|Não| X3
+        X3 -->|Sim| F11 --> E16 --> F12
+        X3 -->|Não| F12
+        F12 --> E17
+    end
+
+    %% ========================================
+    %% PROCESSO 4: PRONTUÁRIO ELETRÔNICO
+    %% ========================================
+    subgraph PR["📁 PRONTUÁRIO ELETRÔNICO"]
+        direction TB
+        
+        E18([🔵 Acesso ao<br/>prontuário solicitado])
+        F13[/🔐 Verificar<br/>Permissão/]
+        X4{Autorizado?}
+        F14[/📖 Exibir<br/>Prontuário/]
+        E19([🟢 Prontuário<br/>visualizado])
+        
+        E20([🔵 Documento externo<br/>recebido])
+        F15[/📤 Upload de<br/>Documento/]
+        F16[/🤖 Extrair OCR<br/>e Dados/]
+        E21([🟢 Documento<br/>indexado])
+        
+        E22([🔵 Medida<br/>antropométrica nova])
+        F17[/📊 Registrar<br/>Medida/]
+        E23([🟢 Histórico<br/>atualizado])
+        
+        E18 --> F13 --> X4
+        X4 -->|Sim| F14 --> E19
+        X4 -->|Não| E24([🔴 Acesso<br/>negado])
+        
+        E20 --> F15 --> F16 --> E21
+        E22 --> F17 --> E23
+    end
+
+    %% ========================================
+    %% PROCESSO 5: FATURAMENTO
+    %% ========================================
+    subgraph FA["💰 FATURAMENTO"]
+        direction TB
+        
+        E25([🔵 Atendimento<br/>realizado])
+        F18[/💵 Calcular<br/>Honorários/]
+        E26([🟢 Valor<br/>calculado])
+        
+        F19[/📨 Enviar para<br/>Faturamento/]
+        E27([🟢 Fatura<br/>enviada])
+        
+        E28([🔵 Pagamento<br/>recebido])
+        F20[/✅ Registrar<br/>Pagamento/]
+        E29([🟢 Pagamento<br/>confirmado])
+        
+        F21[/📊 Atualizar<br/>Dashboard/]
+        E30([🟢 Métricas<br/>atualizadas])
+        
+        E25 --> F18 --> E26 --> F19 --> E27
+        E28 --> F20 --> E29 --> F21 --> E30
+    end
+
+    %% ========================================
+    %% PROCESSO 6: COMPARTILHAMENTO CROSS-TENANT
+    %% ========================================
+    subgraph CT["🔄 COMPARTILHAMENTO CROSS-TENANT"]
+        direction TB
+        
+        E31([🔵 Clínica externa<br/>solicita acesso])
+        F22[/📩 Criar<br/>Solicitação/]
+        E32([🟡 Solicitação<br/>pendente])
+        
+        F23[/📧 Notificar<br/>Clínica Origem/]
+        E33([🟢 Notificação<br/>enviada])
+        
+        X5{Paciente<br/>autoriza?}
+        F24[/✅ Aprovar com<br/>Consentimento LGPD/]
+        E34([🟢 Acesso<br/>autorizado])
+        
+        F25[/❌ Rejeitar<br/>Solicitação/]
+        E35([🔴 Acesso<br/>negado])
+        
+        E36([🔵 Acesso<br/>cross-tenant])
+        F26[/📝 Registrar<br/>Log Auditoria/]
+        E37([🟢 Acesso<br/>auditado])
+        
+        E38([🔵 Autorização<br/>não mais necessária])
+        F27[/🚫 Revogar<br/>Autorização/]
+        E39([🟢 Acesso<br/>revogado])
+        
+        E31 --> F22 --> E32 --> F23 --> E33 --> X5
+        X5 -->|Sim| F24 --> E34
+        X5 -->|Não| F25 --> E35
+        E36 --> F26 --> E37
+        E38 --> F27 --> E39
+    end
+
+    %% ========================================
+    %% PROCESSO 7: AUDITORIA E CONFORMIDADE
+    %% ========================================
+    subgraph AU["🔒 AUDITORIA E CONFORMIDADE"]
+        direction TB
+        
+        E40([🔵 Ação realizada<br/>no sistema])
+        F28[/📝 Registrar<br/>Log de Auditoria/]
+        E41([🟢 Ação<br/>registrada])
+        
+        E42([🔵 Consulta de<br/>auditoria solicitada])
+        F29[/🔍 Gerar<br/>Relatório/]
+        E43([🟢 Relatório<br/>disponível])
+        
+        E44([🔵 Verificação<br/>LGPD necessária])
+        F30[/✅ Validar<br/>Conformidade/]
+        E45([🟢 Conformidade<br/>verificada])
+        
+        E40 --> F28 --> E41
+        E42 --> F29 --> E43
+        E44 --> F30 --> E45
+    end
+
+    %% ========================================
+    %% CONEXÕES ENTRE PROCESSOS
+    %% ========================================
+    E2 -.->|Paciente disponível| E7
+    E6 -.->|Paciente localizado| E12
+    E8 -.->|Consulta agendada| E12
+    E17 -.->|Atendimento concluído| E25
+    E17 -.->|Dados gerados| E18
+    E34 -.->|Acesso autorizado| E36
+    E41 -.->|Logs disponíveis| E42
+
+    %% ========================================
+    %% LEGENDA
+    %% ========================================
+    subgraph LEGENDA["📖 LEGENDA"]
+        direction LR
+        L1([🔵 Evento Inicial])
+        L2([🟢 Evento Final])
+        L3([🟡 Evento Intermediário])
+        L4([🔴 Evento de Erro])
+        L5[/📝 Função/Atividade/]
+        L6{Decisão}
+    end
+
+    %% Estilos
+    classDef evento fill:#e8f4f8,stroke:#2c5282,stroke-width:2px,color:#1a365d
+    classDef eventoFinal fill:#f0fff4,stroke:#276749,stroke-width:2px,color:#276749
+    classDef eventoPendente fill:#fef3c7,stroke:#d69e2e,stroke-width:2px,color:#744210
+    classDef eventoErro fill:#fed7d7,stroke:#c53030,stroke-width:2px,color:#c53030
+    classDef funcao fill:#ebf8ff,stroke:#3182ce,stroke-width:2px,color:#2c5282
+    classDef decisao fill:#faf5ff,stroke:#805ad5,stroke-width:2px,color:#553c9a
+    
+    class E1,E3,E5,E7,E10,E12,E18,E20,E22,E25,E28,E31,E36,E38,E40,E42,E44 evento
+    class E2,E4,E6,E8,E9,E11,E13,E14,E15,E16,E17,E19,E21,E23,E26,E27,E29,E30,E33,E34,E37,E39,E41,E43,E45 eventoFinal
+    class E32 eventoPendente
+    class E24,E35 eventoErro
+    class F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15,F16,F17,F18,F19,F20,F21,F22,F23,F24,F25,F26,F27,F28,F29,F30 funcao
+    class X1,X2,X3,X4,X5 decisao

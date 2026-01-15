@@ -1,0 +1,675 @@
+# Gorgen - Aplicativo de Gestão em Saúde
+## Roadmap de Desenvolvimento
+
+---
+
+## 🎯 Visão do Produto
+
+**Gorgen** é um sistema integrado de gestão em saúde que conecta médicos e pacientes em uma plataforma única, permitindo gestão administrativa eficiente para consultórios médicos e acesso facilitado a prontuários e exames para pacientes.
+
+### Diferenciais Estratégicos
+
+1. **Dupla Perspectiva**: Sistema serve tanto médicos (gestão) quanto pacientes (autogestão de saúde)
+2. **Prontuário Colaborativo**: Pacientes podem alimentar seus próprios dados antes mesmo da consulta
+3. **Conformidade LGPD**: Arquitetura pensada para proteção máxima de dados sensíveis
+4. **Escalabilidade**: Preparado para crescer de consultório individual para rede de clínicas
+
+---
+
+## 📊 Situação Atual (Checkpoint: dec4330e)
+
+### ✅ Funcionalidades Implementadas
+
+**Gestão de Pacientes**
+- Cadastro completo com 33 campos (dados pessoais, endereço, convênios, diagnósticos)
+- ID automático sequencial (formato 2026-0000001)
+- Máscaras automáticas (CPF, telefone, CEP)
+- Checkboxes para campos Sim/Não
+- Dropdown de operadoras customizado
+
+**Gestão de Atendimentos**
+- Cadastro completo com 26 campos
+- ID automático sequencial (formato 20260001)
+- Vinculação automática de convênios do paciente
+- Dropdowns para tipos e locais de atendimento
+- Estrutura preparada para CBHPM e honorários
+
+**Dashboard e Visualizações**
+- Métricas em tempo real (pacientes, atendimentos, faturamento)
+- Distribuição por convênio
+- Taxa de recebimento
+- Design elegante e profissional
+
+**Infraestrutura**
+- Banco de dados MySQL com relacionamentos
+- Autenticação integrada
+- Tema claro/escuro
+- Layout responsivo com sidebar
+
+---
+
+## 🗺️ Roadmap Estratégico
+
+### **FASE 1: Consolidação da Base Administrativa** ⏱️ 2-3 semanas
+
+**Objetivo**: Tornar o sistema totalmente funcional para gestão diária do consultório
+
+#### 1.1 Filtros e Busca Avançada (Prioridade: ALTA)
+- [ ] Implementar filtros nas colunas de Pacientes
+  - Busca por nome, CPF, convênio
+  - Filtro por diagnóstico, status (ativo/óbito/perda)
+  - Filtro por data de inclusão
+- [ ] Implementar filtros nas colunas de Atendimentos
+  - Busca por paciente, tipo, local
+  - Filtro por convênio, data
+  - Filtro por status de pagamento
+- [ ] Adicionar paginação nas listagens
+- [ ] Exportar resultados filtrados para Excel/PDF
+
+#### 1.2 Edição de Registros (Prioridade: ALTA)
+- [ ] Página de edição de pacientes
+- [ ] Página de edição de atendimentos
+- [ ] Validação de dados na edição
+- [ ] Log de alterações (auditoria)
+
+#### 1.3 Integração de Tabelas Auxiliares (Prioridade: MÉDIA)
+- [ ] Importar tabela CBHPM completa
+- [ ] Vincular procedimentos a códigos automaticamente
+- [ ] Importar tabela de honorários
+- [ ] Cálculo automático de valores por convênio
+
+#### 1.4 Branding e Identidade Visual (Prioridade: BAIXA)
+- [ ] Atualizar nome do sistema para "Gorgen"
+- [ ] Criar logo profissional
+- [ ] Atualizar título e favicon
+- [ ] Adicionar tagline "Aplicativo de Gestão em Saúde"
+
+---
+
+### **FASE 2: Prontuário Médico Eletrônico (PME)** ⏱️ 3-4 semanas
+
+**Objetivo**: Criar prontuário completo e estruturado para cada paciente
+
+#### 2.1 Estrutura do Prontuário (Prioridade: ALTA)
+- [ ] Criar tabela de prontuários no banco
+- [ ] Página de visualização de prontuário por paciente
+- [ ] Histórico completo de atendimentos em timeline
+- [ ] Seções do prontuário:
+  - Anamnese
+  - Exame físico
+  - Hipóteses diagnósticas
+  - Conduta terapêutica
+  - Evolução clínica
+  - Prescrições médicas
+
+#### 2.2 Upload e Gestão de Exames (Prioridade: ALTA)
+- [ ] Criar tabela de exames no banco
+- [ ] Sistema de upload de arquivos (PDF, imagens, DICOM)
+- [ ] Armazenamento seguro em S3
+- [ ] Visualizador de exames integrado
+- [ ] Categorização de exames (laboratorial, imagem, anatomopatológico)
+- [ ] Data e descrição de cada exame
+
+#### 2.3 Documentos Médicos (Prioridade: MÉDIA)
+- [ ] Geração de atestados médicos
+- [ ] Geração de receitas médicas
+- [ ] Geração de solicitações de exames
+- [ ] Templates customizáveis
+- [ ] Assinatura digital
+
+#### 2.4 Busca e Acesso ao Prontuário (Prioridade: ALTA)
+- [ ] Busca de paciente na listagem abre prontuário
+- [ ] Botão "Ver Prontuário" em cada paciente
+- [ ] Navegação rápida entre seções do prontuário
+- [ ] Impressão de prontuário completo
+
+---
+
+### **FASE 3: Portal do Paciente** ⏱️ 4-5 semanas
+
+**Objetivo**: Permitir que pacientes gerenciem seus próprios dados de saúde
+
+#### 3.1 Autenticação e Perfil do Paciente (Prioridade: ALTA)
+- [ ] Sistema de registro de pacientes
+- [ ] Login separado para pacientes (diferente do médico)
+- [ ] Perfil do paciente com dados básicos
+- [ ] Recuperação de senha
+- [ ] Verificação de email/telefone
+
+#### 3.2 Autogestão de Dados (Prioridade: ALTA)
+- [ ] Paciente pode atualizar dados pessoais
+- [ ] Paciente pode fazer upload de exames
+- [ ] Paciente pode visualizar histórico de atendimentos
+- [ ] Paciente pode ver prescrições e receitas
+- [ ] Notificações de novos documentos
+
+#### 3.3 Agendamento Online (Prioridade: MÉDIA)
+- [ ] Calendário de disponibilidade do médico
+- [ ] Sistema de agendamento de consultas
+- [ ] Confirmação automática por email/SMS
+- [ ] Lembretes de consulta
+- [ ] Cancelamento e reagendamento
+
+#### 3.4 Telemedicina (Prioridade: BAIXA)
+- [ ] Integração com plataforma de videochamada
+- [ ] Consultas online
+- [ ] Prescrição digital
+- [ ] Registro de teleconsulta no prontuário
+
+---
+
+### **FASE 4: Relatórios e Análises** ⏱️ 2-3 semanas
+
+**Objetivo**: Fornecer insights estratégicos para gestão do consultório
+
+#### 4.1 Relatórios Financeiros (Prioridade: ALTA)
+- [ ] Relatório de faturamento mensal
+- [ ] Análise de recebimento por convênio
+- [ ] Projeção de receita
+- [ ] Inadimplência e cobranças pendentes
+- [ ] Exportação para Excel/PDF
+
+#### 4.2 Relatórios Clínicos (Prioridade: MÉDIA)
+- [ ] Distribuição de diagnósticos
+- [ ] Taxa de retorno de pacientes
+- [ ] Tempo médio entre consultas
+- [ ] Procedimentos mais realizados
+- [ ] Análise epidemiológica
+
+#### 4.3 Relatórios Operacionais (Prioridade: MÉDIA)
+- [ ] Taxa de ocupação da agenda
+- [ ] Tempo médio de atendimento
+- [ ] No-show (faltas)
+- [ ] Origem dos pacientes (marketing)
+
+#### 4.4 Dashboards Interativos (Prioridade: BAIXA)
+- [ ] Gráficos interativos com drill-down
+- [ ] Filtros por período customizado
+- [ ] Comparação entre períodos
+- [ ] Exportação de gráficos
+
+---
+
+### **FASE 5: Conformidade e Segurança** ⏱️ 2-3 semanas
+
+**Objetivo**: Garantir conformidade total com LGPD e regulamentações médicas
+
+#### 5.1 LGPD (Prioridade: ALTA)
+- [ ] Termo de consentimento para pacientes
+- [ ] Política de privacidade
+- [ ] Direito ao esquecimento (exclusão de dados)
+- [ ] Portabilidade de dados
+- [ ] Log de acesso a dados sensíveis
+- [ ] Anonimização de dados para relatórios
+
+#### 5.2 Auditoria e Rastreabilidade (Prioridade: ALTA)
+- [ ] Log de todas as operações no sistema
+- [ ] Registro de quem acessou cada prontuário
+- [ ] Histórico de alterações em registros
+- [ ] Exportação de logs para auditoria
+
+#### 5.3 Backup e Recuperação (Prioridade: ALTA)
+- [ ] Backup automático diário
+- [ ] Backup incremental
+- [ ] Teste de recuperação de desastres
+- [ ] Redundância geográfica
+
+#### 5.4 Certificações (Prioridade: MÉDIA)
+- [ ] Conformidade com CFM (Conselho Federal de Medicina)
+- [ ] Certificação digital ICP-Brasil
+- [ ] Assinatura digital de documentos
+- [ ] Carimbo de tempo
+
+---
+
+### **FASE 6: Escalabilidade e Multi-tenant** ⏱️ 4-6 semanas
+
+**Objetivo**: Preparar sistema para atender múltiplos consultórios/clínicas
+
+#### 6.1 Arquitetura Multi-tenant (Prioridade: BAIXA)
+- [ ] Isolamento de dados por consultório
+- [ ] Gestão de múltiplos médicos
+- [ ] Permissões e roles (admin, médico, secretária)
+- [ ] Branding por consultório
+
+#### 6.2 Gestão de Equipe (Prioridade: BAIXA)
+- [ ] Cadastro de usuários (médicos, secretárias)
+- [ ] Controle de acesso por perfil
+- [ ] Agenda compartilhada
+- [ ] Comunicação interna
+
+#### 6.3 Integrações Externas (Prioridade: BAIXA)
+- [ ] Integração com sistemas de convênios
+- [ ] Integração com laboratórios
+- [ ] Integração com farmácias
+- [ ] API pública para terceiros
+
+---
+
+## 🚀 Plano de Ação Imediato (Próximas 2 Semanas)
+
+### Semana 1: Filtros e Busca
+
+**Dia 1-2: Filtros em Pacientes**
+- Implementar campos de busca na página de Pacientes
+- Adicionar filtros por nome, CPF, convênio, diagnóstico, status
+- Paginação com 20 registros por página
+
+**Dia 3-4: Filtros em Atendimentos**
+- Implementar campos de busca na página de Atendimentos
+- Adicionar filtros por paciente, tipo, local, convênio, data
+- Filtro por status de pagamento
+
+**Dia 5: Exportação**
+- Botão "Exportar para Excel" nas listagens
+- Exportar dados filtrados
+- Formatação profissional do Excel
+
+### Semana 2: Prontuário Básico
+
+**Dia 1-2: Estrutura do Prontuário**
+- Criar tabela de prontuários no banco
+- Página de visualização de prontuário
+- Timeline de atendimentos
+
+**Dia 3-4: Upload de Exames**
+- Sistema de upload de arquivos
+- Armazenamento em S3
+- Listagem de exames por paciente
+
+**Dia 5: Integração**
+- Botão "Ver Prontuário" na listagem de pacientes
+- Navegação entre prontuário e cadastro
+- Testes completos
+
+---
+
+## 💡 Sugestões Estratégicas Adicionais
+
+### Monetização Futura
+1. **Modelo Freemium**: Versão gratuita para 1 médico, paga para equipes
+2. **Assinatura por Usuário**: R$ 49/mês por médico
+3. **Marketplace**: Venda de templates de documentos, integrações premium
+4. **White Label**: Licenciamento para clínicas e hospitais
+
+### Expansão de Mercado
+1. **Especialidades Médicas**: Adaptar para diferentes especialidades (cardiologia, pediatria, etc.)
+2. **Outros Profissionais de Saúde**: Fisioterapeutas, psicólogos, nutricionistas
+3. **Clínicas e Hospitais**: Versão enterprise
+4. **Planos de Saúde**: Parceria para gestão de beneficiários
+
+### Inovação Tecnológica
+1. **IA para Diagnóstico**: Sugestões baseadas em sintomas
+2. **OCR de Exames**: Extração automática de dados de exames em PDF
+3. **Chatbot**: Assistente virtual para pacientes
+4. **App Mobile**: Aplicativo nativo iOS/Android
+
+---
+
+## 📋 Critérios de Sucesso
+
+### Métricas de Produto
+- **Tempo de cadastro de paciente**: < 2 minutos
+- **Tempo de registro de atendimento**: < 1 minuto
+- **Tempo de busca de prontuário**: < 5 segundos
+- **Uptime do sistema**: > 99.5%
+
+### Métricas de Negócio
+- **Redução de tempo administrativo**: 40%
+- **Aumento de produtividade**: 30%
+- **Satisfação do médico**: > 4.5/5
+- **Satisfação do paciente**: > 4.5/5
+
+### Métricas Técnicas
+- **Performance**: Páginas carregam em < 2s
+- **Segurança**: Zero vazamentos de dados
+- **Conformidade**: 100% LGPD e CFM
+- **Disponibilidade**: 99.9% uptime
+
+---
+
+## 🎓 Aprendizados e Boas Práticas
+
+### Desenvolvimento
+- **Incremental**: Entregar valor a cada 2 semanas
+- **Testes**: Validar com usuários reais antes de avançar
+- **Documentação**: Manter documentação atualizada
+- **Feedback**: Coletar feedback contínuo do Dr. André
+
+### Segurança
+- **Criptografia**: Dados sensíveis sempre criptografados
+- **Acesso**: Princípio do menor privilégio
+- **Auditoria**: Tudo registrado e rastreável
+- **Backup**: Múltiplas camadas de redundância
+
+### UX/UI
+- **Simplicidade**: Menos cliques, mais produtividade
+- **Consistência**: Padrões visuais e de interação
+- **Acessibilidade**: Sistema acessível para todos
+- **Responsividade**: Funciona em qualquer dispositivo
+
+---
+
+## 📞 Próximos Passos
+
+**Decisão Necessária**: Qual fase priorizar?
+
+**Opção A - Rápido Retorno (Recomendado)**
+→ Implementar **Fase 1 completa** (filtros + edição + tabelas)
+→ Depois partir para **Fase 2** (prontuário)
+
+**Opção B - Diferencial Competitivo**
+→ Pular direto para **Fase 2** (prontuário)
+→ Voltar para **Fase 1** depois
+
+**Opção C - Visão de Longo Prazo**
+→ Implementar **Fase 3** (portal do paciente) em paralelo
+→ Criar diferencial único no mercado
+
+**Minha Recomendação**: Opção A
+- Consolida o que já existe
+- Torna sistema 100% funcional para uso diário
+- Base sólida para funcionalidades avançadas
+
+---
+
+**Aguardando sua decisão para iniciar a implementação! 🚀**
+
+
+---
+
+## 🔐 FASE 1.5: Sistema de Controle de Acesso e Gestão de Usuários (PLANEJADO)
+
+### Visão Geral
+Implementar sistema robusto de controle de acesso baseado em perfis (RBAC - Role-Based Access Control) para garantir conformidade LGPD e segurança dos dados sensíveis de pacientes.
+
+### Níveis de Acesso Definidos
+
+#### 1. **Administrador Master (Usuário Master)**
+**Responsável**: Dr. André Gorgen
+
+**Permissões**:
+- ✅ Acesso completo e irrestrito a todos os dados do sistema
+- ✅ Visualizar, criar, editar e excluir qualquer registro (pacientes, atendimentos, usuários)
+- ✅ Gerenciar todos os usuários do sistema
+- ✅ Conceder e revogar permissões de acesso a prontuários
+- ✅ Acessar logs de auditoria completos
+- ✅ Configurar parâmetros do sistema
+- ✅ Realizar importação/exportação de dados
+- ✅ Gerenciar tabelas auxiliares (CBHPM, honorários, operadoras)
+
+**Restrições**: Nenhuma
+
+---
+
+#### 2. **Médico (Profissional de Saúde)**
+
+**Permissões**:
+- ✅ Visualizar e editar **apenas** pacientes que:
+  - Tiveram atendimento registrado pelo próprio médico
+  - Concederam autorização explícita de acesso ao prontuário
+- ✅ Registrar novos atendimentos para seus pacientes autorizados
+- ✅ Visualizar histórico completo de atendimentos dos pacientes autorizados
+- ✅ Upload de exames e documentos para pacientes autorizados
+- ✅ Gerar documentos médicos (atestados, receitas) para pacientes autorizados
+- ✅ Visualizar dashboard com métricas **apenas dos seus pacientes**
+- ✅ Buscar e filtrar **apenas seus pacientes autorizados**
+
+**Restrições**:
+- ❌ Não pode visualizar pacientes de outros médicos sem autorização
+- ❌ Não pode acessar dados financeiros globais do consultório
+- ❌ Não pode gerenciar usuários
+- ❌ Não pode alterar configurações do sistema
+- ❌ Não pode excluir registros (apenas Administrador Master)
+- ❌ Acesso ao prontuário pode ser revogado pelo paciente ou Administrador Master a qualquer momento
+
+---
+
+#### 3. **Paciente (Usuário Final)**
+
+**Permissões**:
+- ✅ Visualizar **apenas seus próprios dados pessoais**
+- ✅ Visualizar histórico de seus atendimentos
+- ✅ Fazer upload de exames e documentos pessoais
+- ✅ Visualizar lista de médicos autorizados a acessar seu prontuário
+- ✅ **Conceder autorização** de acesso ao prontuário para médicos específicos
+- ✅ **Revogar autorização** de acesso ao prontuário de qualquer médico
+- ✅ Atualizar dados pessoais (telefone, endereço, email)
+- ✅ Agendar consultas (quando funcionalidade estiver disponível)
+- ✅ Visualizar receitas e prescrições médicas
+
+**Restrições**:
+- ❌ Não pode visualizar dados de outros pacientes
+- ❌ Não pode editar dados clínicos (diagnósticos, procedimentos)
+- ❌ Não pode visualizar valores de honorários ou dados financeiros
+- ❌ Não pode excluir atendimentos registrados
+- ❌ Não pode acessar área administrativa
+- ❌ Não pode gerenciar usuários
+
+---
+
+### Funcionalidades a Implementar
+
+#### 1. **Gestão de Usuários (Aba "Usuários")**
+
+**Página de Listagem de Usuários**:
+- [ ] Tabela com todos os usuários cadastrados
+- [ ] Colunas: Nome, Email, Perfil (Master/Médico/Paciente), Status (Ativo/Inativo), Data de Cadastro
+- [ ] Busca por nome ou email
+- [ ] Filtro por perfil
+- [ ] Botão "Novo Usuário" (apenas para Administrador Master)
+- [ ] Botão "Editar" em cada linha
+- [ ] Botão "Desativar/Ativar" usuário
+- [ ] Indicador visual de usuários online
+
+**Formulário de Cadastro/Edição de Usuário**:
+- [ ] Campos: Nome completo, Email, Perfil (dropdown), CRM (se médico), CPF
+- [ ] Senha inicial (gerada automaticamente e enviada por email)
+- [ ] Checkbox "Forçar troca de senha no primeiro login"
+- [ ] Status (Ativo/Inativo)
+- [ ] Data de criação e última modificação
+
+---
+
+#### 2. **Sistema de Autorizações de Acesso ao Prontuário**
+
+**Tabela no Banco de Dados**:
+```sql
+CREATE TABLE autorizacoes_prontuario (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  paciente_id INT NOT NULL,
+  medico_id INT NOT NULL,
+  autorizado_por VARCHAR(50), -- 'paciente' ou 'admin'
+  data_autorizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  data_revogacao TIMESTAMP NULL,
+  status ENUM('ativa', 'revogada') DEFAULT 'ativa',
+  motivo_revogacao TEXT NULL,
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+  FOREIGN KEY (medico_id) REFERENCES users(id)
+);
+```
+
+**Interface para Paciente (Portal do Paciente)**:
+- [ ] Página "Meus Médicos Autorizados"
+- [ ] Lista de médicos com acesso ao prontuário
+- [ ] Botão "Autorizar Novo Médico" (busca por nome ou CRM)
+- [ ] Botão "Revogar Acesso" com confirmação
+- [ ] Histórico de autorizações e revogações
+
+**Interface para Administrador Master**:
+- [ ] Página "Autorizações de Prontuário" no menu administrativo
+- [ ] Visualizar todas as autorizações ativas
+- [ ] Conceder acesso manualmente (paciente + médico)
+- [ ] Revogar acesso com justificativa obrigatória
+- [ ] Relatório de autorizações por paciente
+- [ ] Relatório de autorizações por médico
+
+---
+
+#### 3. **Middleware de Controle de Acesso (Backend)**
+
+**Procedures tRPC Protegidas**:
+- [ ] `protectedProcedure` → Requer autenticação (qualquer usuário logado)
+- [ ] `adminProcedure` → Requer perfil Administrador Master
+- [ ] `medicoProcedure` → Requer perfil Médico
+- [ ] `pacienteProcedure` → Requer perfil Paciente
+
+**Validação de Acesso a Prontuário**:
+```typescript
+// Exemplo de middleware
+const checkProntuarioAccess = async (ctx, pacienteId) => {
+  // Administrador Master: acesso total
+  if (ctx.user.role === 'admin') return true;
+  
+  // Médico: verificar autorização
+  if (ctx.user.role === 'medico') {
+    const autorizado = await db.checkAutorizacao(pacienteId, ctx.user.id);
+    if (!autorizado) throw new TRPCError({ code: 'FORBIDDEN' });
+    return true;
+  }
+  
+  // Paciente: apenas seus próprios dados
+  if (ctx.user.role === 'paciente') {
+    const paciente = await db.getPacienteByUserId(ctx.user.id);
+    if (paciente.id !== pacienteId) throw new TRPCError({ code: 'FORBIDDEN' });
+    return true;
+  }
+  
+  throw new TRPCError({ code: 'UNAUTHORIZED' });
+};
+```
+
+---
+
+#### 4. **Filtros Automáticos por Perfil**
+
+**Para Médicos**:
+- [ ] Listar apenas pacientes autorizados na página "Pacientes"
+- [ ] Dashboard mostra métricas apenas dos pacientes autorizados
+- [ ] Busca retorna apenas pacientes autorizados
+- [ ] Formulário "Novo Atendimento" permite selecionar apenas pacientes autorizados
+
+**Para Pacientes**:
+- [ ] Acesso apenas ao próprio perfil
+- [ ] Visualização de histórico de atendimentos próprios
+- [ ] Upload de exames apenas para si mesmo
+
+---
+
+#### 5. **Log de Auditoria (Conformidade LGPD)**
+
+**Tabela de Auditoria**:
+```sql
+CREATE TABLE audit_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NOT NULL,
+  acao VARCHAR(100) NOT NULL, -- 'visualizar', 'editar', 'criar', 'excluir', 'autorizar', 'revogar'
+  entidade VARCHAR(50) NOT NULL, -- 'paciente', 'atendimento', 'prontuario', 'usuario'
+  entidade_id INT NOT NULL,
+  detalhes JSON,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Funcionalidades**:
+- [ ] Registrar automaticamente todas as ações sensíveis
+- [ ] Página "Logs de Auditoria" (apenas Administrador Master)
+- [ ] Filtros: usuário, ação, entidade, período
+- [ ] Exportar logs para análise externa
+- [ ] Alertas automáticos para ações suspeitas
+
+---
+
+#### 6. **Interface de Autorização no Cadastro de Atendimento**
+
+**Fluxo Automático**:
+- [ ] Ao registrar primeiro atendimento de um médico com um paciente:
+  - Sistema cria automaticamente autorização de acesso ao prontuário
+  - Notifica paciente sobre a autorização (email/SMS)
+  - Paciente pode revogar posteriormente se desejar
+
+**Fluxo Manual**:
+- [ ] Médico solicita acesso ao prontuário de paciente
+- [ ] Paciente recebe notificação e pode aprovar/rejeitar
+- [ ] Histórico de solicitações pendentes
+
+---
+
+### Prioridade de Implementação
+
+**Alta Prioridade** (Implementar antes da Fase 2 - Prontuário):
+1. Gestão de usuários (CRUD completo)
+2. Sistema de perfis (Admin, Médico, Paciente)
+3. Middleware de controle de acesso
+4. Tabela de autorizações de prontuário
+5. Filtros automáticos por perfil
+
+**Média Prioridade** (Implementar junto com Fase 2):
+6. Interface de autorizações para pacientes
+7. Log de auditoria básico
+8. Notificações de autorização/revogação
+
+**Baixa Prioridade** (Implementar na Fase 3 - Portal do Paciente):
+9. Solicitações de acesso por médicos
+10. Dashboard de autorizações para administrador
+11. Relatórios avançados de auditoria
+
+---
+
+### Considerações de Segurança
+
+**Autenticação**:
+- [ ] Implementar autenticação multifator (MFA) para Administrador Master
+- [ ] Política de senhas fortes (mínimo 8 caracteres, letras, números, símbolos)
+- [ ] Bloqueio de conta após 5 tentativas de login falhadas
+- [ ] Sessões com timeout automático (30 minutos de inatividade)
+
+**Criptografia**:
+- [ ] Senhas armazenadas com bcrypt (hash + salt)
+- [ ] Dados sensíveis criptografados no banco (CPF, dados clínicos)
+- [ ] Comunicação via HTTPS obrigatório
+
+**Conformidade LGPD**:
+- [ ] Termo de consentimento para coleta de dados
+- [ ] Política de privacidade acessível
+- [ ] Direito ao esquecimento (anonimização de dados)
+- [ ] Portabilidade de dados (exportação em formato padrão)
+- [ ] Notificação de vazamento de dados (se ocorrer)
+
+---
+
+### Estimativa de Tempo
+
+- **Gestão de Usuários**: 1 semana
+- **Sistema de Perfis e Middleware**: 1 semana
+- **Autorizações de Prontuário**: 1 semana
+- **Log de Auditoria**: 3 dias
+- **Testes e Ajustes**: 3 dias
+
+**Total estimado**: 3-4 semanas
+
+---
+
+### Dependências
+
+- Fase 1 (Consolidação da Base Administrativa) deve estar 100% concluída
+- Importação dos 21.000+ pacientes reais deve estar finalizada
+- Testes de performance com volume real de dados
+
+---
+
+### Critérios de Sucesso
+
+- ✅ Administrador Master tem acesso total sem restrições
+- ✅ Médico visualiza apenas pacientes autorizados
+- ✅ Paciente visualiza apenas seus próprios dados
+- ✅ Tentativa de acesso não autorizado retorna erro 403 (Forbidden)
+- ✅ Todas as ações sensíveis são registradas em log de auditoria
+- ✅ Paciente consegue revogar acesso de médico em < 30 segundos
+- ✅ Sistema passa em auditoria de conformidade LGPD
+
+---
+
+**Observação**: Esta funcionalidade é **crítica** e deve ser implementada **antes** da Fase 2 (Prontuário Médico Eletrônico) para garantir que dados sensíveis de saúde estejam protegidos desde o início.

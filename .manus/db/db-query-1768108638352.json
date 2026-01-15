@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id_paciente, nome FROM pacientes WHERE id_paciente LIKE '2025-%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id_paciente, nome FROM pacientes WHERE id_paciente LIKE '2025-%' LIMIT 10;",
+  "rows": [
+    {
+      "id_paciente": "2025-0000001",
+      "nome": "Aaron Concha Vásquez Hengles"
+    },
+    {
+      "id_paciente": "2025-0000002",
+      "nome": "Abacy Garcia"
+    },
+    {
+      "id_paciente": "2025-0000003",
+      "nome": "Abel Mohamed El Massri"
+    },
+    {
+      "id_paciente": "2025-0000004",
+      "nome": "Abel Samuel da Rosa"
+    },
+    {
+      "id_paciente": "2025-0000005",
+      "nome": "Abilene Rodrigues da Silva"
+    },
+    {
+      "id_paciente": "2025-0000006",
+      "nome": "Abilio da Silva Filho"
+    },
+    {
+      "id_paciente": "2025-0000007",
+      "nome": "Abraham Trespach Pugen"
+    },
+    {
+      "id_paciente": "2025-0000008",
+      "nome": "Abrahao Wolkind"
+    },
+    {
+      "id_paciente": "2025-0000009",
+      "nome": "Acelio Moraes Camargo Junior"
+    },
+    {
+      "id_paciente": "2025-0000010",
+      "nome": "Acilon Silva Dutra"
+    }
+  ],
+  "messages": [],
+  "stdout": "id_paciente\tnome\n2025-0000001\tAaron Concha Vásquez Hengles\n2025-0000002\tAbacy Garcia\n2025-0000003\tAbel Mohamed El Massri\n2025-0000004\tAbel Samuel da Rosa\n2025-0000005\tAbilene Rodrigues da Silva\n2025-0000006\tAbilio da Silva Filho\n2025-0000007\tAbraham Trespach Pugen\n2025-0000008\tAbrahao Wolkind\n2025-0000009\tAcelio Moraes Camargo Junior\n2025-0000010\tAcilon Silva Dutra\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

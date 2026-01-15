@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as total_ficticios \nFROM pacientes \nWHERE tenant_id = 1 \n  AND id_paciente NOT LIKE 'MIG-%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT COUNT(*) as total_ficticios \nFROM pacientes \nWHERE tenant_id = 1 \n  AND id_paciente NOT LIKE 'MIG-%';",
+  "rows": [
+    {
+      "total_ficticios": "53"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_ficticios\n53\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

@@ -1,0 +1,9 @@
+{
+  "query": "\nUPDATE pacientes SET operadora_1 = 'PETROBRAS' WHERE operadora_1 = 'Petrobrás';\nUPDATE pacientes SET operadora_2 = 'PETROBRAS' WHERE operadora_2 = 'Petrobrás';\nUPDATE pacientes SET operadora_1 = 'IPE SAÚDE' WHERE operadora_1 = 'IPE';\nUPDATE pacientes SET operadora_2 = 'IPE SAÚDE' WHERE operadora_2 = 'IPE';\nUPDATE pacientes SET operadora_1 = 'IPE SAÚDE' WHERE operadora_1 = 'IPE Saúde';\nUPDATE pacientes SET operadora_2 = 'IPE SAÚDE' WHERE operadora_2 = 'IPE Saúde';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute \nUPDATE pacientes SET operadora_1 = 'PETROBRAS' WHERE operadora_1 = 'Petrobrás';\nUPDATE pacientes SET operadora_2 = 'PETROBRAS' WHERE operadora_2 = 'Petrobrás';\nUPDATE pacientes SET operadora_1 = 'IPE SAÚDE' WHERE operadora_1 = 'IPE';\nUPDATE pacientes SET operadora_2 = 'IPE SAÚDE' WHERE operadora_2 = 'IPE';\nUPDATE pacientes SET operadora_1 = 'IPE SAÚDE' WHERE operadora_1 = 'IPE Saúde';\nUPDATE pacientes SET operadora_2 = 'IPE SAÚDE' WHERE operadora_2 = 'IPE Saúde';\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 290
+}

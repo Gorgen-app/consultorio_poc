@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS problemas_ativos (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  descricao VARCHAR(500) NOT NULL,\n  cid10 VARCHAR(20),\n  data_inicio DATE,\n  data_resolucao DATE,\n  ativo BOOLEAN DEFAULT TRUE NOT NULL,\n  observacoes TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS problemas_ativos (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  paciente_id INT NOT NULL,\n  descricao VARCHAR(500) NOT NULL,\n  cid10 VARCHAR(20),\n  data_inicio DATE,\n  data_resolucao DATE,\n  ativo BOOLEAN DEFAULT TRUE NOT NULL,\n  observacoes TEXT,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 614
+}

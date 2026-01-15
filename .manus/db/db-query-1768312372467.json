@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'pacientes' AND COLUMN_NAME LIKE '%nasc%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'pacientes' AND COLUMN_NAME LIKE '%nasc%';",
+  "rows": [
+    {
+      "COLUMN_NAME": "data_nascimento",
+      "DATA_TYPE": "date"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\tDATA_TYPE\ndata_nascimento\tdate\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

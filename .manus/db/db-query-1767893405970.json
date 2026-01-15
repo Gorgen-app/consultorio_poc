@@ -1,0 +1,24 @@
+{
+  "query": "SELECT id, user_id, cpf, nome_completo, email, perfil_ativo, is_admin_master, is_medico, is_secretaria, is_financeiro, is_visualizador, crm FROM user_profiles WHERE nome_completo LIKE '%Gorgen%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, user_id, cpf, nome_completo, email, perfil_ativo, is_admin_master, is_medico, is_secretaria, is_financeiro, is_visualizador, crm FROM user_profiles WHERE nome_completo LIKE '%Gorgen%';",
+  "rows": [
+    {
+      "id": "1",
+      "user_id": "1",
+      "cpf": "005.717.430-05",
+      "nome_completo": "André Gorgen",
+      "email": "contato@andregorgen.com.br",
+      "perfil_ativo": "medico",
+      "is_admin_master": "1",
+      "is_medico": "1",
+      "is_secretaria": "1",
+      "is_financeiro": "1",
+      "is_visualizador": "1",
+      "crm": "CRM/RS 12345"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuser_id\tcpf\tnome_completo\temail\tperfil_ativo\tis_admin_master\tis_medico\tis_secretaria\tis_financeiro\tis_visualizador\tcrm\n1\t1\t005.717.430-05\tAndré Gorgen\tcontato@andregorgen.com.br\tmedico\t1\t1\t1\t1\t1\tCRM/RS 12345\n",
+  "stderr": "",
+  "execution_time_ms": 410
+}

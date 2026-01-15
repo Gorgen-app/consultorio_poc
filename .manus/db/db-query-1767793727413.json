@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO pacientes (id_paciente, nome, data_nascimento, sexo, cpf, telefone, email, cidade, uf, operadora_1, status_caso) VALUES ('2026-TESTE-001', 'Maria Silva Teste', '1985-03-15', 'F', '123.456.789-00', '(11) 98765-4321', 'maria.teste@example.com', 'São Paulo', 'SP', 'Unimed', 'Ativo')",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute INSERT INTO pacientes (id_paciente, nome, data_nascimento, sexo, cpf, telefone, email, cidade, uf, operadora_1, status_caso) VALUES ('2026-TESTE-001', 'Maria Silva Teste', '1985-03-15', 'F', '123.456.789-00', '(11) 98765-4321', 'maria.teste@example.com', 'São Paulo', 'SP', 'Unimed', 'Ativo')",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 401
+}

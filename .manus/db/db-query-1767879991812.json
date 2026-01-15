@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `historico_agendamentos` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `agendamento_id` int NOT NULL,\n  `tipo_alteracao` enum('Criação','Confirmação','Cancelamento','Reagendamento','Realização','Falta','Edição') NOT NULL,\n  `descricao_alteracao` text,\n  `valores_anteriores` json,\n  `valores_novos` json,\n  `realizado_por` varchar(255) NOT NULL,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (`agendamento_id`) REFERENCES `agendamentos`(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS `historico_agendamentos` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `agendamento_id` int NOT NULL,\n  `tipo_alteracao` enum('Criação','Confirmação','Cancelamento','Reagendamento','Realização','Falta','Edição') NOT NULL,\n  `descricao_alteracao` text,\n  `valores_anteriores` json,\n  `valores_novos` json,\n  `realizado_por` varchar(255) NOT NULL,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  FOREIGN KEY (`agendamento_id`) REFERENCES `agendamentos`(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 549
+}
