@@ -837,54 +837,6 @@ export default function Configuracoes() {
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Preferências de Agenda
-                </CardTitle>
-                <CardDescription>
-                  Configure a duração dos slots de agendamento e outras preferências
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="duracaoSlot">Duração dos Slots de Agenda</Label>
-                  <div className="px-3 py-2 bg-muted rounded border">
-                    <p className="font-medium">30 minutos (fixo)</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      O sistema utiliza slots de 30 minutos para a visualização da agenda
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="duracaoConsulta">Duração Padrão de Consulta (minutos)</Label>
-                  <Input
-                    id="duracaoConsulta"
-                    type="number"
-                    min="1"
-                    max="480"
-                    value={formData.duracaoConsultaPadrao || "30"}
-                    onChange={(e) => setFormData({ ...formData, duracaoConsultaPadrao: e.target.value })}
-                    placeholder="Digite a duração em minutos"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Duração padrão de cada consulta em minutos (ex: 8, 17, 30, 45, 60, etc). Pode ser qualquer valor entre 1 e 480 minutos
-                  </p>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button onClick={() => {
-                    toast.success("Preferências de agenda salvas!");
-                  }}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Salvar Preferências
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         )}
 

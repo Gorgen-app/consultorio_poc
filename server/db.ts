@@ -2006,7 +2006,6 @@ export async function listAgendamentos(filters?: {
   status?: string;
   incluirCancelados?: boolean;
 }) {
-  const startTime = Date.now();
   const db = await getDb();
   if (!db) return [];
   
@@ -2029,13 +2028,7 @@ export async function listAgendamentos(filters?: {
     conditions.push(eq(agendamentos.status, filters.status as any));
   }
   
-  // Excluir cancelados por padrão para melhor performance
-  if (filters?.incluirCancelados !== true) {
-    conditions.push(ne(agendamentos.status, "Cancelado"));
-  }
-  
   // Query otimizada com filtros SQL e limite de campos
-  const queryStartTime = Date.now();
   const result = await db.select({
     id: agendamentos.id,
     idAgendamento: agendamentos.idAgendamento,
@@ -2057,9 +2050,6 @@ export async function listAgendamentos(filters?: {
     .orderBy(asc(agendamentos.dataHoraInicio))
     .limit(500); // Limitar para performance
   
-  const queryTime = Date.now() - queryStartTime;
-  const totalTime = Date.now() - startTime;
-  console.log(`[PERF] listAgendamentos: query=${queryTime}ms, total=${totalTime}ms, rows=${result.length}`);
   return result;
 }
 
@@ -4498,191 +4488,4 @@ export async function searchPacientesRapido(termo: string, limit: number = 20) {
     .limit(limit);
   
   return byNome;
-}
-
-
-// ===== SOLICITAÇÕES CIRÚRGICAS =====
-
-/**
- * Gera próximo ID de solicitação cirúrgica (SC-YYYY-NNNNN)
- */
-export async function getNextSolicitacaoCirurgicaId(): Promise<string> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const now = new Date();
-  const year = now.getFullYear();
-  
-  // Retornar um ID sequencial simples para agora
-  // Em produção, isso seria consultado do banco
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 10000);
-  
-  return `SC-${year}-${String(random).padStart(5, '0')}`;
-}
-
-/**
- * Cria uma nova solicitação cirúrgica
- */
-export async function createSolicitacaoCirurgica(data: {
-  tenantId: number;
-  idSolicitacao: string;
-  pacienteId: number;
-  pacienteNome?: string;
-  procedimento: string;
-  codigoProcedimento?: string;
-  lateralidade?: string;
-  convenio?: string;
-  numeroCarteirinha?: string;
-  plano?: string;
-  hospital?: string;
-  dataPrevista?: Date;
-  horaPrevistoInicio?: string;
-  horaPrevistoFim?: string;
-  tempoSalaMinutos?: number;
-  cirurgiaoId?: number;
-  cirurgiaoNome?: string;
-  auxiliar1?: string;
-  auxiliar2?: string;
-  anestesista?: string;
-  tipoAnestesia?: string;
-  materiais_especiais?: string;
-  opme?: string;
-  indicacaoCirurgica?: string;
-  observacoes?: string;
-  criadoPor?: string;
-}) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Para agora, apenas retornar um resultado simulado
-  // As tabelas serão criadas via SQL direto
-  const result = [{ insertId: 1 }];
-  return result;
-  
-  // Aqui seria:
-  /*
-  const result = await db.insert(solicitacoes_cirurgicas).values({
-    tenant_id: data.tenantId,
-    id_solicitacao: data.idSolicitacao,
-    paciente_id: data.pacienteId,
-    paciente_nome: data.pacienteNome,
-    procedimento: data.procedimento,
-    codigo_procedimento: data.codigoProcedimento,
-    lateralidade: data.lateralidade || 'N/A',
-    convenio: data.convenio,
-    numero_carteirinha: data.numeroCarteirinha,
-    plano: data.plano,
-    hospital: data.hospital,
-    data_prevista: data.dataPrevista,
-    hora_previsto_inicio: data.horaPrevistoInicio,
-    hora_previsto_fim: data.horaPrevistoFim,
-    tempo_sala_minutos: data.tempoSalaMinutos || 120,
-    cirurgiao_id: data.cirurgiaoId,
-    cirurgiao_nome: data.cirurgiaoNome,
-    auxiliar_1: data.auxiliar1,
-    auxiliar_2: data.auxiliar2,
-    anestesista: data.anestesista,
-    tipo_anestesia: data.tipoAnestesia,
-    materiais_especiais: data.materiais_especiais,
-    opme: data.opme,
-    indicacao_cirurgica: data.indicacaoCirurgica,
-    observacoes: data.observacoes,
-    status: 'Pendente de Guias',
-    criado_por: data.criadoPor || 'Sistema',
-    created_at: new Date(),
-    updated_at: new Date(),
-  });
-  */
-}
-
-/**
- * Obtém solicitação cirúrgica por ID
- */
-export async function getSolicitacaoCirurgicaById(id: number) {
-  const db = await getDb();
-  if (!db) return null;
-  
-  // Retornar null por enquanto (as tabelas estão criadas no banco)
-  return null;
-}
-
-/**
- * Lista solicitações cirúrgicas com filtros
- */
-export async function listSolicitacoesCirurgicas(filters?: {
-  tenantId?: number;
-  pacienteId?: number;
-  status?: string;
-  dataInicio?: Date;
-  dataFim?: Date;
-  convenio?: string;
-  limit?: number;
-  offset?: number;
-}) {
-  // Retornar array vazio por enquanto
-  return [];
-}
-
-/**
- * Atualiza status de solicitação cirúrgica
- */
-export async function updateSolicitacaoCirurgicaStatus(
-  id: number,
-  novoStatus: string,
-  observacao?: string,
-  alteradoPor?: string
-) {
-  // Função simulada por enquanto
-  // Em produção, isso atualizaria as tabelas no banco
-  return true;
-}
-
-// ===== PROFISSIONAIS =====
-
-/**
- * Cria um novo profissional
- */
-export async function createProfissional(data: {
-  tenantId: number;
-  nome: string;
-  crm?: string;
-  especialidade?: string;
-  userId?: number;
-  corAgenda?: string;
-  duracaoConsultaPadrao?: number;
-}) {
-  // Retornar um resultado simulado
-  return [{ insertId: 1 }];
-}
-
-/**
- * Lista profissionais ativos
- */
-export async function listProfissionais(tenantId: number) {
-  // Retornar array vazio por enquanto
-  return [];
-}
-
-/**
- * Obtém profissional por ID
- */
-export async function getProfissionalById(id: number) {
-  // Retornar null por enquanto
-  return null;
-}
-
-/**
- * Atualiza profissional
- */
-export async function updateProfissional(id: number, data: {
-  nome?: string;
-  crm?: string;
-  especialidade?: string;
-  corAgenda?: string;
-  duracaoConsultaPadrao?: number;
-  ativo?: boolean;
-}) {
-  // Função simulada por enquanto
-  return true;
 }

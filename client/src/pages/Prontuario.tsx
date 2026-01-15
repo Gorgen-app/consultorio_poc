@@ -1015,9 +1015,9 @@ export default function Prontuario() {
               </div>
               <div>
                 <Label htmlFor="gravidade">Gravidade</Label>
-                <Select value={novaAlergiaGravidade || "Leve"} onValueChange={(v: "Leve" | "Moderada" | "Grave") => setNovaAlergiaGravidade(v)}>
+                <Select value={novaAlergiaGravidade} onValueChange={(v: "Leve" | "Moderada" | "Grave") => setNovaAlergiaGravidade(v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a gravidade" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Leve">Leve</SelectItem>
