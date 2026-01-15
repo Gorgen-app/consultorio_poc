@@ -38,14 +38,14 @@ import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especiali
 const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   admin_master: { label: "Administrador Master", icon: <Shield className="h-4 w-4" />, color: "bg-red-500" },
   medico: { label: "Médico", icon: <Stethoscope className="h-4 w-4" />, color: "bg-blue-500" },
-  secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-green-500" },
+  secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-emerald-500" },
   auditor: { label: "Auditor", icon: <Eye className="h-4 w-4" />, color: "bg-purple-500" },
   paciente: { label: "Paciente", icon: <User className="h-4 w-4" />, color: "bg-gray-500" },
 };
 
 // Status do vínculo para exibição
 const statusVinculoInfo: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  ativo: { label: "Ativo", color: "bg-green-500", icon: <CheckCircle className="h-4 w-4" /> },
+  ativo: { label: "Ativo", color: "bg-emerald-500", icon: <CheckCircle className="h-4 w-4" /> },
   pendente_renovacao: { label: "Pendente Renovação", color: "bg-yellow-500", icon: <AlertTriangle className="h-4 w-4" /> },
   expirado: { label: "Expirado", color: "bg-red-500", icon: <Clock className="h-4 w-4" /> },
   cancelado: { label: "Cancelado", color: "bg-gray-500", icon: <X className="h-4 w-4" /> },
@@ -114,7 +114,7 @@ function AlertaPacientesInativos() {
             </div>
           </>
         ) : (
-          <div className="flex items-center gap-2 text-green-600">
+          <div className="flex items-center gap-2 text-emerald-600">
             <CheckCircle className="h-5 w-5" />
             <span>Nenhum paciente ativo sem atendimento há 360+ dias</span>
           </div>
@@ -878,7 +878,7 @@ export default function Configuracoes() {
                       Notificações sobre vínculos próximos do vencimento (30 dias antes)
                     </p>
                   </div>
-                  <Badge className="bg-green-500 text-white">Ativo</Badge>
+                  <Badge className="bg-emerald-500 text-white">Ativo</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -903,18 +903,18 @@ export default function Configuracoes() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Status atual */}
-                <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950">
+                <div className="p-4 border rounded-lg bg-emerald-50 dark:bg-green-950">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-green-800 dark:text-green-200 flex items-center gap-2">
+                      <h3 className="font-semibold text-emerald-800 dark:text-green-200 flex items-center gap-2">
                         <CheckCircle className="h-5 w-5" />
                         Plano Profissional
                       </h3>
-                      <p className="text-sm text-green-600 dark:text-green-400">
+                      <p className="text-sm text-emerald-600 dark:text-green-400">
                         Sua assinatura está ativa
                       </p>
                     </div>
-                    <Badge className="bg-green-500 text-white">Ativo</Badge>
+                    <Badge className="bg-emerald-500 text-white">Ativo</Badge>
                   </div>
                   <Separator className="my-3" />
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -1021,7 +1021,7 @@ export default function Configuracoes() {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-medium">R$ 199,00</span>
-                            <Badge className="bg-green-500 text-white">Pago</Badge>
+                            <Badge className="bg-emerald-500 text-white">Pago</Badge>
                           </div>
                         </div>
                         <div className="flex items-center justify-between py-2 border-b">
@@ -1031,7 +1031,7 @@ export default function Configuracoes() {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-medium">R$ 199,00</span>
-                            <Badge className="bg-green-500 text-white">Pago</Badge>
+                            <Badge className="bg-emerald-500 text-white">Pago</Badge>
                           </div>
                         </div>
                       </div>

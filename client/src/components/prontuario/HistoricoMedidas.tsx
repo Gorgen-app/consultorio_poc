@@ -78,7 +78,7 @@ export default function HistoricoMedidas({ pacienteId, onUpdate }: Props) {
   // Classificar IMC
   const classificarIMC = (imc: number) => {
     if (imc < 18.5) return { label: "Abaixo do peso", color: "text-yellow-600" };
-    if (imc < 25) return { label: "Peso normal", color: "text-green-600" };
+    if (imc < 25) return { label: "Peso normal", color: "text-emerald-600" };
     if (imc < 30) return { label: "Sobrepeso", color: "text-yellow-600" };
     if (imc < 35) return { label: "Obesidade Grau I", color: "text-orange-600" };
     if (imc < 40) return { label: "Obesidade Grau II", color: "text-red-600" };
@@ -92,7 +92,7 @@ export default function HistoricoMedidas({ pacienteId, onUpdate }: Props) {
     const ultimo = parseFloat(evolucaoIMC[evolucaoIMC.length - 1]?.peso || "0");
     const diff = ultimo - primeiro;
     if (diff > 0.5) return { icon: TrendingUp, label: `+${diff.toFixed(1)}kg`, color: "text-red-500" };
-    if (diff < -0.5) return { icon: TrendingDown, label: `${diff.toFixed(1)}kg`, color: "text-green-500" };
+    if (diff < -0.5) return { icon: TrendingDown, label: `${diff.toFixed(1)}kg`, color: "text-emerald-500" };
     return { icon: Minus, label: "Estável", color: "text-gray-500" };
   };
 
@@ -280,7 +280,7 @@ export default function HistoricoMedidas({ pacienteId, onUpdate }: Props) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Ruler className="h-5 w-5 text-green-500" />
+              <Ruler className="h-5 w-5 text-emerald-500" />
               <span className="text-2xl font-bold">
                 {ultimaMedida?.altura ? `${ultimaMedida.altura} m` : "—"}
               </span>

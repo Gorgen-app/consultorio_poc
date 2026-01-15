@@ -330,7 +330,7 @@ export default function BackupSettings() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "success":
-        return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Sucesso</Badge>;
+        return <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> Sucesso</Badge>;
       case "failed":
         return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falhou</Badge>;
       case "running":
@@ -441,7 +441,7 @@ export default function BackupSettings() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Criptografia</span>
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                         <Lock className="w-3 h-3 mr-1" />
                         AES-256
                       </Badge>
@@ -727,7 +727,7 @@ export default function BackupSettings() {
                           <td className="py-2 px-3 text-sm">{backup.databaseRecords?.toLocaleString("pt-BR") || "-"}</td>
                           <td className="py-2 px-3">
                             {backup.isEncrypted ? (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                                 <Lock className="w-3 h-3 mr-1" />
                                 AES-256
                               </Badge>
@@ -831,7 +831,7 @@ export default function BackupSettings() {
                 ) : validationResult ? (
                   validationResult.valid ? (
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-green-600">
+                      <div className="flex items-center gap-2 text-emerald-600">
                         <CheckCircle className="h-5 w-5" />
                         <span className="font-medium">Backup válido</span>
                       </div>
@@ -938,9 +938,9 @@ export default function BackupSettings() {
                         <p className="text-2xl font-bold">{integrityResult.totalChecked}</p>
                         <p className="text-xs text-muted-foreground">Verificados</p>
                       </div>
-                      <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-                        <p className="text-2xl font-bold text-green-600">{integrityResult.validCount}</p>
-                        <p className="text-xs text-green-600">Íntegros</p>
+                      <div className="p-4 bg-emerald-50 dark:bg-green-950 rounded-lg">
+                        <p className="text-2xl font-bold text-emerald-600">{integrityResult.validCount}</p>
+                        <p className="text-xs text-emerald-600">Íntegros</p>
                       </div>
                       <div className="p-4 bg-red-50 dark:bg-red-950 rounded-lg">
                         <p className="text-2xl font-bold text-red-600">{integrityResult.invalidCount}</p>
@@ -1044,9 +1044,9 @@ export default function BackupSettings() {
                         <p className="text-xl font-bold">{auditReport.summary.totalBackups}</p>
                         <p className="text-xs text-muted-foreground">Total</p>
                       </div>
-                      <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg text-center">
-                        <p className="text-xl font-bold text-green-600">{auditReport.summary.successfulBackups}</p>
-                        <p className="text-xs text-green-600">Sucesso</p>
+                      <div className="p-3 bg-emerald-50 dark:bg-green-950 rounded-lg text-center">
+                        <p className="text-xl font-bold text-emerald-600">{auditReport.summary.successfulBackups}</p>
+                        <p className="text-xs text-emerald-600">Sucesso</p>
                       </div>
                       <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg text-center">
                         <p className="text-xl font-bold text-red-600">{auditReport.summary.failedBackups}</p>
@@ -1085,7 +1085,7 @@ export default function BackupSettings() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Backups Diários</span>
                         {auditReport.compliance.dailyBackupsMet ? (
-                          <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
+                          <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
                         ) : (
                           <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Não Conforme</Badge>
                         )}
@@ -1093,7 +1093,7 @@ export default function BackupSettings() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Backups Semanais</span>
                         {auditReport.compliance.weeklyBackupsMet ? (
-                          <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
+                          <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
                         ) : (
                           <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Não Conforme</Badge>
                         )}
@@ -1101,7 +1101,7 @@ export default function BackupSettings() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Criptografia (95%+)</span>
                         {auditReport.compliance.encryptionCompliance ? (
-                          <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
+                          <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
                         ) : (
                           <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Não Conforme</Badge>
                         )}
@@ -1109,7 +1109,7 @@ export default function BackupSettings() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Retenção (7 anos)</span>
                         {auditReport.compliance.retentionCompliance ? (
-                          <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
+                          <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> Conforme</Badge>
                         ) : (
                           <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Não Conforme</Badge>
                         )}
@@ -1127,7 +1127,7 @@ export default function BackupSettings() {
                           ? format(new Date(auditReport.integrityStatus.lastCheck), "dd/MM/yyyy HH:mm", { locale: ptBR })
                           : "Nunca"}
                       </span>
-                      <span className="text-sm text-green-600">{auditReport.integrityStatus.validBackups} íntegros</span>
+                      <span className="text-sm text-emerald-600">{auditReport.integrityStatus.validBackups} íntegros</span>
                       {auditReport.integrityStatus.invalidBackups > 0 && (
                         <span className="text-sm text-red-600">{auditReport.integrityStatus.invalidBackups} com problemas</span>
                       )}
@@ -1231,14 +1231,14 @@ export default function BackupSettings() {
                 {restoreTestResult ? (
                   <div className="space-y-4">
                     {/* Status Geral */}
-                    <div className={`p-4 rounded-lg ${restoreTestResult.success ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
+                    <div className={`p-4 rounded-lg ${restoreTestResult.success ? 'bg-emerald-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}`}>
                       <div className="flex items-center gap-2">
                         {restoreTestResult.success ? (
-                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <CheckCircle className="h-5 w-5 text-emerald-600" />
                         ) : (
                           <XCircle className="h-5 w-5 text-red-600" />
                         )}
-                        <span className={`font-medium ${restoreTestResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                        <span className={`font-medium ${restoreTestResult.success ? 'text-emerald-700' : 'text-red-700'}`}>
                           {restoreTestResult.success ? 'Teste APROVADO' : 'Teste FALHOU'}
                         </span>
                       </div>
@@ -1250,9 +1250,9 @@ export default function BackupSettings() {
                         <p className="text-xl font-bold">{restoreTestResult.summary?.totalValidations || 6}</p>
                         <p className="text-xs text-muted-foreground">Validações</p>
                       </div>
-                      <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                        <p className="text-xl font-bold text-green-600">{restoreTestResult.summary?.passedValidations || 0}</p>
-                        <p className="text-xs text-green-600">Aprovadas</p>
+                      <div className="p-3 bg-emerald-50 dark:bg-green-950 rounded-lg">
+                        <p className="text-xl font-bold text-emerald-600">{restoreTestResult.summary?.passedValidations || 0}</p>
+                        <p className="text-xs text-emerald-600">Aprovadas</p>
                       </div>
                       <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg">
                         <p className="text-xl font-bold text-red-600">{restoreTestResult.summary?.failedValidations || 0}</p>
@@ -1267,7 +1267,7 @@ export default function BackupSettings() {
                         <div className="flex items-center justify-between text-sm">
                           <span>Descriptografia</span>
                           {restoreTestResult.validations?.decryption?.success ? (
-                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                            <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
                           ) : (
                             <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
                           )}
@@ -1275,7 +1275,7 @@ export default function BackupSettings() {
                         <div className="flex items-center justify-between text-sm">
                           <span>Descompressão</span>
                           {restoreTestResult.validations?.decompression?.success ? (
-                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                            <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
                           ) : (
                             <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
                           )}
@@ -1283,7 +1283,7 @@ export default function BackupSettings() {
                         <div className="flex items-center justify-between text-sm">
                           <span>Parsing JSON</span>
                           {restoreTestResult.validations?.jsonParsing?.success ? (
-                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                            <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
                           ) : (
                             <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
                           )}
@@ -1291,7 +1291,7 @@ export default function BackupSettings() {
                         <div className="flex items-center justify-between text-sm">
                           <span>Checksum</span>
                           {restoreTestResult.validations?.checksumVerification?.success ? (
-                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                            <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
                           ) : (
                             <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
                           )}
@@ -1299,7 +1299,7 @@ export default function BackupSettings() {
                         <div className="flex items-center justify-between text-sm">
                           <span>Schema</span>
                           {restoreTestResult.validations?.schemaValidation?.success ? (
-                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                            <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
                           ) : (
                             <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
                           )}
@@ -1307,7 +1307,7 @@ export default function BackupSettings() {
                         <div className="flex items-center justify-between text-sm">
                           <span>Integridade</span>
                           {restoreTestResult.validations?.dataIntegrity?.success ? (
-                            <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
+                            <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" /> OK</Badge>
                           ) : (
                             <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Falha</Badge>
                           )}

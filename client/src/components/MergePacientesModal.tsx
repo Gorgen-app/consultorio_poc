@@ -216,7 +216,7 @@ export function MergePacientesModal({
                           </div>
                         </div>
                         {pacientePrincipal === paciente.id && (
-                          <Badge className="bg-green-500">Principal</Badge>
+                          <Badge className="bg-emerald-500">Principal</Badge>
                         )}
                       </div>
                     </CardHeader>
@@ -332,7 +332,7 @@ export function MergePacientesModal({
             <Button
               onClick={handleMerge}
               disabled={mergeMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-emerald-600 hover:bg-emerald-700"
             >
               {mergeMutation.isPending ? "Unificando..." : "Confirmar Unificação"}
             </Button>

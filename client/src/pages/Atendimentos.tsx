@@ -534,7 +534,7 @@ export default function Atendimentos() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded text-xs ${atd.pagamentoEfetivado ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                          <span className={`px-2 py-1 rounded text-xs ${atd.pagamentoEfetivado ? "bg-emerald-100 text-emerald-800" : "bg-yellow-100 text-yellow-800"}`}>
                             {atd.pagamentoEfetivado ? "Sim" : "Não"}
                           </span>
                         </TableCell>
@@ -557,7 +557,7 @@ export default function Atendimentos() {
                               size="sm"
                               onClick={() => handleDuplicar(atd)}
                               title="Duplicar atendimento"
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                             >
                               <Copy className="h-4 w-4" />
                             </Button>

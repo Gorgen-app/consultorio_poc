@@ -507,7 +507,7 @@ export default function Pacientes() {
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className={`font-medium ${(metricas?.atendimentos12m || 0) > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                          <span className={`font-medium ${(metricas?.atendimentos12m || 0) > 0 ? 'text-emerald-600' : 'text-muted-foreground'}`}>
                             {metricas?.atendimentos12m ?? "-"}
                           </span>
                         </TableCell>

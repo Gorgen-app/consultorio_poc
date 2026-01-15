@@ -265,7 +265,7 @@ export default function NovoAtendimento() {
                   <p className="text-xs text-muted-foreground">ID gerado automaticamente</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dataAtendimento" className={isDuplicacao ? "text-green-600 font-semibold" : ""}>
+                  <Label htmlFor="dataAtendimento" className={isDuplicacao ? "text-emerald-600 font-semibold" : ""}>
                     Data do Atendimento * {isDuplicacao && "(PREENCHER)"}
                   </Label>
                   <Input
@@ -274,7 +274,7 @@ export default function NovoAtendimento() {
                     value={formData.dataAtendimento}
                     onChange={(e) => handleChange("dataAtendimento", e.target.value)}
                     required
-                    className={isDuplicacao && !formData.dataAtendimento ? "border-green-500 ring-2 ring-green-200" : ""}
+                    className={isDuplicacao && !formData.dataAtendimento ? "border-emerald-500 ring-2 ring-green-200" : ""}
                     autoFocus={isDuplicacao}
                   />
                 </div>

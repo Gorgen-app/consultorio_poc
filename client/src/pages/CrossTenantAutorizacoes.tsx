@@ -126,7 +126,7 @@ export default function CrossTenantAutorizacoes() {
     switch (tipo) {
       case "leitura": return <Eye className="h-4 w-4 text-blue-500" />;
       case "escrita": return <FileText className="h-4 w-4 text-yellow-500" />;
-      case "completo": return <Download className="h-4 w-4 text-green-500" />;
+      case "completo": return <Download className="h-4 w-4 text-emerald-500" />;
       default: return <Eye className="h-4 w-4" />;
     }
   };
@@ -406,7 +406,7 @@ export default function CrossTenantAutorizacoes() {
                                   setShowAprovarDialog(true);
                                 }}
                               >
-                                <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
+                                <CheckCircle className="h-4 w-4 mr-1 text-emerald-600" />
                                 Aprovar
                               </Button>
                               <Button

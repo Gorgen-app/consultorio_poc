@@ -148,7 +148,7 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
                 
                 <div>
                   <Label className="flex items-center gap-2">
-                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
+                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
                     Objetivo (Exame Físico)
                   </Label>
                   <Textarea
@@ -363,7 +363,7 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
                     {ev.objetivo && (
                       <div>
                         <h4 className="text-sm font-medium flex items-center gap-2 mb-1">
-                          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
+                          <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
                           Objetivo
                         </h4>
                         <p className="text-sm whitespace-pre-wrap bg-white p-3 rounded border">{ev.objetivo}</p>

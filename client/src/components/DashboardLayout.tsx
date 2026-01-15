@@ -45,13 +45,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-// Mapeamento de perfis
+// Mapeamento de perfis - Gorgen Design System
 const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  admin_master: { label: "Admin Master", icon: <Shield className="h-4 w-4" />, color: "bg-red-500" },
-  medico: { label: "Médico", icon: <Stethoscope className="h-4 w-4" />, color: "bg-blue-500" },
-  secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-green-500" },
-  auditor: { label: "Auditor", icon: <DollarSign className="h-4 w-4" />, color: "bg-yellow-500" },
-  paciente: { label: "Paciente", icon: <Eye className="h-4 w-4" />, color: "bg-gray-500" },
+  admin_master: { label: "Admin Master", icon: <Shield className="h-4 w-4" />, color: "bg-gorgen-700" },      // Azul Gorgen
+  medico: { label: "Médico", icon: <Stethoscope className="h-4 w-4" />, color: "bg-gorgen-600" },           // Azul Gorgen claro
+  secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-green-600" },       // Verde (sucesso)
+  auditor: { label: "Auditor", icon: <DollarSign className="h-4 w-4" />, color: "bg-amber-500" },           // Âmbar (alerta)
+  paciente: { label: "Paciente", icon: <Eye className="h-4 w-4" />, color: "bg-gray-500" },                  // Cinza neutro
 };
 
 // Menu items principais (sem subitens)

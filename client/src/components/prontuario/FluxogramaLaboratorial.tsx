@@ -78,7 +78,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
       case "Diminuído":
         return <TrendingDown className="h-3 w-3 text-blue-500" />;
       default:
-        return <Minus className="h-3 w-3 text-green-500" />;
+        return <Minus className="h-3 w-3 text-emerald-500" />;
     }
   };
 

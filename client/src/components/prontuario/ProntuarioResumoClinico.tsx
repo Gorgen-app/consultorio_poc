@@ -395,7 +395,7 @@ export default function ProntuarioResumoClinico({
         </CardHeader>
         <CardContent>
           {alergias.length === 0 ? (
-            <Badge variant="outline" className="bg-green-50 text-green-700">
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
               Nenhuma alergia conhecida (NKDA)
             </Badge>
           ) : (

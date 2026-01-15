@@ -94,7 +94,7 @@ function calcularIMC(peso: number | null, altura: number | null): string {
 // Função para classificar IMC
 function classificarIMC(imc: number): { texto: string; cor: string } {
   if (imc < 18.5) return { texto: "Abaixo do peso", cor: "text-yellow-600" };
-  if (imc < 25) return { texto: "Normal", cor: "text-green-600" };
+  if (imc < 25) return { texto: "Normal", cor: "text-emerald-600" };
   if (imc < 30) return { texto: "Sobrepeso", cor: "text-yellow-600" };
   if (imc < 35) return { texto: "Obesidade I", cor: "text-orange-600" };
   if (imc < 40) return { texto: "Obesidade II", cor: "text-red-600" };
@@ -457,7 +457,7 @@ export default function Prontuario() {
                       href={`https://wa.me/55${paciente.telefone.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-500 hover:bg-green-600 text-white transition-colors"
+                      className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
                       title="Abrir WhatsApp"
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
@@ -538,7 +538,7 @@ export default function Prontuario() {
                     <p className="text-xs text-gray-500">Peso (kg)</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-2xl font-bold text-emerald-600">
                       {altura ? `${altura}` : "-"}
                     </p>
                     <p className="text-xs text-gray-500">Altura (m)</p>
@@ -606,7 +606,7 @@ export default function Prontuario() {
                       ))}
                     </div>
                   ) : (
-                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                    <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700">
                       Nenhuma alergia conhecida
                     </Badge>
                   )}
@@ -928,7 +928,7 @@ export default function Prontuario() {
                 {/* Gráfico de IMC */}
                 <div>
                   <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-green-600" />
+                    <Activity className="h-4 w-4 text-emerald-600" />
                     Evolução do IMC
                   </h4>
                   <div className="h-48 bg-gray-50 rounded-lg p-4">
@@ -939,10 +939,10 @@ export default function Prontuario() {
                         const minIMC = Math.min(...imcs);
                         const range = maxIMC - minIMC || 1;
                         const heightPercent = ((d.imc! - minIMC) / range) * 70 + 20;
-                        const cor = d.imc! < 18.5 ? 'bg-yellow-500' : d.imc! < 25 ? 'bg-green-500' : d.imc! < 30 ? 'bg-yellow-500' : 'bg-red-500';
+                        const cor = d.imc! < 18.5 ? 'bg-yellow-500' : d.imc! < 25 ? 'bg-emerald-500' : d.imc! < 30 ? 'bg-yellow-500' : 'bg-red-500';
                         return (
                           <div key={i} className="flex flex-col items-center flex-1 min-w-0">
-                            <span className="text-xs font-medium text-green-600 mb-1">{d.imc}</span>
+                            <span className="text-xs font-medium text-emerald-600 mb-1">{d.imc}</span>
                             <div 
                               className={`w-full ${cor} rounded-t transition-all hover:opacity-80 cursor-pointer`}
                               style={{ height: `${heightPercent}%` }}
@@ -976,7 +976,7 @@ export default function Prontuario() {
                             <td className="px-3 py-2">{d.dataCompleta}</td>
                             <td className="px-3 py-2 text-right font-medium text-blue-600">{d.peso || "-"}</td>
                             <td className="px-3 py-2 text-right">{d.altura || "-"}</td>
-                            <td className="px-3 py-2 text-right font-medium text-green-600">{d.imc || "-"}</td>
+                            <td className="px-3 py-2 text-right font-medium text-emerald-600">{d.imc || "-"}</td>
                             <td className="px-3 py-2 text-gray-500 text-xs">{d.registradoPor}</td>
                           </tr>
                         ))}
@@ -1085,7 +1085,7 @@ export default function Prontuario() {
                   {alergias.map((a, i) => (
                     <div key={a.id} className="flex items-start gap-4 pb-4">
                       <div className="flex flex-col items-center">
-                        <div className={`w-3 h-3 rounded-full ${a.gravidade === 'Grave' ? 'bg-red-500' : a.gravidade === 'Moderada' ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                        <div className={`w-3 h-3 rounded-full ${a.gravidade === 'Grave' ? 'bg-red-500' : a.gravidade === 'Moderada' ? 'bg-yellow-500' : 'bg-emerald-500'}`} />
                         {i < alergias.length - 1 && <div className="w-0.5 h-full bg-gray-200 mt-1" />}
                       </div>
                       <div className="flex-1 bg-gray-50 rounded-lg p-3">
@@ -1200,7 +1200,7 @@ export default function Prontuario() {
                   {problemasAtivos.map((p, i) => (
                     <div key={p.id} className="flex items-start gap-4 pb-4">
                       <div className="flex flex-col items-center">
-                        <div className={`w-3 h-3 rounded-full ${p.ativo ? 'bg-red-500' : 'bg-green-500'}`} />
+                        <div className={`w-3 h-3 rounded-full ${p.ativo ? 'bg-red-500' : 'bg-emerald-500'}`} />
                         {i < problemasAtivos.length - 1 && <div className="w-0.5 h-full bg-gray-200 mt-1" />}
                       </div>
                       <div className="flex-1 bg-gray-50 rounded-lg p-3">
@@ -1211,7 +1211,7 @@ export default function Prontuario() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-7 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                                className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                 onClick={() => {
                                   setProblemaParaResolver({ id: p.id, descricao: p.descricao });
                                   setDataResolucaoProblema(new Date().toISOString().split('T')[0]);
@@ -1378,7 +1378,7 @@ export default function Prontuario() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-emerald-500" />
               Resolver Problema
             </DialogTitle>
           </DialogHeader>
@@ -1412,7 +1412,7 @@ export default function Prontuario() {
               Cancelar
             </Button>
             <Button 
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-emerald-600 hover:bg-emerald-700"
               onClick={() => {
                 if (!dataResolucaoProblema) {
                   toast.error("Informe a data de resolução");

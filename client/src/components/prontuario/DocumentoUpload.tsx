@@ -222,7 +222,7 @@ export function DocumentoUpload({
           <div
             className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
               arquivo
-                ? "border-green-500 bg-green-50"
+                ? "border-emerald-500 bg-emerald-50"
                 : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
             }`}
             onClick={() => fileInputRef.current?.click()}
@@ -244,9 +244,9 @@ export function DocumentoUpload({
                     className="max-h-32 mx-auto rounded"
                   />
                 ) : (
-                  <FileText className="h-12 w-12 mx-auto text-green-600" />
+                  <FileText className="h-12 w-12 mx-auto text-emerald-600" />
                 )}
-                <p className="text-sm font-medium text-green-700">
+                <p className="text-sm font-medium text-emerald-700">
                   {arquivo.name}
                 </p>
                 <p className="text-xs text-gray-500">

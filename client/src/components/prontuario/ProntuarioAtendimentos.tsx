@@ -119,7 +119,7 @@ export default function ProntuarioAtendimentos({ pacienteId }: ProntuarioAtendim
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">{formatarMoeda(totalRecebido)}</p>
+            <p className="text-2xl font-bold text-emerald-600">{formatarMoeda(totalRecebido)}</p>
           </CardContent>
         </Card>
       </div>
@@ -159,9 +159,9 @@ export default function ProntuarioAtendimentos({ pacienteId }: ProntuarioAtendim
                     </TableCell>
                     <TableCell>
                       {atd.dataPagamento ? (
-                        <Badge className="bg-green-100 text-green-800">Pago</Badge>
+                        <Badge className="bg-emerald-100 text-emerald-800">Pago</Badge>
                       ) : atd.dataFaturamento ? (
-                        <Badge className="bg-yellow-100 text-yellow-800">Faturado</Badge>
+                        <Badge className="badge-warning">Faturado</Badge>
                       ) : (
                         <Badge className="bg-gray-100 text-gray-800">Pendente</Badge>
                       )}
@@ -173,7 +173,7 @@ export default function ProntuarioAtendimentos({ pacienteId }: ProntuarioAtendim
                           size="sm"
                           onClick={() => handleDuplicar(atd)}
                           title="Duplicar atendimento"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>

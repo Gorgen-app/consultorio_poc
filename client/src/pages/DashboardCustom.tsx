@@ -1,4 +1,3 @@
-// DashboardLayout é aplicado globalmente no App.tsx
 import { useState, useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -16,13 +15,20 @@ import {
   Heart, 
   LayoutGrid,
   TrendingUp,
+  TrendingDown,
   PieChart,
   BarChart3,
   Activity,
   RefreshCw,
   GripVertical,
   Maximize2,
-  Save
+  Save,
+  UserPlus,
+  UserMinus,
+  Clock,
+  Receipt,
+  CalendarCheck,
+  Percent
 } from 'lucide-react';
 import {
   LineChart,
@@ -70,25 +76,30 @@ import {
   type CategoriaMetrica,
   type PeriodoTempo 
 } from '@/components/WidgetGallery';
+import { cn } from '@/lib/utils';
+
+// ============================================
+// GORGEN DESIGN SYSTEM - Configurações
+// ============================================
 
 const periodos: { valor: PeriodoTempo; label: string }[] = [
-  { valor: '7d', label: '7 dias' },
-  { valor: '30d', label: '30 dias' },
-  { valor: '3m', label: '3 meses' },
-  { valor: '6m', label: '6 meses' },
-  { valor: '1a', label: '1 ano' },
-  { valor: '3a', label: '3 anos' },
-  { valor: '5a', label: '5 anos' },
+  { valor: '7d', label: 'Últimos 7 dias' },
+  { valor: '30d', label: 'Últimos 30 dias' },
+  { valor: '3m', label: 'Últimos 3 meses' },
+  { valor: '6m', label: 'Últimos 6 meses' },
+  { valor: '1a', label: 'Último ano' },
+  { valor: '3a', label: 'Últimos 3 anos' },
+  { valor: '5a', label: 'Últimos 5 anos' },
   { valor: 'todo', label: 'Todo período' },
 ];
 
 // Gorgen Design System - Cores das Categorias
 const categorias: { valor: CategoriaMetrica; label: string; cor: string; icone: React.ReactNode }[] = [
-  { valor: 'populacao_pacientes', label: 'População de Pacientes', cor: '#203864', icone: <Users className="h-4 w-4" /> },  // Azul Gorgen
-  { valor: 'atendimentos', label: 'Atendimentos', cor: '#10B981', icone: <Calendar className="h-4 w-4" /> },              // Verde
-  { valor: 'economico_financeiro', label: 'Econômico-Financeiro', cor: '#F59E0B', icone: <DollarSign className="h-4 w-4" /> }, // Âmbar
-  { valor: 'qualidade_atendimento', label: 'Qualidade do Atendimento', cor: '#8B5CF6', icone: <Heart className="h-4 w-4" /> },  // Violeta
-  { valor: 'diversas', label: 'Diversas', cor: '#DC6B4A', icone: <LayoutGrid className="h-4 w-4" /> },                   // Coral Gorgen
+  { valor: 'populacao_pacientes', label: 'População de Pacientes', cor: '#203864', icone: <Users className="h-4 w-4" /> },
+  { valor: 'atendimentos', label: 'Atendimentos', cor: '#10B981', icone: <Calendar className="h-4 w-4" /> },
+  { valor: 'economico_financeiro', label: 'Econômico-Financeiro', cor: '#F59E0B', icone: <DollarSign className="h-4 w-4" /> },
+  { valor: 'qualidade_atendimento', label: 'Qualidade do Atendimento', cor: '#8B5CF6', icone: <Heart className="h-4 w-4" /> },
+  { valor: 'diversas', label: 'Diversas', cor: '#DC6B4A', icone: <LayoutGrid className="h-4 w-4" /> },
 ];
 
 // Gorgen Design System - Cores para Gráficos
@@ -98,58 +109,187 @@ const CORES_GRAFICOS = [
   '#5A7DB0', // Azul Gorgen 400
   '#10B981', // Verde (sucesso)
   '#F59E0B', // Âmbar (alerta)
+  '#DC6B4A', // Coral Gorgen (accent)
   '#8B5CF6', // Violeta
-  '#DC6B4A', // Coral Gorgen
-  '#06B6D4', // Ciano
-  '#84CC16', // Lima
-  '#F97316', // Laranja
+  '#EC4899', // Rosa
+  '#6B7280', // Cinza
 ];
 
-const tamanhoClasses: Record<TamanhoWidget, string> = {
-  micro: 'col-span-1',
-  pequeno: 'col-span-1',
-  medio: 'col-span-1 md:col-span-2',
-  grande: 'col-span-1 md:col-span-2 lg:col-span-3',
-};
+// ============================================
+// KPI PANEL - Painel de Voo
+// ============================================
 
-const tamanhoAlturas: Record<TamanhoWidget, string> = {
-  micro: 'h-[140px]',
-  pequeno: 'h-[300px]',
-  medio: 'h-[380px]',
-  grande: 'h-[480px]',
-};
-
-// Agrupa widgets micro em pares para empilhamento
-function agruparWidgetsMicro(widgets: { metrica: MetricaDefinicao; config: WidgetConfig }[]): (typeof widgets[0] | { tipo: 'par_micro'; widgets: typeof widgets })[] {
-  const resultado: (typeof widgets[0] | { tipo: 'par_micro'; widgets: typeof widgets })[] = [];
-  let microBuffer: typeof widgets = [];
-  
-  for (const item of widgets) {
-    if (item.config.tamanho === 'micro') {
-      microBuffer.push(item);
-      if (microBuffer.length === 2) {
-        resultado.push({ tipo: 'par_micro', widgets: [...microBuffer] });
-        microBuffer = [];
-      }
-    } else {
-      // Se houver um micro sozinho no buffer, adiciona antes do widget atual
-      if (microBuffer.length > 0) {
-        resultado.push(microBuffer[0]);
-        microBuffer = [];
-      }
-      resultado.push(item);
-    }
-  }
-  
-  // Adiciona qualquer micro restante
-  if (microBuffer.length > 0) {
-    resultado.push(microBuffer[0]);
-  }
-  
-  return resultado;
+interface KPIData {
+  id: string;
+  label: string;
+  value: string | number;
+  description: string;
+  change?: {
+    value: number;
+    isPositive: boolean;
+  };
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
 }
 
-// Componente de Widget Sortable
+function KPICard({ kpi, isLoading }: { kpi: KPIData; isLoading?: boolean }) {
+  if (isLoading) {
+    return (
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-8 rounded-lg" />
+        </div>
+        <Skeleton className="h-8 w-32 mb-1" />
+        <Skeleton className="h-3 w-20 mb-2" />
+        <Skeleton className="h-5 w-28" />
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border-border/50">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium text-muted-foreground">
+          {kpi.label}
+        </span>
+        <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', kpi.iconBg)}>
+          <span className={kpi.iconColor}>{kpi.icon}</span>
+        </div>
+      </div>
+
+      <div className="text-[32px] font-bold text-gorgen-700 leading-tight tracking-tight">
+        {kpi.value}
+      </div>
+
+      <div className="text-sm text-muted-foreground mt-1">
+        {kpi.description}
+      </div>
+
+      {kpi.change && (
+        <div className={cn(
+          'inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded mt-2',
+          kpi.change.isPositive 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-red-100 text-red-800'
+        )}>
+          {kpi.change.isPositive ? (
+            <TrendingUp className="w-3 h-3" />
+          ) : (
+            <TrendingDown className="w-3 h-3" />
+          )}
+          {kpi.change.isPositive ? '+' : ''}{kpi.change.value}% vs. período anterior
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function KPIPanel({ stats, isLoading }: { stats: any; isLoading: boolean }) {
+  const kpis: KPIData[] = [
+    {
+      id: 'faturamento',
+      label: 'Faturamento Total',
+      value: stats?.faturamentoTotal 
+        ? `R$ ${Number(stats.faturamentoTotal).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+        : 'R$ 0',
+      description: 'no período selecionado',
+      change: stats?.faturamentoVariacao ? {
+        value: Math.abs(stats.faturamentoVariacao),
+        isPositive: stats.faturamentoVariacao >= 0,
+      } : undefined,
+      icon: <DollarSign className="w-[18px] h-[18px]" />,
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
+    },
+    {
+      id: 'pacientes',
+      label: 'Pacientes Ativos',
+      value: stats?.totalPacientes?.toLocaleString('pt-BR') || '0',
+      description: 'pacientes cadastrados',
+      change: stats?.pacientesVariacao ? {
+        value: Math.abs(stats.pacientesVariacao),
+        isPositive: stats.pacientesVariacao >= 0,
+      } : undefined,
+      icon: <Users className="w-[18px] h-[18px]" />,
+      iconBg: 'bg-gorgen-100',
+      iconColor: 'text-gorgen-700',
+    },
+    {
+      id: 'atendimentos',
+      label: 'Atendimentos',
+      value: stats?.totalAtendimentos?.toLocaleString('pt-BR') || '0',
+      description: 'no período selecionado',
+      change: stats?.atendimentosVariacao ? {
+        value: Math.abs(stats.atendimentosVariacao),
+        isPositive: stats.atendimentosVariacao >= 0,
+      } : undefined,
+      icon: <CalendarCheck className="w-[18px] h-[18px]" />,
+      iconBg: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+    },
+    {
+      id: 'taxa_recebimento',
+      label: 'Taxa de Recebimento',
+      value: stats?.taxaRecebimento 
+        ? `${Number(stats.taxaRecebimento).toFixed(1)}%`
+        : '0%',
+      description: 'do faturamento recebido',
+      change: stats?.taxaRecebimentoVariacao ? {
+        value: Math.abs(stats.taxaRecebimentoVariacao),
+        isPositive: stats.taxaRecebimentoVariacao >= 0,
+      } : undefined,
+      icon: <Percent className="w-[18px] h-[18px]" />,
+      iconBg: 'bg-orange-100',
+      iconColor: 'text-orange-600',
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      {kpis.map((kpi) => (
+        <KPICard key={kpi.id} kpi={kpi} isLoading={isLoading} />
+      ))}
+    </div>
+  );
+}
+
+// ============================================
+// MICRO WIDGET - Para métricas numéricas
+// ============================================
+
+interface MicroWidgetProps {
+  label: string;
+  value: string | number;
+  unit?: string;
+  icon: React.ReactNode;
+}
+
+function MicroWidget({ label, value, unit, icon }: MicroWidgetProps) {
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <div className="text-sm font-medium text-muted-foreground mb-1">
+            {label}
+          </div>
+          <div className="text-2xl font-bold text-gorgen-700">
+            {value} {unit && <span className="text-sm font-normal text-muted-foreground">{unit}</span>}
+          </div>
+        </div>
+        <div className="w-10 h-10 rounded-lg bg-gorgen-50 flex items-center justify-center text-gorgen-600">
+          {icon}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ============================================
+// SORTABLE WIDGET - Widget com drag-and-drop
+// ============================================
+
 interface SortableWidgetProps {
   metrica: MetricaDefinicao;
   periodo: PeriodoTempo;
@@ -159,7 +299,14 @@ interface SortableWidgetProps {
   onOpenFullscreen: () => void;
 }
 
-function SortableWidget({ metrica, periodo, config, onChangeTamanho, onChangePeriodo, onOpenFullscreen }: SortableWidgetProps) {
+function SortableWidget({ 
+  metrica, 
+  periodo, 
+  config,
+  onChangeTamanho,
+  onChangePeriodo,
+  onOpenFullscreen
+}: SortableWidgetProps) {
   const {
     attributes,
     listeners,
@@ -172,280 +319,254 @@ function SortableWidget({ metrica, periodo, config, onChangeTamanho, onChangePer
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
-  const periodoAtivo = config.periodoIndividual || periodo;
-  const [showControls, setShowControls] = useState(false);
+  const tamanho = config.tamanho;
+  const periodoWidget = config.periodoIndividual || periodo;
   
-  // Obter tamanhos permitidos para esta métrica
-  const tamanhosDisponiveis = tamanhosPermitidos[metrica.id] || ['pequeno', 'medio', 'grande'];
+  // Classes de tamanho para o grid
+  const tamanhoClasses: Record<TamanhoWidget, string> = {
+    micro: 'col-span-1 h-[140px]',
+    pequeno: 'col-span-1 h-[300px]',
+    medio: 'col-span-2 h-[300px]',
+    grande: 'col-span-3 h-[400px]',
+  };
+
+  // Encontrar a categoria para a cor do badge
+  const categoria = categorias.find(c => c.valor === metrica.categoria);
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`${tamanhoClasses[config.tamanho]} ${tamanhoAlturas[config.tamanho]}`}
-      onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => setShowControls(false)}
+      className={cn(
+        tamanhoClasses[tamanho],
+        isDragging && 'opacity-50 z-50',
+      )}
     >
-      <Card className="h-full relative group">
-        {/* Controles do Widget */}
-        <div className={`absolute top-2 right-2 z-10 flex items-center gap-1 transition-opacity ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-          {/* Seletor de período individual */}
-          <Select value={config.periodoIndividual || 'todo'} onValueChange={(v) => onChangePeriodo(v as PeriodoTempo)}>
-            <SelectTrigger className="h-7 w-24 text-xs bg-background/80 backdrop-blur-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {periodos.map(p => (
-                <SelectItem key={p.valor} value={p.valor}>{p.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <Card className="h-full flex flex-col group relative overflow-hidden">
+        {/* Header do Widget */}
+        <div className="flex items-start justify-between p-4 pb-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <button
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+              </button>
+              <h3 className="font-semibold text-sm truncate">{metrica.nome}</h3>
+            </div>
+            {tamanho !== 'micro' && (
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">{metrica.descricao}</p>
+            )}
+          </div>
           
-          {/* Seletor de tamanho - apenas tamanhos permitidos */}
-          <Select value={config.tamanho} onValueChange={(v) => onChangeTamanho(v as TamanhoWidget)}>
-            <SelectTrigger className="h-7 w-20 text-xs bg-background/80 backdrop-blur-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {tamanhosDisponiveis.includes('micro') && <SelectItem value="micro">Micro</SelectItem>}
-              {tamanhosDisponiveis.includes('pequeno') && <SelectItem value="pequeno">Pequeno</SelectItem>}
-              {tamanhosDisponiveis.includes('medio') && <SelectItem value="medio">Médio</SelectItem>}
-              {tamanhosDisponiveis.includes('grande') && <SelectItem value="grande">Grande</SelectItem>}
-            </SelectContent>
-          </Select>
-          
-          {/* Botão tela cheia */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-7 w-7 bg-background/80 backdrop-blur-sm"
+          {/* Badge de categoria */}
+          <Badge 
+            variant="secondary" 
+            className="text-[10px] px-2 py-0.5 shrink-0"
+            style={{ 
+              backgroundColor: `${categoria?.cor}15`,
+              color: categoria?.cor,
+            }}
+          >
+            {categoria?.label.split(' ')[0]}
+          </Badge>
+        </div>
+
+        {/* Controles on-hover */}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-background/80 backdrop-blur-sm rounded-md p-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
             onClick={onOpenFullscreen}
           >
             <Maximize2 className="h-3 w-3" />
           </Button>
         </div>
-        
-        {/* Handle de arraste */}
-        <div
-          {...attributes}
-          {...listeners}
-          className={`absolute top-2 left-2 z-10 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted transition-opacity ${showControls ? 'opacity-100' : 'opacity-0'}`}
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
+
+        {/* Conteúdo do Widget */}
+        <div className="flex-1 px-4 pb-4 min-h-0">
+          <MetricaConteudo 
+            metrica={metrica} 
+            periodo={periodoWidget}
+            tamanho={tamanho}
+          />
         </div>
-        
-        <CardHeader className={`pb-2 ${config.tamanho === 'micro' ? 'pt-2 pb-1' : 'pt-8'}`}>
-          <div className="flex items-center justify-between">
-            <CardTitle className={`font-medium ${config.tamanho === 'micro' ? 'text-xs' : 'text-sm'}`}>{metrica.nome}</CardTitle>
-            {config.tamanho !== 'micro' && (
-              <Badge variant="outline" style={{ borderColor: metrica.corPrimaria, color: metrica.corPrimaria }}>
-                {categorias.find(c => c.valor === metrica.categoria)?.label.split(' ')[0]}
-              </Badge>
-            )}
-          </div>
-          {config.tamanho !== 'micro' && (
-            <CardDescription className="text-xs">
-              {metrica.descricao}
-              {config.periodoIndividual && (
-                <span className="ml-2 text-primary">({periodos.find(p => p.valor === config.periodoIndividual)?.label})</span>
-              )}
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardContent className={`${config.tamanho === 'micro' ? 'h-[calc(100%-40px)]' : 'h-[calc(100%-80px)]'}`}>
-          <MetricaConteudo metrica={metrica} periodo={periodoAtivo} tamanho={config.tamanho} />
-        </CardContent>
       </Card>
     </div>
   );
 }
 
-// Componente de conteúdo da métrica
-function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { metrica: MetricaDefinicao; periodo: PeriodoTempo; tamanho: TamanhoWidget; isFullscreen?: boolean }) {
-  // Buscar dados baseado no tipo de métrica
-  const { data: pacTotalAtivos } = trpc.dashboardMetricas.pacTotalAtivos.useQuery(undefined, {
-    enabled: metrica.id === 'pac_total_ativos',
-  });
-  
-  const { data: pacDistribuicaoSexo } = trpc.dashboardMetricas.pacDistribuicaoSexo.useQuery(undefined, {
-    enabled: metrica.id === 'pac_distribuicao_sexo',
-  });
-  
-  const { data: pacFaixaEtaria } = trpc.dashboardMetricas.pacFaixaEtaria.useQuery(undefined, {
-    enabled: metrica.id === 'pac_faixa_etaria',
-  });
-  
-  const { data: pacDistribuicaoCidade } = trpc.dashboardMetricas.pacDistribuicaoCidade.useQuery(undefined, {
-    enabled: metrica.id === 'pac_distribuicao_cidade',
-  });
-  
-  const { data: pacDistribuicaoConvenio } = trpc.dashboardMetricas.pacDistribuicaoConvenio.useQuery(undefined, {
-    enabled: metrica.id === 'pac_distribuicao_convenio',
-  });
-  
-  const { data: pacTempoAcompanhamento } = trpc.dashboardMetricas.pacTempoAcompanhamento.useQuery(undefined, {
-    enabled: metrica.id === 'pac_tempo_acompanhamento',
-  });
-  
-  const { data: pacInativos } = trpc.dashboardMetricas.pacInativos.useQuery(undefined, {
-    enabled: metrica.id === 'pac_inativos_periodo',
-  });
-  
-  const { data: pacNovosPeriodo } = trpc.dashboardMetricas.pacNovosPeriodo.useQuery(
+// ============================================
+// MÉTRICA CONTEÚDO - Renderização do conteúdo
+// ============================================
+
+function MetricaConteudo({ 
+  metrica, 
+  periodo, 
+  tamanho,
+  isFullscreen = false
+}: { 
+  metrica: MetricaDefinicao; 
+  periodo: PeriodoTempo;
+  tamanho: TamanhoWidget;
+  isFullscreen?: boolean;
+}) {
+  // Queries para buscar dados das métricas
+  const { data: pacTotalAtivos } = trpc.dashboardMetricas.getPacTotalAtivos.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'pac_total_ativos' }
+  );
+  const { data: pacNovosPeriodo } = trpc.dashboardMetricas.getPacNovosPeriodo.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_novos_periodo' }
   );
-  
-  const { data: pacTaxaRetencao } = trpc.dashboardMetricas.pacTaxaRetencao.useQuery(
+  const { data: pacDistribuicaoSexo } = trpc.dashboardMetricas.getPacDistribuicaoSexo.useQuery(
     { periodo },
-    { enabled: metrica.id === 'pac_taxa_retencao' }
+    { enabled: metrica.id === 'pac_distribuicao_sexo' }
   );
-  
-  const { data: pacObitos } = trpc.dashboardMetricas.pacObitos.useQuery(
+  const { data: pacFaixaEtaria } = trpc.dashboardMetricas.getPacFaixaEtaria.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'pac_faixa_etaria' }
+  );
+  const { data: pacDistribuicaoCidade } = trpc.dashboardMetricas.getPacDistribuicaoCidade.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'pac_distribuicao_cidade' }
+  );
+  const { data: pacDistribuicaoConvenio } = trpc.dashboardMetricas.getPacDistribuicaoConvenio.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'pac_distribuicao_convenio' }
+  );
+  const { data: pacInativos } = trpc.dashboardMetricas.getPacInativos.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'pac_inativos_periodo' }
+  );
+  const { data: pacObitos } = trpc.dashboardMetricas.getPacObitos.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_obitos_periodo' }
   );
-  
-  const { data: atdTotalPeriodo } = trpc.dashboardMetricas.atdTotalPeriodo.useQuery(
+  const { data: atdTotalPeriodo } = trpc.dashboardMetricas.getAtdTotalPeriodo.useQuery(
     { periodo },
     { enabled: metrica.id === 'atd_total_periodo' }
   );
-  
-  const { data: atdEvolucaoTemporal } = trpc.dashboardMetricas.atdEvolucaoTemporal.useQuery(
+  const { data: atdEvolucaoTemporal } = trpc.dashboardMetricas.getAtdEvolucaoTemporal.useQuery(
     { periodo },
     { enabled: metrica.id === 'atd_evolucao_temporal' }
   );
-  
-  const { data: finFaturamentoTotal } = trpc.dashboardMetricas.finFaturamentoTotal.useQuery(
+  const { data: atdPorTipo } = trpc.dashboardMetricas.getAtdPorTipo.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'atd_por_tipo' }
+  );
+  const { data: atdPorLocal } = trpc.dashboardMetricas.getAtdPorLocal.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'atd_por_local' }
+  );
+  const { data: atdPorConvenio } = trpc.dashboardMetricas.getAtdPorConvenio.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'atd_por_convenio' }
+  );
+  const { data: finFaturamentoTotal } = trpc.dashboardMetricas.getFinFaturamentoTotal.useQuery(
     { periodo },
     { enabled: metrica.id === 'fin_faturamento_total' }
   );
-  
-  const { data: finTaxaRecebimento } = trpc.dashboardMetricas.finTaxaRecebimento.useQuery(
+  const { data: finFaturamentoConvenio } = trpc.dashboardMetricas.getFinFaturamentoConvenio.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'fin_faturamento_convenio' }
+  );
+  const { data: finTicketMedio } = trpc.dashboardMetricas.getFinTicketMedio.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'fin_ticket_medio' }
+  );
+  const { data: finTaxaRecebimento } = trpc.dashboardMetricas.getFinTaxaRecebimento.useQuery(
     { periodo },
     { enabled: metrica.id === 'fin_taxa_recebimento' }
   );
-  
-  const { data: quaDiagnosticosFrequentes } = trpc.dashboardMetricas.quaDiagnosticosFrequentes.useQuery(
+  const { data: quaDiagnosticosFrequentes } = trpc.dashboardMetricas.getQuaDiagnosticosFrequentes.useQuery(
     { periodo },
     { enabled: metrica.id === 'qua_diagnosticos_frequentes' }
   );
-  
-  const { data: quaTaxaRetorno } = trpc.dashboardMetricas.quaTaxaRetorno.useQuery(
-    { periodo },
-    { enabled: metrica.id === 'qua_taxa_retorno' }
-  );
-  
-  const { data: divAlertasPendentes } = trpc.dashboardMetricas.divAlertasPendentes.useQuery(undefined, {
-    enabled: metrica.id === 'div_alertas_pendentes',
-  });
-  
-  // Calcular altura do gráfico baseado no tamanho
-  const chartHeight = isFullscreen ? 500 : (tamanho === 'micro' ? 60 : tamanho === 'pequeno' ? 160 : tamanho === 'medio' ? 220 : 320);
-  const fontSize = tamanho === 'micro' ? 8 : tamanho === 'pequeno' ? 10 : 12;
-  
-  // Renderizar baseado no tipo de métrica
-  if (metrica.id === 'pac_total_ativos' && pacTotalAtivos?.valor !== undefined) {
+
+  // Configurações de tamanho
+  const chartHeight = isFullscreen ? 400 : tamanho === 'micro' ? 60 : tamanho === 'pequeno' ? 180 : tamanho === 'medio' ? 200 : 280;
+  const fontSize = tamanho === 'micro' ? 10 : 11;
+
+  // Métricas numéricas
+  if (metrica.tipoGrafico === 'numero') {
+    let valor: number | string = 0;
+    let unidade = metrica.unidade || '';
+    
+    if (metrica.id === 'pac_total_ativos' && pacTotalAtivos) {
+      valor = pacTotalAtivos.valor;
+    }
+    if (metrica.id === 'pac_inativos_periodo' && pacInativos) {
+      valor = pacInativos.valor;
+    }
+    if (metrica.id === 'atd_total_periodo' && atdTotalPeriodo) {
+      valor = atdTotalPeriodo.valor;
+    }
+    if (metrica.id === 'fin_faturamento_total' && finFaturamentoTotal) {
+      valor = `R$ ${Number(finFaturamentoTotal.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      unidade = '';
+    }
+    if (metrica.id === 'fin_ticket_medio' && finTicketMedio) {
+      valor = `R$ ${Number(finTicketMedio.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      unidade = '';
+    }
+    
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
-          {pacTotalAtivos.valor.toLocaleString('pt-BR')}
+        <div className={cn(
+          "font-bold text-gorgen-700",
+          tamanho === 'micro' ? 'text-2xl' : 'text-4xl'
+        )}>
+          {typeof valor === 'number' ? valor.toLocaleString('pt-BR') : valor}
         </div>
-        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">pacientes ativos</div>}
+        {unidade && (
+          <div className="text-sm text-muted-foreground mt-1">{unidade}</div>
+        )}
       </div>
     );
   }
   
-  if (metrica.id === 'pac_inativos_periodo' && pacInativos?.valor !== undefined) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
-          {pacInativos.valor.toLocaleString('pt-BR')}
-        </div>
-        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">pacientes inativos</div>}
-      </div>
-    );
-  }
-  
-  if (metrica.id === 'pac_tempo_acompanhamento' && pacTempoAcompanhamento?.valor !== undefined) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
-          {pacTempoAcompanhamento.valor.toFixed(1)}
-        </div>
-        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">anos em média</div>}
-      </div>
-    );
-  }
-  
-  if (metrica.id === 'atd_total_periodo' && atdTotalPeriodo?.valor !== undefined) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
-          {atdTotalPeriodo.valor.toLocaleString('pt-BR')}
-        </div>
-        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">atendimentos no período</div>}
-      </div>
-    );
-  }
-  
-  if (metrica.id === 'fin_faturamento_total' && finFaturamentoTotal?.valor !== undefined) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className={`font-bold ${tamanho === 'micro' ? 'text-xl' : 'text-3xl'}`} style={{ color: metrica.corPrimaria }}>
-          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finFaturamentoTotal.valor)}
-        </div>
-        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">faturamento no período</div>}
-      </div>
-    );
-  }
-  
-  if (metrica.id === 'div_alertas_pendentes' && divAlertasPendentes?.valor !== undefined) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className={`font-bold ${tamanho === 'micro' ? 'text-2xl' : 'text-4xl'}`} style={{ color: metrica.corPrimaria }}>
-          {divAlertasPendentes.valor.toLocaleString('pt-BR')}
-        </div>
-        {tamanho !== 'micro' && <div className="text-muted-foreground mt-1">alertas pendentes</div>}
-      </div>
-    );
-  }
-  
-  // Gauges
+  // Gráficos de Gauge
   if (metrica.tipoGrafico === 'gauge') {
     let valor = 0;
-    if (metrica.id === 'pac_taxa_retencao' && pacTaxaRetencao?.valor !== undefined) valor = pacTaxaRetencao.valor;
-    if (metrica.id === 'fin_taxa_recebimento' && finTaxaRecebimento?.valor !== undefined) valor = finTaxaRecebimento.valor;
-    if (metrica.id === 'qua_taxa_retorno' && quaTaxaRetorno?.valor !== undefined) valor = quaTaxaRetorno.valor;
     
-    const gaugeSize = tamanho === 'micro' ? 80 : tamanho === 'pequeno' ? 120 : tamanho === 'medio' ? 160 : 200;
-    const strokeWidth = tamanho === 'micro' ? 8 : 12;
+    if (metrica.id === 'fin_taxa_recebimento' && finTaxaRecebimento) {
+      valor = finTaxaRecebimento.valor;
+    }
+    
+    const data = [
+      { name: 'Valor', value: valor },
+      { name: 'Restante', value: 100 - valor },
+    ];
     
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <svg width={gaugeSize} height={gaugeSize * 0.6} viewBox="0 0 120 72">
-          <path
-            d="M 10 60 A 50 50 0 0 1 110 60"
-            fill="none"
-            stroke="#e5e7eb"
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-          />
-          <path
-            d="M 10 60 A 50 50 0 0 1 110 60"
-            fill="none"
-            stroke={metrica.corPrimaria}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={`${(valor / 100) * 157} 157`}
-          />
-        </svg>
-        <div className={`font-bold ${tamanho === 'micro' ? 'text-lg' : 'text-2xl'} -mt-4`} style={{ color: metrica.corPrimaria }}>
-          {valor.toFixed(1)}%
-        </div>
+        <ResponsiveContainer width="100%" height={chartHeight}>
+          <RechartsPieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="70%"
+              startAngle={180}
+              endAngle={0}
+              innerRadius="60%"
+              outerRadius="80%"
+              dataKey="value"
+              stroke="none"
+            >
+              <Cell fill="#203864" />
+              <Cell fill="#E5E7EB" />
+            </Pie>
+          </RechartsPieChart>
+        </ResponsiveContainer>
+        <div className="text-3xl font-bold text-gorgen-700 -mt-8">{valor.toFixed(1)}%</div>
+        <div className="text-sm text-muted-foreground">{metrica.unidade}</div>
       </div>
     );
   }
@@ -458,14 +579,18 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
       dados = pacDistribuicaoSexo.dados as { nome: string; valor: number }[];
     }
     if (metrica.id === 'pac_distribuicao_convenio' && pacDistribuicaoConvenio?.dados) {
-      dados = pacDistribuicaoConvenio.dados as { nome: string; valor: number }[];
+      dados = (pacDistribuicaoConvenio.dados as { nome: string; valor: number }[]).slice(0, 5);
+    }
+    if (metrica.id === 'atd_por_tipo' && atdPorTipo?.dados) {
+      dados = atdPorTipo.dados as { nome: string; valor: number }[];
+    }
+    if (metrica.id === 'fin_faturamento_convenio' && finFaturamentoConvenio?.dados) {
+      dados = (finFaturamentoConvenio.dados as { nome: string; valor: number }[]).slice(0, 5);
     }
     
     if (dados.length === 0) {
       return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Sem dados</div>;
     }
-    
-    const outerRadius = tamanho === 'micro' ? 25 : tamanho === 'pequeno' ? 50 : tamanho === 'medio' ? 70 : 90;
     
     return (
       <ResponsiveContainer width="100%" height={chartHeight}>
@@ -474,19 +599,24 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
             data={dados}
             cx="50%"
             cy="50%"
-            outerRadius={outerRadius}
-            fill="#8884d8"
+            innerRadius={tamanho === 'micro' ? 15 : tamanho === 'pequeno' ? 30 : 50}
+            outerRadius={tamanho === 'micro' ? 25 : tamanho === 'pequeno' ? 55 : 80}
             dataKey="valor"
             nameKey="nome"
-            label={tamanho !== 'micro' ? ({ nome, percent }) => `${nome}: ${(percent * 100).toFixed(0)}%` : false}
-            labelLine={tamanho !== 'micro'}
+            stroke="none"
           >
             {dados.map((_, index) => (
               <Cell key={`cell-${index}`} fill={CORES_GRAFICOS[index % CORES_GRAFICOS.length]} />
             ))}
           </Pie>
-          {tamanho !== 'micro' && <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />}
-          {tamanho === 'grande' && <Legend />}
+          {tamanho !== 'micro' && (
+            <Legend 
+              layout="horizontal" 
+              verticalAlign="bottom"
+              formatter={(value) => <span className="text-xs">{value}</span>}
+            />
+          )}
+          <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
         </RechartsPieChart>
       </ResponsiveContainer>
     );
@@ -502,6 +632,12 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     if (metrica.id === 'pac_distribuicao_cidade' && pacDistribuicaoCidade?.dados) {
       dados = (pacDistribuicaoCidade.dados as { nome: string; valor: number }[]).slice(0, tamanho === 'micro' ? 3 : tamanho === 'pequeno' ? 5 : 10);
     }
+    if (metrica.id === 'atd_por_local' && atdPorLocal?.dados) {
+      dados = atdPorLocal.dados as { nome: string; valor: number }[];
+    }
+    if (metrica.id === 'atd_por_convenio' && atdPorConvenio?.dados) {
+      dados = (atdPorConvenio.dados as { nome: string; valor: number }[]).slice(0, 5);
+    }
     if (metrica.id === 'qua_diagnosticos_frequentes' && quaDiagnosticosFrequentes?.dados) {
       dados = (quaDiagnosticosFrequentes.dados as { nome: string; valor: number }[]).slice(0, tamanho === 'micro' ? 3 : tamanho === 'pequeno' ? 5 : 10);
     }
@@ -513,11 +649,11 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     return (
       <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={dados} layout="vertical" margin={{ left: tamanho === 'micro' ? 40 : 60, right: 10 }}>
-          {tamanho !== 'micro' && <CartesianGrid strokeDasharray="3 3" />}
+          {tamanho !== 'micro' && <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />}
           <XAxis type="number" tick={{ fontSize }} />
           <YAxis dataKey="nome" type="category" tick={{ fontSize }} width={tamanho === 'micro' ? 35 : 55} />
           <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
-          <Bar dataKey="valor" fill={metrica.corPrimaria} radius={[0, 4, 4, 0]} />
+          <Bar dataKey="valor" fill="#203864" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
@@ -538,15 +674,15 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     return (
       <ResponsiveContainer width="100%" height={chartHeight}>
         <AreaChart data={dados}>
-          {tamanho !== 'micro' && <CartesianGrid strokeDasharray="3 3" />}
+          {tamanho !== 'micro' && <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />}
           <XAxis dataKey="data" tick={{ fontSize }} />
           <YAxis tick={{ fontSize }} />
           <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
           <Area 
             type="monotone" 
             dataKey="valor" 
-            stroke={metrica.corPrimaria} 
-            fill={`${metrica.corPrimaria}40`}
+            stroke="#203864"
+            fill="#20386420"
             strokeWidth={2}
           />
         </AreaChart>
@@ -572,16 +708,16 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
     return (
       <ResponsiveContainer width="100%" height={chartHeight}>
         <LineChart data={dados}>
-          {tamanho !== 'micro' && <CartesianGrid strokeDasharray="3 3" />}
+          {tamanho !== 'micro' && <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />}
           <XAxis dataKey="data" tick={{ fontSize }} />
           <YAxis tick={{ fontSize }} />
           <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
           <Line 
             type="monotone" 
             dataKey="valor" 
-            stroke={metrica.corPrimaria} 
+            stroke="#203864"
             strokeWidth={2}
-            dot={{ fill: metrica.corPrimaria, r: 3 }}
+            dot={{ fill: '#203864', r: 3 }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -591,19 +727,69 @@ function MetricaConteudo({ metrica, periodo, tamanho, isFullscreen = false }: { 
   return <div className="flex items-center justify-center h-full text-muted-foreground">Carregando...</div>;
 }
 
-// Componente principal
+// ============================================
+// FUNÇÃO AUXILIAR - Agrupar widgets micro
+// ============================================
+
+function agruparWidgetsMicro(
+  metricasExibidas: { metrica: MetricaDefinicao; config: WidgetConfig }[]
+): (
+  | { metrica: MetricaDefinicao; config: WidgetConfig }
+  | { tipo: 'par_micro'; widgets: { metrica: MetricaDefinicao; config: WidgetConfig }[] }
+)[] {
+  const resultado: (
+    | { metrica: MetricaDefinicao; config: WidgetConfig }
+    | { tipo: 'par_micro'; widgets: { metrica: MetricaDefinicao; config: WidgetConfig }[] }
+  )[] = [];
+  
+  let microBuffer: { metrica: MetricaDefinicao; config: WidgetConfig }[] = [];
+  
+  for (const item of metricasExibidas) {
+    if (item.config.tamanho === 'micro') {
+      microBuffer.push(item);
+      if (microBuffer.length === 2) {
+        resultado.push({ tipo: 'par_micro', widgets: [...microBuffer] });
+        microBuffer = [];
+      }
+    } else {
+      // Se houver um micro sozinho no buffer, adiciona antes
+      if (microBuffer.length > 0) {
+        resultado.push({ tipo: 'par_micro', widgets: [...microBuffer] });
+        microBuffer = [];
+      }
+      resultado.push(item);
+    }
+  }
+  
+  // Se sobrou um micro no buffer
+  if (microBuffer.length > 0) {
+    resultado.push({ tipo: 'par_micro', widgets: microBuffer });
+  }
+  
+  return resultado;
+}
+
+// ============================================
+// COMPONENTE PRINCIPAL - Dashboard
+// ============================================
+
 export default function DashboardCustom() {
   const [periodo, setPeriodo] = useState<PeriodoTempo>('30d');
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([
-    { id: 'pac_total_ativos', tamanho: 'pequeno' },
-    { id: 'pac_novos_periodo', tamanho: 'pequeno' },
-    { id: 'pac_distribuicao_sexo', tamanho: 'pequeno' },
-    { id: 'pac_faixa_etaria', tamanho: 'pequeno' },
-    { id: 'atd_total_periodo', tamanho: 'pequeno' },
-    { id: 'fin_faturamento_total', tamanho: 'pequeno' },
+    { id: 'atd_evolucao_temporal', tamanho: 'medio' },
+    { id: 'pac_novos_periodo', tamanho: 'micro' },
+    { id: 'pac_inativos_periodo', tamanho: 'micro' },
+    { id: 'pac_tempo_acompanhamento', tamanho: 'micro' },
+    { id: 'fin_ticket_medio', tamanho: 'micro' },
+    { id: 'pac_distribuicao_convenio', tamanho: 'pequeno' },
+    { id: 'pac_faixa_etaria', tamanho: 'medio' },
+    { id: 'pac_taxa_retencao', tamanho: 'pequeno' },
   ]);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [fullscreenWidget, setFullscreenWidget] = useState<string | null>(null);
+  
+  // Buscar estatísticas do dashboard para os KPIs
+  const { data: dashboardStats, isLoading: carregandoStats } = trpc.getDashboardStats.useQuery();
   
   // Buscar configuração salva
   const { data: configSalva, isLoading: carregandoConfig } = trpc.dashboardMetricas.getConfig.useQuery();
@@ -629,7 +815,6 @@ export default function DashboardCustom() {
       try {
         const metricas = JSON.parse(configSalva.metricasSelecionadas);
         if (Array.isArray(metricas) && metricas.length > 0) {
-          // Converter formato antigo (array de IDs) para novo formato (array de WidgetConfig)
           const configs: WidgetConfig[] = [];
           const sizes = configSalva.widgetSizes ? JSON.parse(configSalva.widgetSizes) : {};
           const periods = configSalva.widgetPeriods ? JSON.parse(configSalva.widgetPeriods) : {};
@@ -720,8 +905,13 @@ export default function DashboardCustom() {
     return (
       <div className="p-6">
         <Skeleton className="h-8 w-64 mb-6" />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+          {[1, 2, 3, 4, 5, 6].map(i => (
             <Skeleton key={i} className="h-64" />
           ))}
         </div>
@@ -747,7 +937,7 @@ export default function DashboardCustom() {
                       value={getWidgetConfig(fullscreenMetrica.id).periodoIndividual || periodo} 
                       onValueChange={(v) => updateWidgetPeriodo(fullscreenMetrica.id, v as PeriodoTempo)}
                     >
-                      <SelectTrigger className="w-32">
+                      <SelectTrigger className="w-40">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -780,30 +970,39 @@ export default function DashboardCustom() {
         onSave={handleSalvarConfig}
       />
 
-      {/* Cabeçalho simplificado */}
+      {/* Header do Dashboard */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         
-        {/* Botão de configurações - tamanho harmonizado com título */}
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => setDialogAberto(true)}
-          title="Configurar Widgets"
-          className="h-12 w-12"
-        >
-          <Settings className="h-9 w-9" />
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* Filtro Global de Período */}
+          <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoTempo)}>
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {periodos.map(p => (
+                <SelectItem key={p.valor} value={p.valor}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {/* Botão de Configurações */}
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => setDialogAberto(true)}
+            title="Configurar Widgets"
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
       
-      {/* Instruções de uso */}
-      <div className="mb-4 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-        <strong>Dica:</strong> Arraste os widgets pelo ícone <GripVertical className="h-4 w-4 inline" /> para reorganizar. 
-        Passe o mouse sobre um widget para acessar controles de tamanho, período e tela cheia.
-        Clique no ícone <Settings className="h-4 w-4 inline" /> para adicionar ou remover widgets.
-      </div>
+      {/* Painel de KPIs (Painel de Voo) */}
+      <KPIPanel stats={dashboardStats} isLoading={carregandoStats} />
       
-      {/* Grid de métricas com Drag-and-Drop */}
+      {/* Grid de Widgets com Drag-and-Drop */}
       {metricasExibidas.length === 0 ? (
         <Card className="p-12 text-center">
           <LayoutGrid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -828,7 +1027,7 @@ export default function DashboardCustom() {
                 // Par de widgets micro empilhados
                 if ('tipo' in item && item.tipo === 'par_micro') {
                   return (
-                    <div key={`micro-pair-${index}`} className="col-span-1 h-[300px] flex flex-col gap-2">
+                    <div key={`micro-pair-${index}`} className="col-span-1 flex flex-col gap-4">
                       {item.widgets.map(({ metrica, config }) => (
                         <SortableWidget
                           key={metrica.id}
@@ -877,9 +1076,9 @@ export default function DashboardCustom() {
                 <div className="flex items-center gap-2 mb-2">
                   <div 
                     className="p-2 rounded-lg" 
-                    style={{ backgroundColor: `${cat.cor}20` }}
+                    style={{ backgroundColor: `${cat.cor}15` }}
                   >
-                    {cat.icone}
+                    <span style={{ color: cat.cor }}>{cat.icone}</span>
                   </div>
                   <span className="font-medium text-sm">{cat.label.split(' ')[0]}</span>
                 </div>

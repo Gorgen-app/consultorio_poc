@@ -24,7 +24,7 @@ interface Props {
 const tiposDocumento = [
   { value: "Receita", label: "Receita Simples", icon: Pill, cor: "bg-blue-100 text-blue-700" },
   { value: "Receita Especial", label: "Receita Especial (Controlado)", icon: Pill, cor: "bg-purple-100 text-purple-700" },
-  { value: "Solicitação de Exames", label: "Solicitação de Exames", icon: ClipboardList, cor: "bg-green-100 text-green-700" },
+  { value: "Solicitação de Exames", label: "Solicitação de Exames", icon: ClipboardList, cor: "bg-emerald-100 text-emerald-700" },
   { value: "Atestado Comparecimento", label: "Atestado de Comparecimento", icon: FileCheck, cor: "bg-yellow-100 text-yellow-700" },
   { value: "Atestado Afastamento", label: "Atestado de Afastamento", icon: Calendar, cor: "bg-orange-100 text-orange-700" },
   { value: "Laudo", label: "Laudo Médico", icon: FileText, cor: "bg-gray-100 text-gray-700" },

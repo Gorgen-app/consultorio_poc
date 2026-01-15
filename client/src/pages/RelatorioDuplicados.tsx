@@ -236,7 +236,7 @@ export default function RelatorioDuplicados() {
                 {isLoading ? (
                   <div className="text-center py-8 text-gray-500">Carregando...</div>
                 ) : duplicadosCPF.length === 0 ? (
-                  <div className="text-center py-8 text-green-600">
+                  <div className="text-center py-8 text-emerald-600">
                     <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p className="font-medium">Nenhum duplicado por CPF encontrado!</p>
                     <p className="text-sm text-gray-500">Todos os CPFs são únicos no sistema.</p>
@@ -312,7 +312,7 @@ export default function RelatorioDuplicados() {
                 {isLoading ? (
                   <div className="text-center py-8 text-gray-500">Carregando...</div>
                 ) : duplicadosNome.length === 0 ? (
-                  <div className="text-center py-8 text-green-600">
+                  <div className="text-center py-8 text-emerald-600">
                     <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p className="font-medium">Nenhum duplicado por nome encontrado!</p>
                     <p className="text-sm text-gray-500">Todos os nomes são únicos no sistema.</p>

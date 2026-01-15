@@ -108,7 +108,7 @@ export default function AdminTenants() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ativo":
-        return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" />Ativo</Badge>;
+        return <Badge className="bg-emerald-500"><CheckCircle className="w-3 h-3 mr-1" />Ativo</Badge>;
       case "inativo":
         return <Badge variant="secondary"><XCircle className="w-3 h-3 mr-1" />Inativo</Badge>;
       case "suspenso":
@@ -281,7 +281,7 @@ export default function AdminTenants() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tenants Ativos</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -389,7 +389,7 @@ export default function AdminTenants() {
                           {tenant.status === "ativo" ? (
                             <XCircle className="w-4 h-4 text-red-500" />
                           ) : (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <CheckCircle className="w-4 h-4 text-emerald-500" />
                           )}
                         </Button>
                       </div>
