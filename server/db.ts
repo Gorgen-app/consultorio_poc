@@ -2006,6 +2006,7 @@ export async function listAgendamentos(filters?: {
   status?: string;
   incluirCancelados?: boolean;
 }) {
+  const startTime = Date.now();
   const db = await getDb();
   if (!db) return [];
   
@@ -2034,6 +2035,7 @@ export async function listAgendamentos(filters?: {
   }
   
   // Query otimizada com filtros SQL e limite de campos
+  const queryStartTime = Date.now();
   const result = await db.select({
     id: agendamentos.id,
     idAgendamento: agendamentos.idAgendamento,
@@ -2055,6 +2057,9 @@ export async function listAgendamentos(filters?: {
     .orderBy(asc(agendamentos.dataHoraInicio))
     .limit(500); // Limitar para performance
   
+  const queryTime = Date.now() - queryStartTime;
+  const totalTime = Date.now() - startTime;
+  console.log(`[PERF] listAgendamentos: query=${queryTime}ms, total=${totalTime}ms, rows=${result.length}`);
   return result;
 }
 

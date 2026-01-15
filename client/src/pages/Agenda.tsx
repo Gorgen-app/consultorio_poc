@@ -23,12 +23,17 @@ export default function Agenda() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Buscar eventos da agenda
-  const { data: events = [], isLoading } = trpc.agenda.list.useQuery({
-    startDate: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000), // 30 dias atrás
-    endDate: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000), // 30 dias à frente
-    searchQuery: searchQuery || undefined,
-  });
+  // Buscar eventos da agenda com cache de 1 minuto
+  const { data: events = [], isLoading } = trpc.agenda.list.useQuery(
+    {
+      dataInicio: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
+      dataFim: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
+    },
+    {
+      staleTime: 60000,
+      gcTime: 5 * 60000,
+    }
+  );
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
