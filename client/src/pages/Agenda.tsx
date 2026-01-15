@@ -24,7 +24,7 @@ export default function Agenda() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Buscar eventos da agenda
-  const { data: events = [], isLoading } = trpc.agenda.events.list.useQuery({
+  const { data: events = [], isLoading } = trpc.agenda.list.useQuery({
     startDate: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000), // 30 dias atrás
     endDate: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000), // 30 dias à frente
     searchQuery: searchQuery || undefined,
@@ -48,7 +48,7 @@ export default function Agenda() {
     if (!selectedEvent) return;
 
     try {
-      await trpc.agenda.events.delete.mutate({ id: selectedEvent.id });
+      await trpc.agenda.delete.mutate({ id: selectedEvent.id });
       toast.success("Evento deletado com sucesso");
       setIsDetailsOpen(false);
       setSelectedEvent(null);
