@@ -82,15 +82,28 @@ const periodos: { valor: PeriodoTempo; label: string }[] = [
   { valor: 'todo', label: 'Todo período' },
 ];
 
+// Gorgen Design System - Cores das Categorias
 const categorias: { valor: CategoriaMetrica; label: string; cor: string; icone: React.ReactNode }[] = [
-  { valor: 'populacao_pacientes', label: 'População de Pacientes', cor: '#3B82F6', icone: <Users className="h-4 w-4" /> },
-  { valor: 'atendimentos', label: 'Atendimentos', cor: '#10B981', icone: <Calendar className="h-4 w-4" /> },
-  { valor: 'economico_financeiro', label: 'Econômico-Financeiro', cor: '#F59E0B', icone: <DollarSign className="h-4 w-4" /> },
-  { valor: 'qualidade_atendimento', label: 'Qualidade do Atendimento', cor: '#8B5CF6', icone: <Heart className="h-4 w-4" /> },
-  { valor: 'diversas', label: 'Diversas', cor: '#EC4899', icone: <LayoutGrid className="h-4 w-4" /> },
+  { valor: 'populacao_pacientes', label: 'População de Pacientes', cor: '#203864', icone: <Users className="h-4 w-4" /> },  // Azul Gorgen
+  { valor: 'atendimentos', label: 'Atendimentos', cor: '#10B981', icone: <Calendar className="h-4 w-4" /> },              // Verde
+  { valor: 'economico_financeiro', label: 'Econômico-Financeiro', cor: '#F59E0B', icone: <DollarSign className="h-4 w-4" /> }, // Âmbar
+  { valor: 'qualidade_atendimento', label: 'Qualidade do Atendimento', cor: '#8B5CF6', icone: <Heart className="h-4 w-4" /> },  // Violeta
+  { valor: 'diversas', label: 'Diversas', cor: '#DC6B4A', icone: <LayoutGrid className="h-4 w-4" /> },                   // Coral Gorgen
 ];
 
-const CORES_GRAFICOS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#14B8A6'];
+// Gorgen Design System - Cores para Gráficos
+const CORES_GRAFICOS = [
+  '#203864', // Azul Gorgen 700 (principal)
+  '#3B5F96', // Azul Gorgen 500
+  '#5A7DB0', // Azul Gorgen 400
+  '#10B981', // Verde (sucesso)
+  '#F59E0B', // Âmbar (alerta)
+  '#8B5CF6', // Violeta
+  '#DC6B4A', // Coral Gorgen
+  '#06B6D4', // Ciano
+  '#84CC16', // Lima
+  '#F97316', // Laranja
+];
 
 const tamanhoClasses: Record<TamanhoWidget, string> = {
   micro: 'col-span-1',
