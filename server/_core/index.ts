@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { storagePut } from "../storage";
 import { recordEndpointMetric } from "../performance";
+import superjson from "superjson";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -92,6 +93,7 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      transformer: superjson,
     })
   );
   // development mode uses Vite, production mode uses static files

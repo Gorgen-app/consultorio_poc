@@ -992,11 +992,11 @@ export const appRouter = router({
           return await db.createAlergia(input as any);
         }),
       
-      delete: protectedProcedure
-        .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
-          return await db.deleteAlergia(input.id);
-        }),
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteAgendamento(input.id);
+      }),
     }),
 
     // Medicamentos em Uso
@@ -1558,7 +1558,7 @@ export const appRouter = router({
         } as any);
       }),
 
-    list: protectedProcedure
+    list: publicProcedure
       .input(z.object({
         dataInicio: z.date().optional(),
         dataFim: z.date().optional(),
