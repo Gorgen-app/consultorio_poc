@@ -24,7 +24,7 @@ export default function Agenda() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Buscar eventos da agenda com cache de 1 minuto
-  const { data: events = [], isLoading } = trpc.agenda.list.useQuery(
+  const { data: rawEvents = [], isLoading } = trpc.agenda.list.useQuery(
     {
       dataInicio: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
       dataFim: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
@@ -34,6 +34,9 @@ export default function Agenda() {
       gcTime: 5 * 60000,
     }
   );
+
+  // Extrair array de eventos (pode estar em { json: [...] } ou direto [])
+  const events = Array.isArray(rawEvents) ? rawEvents : (rawEvents as any)?.json || [];
 
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
@@ -64,21 +67,29 @@ export default function Agenda() {
 
   // Converter eventos do banco para formato do componente
   const formattedEvents: Event[] = events.map((event: any) => ({
-    id: event.id,
-    title: event.title || `${event.category}`,
-    category: event.category,
-    startAt: new Date(event.startAt),
-    endAt: new Date(event.endAt),
-    color: event.color || "#3B82F6",
+    id: String(event.id),
+    title: event.titulo || `${event.tipoCompromisso}`,
+    category: event.tipoCompromisso,
+    startAt: new Date(event.dataHoraInicio),
+    endAt: new Date(event.dataHoraFim),
+    color: "#3B82F6",
     status: event.status,
-    patientId: event.patientId,
-    professionalId: event.professionalId,
+    patientId: event.pacienteId,
+    professionalId: undefined,
   }));
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-gray-500">Carregando agenda...</div>
+      </div>
+    );
+  }
+
+  if (formattedEvents.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-gray-500">Nenhum agendamento encontrado</div>
       </div>
     );
   }
