@@ -708,6 +708,13 @@ export async function getDashboardStats(tenantId: number) {
   const pacientesAtivos = await countPacientes(tenantId, { status: "Ativo" });
   const totalAtendimentos = await countAtendimentos(tenantId);
 
+  // Datas para cálculo de variação (período atual: últimos 30 dias, período anterior: 30 dias antes)
+  const hoje = new Date();
+  const inicioAtual = new Date(hoje);
+  inicioAtual.setDate(hoje.getDate() - 30);
+  const inicioAnterior = new Date(inicioAtual);
+  inicioAnterior.setDate(inicioAtual.getDate() - 30);
+
   // Faturamento total previsto e realizado (filtrado por tenant)
   const faturamento = await db
     .select({
@@ -716,6 +723,62 @@ export async function getDashboardStats(tenantId: number) {
     })
     .from(atendimentos)
     .where(eq(atendimentos.tenantId, tenantId));
+
+  // Faturamento do período atual (30 dias)
+  const faturamentoAtual = await db
+    .select({
+      previsto: sql<number>`SUM(${atendimentos.faturamentoPrevistoFinal})`,
+      realizado: sql<number>`SUM(CASE WHEN ${atendimentos.pagamentoEfetivado} = 1 THEN ${atendimentos.faturamentoPrevistoFinal} ELSE 0 END)`,
+    })
+    .from(atendimentos)
+    .where(and(
+      eq(atendimentos.tenantId, tenantId),
+      gte(atendimentos.dataAtendimento, inicioAtual)
+    ));
+
+  // Faturamento do período anterior (30 dias antes)
+  const faturamentoAnterior = await db
+    .select({
+      previsto: sql<number>`SUM(${atendimentos.faturamentoPrevistoFinal})`,
+    })
+    .from(atendimentos)
+    .where(and(
+      eq(atendimentos.tenantId, tenantId),
+      gte(atendimentos.dataAtendimento, inicioAnterior),
+      lt(atendimentos.dataAtendimento, inicioAtual)
+    ));
+
+  // Atendimentos do período atual
+  const atendimentosAtual = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(atendimentos)
+    .where(and(
+      eq(atendimentos.tenantId, tenantId),
+      gte(atendimentos.dataAtendimento, inicioAtual)
+    ));
+
+  // Atendimentos do período anterior
+  const atendimentosAnterior = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(atendimentos)
+    .where(and(
+      eq(atendimentos.tenantId, tenantId),
+      gte(atendimentos.dataAtendimento, inicioAnterior),
+      lt(atendimentos.dataAtendimento, inicioAtual)
+    ));
+
+  // Calcular variações
+  const fatAtualVal = Number(faturamentoAtual[0]?.previsto || 0);
+  const fatAnteriorVal = Number(faturamentoAnterior[0]?.previsto || 0);
+  const faturamentoVariacao = fatAnteriorVal > 0 
+    ? ((fatAtualVal - fatAnteriorVal) / fatAnteriorVal) * 100 
+    : 0;
+
+  const atdAtualVal = Number(atendimentosAtual[0]?.count || 0);
+  const atdAnteriorVal = Number(atendimentosAnterior[0]?.count || 0);
+  const atendimentosVariacao = atdAnteriorVal > 0 
+    ? ((atdAtualVal - atdAnteriorVal) / atdAnteriorVal) * 100 
+    : 0;
 
   // Distribuição por convênio (filtrado por tenant)
   const distribuicaoConvenio = await db
@@ -735,6 +798,8 @@ export async function getDashboardStats(tenantId: number) {
     totalAtendimentos,
     faturamentoPrevisto: Number(faturamento[0]?.previsto || 0),
     faturamentoRealizado: Number(faturamento[0]?.realizado || 0),
+    faturamentoVariacao: Math.round(faturamentoVariacao * 10) / 10,
+    atendimentosVariacao: Math.round(atendimentosVariacao * 10) / 10,
     distribuicaoConvenio: distribuicaoConvenio.map(d => ({
       convenio: d.convenio || "Não informado",
       total: Number(d.total),

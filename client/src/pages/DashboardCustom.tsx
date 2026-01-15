@@ -116,7 +116,7 @@ const CORES_GRAFICOS = [
 ];
 
 // ============================================
-// KPI PANEL - Painel de Voo
+// KPI PANEL - Painel de Voo (CORRIGIDO)
 // ============================================
 
 interface KPIData {
@@ -186,16 +186,22 @@ function KPICard({ kpi, isLoading }: { kpi: KPIData; isLoading?: boolean }) {
   );
 }
 
-function KPIPanel({ stats, isLoading }: { stats: any; isLoading: boolean }) {
+// KPIPanel agora usa os dados corretos do dashboard.stats com indicadores de variação
+function KPIPanel({ stats, periodo, isLoading }: { stats: any; periodo: PeriodoTempo; isLoading: boolean }) {
+  // Calcular taxa de recebimento
+  const taxaRecebimento = stats?.faturamentoPrevisto > 0 
+    ? (stats.faturamentoRealizado / stats.faturamentoPrevisto) * 100 
+    : 0;
+
   const kpis: KPIData[] = [
     {
       id: 'faturamento',
       label: 'Faturamento Total',
-      value: stats?.faturamentoTotal 
-        ? `R$ ${Number(stats.faturamentoTotal).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-        : 'R$ 0',
-      description: 'no período selecionado',
-      change: stats?.faturamentoVariacao ? {
+      value: stats?.faturamentoPrevisto 
+        ? `R$ ${Number(stats.faturamentoPrevisto).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : 'R$ 0,00',
+      description: 'faturamento previsto',
+      change: stats?.faturamentoVariacao !== undefined && stats?.faturamentoVariacao !== 0 ? {
         value: Math.abs(stats.faturamentoVariacao),
         isPositive: stats.faturamentoVariacao >= 0,
       } : undefined,
@@ -206,12 +212,9 @@ function KPIPanel({ stats, isLoading }: { stats: any; isLoading: boolean }) {
     {
       id: 'pacientes',
       label: 'Pacientes Ativos',
-      value: stats?.totalPacientes?.toLocaleString('pt-BR') || '0',
-      description: 'pacientes cadastrados',
-      change: stats?.pacientesVariacao ? {
-        value: Math.abs(stats.pacientesVariacao),
-        isPositive: stats.pacientesVariacao >= 0,
-      } : undefined,
+      value: stats?.pacientesAtivos?.toLocaleString('pt-BR') || '0',
+      description: `de ${stats?.totalPacientes?.toLocaleString('pt-BR') || '0'} cadastrados`,
+      change: undefined, // Pacientes não têm variação por período
       icon: <Users className="w-[18px] h-[18px]" />,
       iconBg: 'bg-gorgen-100',
       iconColor: 'text-gorgen-700',
@@ -220,8 +223,8 @@ function KPIPanel({ stats, isLoading }: { stats: any; isLoading: boolean }) {
       id: 'atendimentos',
       label: 'Atendimentos',
       value: stats?.totalAtendimentos?.toLocaleString('pt-BR') || '0',
-      description: 'no período selecionado',
-      change: stats?.atendimentosVariacao ? {
+      description: 'total de atendimentos',
+      change: stats?.atendimentosVariacao !== undefined && stats?.atendimentosVariacao !== 0 ? {
         value: Math.abs(stats.atendimentosVariacao),
         isPositive: stats.atendimentosVariacao >= 0,
       } : undefined,
@@ -232,14 +235,9 @@ function KPIPanel({ stats, isLoading }: { stats: any; isLoading: boolean }) {
     {
       id: 'taxa_recebimento',
       label: 'Taxa de Recebimento',
-      value: stats?.taxaRecebimento 
-        ? `${Number(stats.taxaRecebimento).toFixed(1)}%`
-        : '0%',
-      description: 'do faturamento recebido',
-      change: stats?.taxaRecebimentoVariacao ? {
-        value: Math.abs(stats.taxaRecebimentoVariacao),
-        isPositive: stats.taxaRecebimentoVariacao >= 0,
-      } : undefined,
+      value: `${taxaRecebimento.toFixed(1)}%`,
+      description: `R$ ${Number(stats?.faturamentoRealizado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} recebido`,
+      change: undefined, // Taxa de recebimento é calculada, não tem variação direta
       icon: <Percent className="w-[18px] h-[18px]" />,
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600',
@@ -264,21 +262,37 @@ interface MicroWidgetProps {
   value: string | number;
   unit?: string;
   icon: React.ReactNode;
+  categoria?: CategoriaMetrica;
 }
 
-function MicroWidget({ label, value, unit, icon }: MicroWidgetProps) {
+function MicroWidget({ label, value, unit, icon, categoria }: MicroWidgetProps) {
+  const cat = categorias.find(c => c.valor === categoria);
+  
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="text-sm font-medium text-muted-foreground mb-1">
+    <Card className="p-4 h-[130px] transition-all duration-200 hover:shadow-sm">
+      <div className="flex items-center justify-between h-full">
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-muted-foreground mb-1 truncate">
             {label}
           </div>
-          <div className="text-2xl font-bold text-gorgen-700">
-            {value} {unit && <span className="text-sm font-normal text-muted-foreground">{unit}</span>}
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-bold text-gorgen-700 tracking-tight">
+              {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
+            </span>
+            {unit && (
+              <span className="text-sm font-normal text-muted-foreground">
+                {unit}
+              </span>
+            )}
           </div>
         </div>
-        <div className="w-10 h-10 rounded-lg bg-gorgen-50 flex items-center justify-center text-gorgen-600">
+        <div 
+          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+          style={{ 
+            backgroundColor: cat ? `${cat.cor}15` : '#20386415',
+            color: cat?.cor || '#203864'
+          }}
+        >
           {icon}
         </div>
       </div>
@@ -326,7 +340,7 @@ function SortableWidget({
   
   // Classes de tamanho para o grid
   const tamanhoClasses: Record<TamanhoWidget, string> = {
-    micro: 'col-span-1 h-[140px]',
+    micro: 'col-span-1',
     pequeno: 'col-span-1 h-[300px]',
     medio: 'col-span-2 h-[300px]',
     grande: 'col-span-3 h-[400px]',
@@ -334,6 +348,21 @@ function SortableWidget({
 
   // Encontrar a categoria para a cor do badge
   const categoria = categorias.find(c => c.valor === metrica.categoria);
+
+  // Renderização especial para widgets micro
+  if (tamanho === 'micro') {
+    return (
+      <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-50 z-50')}>
+        <MicroWidget
+          label={metrica.nome}
+          value={0}
+          unit={metrica.unidade}
+          icon={categoria?.icone || <LayoutGrid className="h-5 w-5" />}
+          categoria={metrica.categoria}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -344,7 +373,7 @@ function SortableWidget({
         isDragging && 'opacity-50 z-50',
       )}
     >
-      <Card className="h-full flex flex-col group relative overflow-hidden">
+      <Card className="h-full flex flex-col group relative overflow-hidden transition-all duration-200 hover:shadow-md">
         {/* Header do Widget */}
         <div className="flex items-start justify-between p-4 pb-2">
           <div className="flex-1 min-w-0">
@@ -358,12 +387,10 @@ function SortableWidget({
               </button>
               <h3 className="font-semibold text-sm truncate">{metrica.nome}</h3>
             </div>
-            {tamanho !== 'micro' && (
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">{metrica.descricao}</p>
-            )}
+            <p className="text-xs text-muted-foreground mt-0.5 truncate">{metrica.descricao}</p>
           </div>
           
-          {/* Badge de categoria */}
+          {/* Badge de categoria com cor correta */}
           <Badge 
             variant="secondary" 
             className="text-[10px] px-2 py-0.5 shrink-0"
@@ -418,7 +445,7 @@ function MetricaConteudo({
 }) {
   // Queries para buscar dados das métricas
   const { data: pacTotalAtivos } = trpc.dashboardMetricas.pacTotalAtivos.useQuery(
-    { periodo },
+    undefined,
     { enabled: metrica.id === 'pac_total_ativos' }
   );
   const { data: pacNovosPeriodo } = trpc.dashboardMetricas.pacNovosPeriodo.useQuery(
@@ -426,28 +453,36 @@ function MetricaConteudo({
     { enabled: metrica.id === 'pac_novos_periodo' }
   );
   const { data: pacDistribuicaoSexo } = trpc.dashboardMetricas.pacDistribuicaoSexo.useQuery(
-    { periodo },
+    undefined,
     { enabled: metrica.id === 'pac_distribuicao_sexo' }
   );
   const { data: pacFaixaEtaria } = trpc.dashboardMetricas.pacFaixaEtaria.useQuery(
-    { periodo },
+    undefined,
     { enabled: metrica.id === 'pac_faixa_etaria' }
   );
   const { data: pacDistribuicaoCidade } = trpc.dashboardMetricas.pacDistribuicaoCidade.useQuery(
-    { periodo },
+    undefined,
     { enabled: metrica.id === 'pac_distribuicao_cidade' }
   );
   const { data: pacDistribuicaoConvenio } = trpc.dashboardMetricas.pacDistribuicaoConvenio.useQuery(
-    { periodo },
+    undefined,
     { enabled: metrica.id === 'pac_distribuicao_convenio' }
   );
   const { data: pacInativos } = trpc.dashboardMetricas.pacInativos.useQuery(
-    { periodo },
+    undefined,
     { enabled: metrica.id === 'pac_inativos_periodo' }
   );
   const { data: pacObitos } = trpc.dashboardMetricas.pacObitos.useQuery(
     { periodo },
     { enabled: metrica.id === 'pac_obitos_periodo' }
+  );
+  const { data: pacTaxaRetencao } = trpc.dashboardMetricas.pacTaxaRetencao.useQuery(
+    { periodo },
+    { enabled: metrica.id === 'pac_taxa_retencao' }
+  );
+  const { data: pacTempoAcompanhamento } = trpc.dashboardMetricas.pacTempoAcompanhamento.useQuery(
+    undefined,
+    { enabled: metrica.id === 'pac_tempo_acompanhamento' }
   );
   const { data: atdTotalPeriodo } = trpc.dashboardMetricas.atdTotalPeriodo.useQuery(
     { periodo },
@@ -505,6 +540,9 @@ function MetricaConteudo({
     if (metrica.id === 'pac_inativos_periodo' && pacInativos) {
       valor = pacInativos.valor;
     }
+    if (metrica.id === 'pac_tempo_acompanhamento' && pacTempoAcompanhamento) {
+      valor = pacTempoAcompanhamento.valor;
+    }
     if (metrica.id === 'atd_total_periodo' && atdTotalPeriodo) {
       valor = atdTotalPeriodo.valor;
     }
@@ -538,6 +576,9 @@ function MetricaConteudo({
     
     if (metrica.id === 'fin_taxa_recebimento' && finTaxaRecebimento) {
       valor = finTaxaRecebimento.valor;
+    }
+    if (metrica.id === 'pac_taxa_retencao' && pacTaxaRetencao) {
+      valor = pacTaxaRetencao.valor;
     }
     
     const data = [
@@ -788,7 +829,7 @@ export default function DashboardCustom() {
   const [dialogAberto, setDialogAberto] = useState(false);
   const [fullscreenWidget, setFullscreenWidget] = useState<string | null>(null);
   
-  // Buscar estatísticas do dashboard para os KPIs
+  // CORREÇÃO: Usar a rota correta dashboard.stats em vez de getDashboardStats
   const { data: dashboardStats, isLoading: carregandoStats } = trpc.dashboard.stats.useQuery();
   
   // Buscar configuração salva
@@ -972,7 +1013,7 @@ export default function DashboardCustom() {
 
       {/* Header do Dashboard */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gorgen-700">Dashboard</h1>
         
         <div className="flex items-center gap-3">
           {/* Filtro Global de Período */}
@@ -999,8 +1040,8 @@ export default function DashboardCustom() {
         </div>
       </div>
       
-      {/* Painel de KPIs (Painel de Voo) */}
-      <KPIPanel stats={dashboardStats} isLoading={carregandoStats} />
+      {/* Painel de KPIs (Painel de Voo) - CORRIGIDO */}
+      <KPIPanel stats={dashboardStats} periodo={periodo} isLoading={carregandoStats} />
       
       {/* Grid de Widgets com Drag-and-Drop */}
       {metricasExibidas.length === 0 ? (
@@ -1061,9 +1102,9 @@ export default function DashboardCustom() {
         </DndContext>
       )}
       
-      {/* Resumo das categorias */}
+      {/* Resumo das categorias - CORES CORRIGIDAS */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-4">Métricas por Categoria</h2>
+        <h2 className="text-lg font-semibold text-gorgen-700 mb-4">Métricas por Categoria</h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {categorias.map(cat => {
             const qtdTotal = todasMetricas.filter(m => m.categoria === cat.valor).length;
@@ -1072,7 +1113,7 @@ export default function DashboardCustom() {
             ).length;
             
             return (
-              <Card key={cat.valor} className="p-4">
+              <Card key={cat.valor} className="p-4 transition-all duration-200 hover:shadow-sm">
                 <div className="flex items-center gap-2 mb-2">
                   <div 
                     className="p-2 rounded-lg" 

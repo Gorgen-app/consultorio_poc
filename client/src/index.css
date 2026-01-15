@@ -41,19 +41,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   
-  /* Gorgen Design System - Cores para Tailwind */
-  --color-gorgen-50: #F0F4F9;
-  --color-gorgen-100: #E0E8F2;
-  --color-gorgen-200: #B8C9DE;
-  --color-gorgen-300: #8BA3C9;
-  --color-gorgen-400: #5A7DB0;
-  --color-gorgen-500: #3B5F96;
-  --color-gorgen-600: #2B4A7D;
-  --color-gorgen-700: #203864;
-  --color-gorgen-800: #1A2B47;
-  --color-gorgen-900: #152238;
-  --color-gorgen-950: #0D1729;
-  
   /* Gorgen Design System - Paleta de Cores */
   /* Cor Primária: Azul Gorgen #203864 */
   --gorgen-primary-50: #F0F4F9;
@@ -361,6 +348,41 @@
   .text-gorgen-accent {
     color: var(--gorgen-accent-600);
   }
+  
+  /* Escala completa de cores Gorgen */
+  .bg-gorgen-50 { background-color: var(--gorgen-primary-50); }
+  .bg-gorgen-100 { background-color: var(--gorgen-primary-100); }
+  .bg-gorgen-200 { background-color: var(--gorgen-primary-200); }
+  .bg-gorgen-300 { background-color: var(--gorgen-primary-300); }
+  .bg-gorgen-400 { background-color: var(--gorgen-primary-400); }
+  .bg-gorgen-500 { background-color: var(--gorgen-primary-500); }
+  .bg-gorgen-600 { background-color: var(--gorgen-primary-600); }
+  .bg-gorgen-700 { background-color: var(--gorgen-primary-700); }
+  .bg-gorgen-800 { background-color: var(--gorgen-primary-800); }
+  .bg-gorgen-900 { background-color: var(--gorgen-primary-900); }
+  .bg-gorgen-950 { background-color: var(--gorgen-primary-950); }
+  
+  .text-gorgen-50 { color: var(--gorgen-primary-50); }
+  .text-gorgen-100 { color: var(--gorgen-primary-100); }
+  .text-gorgen-200 { color: var(--gorgen-primary-200); }
+  .text-gorgen-300 { color: var(--gorgen-primary-300); }
+  .text-gorgen-400 { color: var(--gorgen-primary-400); }
+  .text-gorgen-500 { color: var(--gorgen-primary-500); }
+  .text-gorgen-600 { color: var(--gorgen-primary-600); }
+  .text-gorgen-700 { color: var(--gorgen-primary-700); }
+  .text-gorgen-800 { color: var(--gorgen-primary-800); }
+  .text-gorgen-900 { color: var(--gorgen-primary-900); }
+  .text-gorgen-950 { color: var(--gorgen-primary-950); }
+  
+  /* Cores semânticas Gorgen */
+  .bg-gorgen-success { background-color: var(--gorgen-success); }
+  .text-gorgen-success { color: var(--gorgen-success); }
+  .bg-gorgen-warning { background-color: var(--gorgen-warning); }
+  .text-gorgen-warning { color: var(--gorgen-warning); }
+  .bg-gorgen-error { background-color: var(--gorgen-error); }
+  .text-gorgen-error { color: var(--gorgen-error); }
+  .bg-gorgen-info { background-color: var(--gorgen-info); }
+  .text-gorgen-info { color: var(--gorgen-info); }
 }
 
 /* ================================================
