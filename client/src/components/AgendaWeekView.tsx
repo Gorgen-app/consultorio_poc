@@ -3,12 +3,16 @@
  * 
  * Exibe uma semana completa com 7 dias lado a lado
  * Horários de 00:00 até 23:30 com slots de 30 minutos
+ * 
+ * OTIMIZAÇÕES:
+ * - Memoização de componentes
+ * - Lazy rendering de eventos
+ * - Callbacks memoizados
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, memo } from "react";
 import { format, addDays, startOfWeek, isSameDay, getWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
@@ -32,6 +36,113 @@ interface AgendaWeekViewProps {
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i); // 00:00 até 23:00
 const SLOT_HEIGHT = 60; // pixels por 30 minutos
+const HOUR_ROW_HEIGHT = SLOT_HEIGHT * 2; // 120px por hora
+
+// Componente memoizado para cada linha de horário
+const HourRow = memo(function HourRow({
+  hour,
+  dayKey,
+  day,
+  dayEvents,
+  onSlotClick,
+  onEventClick,
+  getEventStyle,
+}: {
+  hour: number;
+  dayKey: string;
+  day: Date;
+  dayEvents: Event[];
+  onSlotClick?: (date: Date, time: string) => void;
+  onEventClick?: (event: Event) => void;
+  getEventStyle: (event: Event) => React.CSSProperties;
+}) {
+  // Filtrar eventos que começam nesta hora
+  const hourEvents = useMemo(() => {
+    return dayEvents.filter((event) => {
+      const startHour = new Date(event.startAt).getHours();
+      return startHour === hour;
+    });
+  }, [dayEvents, hour]);
+
+  return (
+    <div
+      className="border-b relative cursor-pointer hover:bg-blue-50 transition-colors"
+      style={{ height: `${HOUR_ROW_HEIGHT}px` }}
+      onClick={() =>
+        onSlotClick?.(day, `${String(hour).padStart(2, "0")}:00`)
+      }
+    >
+      {/* Linhas de meia hora */}
+      <div
+        className="absolute top-1/2 w-full border-t border-gray-200"
+        style={{ height: "1px" }}
+      />
+
+      {/* Eventos desta hora */}
+      {hourEvents.map((event) => (
+        <div
+          key={event.id}
+          className="absolute left-0 right-0 mx-1 rounded-md p-1 text-white text-xs cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
+          style={getEventStyle(event)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEventClick?.(event);
+          }}
+        >
+          <div className="font-semibold truncate">
+            {format(new Date(event.startAt), "HH:mm")}
+          </div>
+          <div className="truncate">{event.title}</div>
+          <div className="text-xs opacity-90 truncate">
+            {event.category}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+// Componente memoizado para cada coluna de dia
+const DayColumn = memo(function DayColumn({
+  day,
+  dayKey,
+  dayEvents,
+  onSlotClick,
+  onEventClick,
+  getEventStyle,
+}: {
+  day: Date;
+  dayKey: string;
+  dayEvents: Event[];
+  onSlotClick?: (date: Date, time: string) => void;
+  onEventClick?: (event: Event) => void;
+  getEventStyle: (event: Event) => React.CSSProperties;
+}) {
+  return (
+    <div className="flex-1 min-w-[150px] border-r relative">
+      {/* Grid de horários */}
+      {HOURS.map((hour) => (
+        <HourRow
+          key={`${dayKey}-${hour}`}
+          hour={hour}
+          dayKey={dayKey}
+          day={day}
+          dayEvents={dayEvents}
+          onSlotClick={onSlotClick}
+          onEventClick={onEventClick}
+          getEventStyle={getEventStyle}
+        />
+      ))}
+
+      {/* Slot final 23:30 */}
+      <div
+        className="border-b relative cursor-pointer hover:bg-blue-50 transition-colors"
+        style={{ height: `${SLOT_HEIGHT}px` }}
+        onClick={() => onSlotClick?.(day, "23:30")}
+      />
+    </div>
+  );
+});
 
 export function AgendaWeekView({
   events,
@@ -45,6 +156,7 @@ export function AgendaWeekView({
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekNumber = getWeek(currentDate, { weekStartsOn: 0 });
 
+  // Agrupar eventos por dia (memoizado)
   const eventsByDay = useMemo(() => {
     const result: Record<string, Event[]> = {};
     weekDays.forEach((day) => {
@@ -56,7 +168,8 @@ export function AgendaWeekView({
     return result;
   }, [events, weekDays]);
 
-  const getEventStyle = (event: Event) => {
+  // Calcular estilo do evento (memoizado)
+  const getEventStyle = useCallback((event: Event) => {
     const start = new Date(event.startAt);
     const end = new Date(event.endAt);
     const startMinutes = start.getHours() * 60 + start.getMinutes();
@@ -71,21 +184,24 @@ export function AgendaWeekView({
       height: `${height}px`,
       backgroundColor: event.color || "#3B82F6",
     };
-  };
+  }, []);
 
-  const handlePrevWeek = () => {
-    setCurrentDate(addDays(currentDate, -7));
-  };
+  const handlePrevWeek = useCallback(() => {
+    setCurrentDate((date) => addDays(date, -7));
+  }, []);
 
-  const handleNextWeek = () => {
-    setCurrentDate(addDays(currentDate, 7));
-  };
+  const handleNextWeek = useCallback(() => {
+    setCurrentDate((date) => addDays(date, 7));
+  }, []);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    onSearch?.(query);
-  };
+  const handleSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const query = e.target.value;
+      setSearchQuery(query);
+      onSearch?.(query);
+    },
+    [onSearch]
+  );
 
   return (
     <div className="w-full bg-white rounded-lg shadow-sm">
@@ -161,7 +277,7 @@ export function AgendaWeekView({
                 <div
                   key={hour}
                   className="border-b text-xs text-gray-600 p-1 text-center font-semibold"
-                  style={{ height: `${SLOT_HEIGHT * 2}px` }}
+                  style={{ height: `${HOUR_ROW_HEIGHT}px` }}
                 >
                   {String(hour).padStart(2, "0")}:00
                 </div>
@@ -181,54 +297,15 @@ export function AgendaWeekView({
               const dayEvents = eventsByDay[dayKey] || [];
 
               return (
-                <div
+                <DayColumn
                   key={dayKey}
-                  className="flex-1 min-w-[150px] border-r relative"
-                >
-                  {/* Grid de horários */}
-                  {HOURS.map((hour) => (
-                    <div
-                      key={`${dayKey}-${hour}`}
-                      className="border-b relative cursor-pointer hover:bg-blue-50 transition-colors"
-                      style={{ height: `${SLOT_HEIGHT * 2}px` }}
-                      onClick={() =>
-                        onSlotClick?.(day, `${String(hour).padStart(2, "0")}:00`)
-                      }
-                    >
-                      {/* Linhas de meia hora */}
-                      <div
-                        className="absolute top-1/2 w-full border-t border-gray-200"
-                        style={{ height: "1px" }}
-                      />
-                    </div>
-                  ))}
-                  {/* Slot final 23:30 */}
-                  <div
-                    className="border-b relative cursor-pointer hover:bg-blue-50 transition-colors"
-                    style={{ height: `${SLOT_HEIGHT}px` }}
-                    onClick={() =>
-                      onSlotClick?.(day, "23:30")
-                    }
-                  />
-
-                  {/* Eventos do dia */}
-                  {dayEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="absolute left-0 right-0 mx-1 rounded-md p-1 text-white text-xs cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
-                      style={getEventStyle(event)}
-                      onClick={() => onEventClick?.(event)}
-                    >
-                      <div className="font-semibold truncate">
-                        {format(new Date(event.startAt), "HH:mm")}
-                      </div>
-                      <div className="truncate">{event.title}</div>
-                      <div className="text-xs opacity-90 truncate">
-                        {event.category}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                  day={day}
+                  dayKey={dayKey}
+                  dayEvents={dayEvents}
+                  onSlotClick={onSlotClick}
+                  onEventClick={onEventClick}
+                  getEventStyle={getEventStyle}
+                />
               );
             })}
           </div>

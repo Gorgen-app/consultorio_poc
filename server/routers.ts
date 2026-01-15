@@ -1777,6 +1777,70 @@ export const appRouter = router({
       .query(async () => {
         return await db.listAgendamentosPendentesVinculacao();
       }),
+
+    // APENAS PARA TESTES: Seed de 135 agendamentos para teste de performance
+    seedTestData: protectedProcedure
+      .query(async ({ ctx }) => {
+        // Verificar se é admin
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores podem criar dados de teste');
+        }
+        
+        console.log('[SEED] Iniciando criação de 135 agendamentos de teste...');
+        const agendamentosParaInserir = [];
+        const baseDate = new Date('2025-12-16');
+        
+        // Criar 135 agendamentos distribuídos ao longo de 60 dias
+        for (let i = 0; i < 135; i++) {
+          const daysOffset = Math.floor(i / 2); // 2 agendamentos por dia
+          const hora = 9 + (i % 8); // Distribuir entre 09:00 e 17:00
+          const minutos = (i % 2) * 30; // Alternar entre :00 e :30
+          
+          const dataInicio = new Date(baseDate);
+          dataInicio.setDate(dataInicio.getDate() + daysOffset);
+          dataInicio.setHours(hora, minutos, 0, 0);
+          
+          const dataFim = new Date(dataInicio);
+          dataFim.setMinutes(dataFim.getMinutes() + 30);
+          
+          agendamentosParaInserir.push({
+            tenantId: 1,
+            idAgendamento: `AG-TEST-${String(i + 1).padStart(5, '0')}`,
+            tipoCompromisso: ['Consulta', 'Cirurgia', 'Procedimento em consultório', 'Exame'][i % 4] as any,
+            pacienteId: (i % 50) + 1,
+            pacienteNome: `Paciente Teste ${(i % 50) + 1}`,
+            dataHoraInicio: dataInicio,
+            dataHoraFim: dataFim,
+            local: 'Consultório',
+            status: 'Agendado' as any,
+            titulo: `Agendamento Teste ${i + 1}`,
+            descricao: `Agendamento de teste ${i + 1} para validação de performance`,
+            criadoPor: 'Sistema - Seed',
+          });
+        }
+        
+        // Inserir em lotes
+        let totalInserido = 0;
+        for (let i = 0; i < agendamentosParaInserir.length; i += 10) {
+          const lote = agendamentosParaInserir.slice(i, i + 10);
+          try {
+            // Inserir cada agendamento do lote
+            for (const agendamento of lote) {
+              await db.createAgendamento(agendamento);
+              totalInserido++;
+            }
+          } catch (error) {
+            console.error(`[SEED] Erro ao inserir lote ${i}:`, error);
+          }
+        }
+        
+        console.log(`[SEED] Seed concluído: ${totalInserido} agendamentos inseridos`);
+        return { 
+          sucesso: true, 
+          totalInserido,
+          mensagem: `${totalInserido} agendamentos de teste foram inseridos com sucesso!`
+        };
+      }),
   }),
 
   // ===== BLOQUEIOS DE HORÁRIO =====
