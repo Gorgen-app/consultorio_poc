@@ -2390,3 +2390,30 @@ A dashboard deve integrar **medicina e administração**:
 - [x] AuditTrailModal para histórico de alterações
 - [x] Esteira de atendimento visual (máquina de estados)
 
+
+
+---
+
+## 🚀 GORGEN 1.9.7 - Filtro por Status na Agenda (16/01/2026)
+
+### Nova Funcionalidade
+- [ ] Adicionar dropdown/chips de filtro por status na agenda
+- [ ] Opções de filtro: Todos, Agendado, Confirmado, Aguardando, Em atendimento, Encerrado, Cancelado, Falta, Transferido
+- [ ] Filtro múltiplo (selecionar mais de um status)
+- [ ] Persistir filtro selecionado durante a sessão
+
+
+
+---
+
+## 🚀 GORGEN 1.9.7 - Filtro por Status na Agenda (16/01/2026)
+
+### Novas Funcionalidades
+- [x] Filtro por status na agenda (Agendado, Confirmado, Aguardando, Em atendimento, Encerrado, Falta, Transferido, Cancelado)
+- [x] Seleção múltipla de status (pode filtrar por mais de um status ao mesmo tempo)
+- [x] Badge indicando quantidade de filtros ativos
+- [x] Botão "Limpar" para remover todos os filtros
+- [x] Dropdown estilizado com ícones e cores por status
+- [x] Texto "Mostrando apenas: X, Y, Z" quando filtros ativos
+- [x] Filtragem em tempo real (sem necessidade de recarregar)
+

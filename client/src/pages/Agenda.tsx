@@ -766,6 +766,22 @@ export default function Agenda() {
     permissao: "visualizar" as "visualizar" | "editar",
   });
 
+  // Filtro por status
+  const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
+  const [showFiltroDropdown, setShowFiltroDropdown] = useState(false);
+
+  // Toggle de status no filtro
+  const toggleFiltroStatus = (status: string) => {
+    setFiltroStatus(prev => 
+      prev.includes(status) 
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  // Limpar todos os filtros
+  const limparFiltros = () => setFiltroStatus([]);
+
   // Gerar array de horários
   const horarios = useMemo(() => {
     const { horaInicio, horaFim } = configHorario;
@@ -998,16 +1014,22 @@ export default function Agenda() {
   const pacientesFiltrados = pacientesSearch || [];
 
   // Agrupar agendamentos por dia
+  // Filtrar agendamentos por status
+  const agendamentosFiltrados = useMemo(() => {
+    if (filtroStatus.length === 0) return agendamentos || [];
+    return (agendamentos || []).filter((ag: any) => filtroStatus.includes(ag.status));
+  }, [agendamentos, filtroStatus]);
+
   const agendamentosPorDia = useMemo(() => {
     const mapa: Record<string, any[]> = {};
-    (agendamentos || []).forEach((ag: any) => {
+    agendamentosFiltrados.forEach((ag: any) => {
       const data = new Date(ag.dataHoraInicio);
       const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
       if (!mapa[chave]) mapa[chave] = [];
       mapa[chave].push(ag);
     });
     return mapa;
-  }, [agendamentos]);
+  }, [agendamentosFiltrados]);
 
   // Dias da semana
   const diasSemana = useMemo(() => {
@@ -1493,6 +1515,74 @@ export default function Agenda() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* Filtro por Status */}
+          <Popover open={showFiltroDropdown} onOpenChange={setShowFiltroDropdown}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={`h-7 px-2 text-xs gap-1 ${filtroStatus.length > 0 ? 'border-primary bg-primary/10' : ''}`}
+              >
+                <Search className="w-3 h-3" />
+                Filtrar Status
+                {filtroStatus.length > 0 && (
+                  <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+                    {filtroStatus.length}
+                  </Badge>
+                )}
+                <ChevronDown className="w-3 h-3" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-2" align="end">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Filtrar por Status</span>
+                  {filtroStatus.length > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-xs text-muted-foreground"
+                      onClick={limparFiltros}
+                    >
+                      Limpar
+                    </Button>
+                  )}
+                </div>
+                <Separator />
+                <div className="grid grid-cols-2 gap-1">
+                  {STATUS_AGENDAMENTO.map((status) => {
+                    const Icon = status.icon;
+                    const isSelected = filtroStatus.includes(status.value);
+                    return (
+                      <button
+                        key={status.value}
+                        type="button"
+                        onClick={() => toggleFiltroStatus(status.value)}
+                        className={`
+                          flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium
+                          transition-all duration-150
+                          ${isSelected 
+                            ? `${status.lightBg} ${status.color} ring-1 ${status.borderColor}` 
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                          }
+                        `}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${isSelected ? status.color : 'text-gray-400'}`} />
+                        <span className="truncate">{status.label}</span>
+                        {isSelected && <Check className="w-3 h-3 ml-auto" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                {filtroStatus.length > 0 && (
+                  <div className="pt-1 text-[10px] text-muted-foreground text-center">
+                    Mostrando apenas: {filtroStatus.join(", ")}
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+
           {/* Legenda */}
           <div className="hidden md:flex items-center gap-2 text-xs">
             {Object.entries(CORES_TIPO).filter(([tipo]) => tipo !== "Bloqueio").map(([tipo, cor]) => (
