@@ -2297,3 +2297,21 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Ordenação por coluna mantida
 - [x] Filtros avançados mantidos
 
+
+
+---
+
+## 🔧 GORGEN 1.9.3 - Correção de Busca de Pacientes (15/01/2026)
+
+### Problemas Corrigidos
+- [x] Busca case-insensitive: "Maria", "MARIA" e "maria" agora encontram o mesmo resultado
+- [x] Busca sem acentos: "jose" agora encontra "José"
+- [x] Busca por CPF normalizada: aceita com ou sem formatação
+- [x] Busca com mais de 4-5 caracteres funcionando corretamente
+- [x] Tenant ID corrigido na função de busca rápida
+
+### Arquivos Modificados
+- [x] server/db.ts - Funções de busca corrigidas
+- [x] server/routers.ts - Endpoint searchRapido corrigido
+- [x] server/busca-pacientes.test.ts - Novos testes unitários (19 testes passando)
+
