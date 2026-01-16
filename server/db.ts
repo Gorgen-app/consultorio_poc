@@ -821,31 +821,25 @@ export async function getDashboardStats(tenantId: number) {
     total: Number(d.total),
   }));
 
-  // Distribuição por faixa etária
-  const distribuicaoFaixaEtariaResult = await db
-    .select({
-      faixa: sql<string>`CASE 
-        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) < 18 THEN '0-17'
-        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 18 AND 30 THEN '18-30'
-        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 31 AND 45 THEN '31-45'
-        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 46 AND 60 THEN '46-60'
-        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) > 60 THEN '60+'
-        ELSE 'N/I'
-      END`,
-      total: sql<number>`COUNT(*)`,
-    })
-    .from(pacientes)
-    .where(eq(pacientes.tenantId, tenantId))
-    .groupBy(sql`CASE 
-      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) < 18 THEN '0-17'
-      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 18 AND 30 THEN '18-30'
-      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 31 AND 45 THEN '31-45'
-      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 46 AND 60 THEN '46-60'
-      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) > 60 THEN '60+'
-      ELSE 'N/I'
-    END`);
+  // Distribuição por faixa etária - usando raw SQL
+  const distribuicaoFaixaEtariaRaw = await db.execute(
+    sql`SELECT 
+        CASE 
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) < 18 THEN '0-17'
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 18 AND 30 THEN '18-30'
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 31 AND 45 THEN '31-45'
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) BETWEEN 46 AND 60 THEN '46-60'
+          WHEN TIMESTAMPDIFF(YEAR, data_nascimento, CURDATE()) > 60 THEN '60+'
+          ELSE 'N/I'
+        END as faixa,
+        COUNT(*) as total
+      FROM pacientes 
+      WHERE tenant_id = ${tenantId}
+      GROUP BY faixa`
+  );
 
-  const distribuicaoFaixaEtaria = distribuicaoFaixaEtariaResult.map(d => ({
+  const distribuicaoFaixaEtariaRows = (distribuicaoFaixaEtariaRaw as unknown as [Array<{ faixa: string; total: number | bigint }>, unknown])[0] || [];
+  const distribuicaoFaixaEtaria = distribuicaoFaixaEtariaRows.map(d => ({
     faixa: d.faixa || 'N/I',
     total: Number(d.total),
   }));
