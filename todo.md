@@ -2341,3 +2341,26 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Backup criado: Agenda_backup.tsx
 - [x] Novo arquivo: Agenda.tsx (v2)
 
+
+
+---
+
+## 🚀 GORGEN 1.9.5 - Agenda v3.0 com Sistema de Delegados (15/01/2026)
+
+### Correções de Bugs
+- [x] Z-Index dos dropdowns nos modais (z-[100])
+
+### Novas Funcionalidades
+- [x] Sistema de delegados da agenda (visualizar/editar)
+- [x] Eventos sobrepostos lado a lado (algoritmo de colisão)
+- [x] Transparência para cancelados e faltas (30% opacidade)
+- [x] Cálculo automático do horário de fim para consultas
+- [x] Local padrão para consultas (Consultório)
+- [x] Campo de convênio no agendamento
+- [x] Campo de status com ícones visuais
+
+### Backend - Implementado
+- [x] Criar tabela delegados_agenda no schema
+- [x] Implementar CRUD de delegados no router
+- [ ] Adicionar verificação de permissões nas mutations (pendente)
+

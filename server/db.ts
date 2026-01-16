@@ -4550,3 +4550,209 @@ export async function searchPacientesRapido(tenantId: number, termo: string, lim
   
   return byNome;
 }
+
+
+// ===== DELEGADOS DA AGENDA =====
+import { delegadosAgenda, InsertDelegadoAgenda, DelegadoAgenda } from "../drizzle/schema";
+
+/**
+ * Listar delegados de um médico
+ */
+export async function listDelegadosAgenda(medicoUserId: number): Promise<DelegadoAgenda[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select()
+    .from(delegadosAgenda)
+    .where(
+      and(
+        eq(delegadosAgenda.medicoUserId, medicoUserId),
+        eq(delegadosAgenda.ativo, true)
+      )
+    )
+    .orderBy(desc(delegadosAgenda.createdAt));
+}
+
+/**
+ * Criar delegado da agenda
+ */
+export async function createDelegadoAgenda(data: {
+  medicoUserId: number;
+  delegadoEmail: string;
+  delegadoNome: string | null;
+  permissao: "visualizar" | "editar";
+  dataFim: Date | null;
+  criadoPor: string;
+}): Promise<DelegadoAgenda | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Verificar se já existe um delegado ativo com esse email para esse médico
+  const existente = await db.select()
+    .from(delegadosAgenda)
+    .where(
+      and(
+        eq(delegadosAgenda.medicoUserId, data.medicoUserId),
+        eq(delegadosAgenda.delegadoEmail, data.delegadoEmail),
+        eq(delegadosAgenda.ativo, true)
+      )
+    )
+    .limit(1);
+
+  if (existente.length > 0) {
+    throw new Error("Este e-mail já está cadastrado como delegado");
+  }
+
+  // Obter tenantId do médico
+  const medico = await db.select({ tenantId: users.tenantId })
+    .from(users)
+    .where(eq(users.id, data.medicoUserId))
+    .limit(1);
+
+  const tenantId = medico[0]?.tenantId || 1;
+
+  // Verificar se o delegado já é um usuário do sistema
+  const delegadoUser = await db.select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, data.delegadoEmail))
+    .limit(1);
+
+  const result = await db.insert(delegadosAgenda).values({
+    tenantId,
+    medicoUserId: data.medicoUserId,
+    delegadoUserId: delegadoUser[0]?.id || null,
+    delegadoEmail: data.delegadoEmail,
+    delegadoNome: data.delegadoNome,
+    permissao: data.permissao,
+    dataFim: data.dataFim,
+    criadoPor: data.criadoPor,
+    ativo: true,
+  });
+
+  // Retornar o delegado criado
+  const created = await db.select()
+    .from(delegadosAgenda)
+    .where(eq(delegadosAgenda.id, Number(result.insertId)))
+    .limit(1);
+
+  return created[0] || null;
+}
+
+/**
+ * Atualizar delegado da agenda
+ */
+export async function updateDelegadoAgenda(
+  id: number,
+  medicoUserId: number,
+  data: {
+    permissao?: "visualizar" | "editar";
+    dataFim?: Date | null;
+    ativo?: boolean;
+  }
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  // Verificar se o delegado pertence ao médico
+  const delegado = await db.select()
+    .from(delegadosAgenda)
+    .where(
+      and(
+        eq(delegadosAgenda.id, id),
+        eq(delegadosAgenda.medicoUserId, medicoUserId)
+      )
+    )
+    .limit(1);
+
+  if (delegado.length === 0) {
+    throw new Error("Delegado não encontrado ou não pertence a este médico");
+  }
+
+  const updateData: Partial<InsertDelegadoAgenda> = {};
+  if (data.permissao !== undefined) updateData.permissao = data.permissao;
+  if (data.dataFim !== undefined) updateData.dataFim = data.dataFim;
+  if (data.ativo !== undefined) updateData.ativo = data.ativo;
+
+  await db.update(delegadosAgenda)
+    .set(updateData)
+    .where(eq(delegadosAgenda.id, id));
+
+  return true;
+}
+
+/**
+ * Remover delegado da agenda (soft delete)
+ */
+export async function removeDelegadoAgenda(id: number, medicoUserId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  // Verificar se o delegado pertence ao médico
+  const delegado = await db.select()
+    .from(delegadosAgenda)
+    .where(
+      and(
+        eq(delegadosAgenda.id, id),
+        eq(delegadosAgenda.medicoUserId, medicoUserId)
+      )
+    )
+    .limit(1);
+
+  if (delegado.length === 0) {
+    throw new Error("Delegado não encontrado ou não pertence a este médico");
+  }
+
+  await db.update(delegadosAgenda)
+    .set({ ativo: false })
+    .where(eq(delegadosAgenda.id, id));
+
+  return true;
+}
+
+/**
+ * Obter permissões de delegado para um email
+ * Retorna lista de médicos para os quais o usuário tem permissão
+ */
+export async function getDelegadoPermissoes(email: string): Promise<Array<{
+  medicoUserId: number;
+  medicoNome: string | null;
+  medicoEmail: string | null;
+  permissao: "visualizar" | "editar";
+  dataInicio: Date;
+  dataFim: Date | null;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const now = new Date();
+
+  const delegacoes = await db.select({
+    medicoUserId: delegadosAgenda.medicoUserId,
+    permissao: delegadosAgenda.permissao,
+    dataInicio: delegadosAgenda.dataInicio,
+    dataFim: delegadosAgenda.dataFim,
+    medicoNome: users.name,
+    medicoEmail: users.email,
+  })
+    .from(delegadosAgenda)
+    .innerJoin(users, eq(users.id, delegadosAgenda.medicoUserId))
+    .where(
+      and(
+        eq(delegadosAgenda.delegadoEmail, email),
+        eq(delegadosAgenda.ativo, true),
+        or(
+          isNull(delegadosAgenda.dataFim),
+          gte(delegadosAgenda.dataFim, now)
+        )
+      )
+    );
+
+  return delegacoes.map(d => ({
+    medicoUserId: d.medicoUserId,
+    medicoNome: d.medicoNome,
+    medicoEmail: d.medicoEmail,
+    permissao: d.permissao,
+    dataInicio: d.dataInicio,
+    dataFim: d.dataFim,
+  }));
+}

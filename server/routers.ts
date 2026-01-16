@@ -3474,5 +3474,69 @@ Retorne um JSON válido com a estrutura:
         );
       }),
   }),
+
+  // ===== DELEGADOS DA AGENDA =====
+  delegadosAgenda: router({
+    // Listar delegados do médico logado
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
+        return await db.listDelegadosAgenda(ctx.user.id);
+      }),
+
+    // Adicionar delegado
+    create: protectedProcedure
+      .input(z.object({
+        email: z.string().email(),
+        nome: z.string().optional(),
+        permissao: z.enum(["visualizar", "editar"]).default("visualizar"),
+        dataFim: z.date().optional().nullable(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
+        return await db.createDelegadoAgenda({
+          medicoUserId: ctx.user.id,
+          delegadoEmail: input.email,
+          delegadoNome: input.nome || null,
+          permissao: input.permissao,
+          dataFim: input.dataFim || null,
+          criadoPor: ctx.user.name || ctx.user.email || "Sistema",
+        });
+      }),
+
+    // Atualizar permissão do delegado
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        permissao: z.enum(["visualizar", "editar"]).optional(),
+        dataFim: z.date().optional().nullable(),
+        ativo: z.boolean().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
+        return await db.updateDelegadoAgenda(input.id, ctx.user.id, {
+          permissao: input.permissao,
+          dataFim: input.dataFim,
+          ativo: input.ativo,
+        });
+      }),
+
+    // Remover delegado (soft delete - desativar)
+    remove: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
+        return await db.removeDelegadoAgenda(input.id, ctx.user.id);
+      }),
+
+    // Verificar se o usuário logado tem permissão de delegado para algum médico
+    minhasPermissoes: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (!ctx.user?.email) return [];
+        return await db.getDelegadoPermissoes(ctx.user.email);
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

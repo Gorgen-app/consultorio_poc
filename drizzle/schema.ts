@@ -1491,3 +1491,46 @@ export const backupConfig = mysqlTable("backup_config", {
 
 export type BackupConfig = typeof backupConfig.$inferSelect;
 export type InsertBackupConfig = typeof backupConfig.$inferInsert;
+
+
+/**
+ * Tabela de Delegados da Agenda
+ * Permite que médicos deleguem acesso à sua agenda para secretárias ou colaboradores
+ * Conforme Pilar 5: Controle de Acesso Baseado em Perfis
+ */
+export const delegadosAgenda = mysqlTable("delegados_agenda", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
+  
+  // Médico que está delegando acesso (dono da agenda)
+  medicoUserId: int("medico_user_id").notNull().references(() => users.id),
+  
+  // Usuário que receberá acesso (delegado)
+  delegadoUserId: int("delegado_user_id").references(() => users.id),
+  
+  // E-mail do delegado (para convites pendentes)
+  delegadoEmail: varchar("delegado_email", { length: 320 }).notNull(),
+  delegadoNome: varchar("delegado_nome", { length: 255 }),
+  
+  // Nível de permissão
+  permissao: mysqlEnum("permissao", ["visualizar", "editar"]).default("visualizar").notNull(),
+  
+  // Período de validade
+  dataInicio: timestamp("data_inicio").defaultNow().notNull(),
+  dataFim: timestamp("data_fim"),
+  
+  // Status
+  ativo: boolean("ativo").default(true).notNull(),
+  
+  // Auditoria
+  criadoPor: varchar("criado_por", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("idx_delegados_agenda_tenant").on(table.tenantId),
+  medicoIdx: index("idx_delegados_agenda_medico").on(table.medicoUserId),
+  delegadoIdx: index("idx_delegados_agenda_delegado").on(table.delegadoUserId),
+}));
+
+export type DelegadoAgenda = typeof delegadosAgenda.$inferSelect;
+export type InsertDelegadoAgenda = typeof delegadosAgenda.$inferInsert;
