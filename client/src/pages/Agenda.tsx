@@ -869,22 +869,22 @@ export default function Agenda() {
     descricao: "",
   });
 
-  // Busca de pacientes
-  const [buscaPaciente, setBuscaPaciente] = useState("");
-  const [buscaPacienteDebounced, setBuscaPacienteDebounced] = useState("");
+  // Busca de pacientes para o modal de novo agendamento
+  const [buscaPacienteModal, setBuscaPacienteModal] = useState("");
+  const [buscaPacienteModalDebounced, setBuscaPacienteModalDebounced] = useState("");
   const [showPacienteDropdown, setShowPacienteDropdown] = useState(false);
   const [pacienteSelecionadoInfo, setPacienteSelecionadoInfo] = useState<any>(null);
   
   useEffect(() => {
     const timer = setTimeout(() => {
-      setBuscaPacienteDebounced(buscaPaciente);
+      setBuscaPacienteModalDebounced(buscaPacienteModal);
     }, 300);
     return () => clearTimeout(timer);
-  }, [buscaPaciente]);
+  }, [buscaPacienteModal]);
   
   const { data: pacientesSearch, isLoading: isSearchingPacientes } = trpc.pacientes.searchRapido.useQuery(
-    { termo: buscaPacienteDebounced, limit: 15 },
-    { enabled: buscaPacienteDebounced.length >= 2 }
+    { termo: buscaPacienteModalDebounced, limit: 15 },
+    { enabled: buscaPacienteModalDebounced.length >= 2 }
   );
 
   // Calcular período
@@ -1123,7 +1123,7 @@ export default function Agenda() {
       convenio: "Particular",
       status: "Agendado",
     });
-    setBuscaPaciente("");
+    setBuscaPacienteModal("");
     setPacienteSelecionadoInfo(null);
   };
 
@@ -2240,9 +2240,9 @@ export default function Agenda() {
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar paciente..."
-                    value={buscaPaciente}
+                    value={buscaPacienteModal}
                     onChange={(e) => {
-                      setBuscaPaciente(e.target.value);
+                      setBuscaPacienteModal(e.target.value);
                       setShowPacienteDropdown(true);
                       if (!e.target.value) {
                         setNovoAgendamento({ ...novoAgendamento, pacienteId: null, pacienteNome: "" });
@@ -2257,7 +2257,7 @@ export default function Agenda() {
                   )}
                 </div>
                 
-                {showPacienteDropdown && buscaPaciente.length >= 2 && (
+                {showPacienteDropdown && buscaPacienteModal.length >= 2 && (
                   <div className="absolute z-[200] w-full mt-1 bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto">
                     {pacientesFiltrados.length > 0 ? (
                       pacientesFiltrados.map((p: any) => (
@@ -2271,7 +2271,7 @@ export default function Agenda() {
                               pacienteNome: p.nome,
                               convenio: p.operadora1 || novoAgendamento.convenio,
                             });
-                            setBuscaPaciente(p.nome);
+                            setBuscaPacienteModal(p.nome);
                             setPacienteSelecionadoInfo(p);
                             setShowPacienteDropdown(false);
                           }}
@@ -2299,7 +2299,7 @@ export default function Agenda() {
                         className="h-6 w-6 p-0"
                         onClick={() => {
                           setNovoAgendamento({ ...novoAgendamento, pacienteId: null, pacienteNome: "" });
-                          setBuscaPaciente("");
+                          setBuscaPacienteModal("");
                           setPacienteSelecionadoInfo(null);
                         }}
                       >
@@ -2309,10 +2309,10 @@ export default function Agenda() {
                   </div>
                 )}
                 
-                {!novoAgendamento.pacienteId && buscaPaciente && (
+                {!novoAgendamento.pacienteId && buscaPacienteModal && (
                   <div className="mt-1">
                     <Label className="text-xs text-muted-foreground">
-                      Novo paciente será criado com o nome: "{buscaPaciente}"
+                      Novo paciente será criado com o nome: "{buscaPacienteModal}"
                     </Label>
                   </div>
                 )}

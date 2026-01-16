@@ -431,7 +431,7 @@
 
 ---
 
-## 🚀 GORGEN 1.9.1 - Correção de Bug (07/01/2026)
+## 🚀 GORGEN 3.4.2 - Correção de Bug (07/01/2026)
 
 ### Bug Corrigido
 - [x] **Filtro de busca por nome não funcionava**
@@ -2269,7 +2269,7 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🚀 GORGEN 1.9.2 - Refatoração da Página de Pacientes (15/01/2026)
+## 🚀 GORGEN 3.4.3 - Refatoração da Página de Pacientes (15/01/2026)
 
 ### Mudança de Abordagem na Listagem de Pacientes
 - [x] Remover listagem automática de todos os pacientes
@@ -2301,7 +2301,7 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🔧 GORGEN 1.9.3 - Correção de Busca de Pacientes (15/01/2026)
+## 🔧 GORGEN 3.4.4 - Correção de Busca de Pacientes (15/01/2026)
 
 ### Problemas Corrigidos
 - [x] Busca case-insensitive: "Maria", "MARIA" e "maria" agora encontram o mesmo resultado
@@ -2319,7 +2319,7 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🚀 GORGEN 1.9.4 - Melhorias no Módulo de Agenda v2 (15/01/2026)
+## 🚀 GORGEN 3.4.5 - Melhorias no Módulo de Agenda v2 (15/01/2026)
 
 ### Novas Funcionalidades
 - [x] Configuração de horários flexível (24h) com modal de configurações
@@ -2345,7 +2345,7 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🚀 GORGEN 1.9.5 - Agenda v3.0 com Sistema de Delegados (15/01/2026)
+## 🚀 GORGEN 3.4.6 - Agenda v3.0 com Sistema de Delegados (15/01/2026)
 
 ### Correções de Bugs
 - [x] Z-Index dos dropdowns nos modais (z-[100])
@@ -2368,7 +2368,7 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🚀 GORGEN 1.9.6 - Agenda v6.0 com Máquina de Estados (16/01/2026)
+## 🚀 GORGEN 3.4.7 - Agenda v6.0 com Máquina de Estados (16/01/2026)
 
 ### Backend - Novas Rotas
 - [x] trpc.agenda.transferir - Criar novo agendamento e marcar original como "Transferido"
@@ -2394,7 +2394,7 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🚀 GORGEN 1.9.7 - Filtro por Status na Agenda (16/01/2026)
+## 🚀 GORGEN 3.4.8 - Filtro por Status na Agenda (16/01/2026)
 
 ### Nova Funcionalidade
 - [ ] Adicionar dropdown/chips de filtro por status na agenda
@@ -2406,7 +2406,7 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🚀 GORGEN 1.9.7 - Filtro por Status na Agenda (16/01/2026)
+## 🚀 GORGEN 3.4.8 - Filtro por Status na Agenda (16/01/2026)
 
 ### Novas Funcionalidades
 - [x] Filtro por status na agenda (Agendado, Confirmado, Aguardando, Em atendimento, Encerrado, Falta, Transferido, Cancelado)
@@ -2421,7 +2421,7 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🚀 GORGEN 1.9.8 - Busca por Paciente na Agenda (16/01/2026)
+## 🚀 GORGEN 3.4.9 - Busca por Paciente na Agenda (16/01/2026)
 
 ### Novas Funcionalidades
 - [x] Barra de busca por nome de paciente na agenda
