@@ -2546,3 +2546,28 @@ A dashboard deve integrar **medicina e administração**:
 ### Testes
 - [x] Testes unitários para funções de sincronização (15 testes)
 - [x] Total: 326 testes passando
+
+
+---
+
+## ✅ GORGEN 3.5.6 - Reimplantação de Layout (16/01/2026)
+
+### Arquivos Substituídos
+- [x] DashboardLayout.tsx - Sidebar com fundo branco, item ativo azul claro
+- [x] DashboardCustom.tsx - Dashboard com painel de KPIs
+- [x] index.css - Estilos globais atualizados
+- [x] KPIPanel.tsx - Novo componente de painel de KPIs
+- [x] MicroWidget.tsx - Novo componente de micro widgets
+
+### Backend Atualizado
+- [x] getDashboardStats expandido com métricas adicionais
+- [x] Distribuição por sexo, faixa etária, evolução de atendimentos
+- [x] Métricas por categoria para widgets
+
+### Verificações
+- [x] Sidebar com fundo BRANCO (não amarelo)
+- [x] Item ativo da sidebar em AZUL CLARO (#E0E8F2)
+- [x] Logo "GORGEN" em AZUL (#203864)
+- [x] Painel de 4 KPIs no topo do Dashboard
+- [x] Valores numéricos em AZUL (#203864)
+- [x] 326 testes passando

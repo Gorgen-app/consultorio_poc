@@ -761,6 +761,7 @@ export async function getDashboardStats(tenantId: number) {
 
   const totalPacientes = await countPacientes(tenantId);
   const pacientesAtivos = await countPacientes(tenantId, { status: "Ativo" });
+  const pacientesInativos = totalPacientes - pacientesAtivos;
   const totalAtendimentos = await countAtendimentos(tenantId);
 
   // Faturamento total previsto e realizado (filtrado por tenant)
@@ -771,6 +772,10 @@ export async function getDashboardStats(tenantId: number) {
     })
     .from(atendimentos)
     .where(eq(atendimentos.tenantId, tenantId));
+
+  const faturamentoTotal = Number(faturamento[0]?.realizado || 0);
+  const faturamentoPrevisto = Number(faturamento[0]?.previsto || 0);
+  const taxaRecebimento = faturamentoPrevisto > 0 ? (faturamentoTotal / faturamentoPrevisto) * 100 : 0;
 
   // Distribuição por convênio (filtrado por tenant)
   const distribuicaoConvenio = await db
@@ -784,16 +789,145 @@ export async function getDashboardStats(tenantId: number) {
     .orderBy(desc(sql<number>`COUNT(*)`))
     .limit(10);
 
+  // Distribuição por sexo
+  const distribuicaoSexoResult = await db
+    .select({
+      sexo: pacientes.sexo,
+      total: sql<number>`COUNT(*)`,
+    })
+    .from(pacientes)
+    .where(eq(pacientes.tenantId, tenantId))
+    .groupBy(pacientes.sexo);
+
+  const distribuicaoSexo = distribuicaoSexoResult.map(d => ({
+    name: d.sexo === 'M' ? 'Masculino' : d.sexo === 'F' ? 'Feminino' : 'Não informado',
+    value: Number(d.total),
+  }));
+
+  // Evolução de atendimentos (6 meses)
+  const evolucaoAtendimentosResult = await db
+    .select({
+      mes: sql<string>`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m')`,
+      total: sql<number>`COUNT(*)`,
+    })
+    .from(atendimentos)
+    .where(eq(atendimentos.tenantId, tenantId))
+    .groupBy(sql`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m')`)
+    .orderBy(sql`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m')`)
+    .limit(12);
+
+  const evolucaoAtendimentos = evolucaoAtendimentosResult.map(d => ({
+    mes: d.mes || '',
+    total: Number(d.total),
+  }));
+
+  // Distribuição por faixa etária
+  const distribuicaoFaixaEtariaResult = await db
+    .select({
+      faixa: sql<string>`CASE 
+        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) < 18 THEN '0-17'
+        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 18 AND 30 THEN '18-30'
+        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 31 AND 45 THEN '31-45'
+        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 46 AND 60 THEN '46-60'
+        WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) > 60 THEN '60+'
+        ELSE 'N/I'
+      END`,
+      total: sql<number>`COUNT(*)`,
+    })
+    .from(pacientes)
+    .where(eq(pacientes.tenantId, tenantId))
+    .groupBy(sql`CASE 
+      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) < 18 THEN '0-17'
+      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 18 AND 30 THEN '18-30'
+      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 31 AND 45 THEN '31-45'
+      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) BETWEEN 46 AND 60 THEN '46-60'
+      WHEN TIMESTAMPDIFF(YEAR, ${pacientes.dataNascimento}, CURDATE()) > 60 THEN '60+'
+      ELSE 'N/I'
+    END`);
+
+  const distribuicaoFaixaEtaria = distribuicaoFaixaEtariaResult.map(d => ({
+    faixa: d.faixa || 'N/I',
+    total: Number(d.total),
+  }));
+
+  // Novos pacientes (30 dias)
+  const novosPacientesResult = await db
+    .select({
+      total: sql<number>`COUNT(*)`,
+    })
+    .from(pacientes)
+    .where(and(
+      eq(pacientes.tenantId, tenantId),
+      sql`${pacientes.dataInclusao} >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)`
+    ));
+
+  const novosPacientes = Number(novosPacientesResult[0]?.total || 0);
+
+  // Ticket médio
+  const ticketMedio = totalAtendimentos > 0 ? faturamentoTotal / totalAtendimentos : 0;
+
+  // Tempo médio de acompanhamento (em meses)
+  const tempoMedioResult = await db
+    .select({
+      media: sql<number>`AVG(TIMESTAMPDIFF(MONTH, ${pacientes.dataInclusao}, CURDATE()))`,
+    })
+    .from(pacientes)
+    .where(eq(pacientes.tenantId, tenantId));
+
+  const tempoMedioAcompanhamento = Number(tempoMedioResult[0]?.media || 0);
+
+  // Métricas por categoria para os widgets
+  const metricasPorCategoria = [
+    {
+      categoria: "População",
+      metricas: [
+        { label: "Total de Pacientes", value: totalPacientes, tipo: "numero" },
+        { label: "Pacientes Ativos", value: pacientesAtivos, tipo: "numero" },
+        { label: "Novos (30d)", value: novosPacientes, tipo: "numero" },
+      ],
+    },
+    {
+      categoria: "Atendimentos",
+      metricas: [
+        { label: "Total de Atendimentos", value: totalAtendimentos, tipo: "numero" },
+        { label: "Ticket Médio", value: ticketMedio, tipo: "moeda" },
+      ],
+    },
+    {
+      categoria: "Econômico-Financeiro",
+      metricas: [
+        { label: "Faturamento Total", value: faturamentoTotal, tipo: "moeda" },
+        { label: "Taxa de Recebimento", value: taxaRecebimento, tipo: "percentual" },
+      ],
+    },
+  ];
+
   return {
     totalPacientes,
     pacientesAtivos,
+    pacientesInativos,
     totalAtendimentos,
-    faturamentoPrevisto: Number(faturamento[0]?.previsto || 0),
-    faturamentoRealizado: Number(faturamento[0]?.realizado || 0),
+    faturamentoPrevisto,
+    faturamentoRealizado: faturamentoTotal,
+    faturamentoTotal,
+    taxaRecebimento,
+    novosPacientes,
+    ticketMedio,
+    tempoMedioAcompanhamento,
+    // Variações (placeholder - implementar cálculo real comparando períodos)
+    faturamentoVariacao: 0,
+    pacientesVariacao: 0,
+    atendimentosVariacao: 0,
+    taxaVariacao: 0,
+    // Distribuições
     distribuicaoConvenio: distribuicaoConvenio.map(d => ({
       convenio: d.convenio || "Não informado",
       total: Number(d.total),
     })),
+    distribuicaoSexo,
+    evolucaoAtendimentos,
+    distribuicaoFaixaEtaria,
+    metricasPorCategoria,
   };
 }
 
