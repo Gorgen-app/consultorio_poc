@@ -197,7 +197,7 @@ export default function ExamesFavoritos() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveExame(exame.nomeExame)}
+                        tooltip="Fechar" onClick={() => handleRemoveExame(exame.nomeExame)}
                         disabled={removeMutation.isPending}
                       >
                         <X className="h-4 w-4 text-destructive" />
@@ -226,7 +226,7 @@ export default function ExamesFavoritos() {
                   <Button
                     onClick={handleAddCustomExame}
                     disabled={!novoExame.trim() || addMutation.isPending}
-                  >
+                   tooltip="Adicionar">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>

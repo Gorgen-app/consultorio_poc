@@ -186,7 +186,7 @@ export default function NovoPaciente() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => setLocation("/pacientes")}>
+        <Button variant="outline" size="icon" tooltip="Voltar" onClick={() => setLocation("/pacientes")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -491,8 +491,8 @@ export default function NovoPaciente() {
             </CardContent>
           </Card>
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={() => setLocation("/pacientes")}>Cancelar</Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button type="button" variant="outline" tooltip="Cancelar operação" onClick={() => setLocation("/pacientes")}>Cancelar</Button>
+            <Button type="submit" disabled={createMutation.isPending} tooltip="Salvar alterações">
               {createMutation.isPending ? "Salvando..." : (<><Save className="h-4 w-4 mr-2" />Salvar Paciente</>)}
             </Button>
           </div>

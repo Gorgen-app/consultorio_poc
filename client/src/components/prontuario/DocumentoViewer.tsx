@@ -179,7 +179,7 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
                   <Button
                     variant="outline"
                     className="mt-4"
-                    onClick={() => window.open(documento.arquivoOriginalUrl, "_blank")}
+                    tooltip="Baixar" onClick={() => window.open(documento.arquivoOriginalUrl, "_blank")}
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Baixar Arquivo
@@ -220,10 +220,10 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
                         variant="outline"
                         size="sm"
                         onClick={handleCopyText}
-                      >
+                       tooltip="Confirmar">
                         {copied ? (
                           <>
-                            <Check className="h-4 w-4 mr-2 text-emerald-500" />
+                            <Check className="h-4 w-4 mr-2 text-green-500" />
                             Copiado!
                           </>
                         ) : (
@@ -314,12 +314,12 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open(documento.arquivoOriginalUrl, "_blank")}
+              tooltip="Baixar" onClick={() => window.open(documento.arquivoOriginalUrl, "_blank")}
             >
               <Download className="h-4 w-4 mr-2" />
               Baixar
             </Button>
-            <Button variant="outline" size="sm" onClick={onClose}>
+            <Button variant="outline" size="sm" onClick={onClose} tooltip="Fechar janela">
               <X className="h-4 w-4 mr-2" />
               Fechar
             </Button>

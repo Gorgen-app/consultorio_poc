@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, user_id, username FROM user_credentials;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, user_id, username FROM user_credentials;",
+  "rows": [
+    {
+      "id": "1",
+      "user_id": "1",
+      "username": "andre.gorgen"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuser_id\tusername\n1\t1\tandre.gorgen\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

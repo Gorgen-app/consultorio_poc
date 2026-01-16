@@ -141,7 +141,7 @@ export default function ProntuarioResumoClinico({
           <h2 className="text-xl font-bold">Resumo Clínico</h2>
           <p className="text-sm text-gray-500">História clínica, problemas ativos, alergias e medicamentos</p>
         </div>
-        <Button onClick={() => setEditandoResumo(true)}>
+        <Button tooltip="Editar registro" onClick={() => setEditandoResumo(true)}>
           <Edit className="h-4 w-4 mr-2" />
           Editar Resumo
         </Button>
@@ -209,7 +209,7 @@ export default function ProntuarioResumoClinico({
           </div>
           <Dialog open={novoProblema} onOpenChange={setNovoProblema}>
             <DialogTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" tooltip="Adicionar item">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar
               </Button>
@@ -254,9 +254,9 @@ export default function ProntuarioResumoClinico({
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setNovoProblema(false)}>Cancelar</Button>
+                <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovoProblema(false)}>Cancelar</Button>
                 <Button 
-                  onClick={() => createProblema.mutate({ pacienteId, ...problemaForm, ativo: true })}
+                  tooltip="Salvar alterações" onClick={() => createProblema.mutate({ pacienteId, ...problemaForm, ativo: true })}
                   disabled={!problemaForm.descricao || createProblema.isPending}
                 >
                   Salvar
@@ -319,7 +319,7 @@ export default function ProntuarioResumoClinico({
           </div>
           <Dialog open={novaAlergia} onOpenChange={setNovaAlergia}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="destructive">
+              <Button size="sm" variant="destructive" tooltip="Adicionar item">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar
               </Button>
@@ -382,9 +382,9 @@ export default function ProntuarioResumoClinico({
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setNovaAlergia(false)}>Cancelar</Button>
+                <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovaAlergia(false)}>Cancelar</Button>
                 <Button 
-                  onClick={() => createAlergia.mutate({ pacienteId, ...alergiaForm, confirmada: true })}
+                  tooltip="Salvar alterações" onClick={() => createAlergia.mutate({ pacienteId, ...alergiaForm, confirmada: true })}
                   disabled={!alergiaForm.substancia || createAlergia.isPending}
                 >
                   Salvar
@@ -395,7 +395,7 @@ export default function ProntuarioResumoClinico({
         </CardHeader>
         <CardContent>
           {alergias.length === 0 ? (
-            <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
+            <Badge variant="outline" className="bg-green-50 text-green-700">
               Nenhuma alergia conhecida (NKDA)
             </Badge>
           ) : (
@@ -433,7 +433,7 @@ export default function ProntuarioResumoClinico({
           </div>
           <Dialog open={novoMedicamento} onOpenChange={setNovoMedicamento}>
             <DialogTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" tooltip="Adicionar item">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar
               </Button>
@@ -479,9 +479,9 @@ export default function ProntuarioResumoClinico({
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setNovoMedicamento(false)}>Cancelar</Button>
+                <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovoMedicamento(false)}>Cancelar</Button>
                 <Button 
-                  onClick={() => createMedicamento.mutate({ pacienteId, ...medicamentoForm, ativo: true })}
+                  tooltip="Salvar alterações" onClick={() => createMedicamento.mutate({ pacienteId, ...medicamentoForm, ativo: true })}
                   disabled={!medicamentoForm.medicamento || createMedicamento.isPending}
                 >
                   Salvar
@@ -589,9 +589,9 @@ export default function ProntuarioResumoClinico({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditandoResumo(false)}>Cancelar</Button>
+            <Button variant="outline" tooltip="Cancelar operação" onClick={() => setEditandoResumo(false)}>Cancelar</Button>
             <Button 
-              onClick={() => upsertResumo.mutate({ pacienteId, ...resumoForm })}
+              tooltip="Salvar alterações" onClick={() => upsertResumo.mutate({ pacienteId, ...resumoForm })}
               disabled={upsertResumo.isPending}
             >
               <Save className="h-4 w-4 mr-2" />

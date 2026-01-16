@@ -150,7 +150,7 @@ export default function RelatorioDuplicados() {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => setLocation("/pacientes")}
+            tooltip="Voltar à página anterior" onClick={() => setLocation("/pacientes")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
@@ -162,7 +162,7 @@ export default function RelatorioDuplicados() {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => refetch()}
+            tooltip="Atualizar dados" onClick={() => refetch()}
             disabled={isFetching}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
@@ -236,7 +236,7 @@ export default function RelatorioDuplicados() {
                 {isLoading ? (
                   <div className="text-center py-8 text-gray-500">Carregando...</div>
                 ) : duplicadosCPF.length === 0 ? (
-                  <div className="text-center py-8 text-emerald-600">
+                  <div className="text-center py-8 text-green-600">
                     <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p className="font-medium">Nenhum duplicado por CPF encontrado!</p>
                     <p className="text-sm text-gray-500">Todos os CPFs são únicos no sistema.</p>
@@ -292,7 +292,7 @@ export default function RelatorioDuplicados() {
                                   <TableCell>{p.telefone || "-"}</TableCell>
                                   <TableCell className="text-right">
                                     <Link href={`/prontuario/${p.id}`}>
-                                      <Button variant="ghost" size="sm" title="Ver prontuário">
+                                      <Button variant="ghost" size="sm" title="Ver prontuário" tooltip="Documento">
                                         <FileText className="h-4 w-4" />
                                       </Button>
                                     </Link>
@@ -312,7 +312,7 @@ export default function RelatorioDuplicados() {
                 {isLoading ? (
                   <div className="text-center py-8 text-gray-500">Carregando...</div>
                 ) : duplicadosNome.length === 0 ? (
-                  <div className="text-center py-8 text-emerald-600">
+                  <div className="text-center py-8 text-green-600">
                     <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p className="font-medium">Nenhum duplicado por nome encontrado!</p>
                     <p className="text-sm text-gray-500">Todos os nomes são únicos no sistema.</p>
@@ -368,7 +368,7 @@ export default function RelatorioDuplicados() {
                                   <TableCell>{p.operadora1 || "-"}</TableCell>
                                   <TableCell className="text-right">
                                     <Link href={`/prontuario/${p.id}`}>
-                                      <Button variant="ghost" size="sm" title="Ver prontuário">
+                                      <Button variant="ghost" size="sm" title="Ver prontuário" tooltip="Documento">
                                         <FileText className="h-4 w-4" />
                                       </Button>
                                     </Link>

@@ -47,7 +47,7 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
           <p className="text-sm text-gray-500">Resultados de exames de sangue, urina, etc.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { setExameIdParaUpload(null); setModalUploadAberto(true); }}>
+          <Button variant="outline" tooltip="Enviar" onClick={() => { setExameIdParaUpload(null); setModalUploadAberto(true); }}>
             <Upload className="h-4 w-4 mr-2" />
             Upload de Documento
           </Button>
@@ -67,8 +67,8 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
               <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => setForm({...form, observacoes: e.target.value})} /></div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setNovoExame(false)}>Cancelar</Button>
-              <Button onClick={() => createExame.mutate({ pacienteId, dataColeta: form.dataColeta, laboratorio: form.laboratorio || null, tipoExame: form.tipoExame, resultado: form.resultados || null, exame: form.tipoExame, observacoes: form.observacoes || null })} disabled={!form.tipoExame}>Salvar</Button>
+              <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovoExame(false)}>Cancelar</Button>
+              <Button tooltip="Salvar alterações" onClick={() => createExame.mutate({ pacienteId, dataColeta: form.dataColeta, laboratorio: form.laboratorio || null, tipoExame: form.tipoExame, resultado: form.resultados || null, exame: form.tipoExame, observacoes: form.observacoes || null })} disabled={!form.tipoExame}>Salvar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -79,7 +79,7 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
           <CardContent className="py-8 text-center">
             <TestTube className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">Nenhum exame laboratorial registrado.</p>
-            <Button className="mt-4" onClick={() => setNovoExame(true)}>
+            <Button className="mt-4" tooltip="Criar novo registro" onClick={() => setNovoExame(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Registrar Primeiro Exame
             </Button>
@@ -96,7 +96,7 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
+                      tooltip="Enviar" onClick={() => {
                         setExameIdParaUpload(ex.id);
                         setModalUploadAberto(true);
                       }}
@@ -111,7 +111,7 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
               <CardContent className="text-sm">
                 {ex.laboratorio && <p className="text-gray-500 mb-2">Laboratório: {ex.laboratorio}</p>}
                 {ex.resultados && <pre className="whitespace-pre-wrap bg-gray-50 p-3 rounded text-xs">{ex.resultados}</pre>}
-                {ex.arquivoUrl && <Button variant="outline" size="sm" className="mt-2"><Download className="h-4 w-4 mr-2" />Ver Laudo</Button>}
+                {ex.arquivoUrl && <Button variant="outline" size="sm" className="mt-2" tooltip="Baixar"><Download className="h-4 w-4 mr-2" />Ver Laudo</Button>}
               </CardContent>
             </Card>
           ))}

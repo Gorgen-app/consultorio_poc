@@ -336,7 +336,7 @@ export default function Atendimentos() {
                   variant="ghost"
                   size="sm"
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                  onClick={() => setSearchTerm("")}
+                  tooltip="Fechar" onClick={() => setSearchTerm("")}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -344,14 +344,14 @@ export default function Atendimentos() {
             </div>
             <Button
               variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
+              tooltip="Filtrar" onClick={() => setShowFilters(!showFilters)}
               className="gap-2"
             >
               <Filter className="h-4 w-4" />
               {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
             </Button>
             {temFiltrosAtivos && (
-              <Button variant="ghost" onClick={limparFiltros} className="gap-2">
+              <Button variant="ghost" onClick={limparFiltros} className="gap-2" tooltip="Limpar campos">
                 <X className="h-4 w-4" />
                 Limpar Filtros
               </Button>
@@ -534,7 +534,7 @@ export default function Atendimentos() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded text-xs ${atd.pagamentoEfetivado ? "bg-emerald-100 text-emerald-800" : "bg-yellow-100 text-yellow-800"}`}>
+                          <span className={`px-2 py-1 rounded text-xs ${atd.pagamentoEfetivado ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
                             {atd.pagamentoEfetivado ? "Sim" : "Não"}
                           </span>
                         </TableCell>
@@ -547,7 +547,7 @@ export default function Atendimentos() {
                                   size="sm"
                                   title="Ver prontuário do paciente"
                                   className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                >
+                                 tooltip="Documento">
                                   <FileText className="h-4 w-4" />
                                 </Button>
                               </Link>
@@ -555,16 +555,16 @@ export default function Atendimentos() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDuplicar(atd)}
+                              tooltip="Copiar" onClick={() => handleDuplicar(atd)}
                               title="Duplicar atendimento"
-                              className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleEditar(atd)}
+                              tooltip="Editar registro" onClick={() => handleEditar(atd)}
                               title="Editar atendimento"
                             >
                               <Pencil className="h-4 w-4" />
@@ -572,7 +572,7 @@ export default function Atendimentos() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleExcluir(atd)}
+                              tooltip="Excluir item selecionado" onClick={() => handleExcluir(atd)}
                               title="Excluir atendimento"
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
@@ -596,7 +596,7 @@ export default function Atendimentos() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                      tooltip="Voltar para etapa anterior" onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
                       disabled={paginaAtual === 1}
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -605,7 +605,7 @@ export default function Atendimentos() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                      tooltip="Próximo" onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
                       disabled={paginaAtual === totalPaginas}
                     >
                       Próxima

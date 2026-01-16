@@ -216,7 +216,7 @@ export function MergePacientesModal({
                           </div>
                         </div>
                         {pacientePrincipal === paciente.id && (
-                          <Badge className="bg-emerald-500">Principal</Badge>
+                          <Badge className="bg-green-500">Principal</Badge>
                         )}
                       </div>
                     </CardHeader>
@@ -317,23 +317,23 @@ export function MergePacientesModal({
 
         <DialogFooter className="gap-2">
           {step === "revisar" && (
-            <Button variant="outline" onClick={() => setStep("selecionar")}>
+            <Button variant="outline" tooltip="Voltar à página anterior" onClick={() => setStep("selecionar")}>
               Voltar
             </Button>
           )}
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" tooltip="Cancelar operação" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           {step === "selecionar" ? (
-            <Button onClick={handleProximoStep} disabled={!pacientePrincipal}>
+            <Button onClick={handleProximoStep} disabled={!pacientePrincipal} tooltip="Avançar para próxima etapa">
               Próximo
             </Button>
           ) : (
             <Button
               onClick={handleMerge}
               disabled={mergeMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
+              className="bg-green-600 hover:bg-green-700"
+             tooltip="Confirmar ação">
               {mergeMutation.isPending ? "Unificando..." : "Confirmar Unificação"}
             </Button>
           )}

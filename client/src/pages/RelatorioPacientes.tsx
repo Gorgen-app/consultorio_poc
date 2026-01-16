@@ -207,19 +207,19 @@ export default function RelatorioPacientes() {
           <p className="text-muted-foreground">Análise e exportação de dados por convênio</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => refetch()}>
+          <Button variant="outline" tooltip="Atualizar dados" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => exportToCSV(pacientesFiltrados, "relatorio_pacientes")}
+            tooltip="Exportar dados" onClick={() => exportToCSV(pacientesFiltrados, "relatorio_pacientes")}
           >
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Exportar Excel
           </Button>
           <Button 
-            onClick={() => exportToPDF("Relatório de Pacientes por Convênio")}
+            tooltip="Exportar dados" onClick={() => exportToPDF("Relatório de Pacientes por Convênio")}
           >
             <FileText className="h-4 w-4 mr-2" />
             Exportar PDF
@@ -286,7 +286,7 @@ export default function RelatorioPacientes() {
           </div>
 
           <div className="flex justify-end mt-4">
-            <Button variant="ghost" onClick={limparFiltros}>
+            <Button variant="ghost" onClick={limparFiltros} tooltip="Limpar campos">
               Limpar filtros
             </Button>
           </div>
@@ -401,7 +401,7 @@ export default function RelatorioPacientes() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      tooltip="Voltar para etapa anterior" onClick={() => setPage(p => Math.max(1, p - 1))}
                       disabled={page === 1}
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -410,7 +410,7 @@ export default function RelatorioPacientes() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      tooltip="Próximo" onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
                     >
                       Próxima

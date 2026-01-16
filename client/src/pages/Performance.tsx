@@ -244,7 +244,7 @@ export default function Performance() {
                   </p>
                 </div>
                 
-                <Button onClick={handleSaveAlertConfig} className="w-full">
+                <Button onClick={handleSaveAlertConfig} className="w-full" tooltip="Salvar alterações">
                   Salvar Configurações
                 </Button>
               </div>
@@ -252,11 +252,11 @@ export default function Performance() {
           </Dialog>
           
           {/* Botões de Exportação */}
-          <Button variant="outline" size="sm" onClick={() => handleExportCSV('aggregated')}>
+          <Button variant="outline" size="sm" tooltip="Exportar dados" onClick={() => handleExportCSV('aggregated')}>
             <Download className="h-4 w-4 mr-2" />
             Exportar Resumo
           </Button>
-          <Button variant="outline" size="sm" onClick={() => handleExportCSV('raw')}>
+          <Button variant="outline" size="sm" tooltip="Exportar dados" onClick={() => handleExportCSV('raw')}>
             <Download className="h-4 w-4 mr-2" />
             Exportar Detalhado
           </Button>
@@ -275,7 +275,7 @@ export default function Performance() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => acknowledgeAllMutation.mutate()}
+                tooltip="Confirmar" onClick={() => acknowledgeAllMutation.mutate()}
               >
                 <Check className="h-4 w-4 mr-2" />
                 Reconhecer Todos
@@ -311,7 +311,7 @@ export default function Performance() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => acknowledgeAlertMutation.mutate({ alertId: alert.id })}
+                    tooltip="Fechar" onClick={() => acknowledgeAlertMutation.mutate({ alertId: alert.id })}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -368,7 +368,7 @@ export default function Performance() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Uptime</CardTitle>
-            <Server className="h-4 w-4 text-emerald-600" />
+            <Server className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -441,13 +441,13 @@ export default function Performance() {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
-                  className="bg-emerald-600 h-2 rounded-full" 
+                  className="bg-green-600 h-2 rounded-full" 
                   style={{ width: `${overview?.system.cacheStats.hitRate || 0}%` }}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-emerald-50 rounded-lg">
-                  <div className="text-2xl font-bold text-emerald-600">
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">
                     {overview?.system.cacheStats.hits || 0}
                   </div>
                   <div className="text-xs text-muted-foreground">Cache Hits</div>

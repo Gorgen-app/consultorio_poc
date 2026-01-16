@@ -2497,3 +2497,15 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Testes de aliases em português
 - [x] Testes de integração de e-mail
 - [x] Total: 311 testes passando
+
+
+---
+
+## ✅ GORGEN 3.5.3 - Tooltip Global (16/01/2026)
+
+### Implementação
+- [x] Substituir componente button.tsx com suporte a tooltip
+- [x] Substituir componente tooltip.tsx com delay de 2 segundos
+- [x] Atualizar App.tsx com TooltipProvider global (delayDuration=2000ms)
+- [x] Aplicar migração automática dos botões existentes (309 botões em 47 arquivos)
+- [x] Testar funcionalidade - 311 testes passando

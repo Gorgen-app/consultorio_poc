@@ -222,7 +222,7 @@ export function DocumentoUpload({
           <div
             className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
               arquivo
-                ? "border-emerald-500 bg-emerald-50"
+                ? "border-green-500 bg-green-50"
                 : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
             }`}
             onClick={() => fileInputRef.current?.click()}
@@ -244,9 +244,9 @@ export function DocumentoUpload({
                     className="max-h-32 mx-auto rounded"
                   />
                 ) : (
-                  <FileText className="h-12 w-12 mx-auto text-emerald-600" />
+                  <FileText className="h-12 w-12 mx-auto text-green-600" />
                 )}
-                <p className="text-sm font-medium text-emerald-700">
+                <p className="text-sm font-medium text-green-700">
                   {arquivo.name}
                 </p>
                 <p className="text-xs text-gray-500">
@@ -255,7 +255,7 @@ export function DocumentoUpload({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={(e) => {
+                  tooltip="Remover item" onClick={(e) => {
                     e.stopPropagation();
                     setArquivo(null);
                     setPreviewUrl(null);
@@ -320,10 +320,10 @@ export function DocumentoUpload({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isUploading}>
+          <Button variant="outline" onClick={onClose} disabled={isUploading} tooltip="Cancelar operação">
             Cancelar
           </Button>
-          <Button onClick={handleUpload} disabled={!arquivo || !titulo || isUploading}>
+          <Button onClick={handleUpload} disabled={!arquivo || !titulo || isUploading} tooltip="Enviar">
             {isUploading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -414,7 +414,7 @@ export function DocumentosList({ pacienteId, categoria }: DocumentosListProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
+              tooltip="Visualizar" onClick={(e) => {
                 e.stopPropagation();
                 setDocumentoSelecionado(doc);
               }}

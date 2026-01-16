@@ -78,7 +78,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
       case "Diminuído":
         return <TrendingDown className="h-3 w-3 text-blue-500" />;
       default:
-        return <Minus className="h-3 w-3 text-emerald-500" />;
+        return <Minus className="h-3 w-3 text-green-500" />;
     }
   };
 
@@ -106,7 +106,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
             <FileSpreadsheet className="h-5 w-5" />
             Fluxograma Laboratorial
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button variant="outline" size="sm" tooltip="Atualizar dados" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4 mr-1" />
             Atualizar
           </Button>
@@ -224,7 +224,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
                         {refMin !== null && (
                           <ReferenceLine
                             y={refMin}
-                            stroke="#203864"
+                            stroke="#3b82f6"
                             strokeDasharray="5 5"
                             label={{ value: "Mín", position: "left", fontSize: 10 }}
                           />
@@ -232,7 +232,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
                         {refMax !== null && (
                           <ReferenceLine
                             y={refMax}
-                            stroke="#EF4444"
+                            stroke="#ef4444"
                             strokeDasharray="5 5"
                             label={{ value: "Máx", position: "left", fontSize: 10 }}
                           />
@@ -240,7 +240,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
                         <Line
                           type="monotone"
                           dataKey="valor"
-                          stroke="#3B5F96"
+                          stroke="#8884d8"
                           strokeWidth={2}
                           dot={{ r: 4 }}
                           activeDot={{ r: 6 }}
@@ -254,7 +254,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
                   </p>
                 )}
 
-                <Button variant="outline" size="sm" onClick={() => setActiveTab("tabela")}>
+                <Button variant="outline" size="sm" tooltip="Voltar à página anterior" onClick={() => setActiveTab("tabela")}>
                   Voltar para tabela
                 </Button>
               </div>
