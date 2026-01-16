@@ -456,6 +456,7 @@ export const appRouter = router({
       }),
 
     // Listar pacientes com paginação server-side (retorna pacientes + total)
+    // IMPORTANTE: Não carrega pacientes sem busca/filtros para melhor performance
     listPaginated: tenantProcedure
       .input(
         z.object({
@@ -471,17 +472,40 @@ export const appRouter = router({
       )
       .query(async ({ input, ctx }) => {
         const { page, pageSize, ...filters } = input;
+        
+        // Verificar se há algum filtro ativo
+        const temFiltroAtivo = !!(filters.busca || filters.convenio || filters.diagnostico || filters.status || filters.cidade || filters.uf);
+        
+        // Se não houver filtro, retornar vazio para evitar carregar todos os pacientes
+        if (!temFiltroAtivo) {
+          return {
+            pacientes: [],
+            total: 0,
+            page: 1,
+            pageSize,
+            totalPages: 0,
+            semFiltro: true, // Flag para o frontend saber que não há filtro
+          };
+        }
+        
         const offset = (page - 1) * pageSize;
         
         // Buscar total e pacientes em paralelo
-        const [total, pacientes] = await Promise.all([
+        const [totalBruto, pacientes] = await Promise.all([
           db.countPacientes(ctx.tenant.tenantId, filters),
           db.listPacientes(ctx.tenant.tenantId, { ...filters, limit: pageSize, offset })
         ]);
         
+        // Limitar total a 1000 pacientes para evitar sobrecarga
+        const LIMITE_MAXIMO = 1000;
+        const total = Math.min(totalBruto, LIMITE_MAXIMO);
+        const excedeuLimite = totalBruto > LIMITE_MAXIMO;
+        
         return {
           pacientes,
           total,
+          totalBruto, // Total real sem limite
+          excedeuLimite, // Flag para avisar o usuário
           page,
           pageSize,
           totalPages: Math.ceil(total / pageSize)

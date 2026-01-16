@@ -2256,3 +2256,44 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Busca inteligente de paciente (ID/nome/CPF) com preenchimento automático
 - [x] Criar paciente automaticamente se não existir no sistema
 
+
+---
+
+## 🚀 GORGEN 3.4.2 - Melhorias na Paginação (15/01/2026)
+
+### Paginação da Lista de Pacientes
+- [ ] Adicionar campo para ir direto para página X
+- [ ] Adicionar botão para ir para primeira página (« ou ⏮️)
+- [ ] Adicionar botão para ir para última página (» ou ⏭️)
+
+
+---
+
+## 🚀 GORGEN 1.9.2 - Refatoração da Página de Pacientes (15/01/2026)
+
+### Mudança de Abordagem na Listagem de Pacientes
+- [x] Remover listagem automática de todos os pacientes
+- [x] Exibir pacientes apenas após busca ou aplicação de filtros
+- [x] Limitar resultados a máximo de 1.000 pacientes por busca
+- [x] Aviso quando busca retorna mais de 1.000 resultados
+- [x] Mensagem orientadora para iniciar busca quando não há filtros
+
+### Paginação Aprimorada
+- [x] Campo de input para ir direto para página específica
+- [x] Botão de primeira página (⏮️)
+- [x] Botão de última página (⏭️)
+- [x] Botões Anterior e Próxima mantidos
+- [x] Indicador "Página X de Y"
+
+### Busca de Pacientes
+- [x] Busca por nome funcionando corretamente
+- [x] Busca por CPF funcionando
+- [x] Busca por ID funcionando
+- [x] Debounce de 300ms para evitar requisições excessivas
+
+### Performance
+- [x] Limite de 1.000 pacientes no backend
+- [x] Paginação no frontend (20, 50, 100 por página)
+- [x] Ordenação por coluna mantida
+- [x] Filtros avançados mantidos
+
