@@ -1,0 +1,58 @@
+{
+  "query": "SELECT DATE_FORMAT(data_atendimento, '%Y-%m') as mes, COUNT(*) as total FROM atendimentos WHERE tenant_id = 1 GROUP BY DATE_FORMAT(data_atendimento, '%Y-%m') ORDER BY mes LIMIT 12;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT DATE_FORMAT(data_atendimento, '%Y-%m') as mes, COUNT(*) as total FROM atendimentos WHERE tenant_id = 1 GROUP BY DATE_FORMAT(data_atendimento, '%Y-%m') ORDER BY mes LIMIT 12;",
+  "rows": [
+    {
+      "mes": "2025-01",
+      "total": "44"
+    },
+    {
+      "mes": "2025-02",
+      "total": "41"
+    },
+    {
+      "mes": "2025-03",
+      "total": "67"
+    },
+    {
+      "mes": "2025-04",
+      "total": "88"
+    },
+    {
+      "mes": "2025-05",
+      "total": "117"
+    },
+    {
+      "mes": "2025-06",
+      "total": "103"
+    },
+    {
+      "mes": "2025-07",
+      "total": "129"
+    },
+    {
+      "mes": "2025-08",
+      "total": "141"
+    },
+    {
+      "mes": "2025-09",
+      "total": "141"
+    },
+    {
+      "mes": "2025-10",
+      "total": "165"
+    },
+    {
+      "mes": "2025-11",
+      "total": "142"
+    },
+    {
+      "mes": "2025-12",
+      "total": "124"
+    }
+  ],
+  "messages": [],
+  "stdout": "mes\ttotal\n2025-01\t44\n2025-02\t41\n2025-03\t67\n2025-04\t88\n2025-05\t117\n2025-06\t103\n2025-07\t129\n2025-08\t141\n2025-09\t141\n2025-10\t165\n2025-11\t142\n2025-12\t124\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

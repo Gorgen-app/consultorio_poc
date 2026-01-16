@@ -804,19 +804,19 @@ export async function getDashboardStats(tenantId: number) {
     value: Number(d.total),
   }));
 
-  // Evolução de atendimentos (6 meses)
-  const evolucaoAtendimentosResult = await db
-    .select({
-      mes: sql<string>`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m')`.as('mes'),
-      total: sql<number>`COUNT(*)`.as('total'),
-    })
-    .from(atendimentos)
-    .where(eq(atendimentos.tenantId, tenantId))
-    .groupBy(sql`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m')`)
-    .orderBy(sql`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m')`)
-    .limit(12);
+  // Evolução de atendimentos (12 meses) - usando raw SQL para evitar problemas de geração de query
+  const evolucaoAtendimentosRaw = await db.execute(
+    sql`SELECT DATE_FORMAT(data_atendimento, '%Y-%m') as mes, COUNT(*) as total 
+        FROM atendimentos 
+        WHERE tenant_id = ${tenantId} 
+        GROUP BY DATE_FORMAT(data_atendimento, '%Y-%m') 
+        ORDER BY mes 
+        LIMIT 12`
+  );
 
-  const evolucaoAtendimentos = evolucaoAtendimentosResult.map(d => ({
+  // O resultado do execute() retorna [rows, fields] - pegamos o primeiro elemento
+  const evolucaoAtendimentosRows = (evolucaoAtendimentosRaw as unknown as [Array<{ mes: string; total: number | bigint }>, unknown])[0] || [];
+  const evolucaoAtendimentos = evolucaoAtendimentosRows.map(d => ({
     mes: d.mes || '',
     total: Number(d.total),
   }));
