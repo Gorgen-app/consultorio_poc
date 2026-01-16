@@ -1,49 +1,76 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@custom-variant dark (&:is(.dark *));
 
-/* ============================================
-   GORGEN DESIGN SYSTEM - Variáveis CSS
-   ============================================ */
-
-:root {
-  /* Cor Primária - Azul Gorgen */
-  --gorgen-50: #F0F4F9;
-  --gorgen-100: #E0E8F2;
-  --gorgen-200: #B8C9DE;
-  --gorgen-300: #8BA3C9;
-  --gorgen-400: #5A7DB0;
-  --gorgen-500: #3B5F96;
-  --gorgen-600: #2B4A7D;
-  --gorgen-700: #203864;
-  --gorgen-800: #1A2B47;
-  --gorgen-900: #152238;
-  --gorgen-950: #0D1520;
-
-  /* Cor Accent - Coral */
-  --gorgen-accent: #DC6B4A;
-  --gorgen-accent-light: #FEE8E2;
-  --gorgen-accent-dark: #B8503A;
-
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Gorgen Design System - Paleta de Cores */
+  /* Cor Primária: Azul Gorgen #203864 */
+  --gorgen-primary-50: #F0F4F9;
+  --gorgen-primary-100: #E0E8F2;
+  --gorgen-primary-200: #B8C9DE;
+  --gorgen-primary-300: #8BA3C9;
+  --gorgen-primary-400: #5A7DB0;
+  --gorgen-primary-500: #3B5F96;
+  --gorgen-primary-600: #2B4A7D;
+  --gorgen-primary-700: #203864;
+  --gorgen-primary-800: #1A2B47;
+  --gorgen-primary-900: #152238;
+  --gorgen-primary-950: #0D1729;
+  
+  /* Cor de Destaque (Accent): Coral */
+  --gorgen-accent-100: #FCEAE5;
+  --gorgen-accent-400: #F0A08D;
+  --gorgen-accent-500: #E8836A;
+  --gorgen-accent-600: #DC6B4A;
+  
   /* Cores Semânticas */
   --gorgen-success: #10B981;
   --gorgen-success-light: #D1FAE5;
-  --gorgen-success-dark: #059669;
-
   --gorgen-warning: #F59E0B;
   --gorgen-warning-light: #FEF3C7;
-  --gorgen-warning-dark: #D97706;
-
   --gorgen-error: #EF4444;
   --gorgen-error-light: #FEE2E2;
-  --gorgen-error-dark: #DC2626;
-
   --gorgen-info: #3B82F6;
   --gorgen-info-light: #DBEAFE;
-  --gorgen-info-dark: #2563EB;
-
+  
   /* Cores Neutras */
   --gorgen-gray-50: #F9FAFB;
   --gorgen-gray-100: #F3F4F6;
@@ -51,338 +78,371 @@
   --gorgen-gray-300: #D1D5DB;
   --gorgen-gray-400: #9CA3AF;
   --gorgen-gray-500: #6B7280;
-  --gorgen-gray-600: #4B5563;
   --gorgen-gray-700: #374151;
-  --gorgen-gray-800: #1F2937;
   --gorgen-gray-900: #111827;
+}
 
-  /* Tipografia */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-
+:root {
+  /* ================================================
+   * GORGEN DESIGN SYSTEM - Light Theme
+   * Paleta baseada no Azul Gorgen #203864
+   * Tipografia: Inter
+   * ================================================ */
+  
+  /* Cor Primária - Azul Gorgen */
+  --primary: #203864;
+  --primary-foreground: #FFFFFF;
+  
   /* Sidebar */
-  --sidebar-bg: #FFFFFF;
+  --sidebar-primary: #2B4A7D;
+  --sidebar-primary-foreground: #FFFFFF;
+  
+  /* Gráficos - Escala do Azul Gorgen */
+  --chart-1: #203864;
+  --chart-2: #3B5F96;
+  --chart-3: #5A7DB0;
+  --chart-4: #8BA3C9;
+  --chart-5: #B8C9DE;
+  
+  /* Raio de borda padrão */
+  --radius: 0.5rem;
+  
+  /* Background e Foreground */
+  --background: #FFFFFF;
+  --foreground: #111827;
+  
+  /* Cards */
+  --card: #FFFFFF;
+  --card-foreground: #111827;
+  
+  /* Popovers */
+  --popover: #FFFFFF;
+  --popover-foreground: #111827;
+  
+  /* Secondary - Cinza neutro */
+  --secondary: #F3F4F6;
+  --secondary-foreground: #374151;
+  
+  /* Muted - Para textos secundários */
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  
+  /* Accent - Coral Gorgen */
+  --accent: #FCEAE5;
+  --accent-foreground: #DC6B4A;
+  
+  /* Destructive - Vermelho para ações destrutivas */
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  
+  /* Bordas e Inputs */
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #203864;
+  
+  /* Sidebar */
+  --sidebar: #F9FAFB;
+  --sidebar-foreground: #111827;
+  --sidebar-accent: #E0E8F2;
+  --sidebar-accent-foreground: #203864;
   --sidebar-border: #E5E7EB;
-  --sidebar-active-bg: #E0E8F2;
-  --sidebar-active-text: #203864;
-  --sidebar-text: #4B5563;
-  --sidebar-hover-bg: #F3F4F6;
+  --sidebar-ring: #203864;
 }
 
-/* ============================================
-   BASE STYLES
-   ============================================ */
-
-* {
-  font-family: var(--font-sans);
+.dark {
+  /* ================================================
+   * GORGEN DESIGN SYSTEM - Dark Theme
+   * ================================================ */
+  
+  /* Cor Primária - Azul Gorgen (mais claro no dark) */
+  --primary: #5A7DB0;
+  --primary-foreground: #FFFFFF;
+  
+  /* Sidebar */
+  --sidebar-primary: #8BA3C9;
+  --sidebar-primary-foreground: #0D1729;
+  
+  /* Gráficos - Escala invertida para dark mode */
+  --chart-1: #8BA3C9;
+  --chart-2: #5A7DB0;
+  --chart-3: #3B5F96;
+  --chart-4: #2B4A7D;
+  --chart-5: #203864;
+  
+  /* Background e Foreground */
+  --background: #0D1729;
+  --foreground: #F3F4F6;
+  
+  /* Cards */
+  --card: #152238;
+  --card-foreground: #F3F4F6;
+  
+  /* Popovers */
+  --popover: #152238;
+  --popover-foreground: #F3F4F6;
+  
+  /* Secondary */
+  --secondary: #1A2B47;
+  --secondary-foreground: #E5E7EB;
+  
+  /* Muted */
+  --muted: #1A2B47;
+  --muted-foreground: #9CA3AF;
+  
+  /* Accent - Coral (ajustado para dark) */
+  --accent: #2B4A7D;
+  --accent-foreground: #F0A08D;
+  
+  /* Destructive */
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  
+  /* Bordas e Inputs */
+  --border: #1A2B47;
+  --input: #1A2B47;
+  --ring: #5A7DB0;
+  
+  /* Sidebar */
+  --sidebar: #152238;
+  --sidebar-foreground: #F3F4F6;
+  --sidebar-accent: #1A2B47;
+  --sidebar-accent-foreground: #8BA3C9;
+  --sidebar-border: #1A2B47;
+  --sidebar-ring: #5A7DB0;
 }
 
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      max-width: 1280px;
+    }
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/50;
+  }
+
+  .card-elevated {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .card-elevated-lg {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+
+  /* Badges semânticos - Gorgen Design System */
+  .badge-success {
+    background-color: var(--gorgen-success-light);
+    color: #065F46;
+  }
+  
+  .dark .badge-success {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #6EE7B7;
+  }
+
+  .badge-warning {
+    background-color: var(--gorgen-warning-light);
+    color: #92400E;
+  }
+  
+  .dark .badge-warning {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #FCD34D;
+  }
+
+  .badge-error {
+    background-color: var(--gorgen-error-light);
+    color: #991B1B;
+  }
+  
+  .dark .badge-error {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #FCA5A5;
+  }
+
+  .badge-info {
+    background-color: var(--gorgen-info-light);
+    color: #1E40AF;
+  }
+  
+  .dark .badge-info {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #93C5FD;
+  }
+  
+  /* Utilitários de cor Gorgen */
+  .bg-gorgen-primary {
+    background-color: var(--gorgen-primary-700);
+  }
+  
+  .text-gorgen-primary {
+    color: var(--gorgen-primary-700);
+  }
+  
+  .border-gorgen-primary {
+    border-color: var(--gorgen-primary-700);
+  }
+  
+  .bg-gorgen-accent {
+    background-color: var(--gorgen-accent-600);
+  }
+  
+  .text-gorgen-accent {
+    color: var(--gorgen-accent-600);
+  }
+  
+  /* Escala completa de cores Gorgen */
+  .bg-gorgen-50 { background-color: var(--gorgen-primary-50); }
+  .bg-gorgen-100 { background-color: var(--gorgen-primary-100); }
+  .bg-gorgen-200 { background-color: var(--gorgen-primary-200); }
+  .bg-gorgen-300 { background-color: var(--gorgen-primary-300); }
+  .bg-gorgen-400 { background-color: var(--gorgen-primary-400); }
+  .bg-gorgen-500 { background-color: var(--gorgen-primary-500); }
+  .bg-gorgen-600 { background-color: var(--gorgen-primary-600); }
+  .bg-gorgen-700 { background-color: var(--gorgen-primary-700); }
+  .bg-gorgen-800 { background-color: var(--gorgen-primary-800); }
+  .bg-gorgen-900 { background-color: var(--gorgen-primary-900); }
+  .bg-gorgen-950 { background-color: var(--gorgen-primary-950); }
+  
+  .text-gorgen-50 { color: var(--gorgen-primary-50); }
+  .text-gorgen-100 { color: var(--gorgen-primary-100); }
+  .text-gorgen-200 { color: var(--gorgen-primary-200); }
+  .text-gorgen-300 { color: var(--gorgen-primary-300); }
+  .text-gorgen-400 { color: var(--gorgen-primary-400); }
+  .text-gorgen-500 { color: var(--gorgen-primary-500); }
+  .text-gorgen-600 { color: var(--gorgen-primary-600); }
+  .text-gorgen-700 { color: var(--gorgen-primary-700); }
+  .text-gorgen-800 { color: var(--gorgen-primary-800); }
+  .text-gorgen-900 { color: var(--gorgen-primary-900); }
+  .text-gorgen-950 { color: var(--gorgen-primary-950); }
+  
+  /* Cores semânticas Gorgen */
+  .bg-gorgen-success { background-color: var(--gorgen-success); }
+  .text-gorgen-success { color: var(--gorgen-success); }
+  .bg-gorgen-warning { background-color: var(--gorgen-warning); }
+  .text-gorgen-warning { color: var(--gorgen-warning); }
+  .bg-gorgen-error { background-color: var(--gorgen-error); }
+  .text-gorgen-error { color: var(--gorgen-error); }
+  .bg-gorgen-info { background-color: var(--gorgen-info); }
+  .text-gorgen-info { color: var(--gorgen-info); }
+}
+
+/* ================================================
+ * GORGEN TYPOGRAPHY - Inter Font Family
+ * ================================================ */
 body {
-  font-family: var(--font-sans);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* ============================================
-   ESCALA TIPOGRÁFICA
-   ============================================ */
-
+/* Escala tipográfica Gorgen */
 .text-display {
   font-size: 2.25rem;
-  line-height: 2.5rem;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.2;
   letter-spacing: -0.025em;
 }
 
 .text-h1 {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
 }
 
 .text-h2 {
-  font-size: 1.5rem;
-  line-height: 2rem;
+  font-size: 1.375rem;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
 }
 
 .text-h3 {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .text-body-lg {
-  font-size: 1.125rem;
-  line-height: 1.75rem;
+  font-size: 1rem;
   font-weight: 400;
+  line-height: 1.6;
 }
 
 .text-body {
-  font-size: 1rem;
-  line-height: 1.5rem;
+  font-size: 0.875rem;
   font-weight: 400;
+  line-height: 1.5;
 }
 
 .text-small {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
+  font-size: 0.75rem;
   font-weight: 400;
+  line-height: 1.5;
 }
 
 .text-tiny {
-  font-size: 0.75rem;
-  line-height: 1rem;
-  font-weight: 400;
-}
-
-.text-micro {
   font-size: 0.6875rem;
-  line-height: 0.875rem;
   font-weight: 500;
-}
-
-/* ============================================
-   CLASSES UTILITÁRIAS - CORES GORGEN
-   ============================================ */
-
-/* Background Colors */
-.bg-gorgen-50 { background-color: var(--gorgen-50); }
-.bg-gorgen-100 { background-color: var(--gorgen-100); }
-.bg-gorgen-200 { background-color: var(--gorgen-200); }
-.bg-gorgen-300 { background-color: var(--gorgen-300); }
-.bg-gorgen-400 { background-color: var(--gorgen-400); }
-.bg-gorgen-500 { background-color: var(--gorgen-500); }
-.bg-gorgen-600 { background-color: var(--gorgen-600); }
-.bg-gorgen-700 { background-color: var(--gorgen-700); }
-.bg-gorgen-800 { background-color: var(--gorgen-800); }
-.bg-gorgen-900 { background-color: var(--gorgen-900); }
-.bg-gorgen-950 { background-color: var(--gorgen-950); }
-
-/* Text Colors */
-.text-gorgen-50 { color: var(--gorgen-50); }
-.text-gorgen-100 { color: var(--gorgen-100); }
-.text-gorgen-200 { color: var(--gorgen-200); }
-.text-gorgen-300 { color: var(--gorgen-300); }
-.text-gorgen-400 { color: var(--gorgen-400); }
-.text-gorgen-500 { color: var(--gorgen-500); }
-.text-gorgen-600 { color: var(--gorgen-600); }
-.text-gorgen-700 { color: var(--gorgen-700); }
-.text-gorgen-800 { color: var(--gorgen-800); }
-.text-gorgen-900 { color: var(--gorgen-900); }
-.text-gorgen-950 { color: var(--gorgen-950); }
-
-/* Accent Colors */
-.bg-gorgen-accent { background-color: var(--gorgen-accent); }
-.bg-gorgen-accent-light { background-color: var(--gorgen-accent-light); }
-.text-gorgen-accent { color: var(--gorgen-accent); }
-
-/* Semantic Colors */
-.bg-gorgen-success { background-color: var(--gorgen-success); }
-.bg-gorgen-success-light { background-color: var(--gorgen-success-light); }
-.text-gorgen-success { color: var(--gorgen-success); }
-
-.bg-gorgen-warning { background-color: var(--gorgen-warning); }
-.bg-gorgen-warning-light { background-color: var(--gorgen-warning-light); }
-.text-gorgen-warning { color: var(--gorgen-warning); }
-
-.bg-gorgen-error { background-color: var(--gorgen-error); }
-.bg-gorgen-error-light { background-color: var(--gorgen-error-light); }
-.text-gorgen-error { color: var(--gorgen-error); }
-
-.bg-gorgen-info { background-color: var(--gorgen-info); }
-.bg-gorgen-info-light { background-color: var(--gorgen-info-light); }
-.text-gorgen-info { color: var(--gorgen-info); }
-
-/* Border Colors */
-.border-gorgen-100 { border-color: var(--gorgen-100); }
-.border-gorgen-200 { border-color: var(--gorgen-200); }
-.border-gorgen-300 { border-color: var(--gorgen-300); }
-.border-gorgen-700 { border-color: var(--gorgen-700); }
-
-/* Ring Colors */
-.ring-gorgen-200 { --tw-ring-color: var(--gorgen-200); }
-.ring-gorgen-500 { --tw-ring-color: var(--gorgen-500); }
-
-/* ============================================
-   COMPONENTES - BADGES
-   ============================================ */
-
-.badge-populacao {
-  background-color: var(--gorgen-100);
-  color: var(--gorgen-700);
-}
-
-.badge-atendimentos {
-  background-color: var(--gorgen-info-light);
-  color: var(--gorgen-info-dark);
-}
-
-.badge-financeiro {
-  background-color: var(--gorgen-success-light);
-  color: var(--gorgen-success-dark);
-}
-
-.badge-qualidade {
-  background-color: var(--gorgen-warning-light);
-  color: var(--gorgen-warning-dark);
-}
-
-.badge-diversas {
-  background-color: var(--gorgen-gray-100);
-  color: var(--gorgen-gray-700);
-}
-
-/* ============================================
-   COMPONENTES - BOTÕES
-   ============================================ */
-
-.btn-primary {
-  background-color: var(--gorgen-700);
-  color: white;
-  transition: all 0.15s ease;
-}
-
-.btn-primary:hover {
-  background-color: var(--gorgen-800);
-}
-
-.btn-accent {
-  background-color: var(--gorgen-accent);
-  color: white;
-  transition: all 0.15s ease;
-}
-
-.btn-accent:hover {
-  background-color: var(--gorgen-accent-dark);
-}
-
-.btn-secondary {
-  background-color: white;
-  color: var(--gorgen-700);
-  border: 1px solid var(--gorgen-200);
-  transition: all 0.15s ease;
-}
-
-.btn-secondary:hover {
-  background-color: var(--gorgen-50);
-  border-color: var(--gorgen-300);
-}
-
-/* ============================================
-   COMPONENTES - CARDS
-   ============================================ */
-
-.card-kpi {
-  background-color: white;
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  border: 1px solid var(--gorgen-gray-200);
-  transition: all 0.2s ease;
-}
-
-.card-kpi:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
-}
-
-.card-kpi-value {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: var(--gorgen-700);
-}
-
-/* ============================================
-   COMPONENTES - SIDEBAR
-   ============================================ */
-
-.sidebar {
-  background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
-}
-
-.sidebar-item {
-  color: var(--sidebar-text);
-  transition: all 0.15s ease;
-}
-
-.sidebar-item:hover {
-  background-color: var(--sidebar-hover-bg);
-}
-
-.sidebar-item-active {
-  background-color: var(--sidebar-active-bg);
-  color: var(--sidebar-active-text);
-}
-
-/* ============================================
-   COMPONENTES - INDICADORES DE VARIAÇÃO
-   ============================================ */
-
-.variacao-positiva {
-  background-color: var(--gorgen-success-light);
-  color: var(--gorgen-success-dark);
-}
-
-.variacao-negativa {
-  background-color: var(--gorgen-error-light);
-  color: var(--gorgen-error-dark);
-}
-
-/* ============================================
-   ANIMAÇÕES
-   ============================================ */
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-/* ============================================
-   SCROLLBAR CUSTOMIZADA
-   ============================================ */
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--gorgen-gray-100);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--gorgen-gray-300);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--gorgen-gray-400);
-}
-
-/* ============================================
-   RESPONSIVIDADE
-   ============================================ */
-
-@media (max-width: 768px) {
-  .text-display {
-    font-size: 1.875rem;
-    line-height: 2.25rem;
-  }
-
-  .text-h1 {
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
-
-  .card-kpi-value {
-    font-size: 1.5rem;
-  }
+  line-height: 1.4;
 }

@@ -388,14 +388,14 @@ export default function ComponentsShowcase() {
               <CardContent className="pt-6">
                 <div className="flex flex-wrap gap-4">
                   <Button>Default</Button>
-                  <Button variant="secondary" tooltip="Secondary">Secondary</Button>
-                  <Button variant="destructive" tooltip="Destructive">Destructive</Button>
-                  <Button variant="outline" tooltip="Outline">Outline</Button>
-                  <Button variant="ghost" tooltip="Ghost">Ghost</Button>
-                  <Button variant="link" tooltip="Link">Link</Button>
-                  <Button size="sm" tooltip="Small">Small</Button>
-                  <Button size="lg" tooltip="Large">Large</Button>
-                  <Button size="icon" tooltip="Confirmar">
+                  <Button variant="secondary">Secondary</Button>
+                  <Button variant="destructive">Destructive</Button>
+                  <Button variant="outline">Outline</Button>
+                  <Button variant="ghost">Ghost</Button>
+                  <Button variant="link">Link</Button>
+                  <Button size="sm">Small</Button>
+                  <Button size="lg">Large</Button>
+                  <Button size="icon">
                     <Check className="h-4 w-4" />
                   </Button>
                 </div>
@@ -479,7 +479,7 @@ export default function ComponentsShowcase() {
                         className={`w-full justify-start text-left font-normal ${
                           !datePickerDate && "text-muted-foreground"
                         }`}
-                       tooltip="Agenda">
+                      >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {datePickerDate ? (
                           format(datePickerDate, "PPP HH:mm", { locale: zhCN })
@@ -542,7 +542,7 @@ export default function ComponentsShowcase() {
                         role="combobox"
                         aria-expanded={openCombobox}
                         className="w-full justify-between"
-                       tooltip="Agenda">
+                      >
                         {selectedFramework
                           ? [
                               { value: "react", label: "React" },
@@ -990,7 +990,7 @@ export default function ComponentsShowcase() {
               <Card>
                 <CardHeader>
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="w-full justify-between" tooltip="@peduarte starred 3 repositories">
+                    <Button variant="ghost" className="w-full justify-between">
                       <CardTitle>@peduarte starred 3 repositories</CardTitle>
                     </Button>
                   </CollapsibleTrigger>
@@ -1022,7 +1022,7 @@ export default function ComponentsShowcase() {
                 <div className="flex flex-wrap gap-4">
                   <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" tooltip="Open Dialog">Open Dialog</Button>
+                      <Button variant="outline">Open Dialog</Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
@@ -1051,14 +1051,14 @@ export default function ComponentsShowcase() {
                         >
                           Cancel
                         </Button>
-                        <Button onClick={handleDialogSubmit} tooltip="Submit">Submit</Button>
+                        <Button onClick={handleDialogSubmit}>Submit</Button>
                       </div>
                     </DialogContent>
                   </Dialog>
 
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="outline" tooltip="Open Sheet">Open Sheet</Button>
+                      <Button variant="outline">Open Sheet</Button>
                     </SheetTrigger>
                     <SheetContent>
                       <SheetHeader>
@@ -1073,7 +1073,7 @@ export default function ComponentsShowcase() {
 
                   <Drawer>
                     <DrawerTrigger asChild>
-                      <Button variant="outline" tooltip="Open Drawer">Open Drawer</Button>
+                      <Button variant="outline">Open Drawer</Button>
                     </DrawerTrigger>
                     <DrawerContent>
                       <DrawerHeader>
@@ -1085,7 +1085,7 @@ export default function ComponentsShowcase() {
                       <DrawerFooter>
                         <Button>Submit</Button>
                         <DrawerClose asChild>
-                          <Button variant="outline" tooltip="Cancel">Cancel</Button>
+                          <Button variant="outline">Cancel</Button>
                         </DrawerClose>
                       </DrawerFooter>
                     </DrawerContent>
@@ -1093,7 +1093,7 @@ export default function ComponentsShowcase() {
 
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" tooltip="Open Popover">Open Popover</Button>
+                      <Button variant="outline">Open Popover</Button>
                     </PopoverTrigger>
                     <PopoverContent>
                       <div className="space-y-2">
@@ -1107,7 +1107,7 @@ export default function ComponentsShowcase() {
 
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="outline" tooltip="Hover me">Hover me</Button>
+                      <Button variant="outline">Hover me</Button>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Add to library</p>
@@ -1126,7 +1126,7 @@ export default function ComponentsShowcase() {
                 <div className="flex flex-wrap gap-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" tooltip="Menu">Dropdown Menu</Button>
+                      <Button variant="outline">Dropdown Menu</Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -1140,7 +1140,7 @@ export default function ComponentsShowcase() {
 
                   <ContextMenu>
                     <ContextMenuTrigger asChild>
-                      <Button variant="outline" tooltip="Right Click Me">Right Click Me</Button>
+                      <Button variant="outline">Right Click Me</Button>
                     </ContextMenuTrigger>
                     <ContextMenuContent>
                       <ContextMenuItem>Profile</ContextMenuItem>
@@ -1152,7 +1152,7 @@ export default function ComponentsShowcase() {
 
                   <HoverCard>
                     <HoverCardTrigger asChild>
-                      <Button variant="outline" tooltip="Hover Card">Hover Card</Button>
+                      <Button variant="outline">Hover Card</Button>
                     </HoverCardTrigger>
                     <HoverCardContent>
                       <div className="space-y-2">

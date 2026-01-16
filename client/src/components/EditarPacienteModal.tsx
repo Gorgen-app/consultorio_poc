@@ -94,7 +94,7 @@ function HistoricoAlteracoes({ pacienteId }: { pacienteId: number }) {
   };
 
   const actionLabels: Record<string, { label: string; color: string }> = {
-    CREATE: { label: "Cadastro", color: "bg-green-100 text-green-800" },
+    CREATE: { label: "Cadastro", color: "bg-emerald-100 text-emerald-800" },
     UPDATE: { label: "Alteração", color: "bg-blue-100 text-blue-800" },
     DELETE: { label: "Exclusão", color: "bg-red-100 text-red-800" },
     RESTORE: { label: "Restauração", color: "bg-purple-100 text-purple-800" },
@@ -156,10 +156,10 @@ function HistoricoAlteracoes({ pacienteId }: { pacienteId: number }) {
           <span>{historico.length} alterações registradas (LGPD)</span>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={exportToExcel} tooltip="Arquivo">
+          <Button variant="outline" size="sm" onClick={exportToExcel}>
             <FileSpreadsheet className="h-4 w-4 mr-1" /> Excel
           </Button>
-          <Button variant="outline" size="sm" onClick={exportToPDF} tooltip="Documento">
+          <Button variant="outline" size="sm" onClick={exportToPDF}>
             <FileText className="h-4 w-4 mr-1" /> PDF
           </Button>
         </div>
@@ -202,7 +202,7 @@ function HistoricoAlteracoes({ pacienteId }: { pacienteId: number }) {
                         {oldVal === null || oldVal === undefined || oldVal === "" ? "(vazio)" : String(oldVal)}
                       </span>
                       <span className="mx-1">→</span>
-                      <span className="text-green-600">
+                      <span className="text-emerald-600">
                         {newVal === null || newVal === undefined || newVal === "" ? "(vazio)" : String(newVal)}
                       </span>
                     </div>
@@ -754,10 +754,10 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
           </ScrollArea>
 
           <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
-            <Button type="button" variant="outline" tooltip="Cancelar operação" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending} tooltip="Salvar alterações">
+            <Button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </div>

@@ -82,7 +82,7 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
           <p className="text-sm text-gray-500">Registro de consultas e atendimentos (SOAP)</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" tooltip="Enviar" onClick={() => { setEvolucaoIdParaUpload(null); setModalUploadAberto(true); }}>
+          <Button variant="outline" onClick={() => { setEvolucaoIdParaUpload(null); setModalUploadAberto(true); }}>
             <Upload className="h-4 w-4 mr-2" />
             Upload de Documento
           </Button>
@@ -148,7 +148,7 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
                 
                 <div>
                   <Label className="flex items-center gap-2">
-                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
+                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
                     Objetivo (Exame Físico)
                   </Label>
                   <Textarea
@@ -233,9 +233,8 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
               </TabsContent>
             </Tabs>
             <DialogFooter>
-              <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovaEvolucao(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => setNovaEvolucao(false)}>Cancelar</Button>
               <Button 
-                tooltip="Salvar alterações"
                 onClick={() => createEvolucao.mutate({
                   pacienteId,
                   dataEvolucao: new Date(form.dataEvolucao),
@@ -266,7 +265,7 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
           <CardContent className="py-8 text-center">
             <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">Nenhuma evolução registrada.</p>
-            <Button className="mt-4" tooltip="Adicionar" onClick={() => setNovaEvolucao(true)}>
+            <Button className="mt-4" onClick={() => setNovaEvolucao(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Registrar Primeira Evolução
             </Button>
@@ -299,7 +298,7 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
                     <Button
                       variant="ghost"
                       size="sm"
-                      tooltip="Enviar" onClick={(e) => {
+                      onClick={(e) => {
                         e.stopPropagation();
                         setEvolucaoIdParaUpload(ev.id);
                         setModalUploadAberto(true);
@@ -364,7 +363,7 @@ export default function ProntuarioEvolucoes({ pacienteId, evolucoes, onUpdate }:
                     {ev.objetivo && (
                       <div>
                         <h4 className="text-sm font-medium flex items-center gap-2 mb-1">
-                          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
+                          <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
                           Objetivo
                         </h4>
                         <p className="text-sm whitespace-pre-wrap bg-white p-3 rounded border">{ev.objetivo}</p>

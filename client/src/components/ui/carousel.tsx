@@ -192,7 +192,7 @@ function CarouselPrevious({
       disabled={!canScrollPrev}
       onClick={scrollPrev}
       {...props}
-     tooltip="Voltar">
+    >
       <ArrowLeft />
       <span className="sr-only">Previous slide</span>
     </Button>
@@ -222,7 +222,7 @@ function CarouselNext({
       disabled={!canScrollNext}
       onClick={scrollNext}
       {...props}
-     tooltip="Avançar">
+    >
       <ArrowRight />
       <span className="sr-only">Next slide</span>
     </Button>

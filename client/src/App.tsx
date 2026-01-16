@@ -1,5 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider, TOOLTIP_DELAY_MS } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -165,7 +165,7 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light" switchable>
-        <TooltipProvider delayDuration={TOOLTIP_DELAY_MS} skipDelayDuration={300}>
+        <TooltipProvider>
           <Toaster />
           <AppContent />
         </TooltipProvider>

@@ -55,8 +55,8 @@ export default function ProntuarioObstetricia({ pacienteId, registros, onUpdate 
               <div><Label>Observações</Label><Textarea rows={4} value={form.observacoes} onChange={(e) => setForm({...form, observacoes: e.target.value})} /></div>
             </div>
             <DialogFooter>
-              <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovoRegistro(false)}>Cancelar</Button>
-              <Button tooltip="Salvar alterações" onClick={() => createRegistro.mutate({ pacienteId, tipoRegistro: form.tipoRegistro as "Pré-natal" | "Parto" | "Puerpério" | "Aborto", dataRegistro: form.dataRegistro, dum: form.dum || null, dpp: form.dpp || null, idadeGestacional: form.ig || null, observacoes: form.observacoes || null })} disabled={!form.tipoRegistro}>Salvar</Button>
+              <Button variant="outline" onClick={() => setNovoRegistro(false)}>Cancelar</Button>
+              <Button onClick={() => createRegistro.mutate({ pacienteId, tipoRegistro: form.tipoRegistro as "Pré-natal" | "Parto" | "Puerpério" | "Aborto", dataRegistro: form.dataRegistro, dum: form.dum || null, dpp: form.dpp || null, idadeGestacional: form.ig || null, observacoes: form.observacoes || null })} disabled={!form.tipoRegistro}>Salvar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

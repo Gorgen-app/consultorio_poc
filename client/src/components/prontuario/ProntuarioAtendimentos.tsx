@@ -81,7 +81,7 @@ export default function ProntuarioAtendimentos({ pacienteId }: ProntuarioAtendim
             {atendimentos?.length || 0} atendimentos registrados
           </p>
         </div>
-        <Button onClick={handleNovoAtendimento} tooltip="Criar novo registro">
+        <Button onClick={handleNovoAtendimento}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Atendimento
         </Button>
@@ -119,7 +119,7 @@ export default function ProntuarioAtendimentos({ pacienteId }: ProntuarioAtendim
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">{formatarMoeda(totalRecebido)}</p>
+            <p className="text-2xl font-bold text-emerald-600">{formatarMoeda(totalRecebido)}</p>
           </CardContent>
         </Card>
       </div>
@@ -159,9 +159,9 @@ export default function ProntuarioAtendimentos({ pacienteId }: ProntuarioAtendim
                     </TableCell>
                     <TableCell>
                       {atd.dataPagamento ? (
-                        <Badge className="bg-green-100 text-green-800">Pago</Badge>
+                        <Badge className="bg-emerald-100 text-emerald-800">Pago</Badge>
                       ) : atd.dataFaturamento ? (
-                        <Badge className="bg-yellow-100 text-yellow-800">Faturado</Badge>
+                        <Badge className="badge-warning">Faturado</Badge>
                       ) : (
                         <Badge className="bg-gray-100 text-gray-800">Pendente</Badge>
                       )}
@@ -171,16 +171,16 @@ export default function ProntuarioAtendimentos({ pacienteId }: ProntuarioAtendim
                         <Button
                           variant="ghost"
                           size="sm"
-                          tooltip="Copiar" onClick={() => handleDuplicar(atd)}
+                          onClick={() => handleDuplicar(atd)}
                           title="Duplicar atendimento"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          tooltip="Documento" onClick={() => navigate(`/atendimentos?buscar=${atd.atendimento}`)}
+                          onClick={() => navigate(`/atendimentos?buscar=${atd.atendimento}`)}
                           title="Ver detalhes"
                         >
                           <FileText className="h-4 w-4" />
@@ -198,7 +198,7 @@ export default function ProntuarioAtendimentos({ pacienteId }: ProntuarioAtendim
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 mx-auto text-gray-300 mb-4" />
             <p className="text-gray-500 mb-4">Nenhum atendimento registrado para este paciente.</p>
-            <Button onClick={handleNovoAtendimento} tooltip="Criar novo registro">
+            <Button onClick={handleNovoAtendimento}>
               <Plus className="h-4 w-4 mr-2" />
               Registrar Primeiro Atendimento
             </Button>

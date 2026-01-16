@@ -219,7 +219,7 @@ export default function Relatorios() {
           <div className="mt-4 flex items-center gap-2">
             <Button 
               variant="outline" 
-              tooltip="Limpar campos" onClick={() => {
+              onClick={() => {
                 setFiltroStatus("");
                 setFiltroOperadora("");
                 setFiltroDiasMinimo("");
@@ -253,7 +253,7 @@ export default function Relatorios() {
               onClick={exportarCSV}
               disabled={isLoading || exportando || pacientesFiltrados.length === 0}
               className="bg-blue-600 hover:bg-blue-700"
-             tooltip="Exportar dados">
+            >
               {exportando ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
@@ -267,7 +267,7 @@ export default function Relatorios() {
               disabled={isLoading || exportando || pacientesFiltrados.length === 0}
               variant="outline"
               className="border-blue-600 text-blue-600 hover:bg-blue-50"
-             tooltip="Exportar dados">
+            >
               {exportando ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
@@ -314,7 +314,7 @@ export default function Relatorios() {
             <Button
               variant="outline"
               className="h-auto py-4 flex flex-col items-start"
-              tooltip="Exportar dados" onClick={() => {
+              onClick={() => {
                 setFiltroStatus("Ativo");
                 setFiltroDiasMinimo("360");
                 setFiltroOperadora("");

@@ -126,7 +126,7 @@ export default function CrossTenantAutorizacoes() {
     switch (tipo) {
       case "leitura": return <Eye className="h-4 w-4 text-blue-500" />;
       case "escrita": return <FileText className="h-4 w-4 text-yellow-500" />;
-      case "completo": return <Download className="h-4 w-4 text-green-500" />;
+      case "completo": return <Download className="h-4 w-4 text-emerald-500" />;
       default: return <Eye className="h-4 w-4" />;
     }
   };
@@ -233,7 +233,7 @@ export default function CrossTenantAutorizacoes() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" tooltip="Cancelar operação" onClick={() => setShowSolicitarDialog(false)}>
+                <Button variant="outline" onClick={() => setShowSolicitarDialog(false)}>
                   Cancelar
                 </Button>
                 <Button
@@ -340,7 +340,7 @@ export default function CrossTenantAutorizacoes() {
                         <div className="flex items-center gap-2">
                           {getStatusBadge(item.autorizacao.status)}
                           {item.autorizacao.status === "ativa" && (
-                            <Button variant="outline" size="sm" tooltip="Visualizar">
+                            <Button variant="outline" size="sm">
                               <Eye className="h-4 w-4 mr-1" />
                               Acessar
                             </Button>
@@ -401,18 +401,18 @@ export default function CrossTenantAutorizacoes() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                tooltip="Confirmar" onClick={() => {
+                                onClick={() => {
                                   setSelectedAutorizacao(item.autorizacao);
                                   setShowAprovarDialog(true);
                                 }}
                               >
-                                <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
+                                <CheckCircle className="h-4 w-4 mr-1 text-emerald-600" />
                                 Aprovar
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                tooltip="Fechar" onClick={() => rejeitarMutation.mutate({ autorizacaoId: item.autorizacao.id })}
+                                onClick={() => rejeitarMutation.mutate({ autorizacaoId: item.autorizacao.id })}
                                 disabled={rejeitarMutation.isPending}
                               >
                                 <XCircle className="h-4 w-4 mr-1 text-red-600" />
@@ -424,7 +424,7 @@ export default function CrossTenantAutorizacoes() {
                             <Button
                               variant="outline"
                               size="sm"
-                              tooltip="Fechar" onClick={() => revogarMutation.mutate({ autorizacaoId: item.autorizacao.id })}
+                              onClick={() => revogarMutation.mutate({ autorizacaoId: item.autorizacao.id })}
                               disabled={revogarMutation.isPending}
                             >
                               <ShieldX className="h-4 w-4 mr-1 text-red-600" />
@@ -515,7 +515,7 @@ export default function CrossTenantAutorizacoes() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" tooltip="Cancelar operação" onClick={() => setShowAprovarDialog(false)}>
+              <Button variant="outline" onClick={() => setShowAprovarDialog(false)}>
                 Cancelar
               </Button>
               <Button

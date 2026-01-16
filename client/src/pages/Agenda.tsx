@@ -64,8 +64,7 @@ import {
   Move,
   AlertTriangle,
   Filter,
-  Briefcase,
-  Maximize2
+  Briefcase
 } from "lucide-react";
 
 // ============================================
@@ -764,125 +763,45 @@ interface CriacaoRapidaModalProps {
   data: Date;
   hora: string;
   onCriarCompleto: () => void;
-  onCriarRapido: (dados: { pacienteId: number | null; pacienteNome: string; duracao: number }) => void;
-  pacientes: any[];
+  onCriarRapido: (dados: { titulo: string; duracao: number }) => void;
 }
 
-function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCriarRapido, pacientes }: CriacaoRapidaModalProps) {
-  const [buscaPacienteRapido, setBuscaPacienteRapido] = useState("");
-  const [pacienteSelecionadoId, setPacienteSelecionadoId] = useState<number | null>(null);
-  const [pacienteSelecionadoNome, setPacienteSelecionadoNome] = useState("");
+function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCriarRapido }: CriacaoRapidaModalProps) {
+  const [titulo, setTitulo] = useState("");
   const [duracao, setDuracao] = useState(30);
-  const [popoverPacienteRapidoAberto, setPopoverPacienteRapidoAberto] = useState(false);
   
-  const pacientesFiltradosRapido = useMemo(() => {
-    if (!buscaPacienteRapido.trim()) return pacientes.slice(0, 10);
-    return pacientes.filter((p: any) => 
-      p.nome.toLowerCase().includes(buscaPacienteRapido.toLowerCase())
-    ).slice(0, 10);
-  }, [pacientes, buscaPacienteRapido]);
-  
-  const handleCriar = () => {
-    if (!pacienteSelecionadoId && !buscaPacienteRapido.trim()) {
-      toast.error("Informe um paciente para o agendamento");
+  const handleCriarRapido = () => {
+    if (!titulo.trim()) {
+      toast.error("Informe um título para o agendamento");
       return;
     }
-    onCriarRapido({ 
-      pacienteId: pacienteSelecionadoId, 
-      pacienteNome: pacienteSelecionadoNome || buscaPacienteRapido,
-      duracao 
-    });
-    setBuscaPacienteRapido("");
-    setPacienteSelecionadoId(null);
-    setPacienteSelecionadoNome("");
+    onCriarRapido({ titulo, duracao });
+    setTitulo("");
     setDuracao(30);
   };
-  
-  // Resetar ao fechar
-  useEffect(() => {
-    if (!isOpen) {
-      setBuscaPacienteRapido("");
-      setPacienteSelecionadoId(null);
-      setPacienteSelecionadoNome("");
-      setDuracao(30);
-    }
-  }, [isOpen]);
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader className="flex flex-row items-start justify-between">
-          <div>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <Plus className="w-5 h-5 text-blue-500" />
-              Novo Agendamento
-            </DialogTitle>
-            <DialogDescription>
-              {data.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })} às {hora}
-            </DialogDescription>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onCriarCompleto}
-            title="Formulário Completo"
-            className="h-8 w-8 -mt-1"
-          >
-            <Maximize2 className="w-4 h-4" />
-          </Button>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <Plus className="w-5 h-5 text-blue-500" />
+            Novo Agendamento
+          </DialogTitle>
+          <DialogDescription>
+            {data.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })} às {hora}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>Paciente</Label>
-            <Popover open={popoverPacienteRapidoAberto} onOpenChange={setPopoverPacienteRapidoAberto}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className="w-full h-11 justify-between font-normal"
-                >
-                  {pacienteSelecionadoNome || "Buscar paciente..."}
-                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[350px] p-0" align="start" sideOffset={5}>
-                <div className="p-2">
-                  <Input
-                    placeholder="Digite o nome do paciente..."
-                    value={buscaPacienteRapido}
-                    onChange={(e) => setBuscaPacienteRapido(e.target.value)}
-                    className="h-10"
-                    autoFocus
-                  />
-                </div>
-                <ScrollArea className="h-[200px]">
-                  {pacientesFiltradosRapido.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      Nenhum paciente encontrado
-                    </div>
-                  ) : (
-                    <div className="p-1">
-                      {pacientesFiltradosRapido.map((p: any) => (
-                        <Button
-                          key={p.id}
-                          variant="ghost"
-                          className="w-full justify-start font-normal h-10"
-                          onClick={() => {
-                            setPacienteSelecionadoId(p.id);
-                            setPacienteSelecionadoNome(p.nome);
-                            setBuscaPacienteRapido("");
-                            setPopoverPacienteRapidoAberto(false);
-                          }}
-                        >
-                          <User className="mr-2 h-4 w-4" />
-                          {p.nome}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </PopoverContent>
-            </Popover>
+            <Label>Título / Paciente</Label>
+            <Input
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              placeholder="Nome do paciente ou título"
+              className="h-11"
+              autoFocus
+            />
           </div>
           <div>
             <Label>Duração</Label>
@@ -905,8 +824,11 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={handleCriar}>
-            Criar
+          <Button variant="outline" onClick={onCriarCompleto}>
+            Formulário Completo
+          </Button>
+          <Button onClick={handleCriarRapido}>
+            Criar Rápido
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1390,7 +1312,6 @@ export default function Agenda() {
   const [novoConvenio, setNovoConvenio] = useState("");
   const [novoStatus, setNovoStatus] = useState("Agendado");
   const [buscaPaciente, setBuscaPaciente] = useState("");
-  const [popoverPacienteAberto, setPopoverPacienteAberto] = useState(false);
   
   // Estados de bloqueio
   const [bloqueioTipo, setBloqueioTipo] = useState("");
@@ -1404,11 +1325,11 @@ export default function Agenda() {
   const gradeRef = useRef<HTMLDivElement>(null);
   
   // Queries tRPC
-  const { data: agendamentos = [], refetch: refetchAgendamentos } = trpc.agenda.list.useQuery({});
-  const { data: pacientes = [] } = trpc.pacientes.list.useQuery({});
+  const { data: agendamentos = [], refetch: refetchAgendamentos } = trpc.agenda.listar.useQuery();
+  const { data: pacientes = [] } = trpc.pacientes.listar.useQuery();
   
   // Mutations tRPC
-  const criarAgendamentoMutation = trpc.agenda.create.useMutation({
+  const criarAgendamentoMutation = trpc.agenda.criar.useMutation({
     onSuccess: () => {
       toast.success("Agendamento criado com sucesso!");
       refetchAgendamentos();
@@ -1498,14 +1419,6 @@ export default function Agenda() {
     });
   }, [agendamentos, termoBusca, filtroTipo, filtroStatus]);
   
-  // Filtrar pacientes para busca
-  const pacientesFiltrados = useMemo(() => {
-    if (!buscaPaciente.trim()) return pacientes.slice(0, 15);
-    return pacientes.filter((p: any) => 
-      p.nome.toLowerCase().includes(buscaPaciente.toLowerCase())
-    ).slice(0, 15);
-  }, [pacientes, buscaPaciente]);
-  
   // Gerar array de horas
   const horas = useMemo(() => {
     const arr = [];
@@ -1573,7 +1486,6 @@ export default function Agenda() {
     setNovoConvenio("");
     setNovoStatus("Agendado");
     setBuscaPaciente("");
-    setPopoverPacienteAberto(false);
   };
   
   // Calcular hora fim automaticamente para consultas
@@ -1615,7 +1527,7 @@ export default function Agenda() {
   };
   
   // Handler de criação rápida
-  const handleCriarRapido = (dados: { pacienteId: number | null; pacienteNome: string; duracao: number }) => {
+  const handleCriarRapido = (dados: { titulo: string; duracao: number }) => {
     const [hora, minuto] = horaCriacaoRapida.split(":").map(Number);
     const dataInicio = new Date(dataCriacaoRapida);
     dataInicio.setHours(hora, minuto, 0, 0);
@@ -1630,8 +1542,7 @@ export default function Agenda() {
       setConflitosDetectados(conflitos);
       setDadosPendentes({
         tipo: "criacaoRapida",
-        pacienteId: dados.pacienteId,
-        pacienteNome: dados.pacienteNome,
+        titulo: dados.titulo,
         dataInicio: dataInicio.toISOString(),
         dataFim: dataFim.toISOString(),
       });
@@ -1643,8 +1554,7 @@ export default function Agenda() {
     // Criar agendamento
     criarAgendamentoMutation.mutate({
       tipoCompromisso: "Consulta",
-      titulo: dados.pacienteNome,
-      pacienteId: dados.pacienteId,
+      titulo: dados.titulo,
       dataHoraInicio: dataInicio.toISOString(),
       dataHoraFim: dataFim.toISOString(),
       local: "Consultório",
@@ -2522,10 +2432,7 @@ export default function Agenda() {
             <Lock className="w-4 h-4 mr-2" />
             Bloquear
           </Button>
-          <Button onClick={() => {
-            setNovaDataAgendamento(formatarDataISO(dataSelecionada));
-            setModalNovoAberto(true);
-          }}>
+          <Button onClick={() => setModalNovoAberto(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Novo Agendamento
           </Button>
@@ -2721,9 +2628,9 @@ export default function Agenda() {
         onClose={() => setModalCriacaoRapidaAberto(false)}
         data={dataCriacaoRapida}
         hora={horaCriacaoRapida}
-        onCriarCompleto={handleAbrirFormularioCompleto}
+        onCr
+iarCompleto={handleAbrirFormularioCompleto}
         onCriarRapido={handleCriarRapido}
-        pacientes={pacientes}
       />
       
       {/* Modal de Conflitos */}
@@ -2772,56 +2679,21 @@ export default function Agenda() {
             {novoTipoCompromisso === "Consulta" && (
               <div>
                 <Label className="text-base">Paciente *</Label>
-                <Popover open={popoverPacienteAberto} onOpenChange={setPopoverPacienteAberto}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className="w-full h-11 justify-between font-normal"
-                    >
-                      {novoPacienteId 
-                        ? pacientes.find((p: any) => p.id === novoPacienteId)?.nome 
-                        : "Buscar paciente..."}
-                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[400px] p-0" align="start" sideOffset={5}>
-                    <div className="p-2">
-                      <Input
-                        placeholder="Digite o nome do paciente..."
-                        value={buscaPaciente}
-                        onChange={(e) => setBuscaPaciente(e.target.value)}
-                        className="h-10"
-                        autoFocus
-                      />
-                    </div>
-                    <ScrollArea className="h-[200px]">
-                      {pacientesFiltrados.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-muted-foreground">
-                          Nenhum paciente encontrado
-                        </div>
-                      ) : (
-                        <div className="p-1">
-                          {pacientesFiltrados.map((p: any) => (
-                            <Button
-                              key={p.id}
-                              variant="ghost"
-                              className="w-full justify-start font-normal h-10"
-                              onClick={() => {
-                                setNovoPacienteId(p.id);
-                                setBuscaPaciente("");
-                                setPopoverPacienteAberto(false);
-                              }}
-                            >
-                              <User className="mr-2 h-4 w-4" />
-                              {p.nome}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
-                    </ScrollArea>
-                  </PopoverContent>
-                </Popover>
+                <Select 
+                  value={novoPacienteId ? String(novoPacienteId) : ""} 
+                  onValueChange={(v) => setNovoPacienteId(Number(v))}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Selecione o paciente" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" sideOffset={5} className="z-[200]">
+                    {pacientes.map((p: any) => (
+                      <SelectItem key={p.id} value={String(p.id)} className="text-base">
+                        {p.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
             

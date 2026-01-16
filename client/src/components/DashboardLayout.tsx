@@ -1,234 +1,563 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import {
-  LayoutDashboard,
-  Calendar,
-  Share2,
-  Users,
-  Stethoscope,
-  Receipt,
-  Megaphone,
-  UserCircle,
-  Activity,
-  ChevronLeft,
-  ChevronRight,
-  Settings,
-  LogOut,
-  Bell,
-  Menu,
-} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { getLoginUrl } from "@/const";
+import { useIsMobile } from "@/hooks/useMobile";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, ChevronLeft, Search, Share2, Receipt, Megaphone, UserCircle, Clock, FileSpreadsheet, AlertTriangle, Activity, LayoutGrid } from "lucide-react";
+import { CSSProperties, useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
+import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
+import { Button } from "./ui/button";
+import { trpc } from "@/lib/trpc";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { temPermissao, type PerfilType, type Funcionalidade } from "../../../shared/permissions";
+import { TenantSelector } from "./TenantSelector";
+import { NotificacoesDropdown } from "./NotificacoesDropdown";
+import {
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
-
-const menuItems = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/agenda", label: "Agenda", icon: Calendar },
-  { path: "/compartilhamento", label: "Compartilhamento", icon: Share2 },
-  { path: "/pacientes", label: "Pacientes", icon: Users },
-  { path: "/atendimentos", label: "Atendimentos", icon: Stethoscope },
-  { path: "/faturamento", label: "Faturamento e Gestão", icon: Receipt, badge: "Em breve" },
-  { path: "/leads", label: "Leads e Marketing", icon: Megaphone, badge: "Em breve" },
-  { path: "/portal", label: "Portal do Paciente", icon: UserCircle, badge: "Em breve" },
-  { path: "/performance", label: "Performance", icon: Activity },
-];
-
-// Cores dos perfis de usuário - Design System Gorgen
-const profileColors: Record<string, string> = {
-  admin_master: "bg-[#203864]",
-  medico: "bg-[#2B4A7D]",
-  secretaria: "bg-[#10B981]",
-  auditor: "bg-[#F59E0B]",
-  paciente: "bg-[#3B82F6]",
+// Mapeamento de perfis - Gorgen Design System
+const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  admin_master: { label: "Admin Master", icon: <Shield className="h-4 w-4" />, color: "bg-gorgen-700" },      // Azul Gorgen
+  medico: { label: "Médico", icon: <Stethoscope className="h-4 w-4" />, color: "bg-gorgen-600" },           // Azul Gorgen claro
+  secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-green-600" },       // Verde (sucesso)
+  auditor: { label: "Auditor", icon: <DollarSign className="h-4 w-4" />, color: "bg-amber-500" },           // Âmbar (alerta)
+  paciente: { label: "Paciente", icon: <Eye className="h-4 w-4" />, color: "bg-gray-500" },                  // Cinza neutro
 };
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [location] = useLocation();
-  const { user, logout } = useAuth();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+// Menu items principais (sem subitens)
+const mainMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade; comingSoon?: boolean; adminOnly?: boolean }[] = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", funcionalidade: "dashboard" },
+  { icon: Calendar, label: "Agenda", path: "/agenda", funcionalidade: "agenda" },
+  { icon: Share2, label: "Compartilhamento", path: "/compartilhamento", funcionalidade: "compartilhamento" },
+];
 
-  const userInitials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "U";
+// Menu items "Em breve" (funcionalidades futuras)
+const comingSoonItems: { icon: typeof LayoutDashboard; label: string; path: string }[] = [
+  { icon: Receipt, label: "Faturamento e Gestão", path: "/faturamento" },
+  { icon: Megaphone, label: "Leads e Marketing", path: "/marketing" },
+  { icon: UserCircle, label: "Portal do Paciente", path: "/portal-paciente" },
+];
 
-  const userProfileColor = profileColors[user?.role || ""] || "bg-[#203864]";
+// Menu items de administração (apenas admin)
+const adminMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade }[] = [
+  { icon: Activity, label: "Performance", path: "/performance", funcionalidade: "admin_tenants" },
+];
+
+// Menu items com subitens
+const menuWithSubitems: {
+  icon: typeof Users;
+  label: string;
+  path: string;
+  funcionalidade: Funcionalidade;
+  subitems: { icon: typeof UserPlus; label: string; path: string; funcionalidade: Funcionalidade }[];
+}[] = [
+  {
+    icon: Users,
+    label: "Pacientes",
+    path: "/pacientes",
+    funcionalidade: "pacientes",
+    subitems: [
+      { icon: UserPlus, label: "Novo Paciente", path: "/pacientes/novo", funcionalidade: "pacientes.criar" },
+      { icon: Search, label: "Buscar Paciente", path: "/pacientes?buscar=true", funcionalidade: "pacientes" },
+      { icon: FileSpreadsheet, label: "Relatório", path: "/pacientes/relatorio", funcionalidade: "pacientes" },
+      { icon: AlertTriangle, label: "Duplicados", path: "/pacientes/duplicados", funcionalidade: "pacientes" },
+    ],
+  },
+  {
+    icon: Stethoscope,
+    label: "Atendimentos",
+    path: "/atendimentos",
+    funcionalidade: "atendimentos",
+    subitems: [
+      { icon: ClipboardPlus, label: "Novo Atendimento", path: "/atendimentos/novo", funcionalidade: "atendimentos.criar" },
+      { icon: Search, label: "Buscar Atendimento", path: "/atendimentos?buscar=true", funcionalidade: "atendimentos" },
+      { icon: FileSpreadsheet, label: "Relatórios", path: "/atendimentos/relatorios", funcionalidade: "atendimentos" },
+    ],
+  },
+];
+
+const SIDEBAR_WIDTH_KEY = "sidebar-width";
+const DEFAULT_WIDTH = 280;
+const MIN_WIDTH = 200;
+const MAX_WIDTH = 480;
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
+  });
+  const { loading, user } = useAuth();
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+  }, [sidebarWidth]);
+
+  if (loading) {
+    return <DashboardLayoutSkeleton />
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
+          <div className="flex flex-col items-center gap-6">
+            <h1 className="text-2xl font-semibold tracking-tight text-center">
+              Sign in to continue
+            </h1>
+            <p className="text-sm text-muted-foreground text-center max-w-sm">
+              Access to this dashboard requires authentication. Continue to launch the login flow.
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              window.location.href = getLoginUrl();
+            }}
+            size="lg"
+            className="w-full shadow-lg hover:shadow-xl transition-all"
+          >
+            Sign in
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
-      >
-        <Menu className="w-5 h-5 text-gray-600" />
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        className={`
-          fixed top-0 left-0 h-screen z-40
-          bg-white border-r border-gray-200
-          flex flex-col
-          transition-all duration-300 ease-in-out
-          ${sidebarCollapsed ? "w-16" : "w-64"}
-          ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}
-      >
-        {/* Header */}
-        <div className="px-4 py-4 border-b border-gray-200 flex items-center justify-between">
-          {!sidebarCollapsed && (
-            <>
-              <span className="text-lg font-bold text-[#203864] tracking-tight">GORGEN</span>
-              <span className="text-xs text-gray-400 font-medium">v3.5.7</span>
-            </>
-          )}
-          {sidebarCollapsed && (
-            <span className="text-lg font-bold text-[#203864] mx-auto">G</span>
-          )}
-        </div>
-
-        {/* Notifications */}
-        <div className="px-3 py-2 border-b border-gray-200">
-          <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
-            <Bell className="w-5 h-5" />
-            {!sidebarCollapsed && (
-              <>
-                <span className="text-sm font-medium">Notificações</span>
-                <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  9
-                </span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 px-2 py-3 overflow-y-auto">
-          {menuItems.map((item) => {
-            const isActive = location === item.path || 
-              (item.path !== "/" && location.startsWith(item.path));
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1
-                  transition-all duration-150
-                  ${isActive
-                    ? "bg-[#E0E8F2] text-[#203864]"
-                    : "text-gray-600 hover:bg-gray-100"
-                  }
-                `}
-                title={sidebarCollapsed ? item.label : undefined}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && (
-                  <>
-                    <span className="truncate">{item.label}</span>
-                    {item.badge && (
-                      <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-500">
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Collapse Button */}
-        <div className="px-2 py-2 border-t border-gray-200 hidden lg:block">
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-          >
-            {sidebarCollapsed ? (
-              <ChevronRight className="w-5 h-5" />
-            ) : (
-              <>
-                <ChevronLeft className="w-5 h-5" />
-                <span className="text-sm">Recolher</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* User Info */}
-        <div className="px-3 py-4 border-t border-gray-200">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-                <div
-                  className={`w-9 h-9 rounded-full ${userProfileColor} text-white flex items-center justify-center font-semibold text-sm flex-shrink-0`}
-                >
-                  {userInitials}
-                </div>
-                {!sidebarCollapsed && (
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {user?.name || "Usuário"}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {user?.email || "email@exemplo.com"}
-                    </p>
-                  </div>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem>
-                <Settings className="w-4 h-4 mr-2" />
-                Configurações
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className="text-red-600">
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </aside>
-
-      {/* Mobile Overlay */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <main
-        className={`
-          min-h-screen transition-all duration-300
-          ${sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"}
-          pt-16 lg:pt-0
-        `}
-      >
-        <div className="p-6">{children}</div>
-      </main>
-    </div>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": `${sidebarWidth}px`,
+        } as CSSProperties
+      }
+    >
+      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
+        {children}
+      </DashboardLayoutContent>
+    </SidebarProvider>
   );
 }
 
-export default DashboardLayout;
+type DashboardLayoutContentProps = {
+  children: React.ReactNode;
+  setSidebarWidth: (width: number) => void;
+};
+
+function DashboardLayoutContent({
+  children,
+  setSidebarWidth,
+}: DashboardLayoutContentProps) {
+  const { user, logout } = useAuth();
+  const [location, setLocation] = useLocation();
+  const { state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  
+  // Estados para controlar os dropdowns abertos
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  
+  // Queries de perfil
+  const { data: profile, refetch: refetchProfile } = trpc.perfil.me.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const { data: availablePerfis } = trpc.perfil.getAvailablePerfis.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const setPerfilAtivo = trpc.perfil.setPerfilAtivo.useMutation({
+    onSuccess: () => {
+      toast.success("Perfil alterado com sucesso!");
+      refetchProfile();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao trocar perfil: ${error.message}`);
+    },
+  });
+  
+  const currentPerfil = profile?.perfilAtivo || "paciente";
+  const currentPerfilInfo = perfilInfo[currentPerfil];
+  
+  // Encontrar item ativo para o título mobile
+  const allItems = [
+    ...mainMenuItems,
+    ...menuWithSubitems.map(m => ({ ...m })),
+    ...menuWithSubitems.flatMap(m => m.subitems),
+  ];
+  const activeMenuItem = allItems.find(item => item.path === location);
+
+  useEffect(() => {
+    if (isCollapsed) {
+      setIsResizing(false);
+    }
+  }, [isCollapsed]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+
+      const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
+      const newWidth = e.clientX - sidebarLeft;
+      if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing, setSidebarWidth]);
+
+  const toggleMenu = (menuPath: string) => {
+    setOpenMenus(prev => ({
+      ...prev,
+      [menuPath]: !prev[menuPath],
+    }));
+  };
+
+  return (
+    <>
+      <div className="relative" ref={sidebarRef}>
+        <Sidebar
+          collapsible="icon"
+          className="border-r-0"
+          disableTransition={isResizing}
+        >
+          <SidebarHeader className="h-16 justify-center">
+            <div className="flex items-center justify-between px-2 transition-all w-full">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleSidebar}
+                  className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                  aria-label="Toggle navigation"
+                >
+                  {isCollapsed ? (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+                {!isCollapsed ? (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-semibold tracking-tight truncate">
+                      Menu
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+              {!isCollapsed && <NotificacoesDropdown />}
+            </div>
+          </SidebarHeader>
+
+          <SidebarContent className="gap-0">
+            <SidebarMenu className="px-2 py-1">
+              {/* Menu items principais */}
+              {mainMenuItems
+                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
+                .filter(item => !item.adminOnly || user?.role === 'admin')
+                .map(item => {
+                  const isActive = location === item.path;
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => setLocation(item.path)}
+                        tooltip={item.label}
+                        className={`h-10 transition-all font-normal`}
+                      >
+                        <item.icon
+                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              
+              {/* Menu items com subitens */}
+              {menuWithSubitems
+                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
+                .map(item => {
+                  const isActive = location === item.path || item.subitems.some(sub => location === sub.path);
+                  const isOpen = openMenus[item.path] ?? false;
+                  const hasVisibleSubitems = item.subitems.some(sub => 
+                    temPermissao(currentPerfil as PerfilType, sub.funcionalidade)
+                  );
+                  
+                  return (
+                    <Collapsible
+                      key={item.path}
+                      open={isOpen && !isCollapsed}
+                    >
+                      <SidebarMenuItem>
+                        <div className="flex items-center w-full">
+                          <SidebarMenuButton
+                            isActive={location === item.path}
+                            onClick={() => setLocation(item.path)}
+                            tooltip={item.label}
+                            className={`h-10 transition-all font-normal flex-1`}
+                          >
+                            <item.icon
+                              className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                            />
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                          {hasVisibleSubitems && !isCollapsed && (
+                            <CollapsibleTrigger asChild>
+                              <button
+                                className="h-10 w-8 flex items-center justify-center hover:bg-accent rounded-r-lg transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleMenu(item.path);
+                                }}
+                              >
+                                <ChevronDown
+                                  className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+                                />
+                              </button>
+                            </CollapsibleTrigger>
+                          )}
+                        </div>
+                      </SidebarMenuItem>
+                      
+                      <CollapsibleContent>
+                        {item.subitems
+                          .filter(sub => temPermissao(currentPerfil as PerfilType, sub.funcionalidade))
+                          .map(subitem => {
+                            const isSubActive = location === subitem.path;
+                            return (
+                              <SidebarMenuItem key={subitem.path}>
+                                <SidebarMenuButton
+                                  isActive={isSubActive}
+                                  onClick={() => setLocation(subitem.path)}
+                                  tooltip={subitem.label}
+                                  className={`h-9 transition-all font-normal ml-4 text-sm`}
+                                >
+                                  <subitem.icon
+                                    className={`h-3.5 w-3.5 ${isSubActive ? "text-primary" : ""}`}
+                                  />
+                                  <span>{subitem.label}</span>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  );
+                })}
+              
+              {/* Menu items "Em breve" */}
+              {comingSoonItems.map(item => (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton
+                    onClick={() => toast.info(`${item.label} estará disponível em breve!`)}
+                    tooltip={`${item.label} (Em breve)`}
+                    className="h-10 transition-all font-normal"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                    {!isCollapsed && (
+                      <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 h-5">
+                        Em breve
+                      </Badge>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              
+              {/* Menu items de administração (apenas admin) */}
+              {user?.role === 'admin' && adminMenuItems
+                .filter(item => temPermissao(currentPerfil as PerfilType, item.funcionalidade))
+                .map(item => {
+                  const isActive = location === item.path;
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => setLocation(item.path)}
+                        tooltip={item.label}
+                        className={`h-10 transition-all font-normal`}
+                      >
+                        <item.icon
+                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+            </SidebarMenu>
+          </SidebarContent>
+
+          <SidebarFooter className="p-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Avatar className="h-9 w-9 border shrink-0">
+                    <AvatarFallback className="text-xs font-medium">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+                    <p className="text-sm font-medium truncate leading-none">
+                      {user?.name || "-"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate mt-1.5">
+                      {user?.email || "-"}
+                    </p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {/* Perfil atual */}
+                <DropdownMenuLabel className="flex items-center gap-2">
+                  <Badge className={`${currentPerfilInfo?.color} text-white text-xs`}>
+                    {currentPerfilInfo?.icon}
+                    <span className="ml-1">{currentPerfilInfo?.label}</span>
+                  </Badge>
+                </DropdownMenuLabel>
+                
+                <DropdownMenuSeparator />
+                
+                {/* Configurações */}
+                {temPermissao(currentPerfil as PerfilType, "configuracoes") && (
+                  <DropdownMenuItem
+                    onClick={() => setLocation("/configuracoes")}
+                    className="cursor-pointer"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </DropdownMenuItem>
+                )}
+                
+                {/* Perfil - Trocar perfil de acesso */}
+                {availablePerfis && availablePerfis.length > 1 && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="cursor-pointer">
+                      <UserCircle className="mr-2 h-4 w-4" />
+                      <span>Perfil</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {availablePerfis.map((perfil) => {
+                        const info = perfilInfo[perfil];
+                        const isActive = perfil === currentPerfil;
+                        return (
+                          <DropdownMenuItem
+                            key={perfil}
+                            onClick={() => !isActive && setPerfilAtivo.mutate({ perfil: perfil as any })}
+                            className={`cursor-pointer ${isActive ? 'bg-accent' : ''}`}
+                            disabled={isActive || setPerfilAtivo.isPending}
+                          >
+                            {info?.icon}
+                            <span className="ml-2">{info?.label}</span>
+                            {isActive && <span className="ml-auto text-xs text-muted-foreground">(Ativo)</span>}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )}
+                
+                {/* Conta - Seletor de Tenant */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="cursor-pointer">
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span>Conta</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="p-2 min-w-[200px]">
+                    <TenantSelector className="w-full" />
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarFooter>
+        </Sidebar>
+        <div
+          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
+          onMouseDown={() => {
+            if (isCollapsed) return;
+            setIsResizing(true);
+          }}
+          style={{ zIndex: 50 }}
+        />
+      </div>
+
+      <SidebarInset>
+        {isMobile && (
+          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-1">
+                  <span className="tracking-tight text-foreground">
+                    {activeMenuItem?.label ?? "Menu"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <NotificacoesDropdown />
+            </div>
+          </div>
+        )}
+        <main className="flex-1">{children}</main>
+      </SidebarInset>
+    </>
+  );
+}

@@ -53,7 +53,7 @@ export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdat
           <p className="text-sm text-gray-500">Histórico de internações hospitalares</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" tooltip="Enviar" onClick={() => { setInternacaoIdParaUpload(null); setModalUploadAberto(true); }}>
+          <Button variant="outline" onClick={() => { setInternacaoIdParaUpload(null); setModalUploadAberto(true); }}>
             <Upload className="h-4 w-4 mr-2" />
             Upload de Documento
           </Button>
@@ -102,8 +102,8 @@ export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdat
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovaInternacao(false)}>Cancelar</Button>
-              <Button tooltip="Salvar alterações" onClick={() => createInternacao.mutate({
+              <Button variant="outline" onClick={() => setNovaInternacao(false)}>Cancelar</Button>
+              <Button onClick={() => createInternacao.mutate({
                 pacienteId,
                 hospital: form.hospital,
                 setor: form.setor || null,
@@ -126,7 +126,7 @@ export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdat
           <CardContent className="py-8 text-center">
             <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">Nenhuma internação registrada.</p>
-            <Button className="mt-4" tooltip="Adicionar" onClick={() => setNovaInternacao(true)}>
+            <Button className="mt-4" onClick={() => setNovaInternacao(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Registrar Primeira Internação
             </Button>
@@ -146,7 +146,7 @@ export default function ProntuarioInternacoes({ pacienteId, internacoes, onUpdat
                     <Button
                       variant="ghost"
                       size="sm"
-                      tooltip="Enviar" onClick={() => {
+                      onClick={() => {
                         setInternacaoIdParaUpload(int.id);
                         setModalUploadAberto(true);
                       }}

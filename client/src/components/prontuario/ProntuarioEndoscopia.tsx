@@ -26,7 +26,7 @@ export default function ProntuarioEndoscopia({ pacienteId, exames, onUpdate }: P
       <div className="flex items-center justify-between">
         <div><h2 className="text-xl font-bold">Endoscopia</h2><p className="text-sm text-gray-500">EDA, Colonoscopia, Broncoscopia, etc.</p></div>
         <div className="flex gap-2">
-          <Button variant="outline" tooltip="Enviar" onClick={() => { setExameIdParaUpload(null); setModalUploadAberto(true); }}>
+          <Button variant="outline" onClick={() => { setExameIdParaUpload(null); setModalUploadAberto(true); }}>
             <Upload className="h-4 w-4 mr-2" />Upload de Documento
           </Button>
           <Dialog open={novoExame} onOpenChange={setNovoExame}>
@@ -63,8 +63,8 @@ export default function ProntuarioEndoscopia({ pacienteId, exames, onUpdate }: P
               {form.biopsia && <div><Label>Resultado da Biópsia</Label><Textarea value={form.resultadoBiopsia} onChange={(e) => setForm({...form, resultadoBiopsia: e.target.value})} /></div>}
             </div>
             <DialogFooter>
-              <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovoExame(false)}>Cancelar</Button>
-              <Button tooltip="Salvar alterações" onClick={() => createExame.mutate({ pacienteId, dataExame: form.dataExame, tipoExame: form.tipoExame as "EDA" | "Colonoscopia" | "Retossigmoidoscopia" | "CPRE" | "Ecoendoscopia" | "Enteroscopia" | "Outro", clinicaServico: form.clinica || null, medicoExecutor: form.medico || null, descricao: form.achados || null, conclusao: form.conclusao || null, biopsia: form.biopsia, resultadoBiopsia: form.resultadoBiopsia || null })} disabled={!form.tipoExame}>Salvar</Button>
+              <Button variant="outline" onClick={() => setNovoExame(false)}>Cancelar</Button>
+              <Button onClick={() => createExame.mutate({ pacienteId, dataExame: form.dataExame, tipoExame: form.tipoExame as "EDA" | "Colonoscopia" | "Retossigmoidoscopia" | "CPRE" | "Ecoendoscopia" | "Enteroscopia" | "Outro", clinicaServico: form.clinica || null, medicoExecutor: form.medico || null, descricao: form.achados || null, conclusao: form.conclusao || null, biopsia: form.biopsia, resultadoBiopsia: form.resultadoBiopsia || null })} disabled={!form.tipoExame}>Salvar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -75,7 +75,7 @@ export default function ProntuarioEndoscopia({ pacienteId, exames, onUpdate }: P
           <CardContent className="py-8 text-center">
             <Scan className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">Nenhum exame endoscópico registrado.</p>
-            <Button className="mt-4" tooltip="Criar novo registro" onClick={() => setNovoExame(true)}>
+            <Button className="mt-4" onClick={() => setNovoExame(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Registrar Primeiro Exame
             </Button>
@@ -85,7 +85,7 @@ export default function ProntuarioEndoscopia({ pacienteId, exames, onUpdate }: P
         <div className="space-y-4">
           {exames.map((ex) => (
             <Card key={ex.id}>
-              <CardHeader><div className="flex items-center justify-between"><CardTitle className="text-base">{ex.tipoExame}</CardTitle><div className="flex items-center gap-2"><Button variant="ghost" size="sm" tooltip="Enviar" onClick={() => { setExameIdParaUpload(ex.id); setModalUploadAberto(true); }} title="Anexar documento"><Upload className="h-4 w-4" /></Button><span className="text-sm text-gray-500">{new Date(ex.dataExame).toLocaleDateString("pt-BR")}</span></div></div></CardHeader>
+              <CardHeader><div className="flex items-center justify-between"><CardTitle className="text-base">{ex.tipoExame}</CardTitle><div className="flex items-center gap-2"><Button variant="ghost" size="sm" onClick={() => { setExameIdParaUpload(ex.id); setModalUploadAberto(true); }} title="Anexar documento"><Upload className="h-4 w-4" /></Button><span className="text-sm text-gray-500">{new Date(ex.dataExame).toLocaleDateString("pt-BR")}</span></div></div></CardHeader>
               <CardContent className="text-sm space-y-2">
                 {ex.conclusao && <p className="font-medium">Conclusão: {ex.conclusao}</p>}
                 {ex.achados && <pre className="whitespace-pre-wrap bg-gray-50 p-3 rounded text-xs">{ex.achados}</pre>}

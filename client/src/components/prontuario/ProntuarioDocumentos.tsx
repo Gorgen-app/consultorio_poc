@@ -24,7 +24,7 @@ interface Props {
 const tiposDocumento = [
   { value: "Receita", label: "Receita Simples", icon: Pill, cor: "bg-blue-100 text-blue-700" },
   { value: "Receita Especial", label: "Receita Especial (Controlado)", icon: Pill, cor: "bg-purple-100 text-purple-700" },
-  { value: "Solicitação de Exames", label: "Solicitação de Exames", icon: ClipboardList, cor: "bg-green-100 text-green-700" },
+  { value: "Solicitação de Exames", label: "Solicitação de Exames", icon: ClipboardList, cor: "bg-emerald-100 text-emerald-700" },
   { value: "Atestado Comparecimento", label: "Atestado de Comparecimento", icon: FileCheck, cor: "bg-yellow-100 text-yellow-700" },
   { value: "Atestado Afastamento", label: "Atestado de Afastamento", icon: Calendar, cor: "bg-orange-100 text-orange-700" },
   { value: "Laudo", label: "Laudo Médico", icon: FileText, cor: "bg-gray-100 text-gray-700" },
@@ -225,7 +225,7 @@ export default function ProntuarioDocumentos({ pacienteId, pacienteNome, documen
             )}
             
             <DialogFooter>
-              <Button variant="outline" tooltip="Cancelar operação" onClick={() => {
+              <Button variant="outline" onClick={() => {
                 setNovoDocumento(false);
                 setTipoSelecionado("");
               }}>
@@ -233,7 +233,6 @@ export default function ProntuarioDocumentos({ pacienteId, pacienteNome, documen
               </Button>
               {tipoSelecionado && (
                 <Button 
-                  tooltip="Salvar alterações"
                   onClick={() => createDocumento.mutate({
                     pacienteId,
                     tipo: form.tipoDocumento as "Receita" | "Receita Especial" | "Solicitação de Exames" | "Atestado Comparecimento" | "Atestado Afastamento" | "Laudo Médico" | "Relatório Médico" | "Protocolo Cirurgia" | "Guia SADT" | "Guia Internação" | "Outro",
@@ -258,7 +257,7 @@ export default function ProntuarioDocumentos({ pacienteId, pacienteNome, documen
           <CardContent className="py-8 text-center">
             <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">Nenhum documento emitido.</p>
-            <Button className="mt-4" tooltip="Criar novo registro" onClick={() => setNovoDocumento(true)}>
+            <Button className="mt-4" onClick={() => setNovoDocumento(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Emitir Primeiro Documento
             </Button>
@@ -285,12 +284,12 @@ export default function ProntuarioDocumentos({ pacienteId, pacienteNome, documen
                       <Button 
                         variant="outline" 
                         size="sm"
-                        tooltip="Visualizar" onClick={() => setVisualizando(doc)}
+                        onClick={() => setVisualizando(doc)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Ver
                       </Button>
-                      <Button variant="outline" size="sm" tooltip="Imprimir documento">
+                      <Button variant="outline" size="sm">
                         <Printer className="h-4 w-4 mr-1" />
                         Imprimir
                       </Button>
@@ -330,7 +329,7 @@ export default function ProntuarioDocumentos({ pacienteId, pacienteNome, documen
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" tooltip="Fechar janela" onClick={() => setVisualizando(null)}>
+            <Button variant="outline" onClick={() => setVisualizando(null)}>
               Fechar
             </Button>
             <Button>

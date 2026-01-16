@@ -230,12 +230,13 @@ const todasMetricas: MetricaDefinicao[] = [
   { id: 'div_ocupacao_agenda', nome: 'Ocupação da Agenda', descricao: 'Percentual de ocupação', categoria: 'diversas', tipoGrafico: 'gauge', unidade: '%', icone: 'CalendarDays', corPrimaria: '#14B8A6' },
 ];
 
+// Gorgen Design System - Cores das Categorias
 const categorias: { valor: CategoriaMetrica; label: string; cor: string }[] = [
-  { valor: 'populacao_pacientes', label: 'População', cor: '#3B82F6' },
-  { valor: 'atendimentos', label: 'Atendimentos', cor: '#10B981' },
-  { valor: 'economico_financeiro', label: 'Financeiro', cor: '#F59E0B' },
-  { valor: 'qualidade_atendimento', label: 'Qualidade', cor: '#8B5CF6' },
-  { valor: 'diversas', label: 'Diversas', cor: '#EC4899' },
+  { valor: 'populacao_pacientes', label: 'População', cor: '#203864' },  // Azul Gorgen
+  { valor: 'atendimentos', label: 'Atendimentos', cor: '#10B981' },         // Verde
+  { valor: 'economico_financeiro', label: 'Financeiro', cor: '#F59E0B' },   // Âmbar
+  { valor: 'qualidade_atendimento', label: 'Qualidade', cor: '#8B5CF6' },   // Violeta
+  { valor: 'diversas', label: 'Diversas', cor: '#DC6B4A' },                 // Coral Gorgen
 ];
 
 // Mapeamento de ícones
@@ -542,13 +543,13 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
               <Badge variant="outline" className="text-sm">
                 {widgets.length} widget{widgets.length !== 1 ? 's' : ''} selecionado{widgets.length !== 1 ? 's' : ''}
               </Badge>
-              <Button onClick={handleSave} tooltip="Salvar">
+              <Button onClick={handleSave}>
                 Concluído
               </Button>
               <Button 
                 variant="ghost" 
                 size="icon"
-                tooltip="Fechar" onClick={() => onOpenChange(false)}
+                onClick={() => onOpenChange(false)}
                 className="h-8 w-8"
               >
                 <XCircle className="h-5 w-5" />

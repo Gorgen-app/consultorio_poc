@@ -47,7 +47,7 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
           <p className="text-sm text-gray-500">Histórico de procedimentos cirúrgicos</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" tooltip="Enviar" onClick={() => { setCirurgiaIdParaUpload(null); setModalUploadAberto(true); }}>
+          <Button variant="outline" onClick={() => { setCirurgiaIdParaUpload(null); setModalUploadAberto(true); }}>
             <Upload className="h-4 w-4 mr-2" />
             Upload de Documento
           </Button>
@@ -68,8 +68,8 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
               <div><Label>Descrição Cirúrgica</Label><Textarea rows={4} value={form.descricaoCirurgica} onChange={(e) => setForm({...form, descricaoCirurgica: e.target.value})} /></div>
             </div>
             <DialogFooter>
-              <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovaCirurgia(false)}>Cancelar</Button>
-              <Button tooltip="Salvar alterações" onClick={() => createCirurgia.mutate({ pacienteId, dataCirurgia: new Date(form.dataCirurgia), procedimento: form.procedimento, hospital: form.hospital || null, cirurgiaoResponsavel: form.cirurgiaoResponsavel || null, indicacao: form.indicacao || null, descricaoCirurgica: form.descricaoCirurgica || null })} disabled={!form.procedimento}>Salvar</Button>
+              <Button variant="outline" onClick={() => setNovaCirurgia(false)}>Cancelar</Button>
+              <Button onClick={() => createCirurgia.mutate({ pacienteId, dataCirurgia: new Date(form.dataCirurgia), procedimento: form.procedimento, hospital: form.hospital || null, cirurgiaoResponsavel: form.cirurgiaoResponsavel || null, indicacao: form.indicacao || null, descricaoCirurgica: form.descricaoCirurgica || null })} disabled={!form.procedimento}>Salvar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -80,7 +80,7 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
           <CardContent className="py-8 text-center">
             <Scissors className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">Nenhuma cirurgia registrada.</p>
-            <Button className="mt-4" tooltip="Adicionar" onClick={() => setNovaCirurgia(true)}>
+            <Button className="mt-4" onClick={() => setNovaCirurgia(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Registrar Primeira Cirurgia
             </Button>
@@ -97,7 +97,7 @@ export default function ProntuarioCirurgias({ pacienteId, cirurgias, onUpdate }:
                     <Button
                       variant="ghost"
                       size="sm"
-                      tooltip="Enviar" onClick={() => {
+                      onClick={() => {
                         setCirurgiaIdParaUpload(cir.id);
                         setModalUploadAberto(true);
                       }}

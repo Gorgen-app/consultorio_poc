@@ -83,7 +83,7 @@ export function TenantSelector({ onTenantChange, className }: TenantSelectorProp
   
   if (loadingTenants || loadingActive) {
     return (
-      <Button variant="outline" className={cn("gap-2", className)} disabled tooltip="Carregando...">
+      <Button variant="outline" className={cn("gap-2", className)} disabled>
         <Loader2 className="h-4 w-4 animate-spin" />
         Carregando...
       </Button>
@@ -98,7 +98,7 @@ export function TenantSelector({ onTenantChange, className }: TenantSelectorProp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className={cn("gap-2 justify-between", className)} tooltip="Recolher">
+        <Button variant="outline" className={cn("gap-2 justify-between", className)}>
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
             <span className="truncate max-w-[150px]">{activeTenant?.nome || "Selecionar Clínica"}</span>

@@ -24,7 +24,7 @@ export default function Home() {
         Example Page
         {/* Example: Streamdown for markdown rendering */}
         <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default" tooltip="Example Button">Example Button</Button>
+        <Button variant="default">Example Button</Button>
       </main>
     </div>
   );

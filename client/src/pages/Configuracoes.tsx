@@ -30,23 +30,25 @@ import {
   AlertCircle,
   FlaskConical,
   HardDrive,
+  HelpCircle,
 } from "lucide-react";
 import { Link } from "wouter";
 import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especialidadesMedicas";
-import { GoogleCalendarSettings } from "@/components/settings/GoogleCalendarSettings";
+import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { HelpSupport } from "@/components/settings/HelpSupport";
 
 // Mapeamento de perfis para labels e ícones
 const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   admin_master: { label: "Administrador Master", icon: <Shield className="h-4 w-4" />, color: "bg-red-500" },
   medico: { label: "Médico", icon: <Stethoscope className="h-4 w-4" />, color: "bg-blue-500" },
-  secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-green-500" },
+  secretaria: { label: "Secretária", icon: <Calendar className="h-4 w-4" />, color: "bg-emerald-500" },
   auditor: { label: "Auditor", icon: <Eye className="h-4 w-4" />, color: "bg-purple-500" },
   paciente: { label: "Paciente", icon: <User className="h-4 w-4" />, color: "bg-gray-500" },
 };
 
 // Status do vínculo para exibição
 const statusVinculoInfo: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  ativo: { label: "Ativo", color: "bg-green-500", icon: <CheckCircle className="h-4 w-4" /> },
+  ativo: { label: "Ativo", color: "bg-emerald-500", icon: <CheckCircle className="h-4 w-4" /> },
   pendente_renovacao: { label: "Pendente Renovação", color: "bg-yellow-500", icon: <AlertTriangle className="h-4 w-4" /> },
   expirado: { label: "Expirado", color: "bg-red-500", icon: <Clock className="h-4 w-4" /> },
   cancelado: { label: "Cancelado", color: "bg-gray-500", icon: <X className="h-4 w-4" /> },
@@ -96,7 +98,7 @@ function AlertaPacientesInativos() {
             </div>
             <div className="flex gap-2">
               <Button
-                tooltip="Atualizar" onClick={() => notificarMutation.mutate()}
+                onClick={() => notificarMutation.mutate()}
                 disabled={notificarMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700"
               >
@@ -108,14 +110,14 @@ function AlertaPacientesInativos() {
                 Enviar Notificação
               </Button>
               <Link href="/atendimentos/relatorios">
-                <Button variant="outline" tooltip="Ver Relatório">
+                <Button variant="outline">
                   Ver Relatório
                 </Button>
               </Link>
             </div>
           </>
         ) : (
-          <div className="flex items-center gap-2 text-green-600">
+          <div className="flex items-center gap-2 text-emerald-600">
             <CheckCircle className="h-5 w-5" />
             <span>Nenhum paciente ativo sem atendimento há 360+ dias</span>
           </div>
@@ -329,7 +331,7 @@ export default function Configuracoes() {
           <Button
             variant={activeTab === "perfil" ? "default" : "ghost"}
             size="sm"
-            tooltip="Usuário" onClick={() => setActiveTab("perfil")}
+            onClick={() => setActiveTab("perfil")}
             className="flex items-center gap-2"
           >
             <User className="h-4 w-4" />
@@ -341,7 +343,7 @@ export default function Configuracoes() {
             <Button
               variant={activeTab === "vinculos" ? "default" : "ghost"}
               size="sm"
-              tooltip="Adicionar" onClick={() => setActiveTab("vinculos")}
+              onClick={() => setActiveTab("vinculos")}
               className="flex items-center gap-2"
             >
               <UserPlus className="h-4 w-4" />
@@ -354,7 +356,7 @@ export default function Configuracoes() {
             <Button
               variant={activeTab === "vinculos" ? "default" : "ghost"}
               size="sm"
-              tooltip="Adicionar" onClick={() => setActiveTab("vinculos")}
+              onClick={() => setActiveTab("vinculos")}
               className="flex items-center gap-2"
             >
               <UserPlus className="h-4 w-4" />
@@ -408,25 +410,13 @@ export default function Configuracoes() {
             <span className="hidden sm:inline">Assinatura</span>
           </Button>
           
-          {/* Botão para Google Calendar */}
-          <Button
-            variant={activeTab === "googleCalendar" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveTab("googleCalendar")}
-            className="flex items-center gap-2"
-            tooltip="Google Calendar"
-          >
-            <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">Google Calendar</span>
-          </Button>
-          
           {/* Botão para Exames Favoritos */}
           <Link href="/configuracoes/exames-favoritos">
             <Button
               variant="ghost"
               size="sm"
               className="flex items-center gap-2"
-             tooltip="Exames Favoritos">
+            >
               <FlaskConical className="h-4 w-4" />
               <span className="hidden sm:inline">Exames Favoritos</span>
             </Button>
@@ -439,12 +429,34 @@ export default function Configuracoes() {
                 variant="ghost"
                 size="sm"
                 className="flex items-center gap-2"
-               tooltip="Backup">
+              >
                 <HardDrive className="h-4 w-4" />
                 <span className="hidden sm:inline">Backup</span>
               </Button>
             </Link>
           )}
+          
+          {/* Aba de Segurança */}
+          <Button
+            variant={activeTab === "seguranca" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("seguranca")}
+            className="flex items-center gap-2"
+          >
+            <Lock className="h-4 w-4" />
+            <span className="hidden sm:inline">Segurança</span>
+          </Button>
+          
+          {/* Aba de Ajuda e Suporte */}
+          <Button
+            variant={activeTab === "ajuda" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("ajuda")}
+            className="flex items-center gap-2"
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Ajuda</span>
+          </Button>
         </div>
 
         {/* Conteúdo das abas */}
@@ -492,7 +504,7 @@ export default function Configuracoes() {
                   />
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={handleSaveProfile} disabled={updateProfile.isPending} tooltip="Salvar alterações">
+                  <Button onClick={handleSaveProfile} disabled={updateProfile.isPending}>
                     <Save className="h-4 w-4 mr-2" />
                     Salvar Alterações
                   </Button>
@@ -563,7 +575,7 @@ export default function Configuracoes() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button onClick={handleCriarVinculo} disabled={criarVinculo.isPending} tooltip="Adicionar">
+                      <Button onClick={handleCriarVinculo} disabled={criarVinculo.isPending}>
                         <UserPlus className="h-4 w-4 mr-2" />
                         Criar Vínculo
                       </Button>
@@ -611,7 +623,7 @@ export default function Configuracoes() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    tooltip="Atualizar" onClick={() => renovarVinculo.mutate({ vinculoId: vinculo.id })}
+                                    onClick={() => renovarVinculo.mutate({ vinculoId: vinculo.id })}
                                     disabled={renovarVinculo.isPending}
                                   >
                                     <RefreshCw className="h-4 w-4 mr-1" />
@@ -623,7 +635,7 @@ export default function Configuracoes() {
                                     size="sm"
                                     variant="ghost"
                                     className="text-red-600 hover:text-red-700"
-                                    tooltip="Fechar" onClick={() => cancelarVinculo.mutate({ vinculoId: vinculo.id })}
+                                    onClick={() => cancelarVinculo.mutate({ vinculoId: vinculo.id })}
                                     disabled={cancelarVinculo.isPending}
                                   >
                                     <X className="h-4 w-4" />
@@ -682,7 +694,7 @@ export default function Configuracoes() {
                               {vinculo.status === "pendente_renovacao" && (
                                 <Button
                                   size="sm"
-                                  tooltip="Confirmar" onClick={() => renovarVinculo.mutate({ vinculoId: vinculo.id })}
+                                  onClick={() => renovarVinculo.mutate({ vinculoId: vinculo.id })}
                                   disabled={renovarVinculo.isPending}
                                 >
                                   <CheckCircle className="h-4 w-4 mr-1" />
@@ -843,7 +855,7 @@ export default function Configuracoes() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleSaveEspecialidades} disabled={atualizarEspecialidades.isPending} tooltip="Salvar alterações">
+                  <Button onClick={handleSaveEspecialidades} disabled={atualizarEspecialidades.isPending}>
                     <Save className="h-4 w-4 mr-2" />
                     Salvar Especialidades
                   </Button>
@@ -891,7 +903,7 @@ export default function Configuracoes() {
                       Notificações sobre vínculos próximos do vencimento (30 dias antes)
                     </p>
                   </div>
-                  <Badge className="bg-green-500 text-white">Ativo</Badge>
+                  <Badge className="bg-emerald-500 text-white">Ativo</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -916,18 +928,18 @@ export default function Configuracoes() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Status atual */}
-                <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950">
+                <div className="p-4 border rounded-lg bg-emerald-50 dark:bg-green-950">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-green-800 dark:text-green-200 flex items-center gap-2">
+                      <h3 className="font-semibold text-emerald-800 dark:text-green-200 flex items-center gap-2">
                         <CheckCircle className="h-5 w-5" />
                         Plano Profissional
                       </h3>
-                      <p className="text-sm text-green-600 dark:text-green-400">
+                      <p className="text-sm text-emerald-600 dark:text-green-400">
                         Sua assinatura está ativa
                       </p>
                     </div>
-                    <Badge className="bg-green-500 text-white">Ativo</Badge>
+                    <Badge className="bg-emerald-500 text-white">Ativo</Badge>
                   </div>
                   <Separator className="my-3" />
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -1013,7 +1025,7 @@ export default function Configuracoes() {
                             <p className="text-sm text-muted-foreground">•••• •••• •••• 4242</p>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" tooltip="Alterar">
+                        <Button variant="outline" size="sm">
                           Alterar
                         </Button>
                       </div>
@@ -1034,7 +1046,7 @@ export default function Configuracoes() {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-medium">R$ 199,00</span>
-                            <Badge className="bg-green-500 text-white">Pago</Badge>
+                            <Badge className="bg-emerald-500 text-white">Pago</Badge>
                           </div>
                         </div>
                         <div className="flex items-center justify-between py-2 border-b">
@@ -1044,7 +1056,7 @@ export default function Configuracoes() {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-medium">R$ 199,00</span>
-                            <Badge className="bg-green-500 text-white">Pago</Badge>
+                            <Badge className="bg-emerald-500 text-white">Pago</Badge>
                           </div>
                         </div>
                       </div>
@@ -1062,7 +1074,7 @@ export default function Configuracoes() {
                         Ao cancelar, você perderá acesso ao sistema no final do período atual.
                         Seus dados serão mantidos por 90 dias para possível reativação.
                       </p>
-                      <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-100" tooltip="Cancelar operação">
+                      <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-100">
                         Cancelar Assinatura
                       </Button>
                     </div>
@@ -1072,12 +1084,15 @@ export default function Configuracoes() {
             </Card>
           </div>
         )}
-        
-        {/* Tab: Google Calendar */}
-        {activeTab === "googleCalendar" && (
-          <div className="space-y-4">
-            <GoogleCalendarSettings />
-          </div>
+
+        {/* Tab: Segurança */}
+        {activeTab === "seguranca" && (
+          <SecuritySettings />
+        )}
+
+        {/* Tab: Ajuda e Suporte */}
+        {activeTab === "ajuda" && (
+          <HelpSupport />
         )}
       </div>
     </div>

@@ -42,8 +42,8 @@ export default function ProntuarioTerapias({ pacienteId, terapias, onUpdate }: P
               <div><Label>Indicação</Label><Textarea value={form.indicacao} onChange={(e) => setForm({...form, indicacao: e.target.value})} /></div>
             </div>
             <DialogFooter>
-              <Button variant="outline" tooltip="Cancelar operação" onClick={() => setNovaTerapia(false)}>Cancelar</Button>
-              <Button tooltip="Salvar alterações" onClick={() => createTerapia.mutate({ pacienteId, dataTerapia: new Date(form.dataInicio), tipoTerapia: form.tipoTerapia as "Quimioterapia" | "Imunoterapia" | "Terapia Alvo" | "Imunobiológico" | "Infusão" | "Transfusão" | "Outro", medicamentos: form.medicamento, local: form.local || null })} disabled={!form.tipoTerapia || !form.medicamento}>Salvar</Button>
+              <Button variant="outline" onClick={() => setNovaTerapia(false)}>Cancelar</Button>
+              <Button onClick={() => createTerapia.mutate({ pacienteId, dataTerapia: new Date(form.dataInicio), tipoTerapia: form.tipoTerapia as "Quimioterapia" | "Imunoterapia" | "Terapia Alvo" | "Imunobiológico" | "Infusão" | "Transfusão" | "Outro", medicamentos: form.medicamento, local: form.local || null })} disabled={!form.tipoTerapia || !form.medicamento}>Salvar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

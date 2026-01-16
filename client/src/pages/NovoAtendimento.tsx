@@ -229,7 +229,7 @@ export default function NovoAtendimento() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" tooltip="Voltar" onClick={() => setLocation("/atendimentos")}>
+        <Button variant="outline" size="icon" onClick={() => setLocation("/atendimentos")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -265,7 +265,7 @@ export default function NovoAtendimento() {
                   <p className="text-xs text-muted-foreground">ID gerado automaticamente</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dataAtendimento" className={isDuplicacao ? "text-green-600 font-semibold" : ""}>
+                  <Label htmlFor="dataAtendimento" className={isDuplicacao ? "text-emerald-600 font-semibold" : ""}>
                     Data do Atendimento * {isDuplicacao && "(PREENCHER)"}
                   </Label>
                   <Input
@@ -274,7 +274,7 @@ export default function NovoAtendimento() {
                     value={formData.dataAtendimento}
                     onChange={(e) => handleChange("dataAtendimento", e.target.value)}
                     required
-                    className={isDuplicacao && !formData.dataAtendimento ? "border-green-500 ring-2 ring-green-200" : ""}
+                    className={isDuplicacao && !formData.dataAtendimento ? "border-emerald-500 ring-2 ring-green-200" : ""}
                     autoFocus={isDuplicacao}
                   />
                 </div>
@@ -539,10 +539,10 @@ export default function NovoAtendimento() {
           </Card>
 
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" tooltip="Cancelar operação" onClick={() => setLocation("/atendimentos")}>
+            <Button type="button" variant="outline" onClick={() => setLocation("/atendimentos")}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={createMutation.isPending} tooltip="Salvar alterações">
+            <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? "Salvando..." : (
                 <>
                   <Save className="h-4 w-4 mr-2" />

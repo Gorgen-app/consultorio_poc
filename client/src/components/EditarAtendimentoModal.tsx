@@ -415,10 +415,10 @@ export function EditarAtendimentoModal({ atendimento, open, onOpenChange }: Edit
           </ScrollArea>
 
           <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
-            <Button type="button" variant="outline" tooltip="Cancelar operação" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending} tooltip="Salvar alterações">
+            <Button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </div>

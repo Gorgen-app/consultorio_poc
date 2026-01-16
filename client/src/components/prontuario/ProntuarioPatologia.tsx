@@ -129,10 +129,10 @@ export default function ProntuarioPatologia({ pacienteId, onUpdate }: Prontuario
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" tooltip="Enviar" onClick={() => { setPatologiaIdParaUpload(null); setModalUploadAberto(true); }}>
+          <Button variant="outline" onClick={() => { setPatologiaIdParaUpload(null); setModalUploadAberto(true); }}>
             <Upload className="h-4 w-4 mr-2" />Upload de Documento
           </Button>
-          <Button tooltip="Criar novo registro" onClick={() => setModalAberto(true)}>
+          <Button onClick={() => setModalAberto(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Exame
           </Button>
@@ -148,7 +148,7 @@ export default function ProntuarioPatologia({ pacienteId, onUpdate }: Prontuario
             <Button 
               variant="outline" 
               className="mt-4"
-              tooltip="Adicionar" onClick={() => setModalAberto(true)}
+              onClick={() => setModalAberto(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
               Registrar Primeiro Exame
@@ -186,7 +186,7 @@ export default function ProntuarioPatologia({ pacienteId, onUpdate }: Prontuario
                   <Button
                     variant="outline"
                     size="sm"
-                    tooltip="Enviar" onClick={() => {
+                    onClick={() => {
                       setPatologiaIdParaUpload(patologia.id);
                       setModalUploadAberto(true);
                     }}
@@ -363,13 +363,13 @@ export default function ProntuarioPatologia({ pacienteId, onUpdate }: Prontuario
           </div>
 
           <DialogFooter>
-            <Button variant="outline" tooltip="Cancelar operação" onClick={() => setModalAberto(false)}>
+            <Button variant="outline" onClick={() => setModalAberto(false)}>
               Cancelar
             </Button>
             <Button 
               onClick={handleSubmit}
               disabled={createPatologia.isPending}
-             tooltip="Salvar alterações">
+            >
               {createPatologia.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
