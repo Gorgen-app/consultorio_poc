@@ -2571,3 +2571,13 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Painel de 4 KPIs no topo do Dashboard
 - [x] Valores numéricos em AZUL (#203864)
 - [x] 326 testes passando
+
+
+---
+
+## ✅ GORGEN 3.5.7 - Correções de Bugs (16/01/2026)
+
+### Bugs Corrigidos
+- [x] Erro SQL: Query de evolução de atendimentos - adicionado alias `as mes` e `as total`
+- [x] Erro HTML: Links aninhados - removida tag `<a>` interna do `<Link>` no DashboardLayout
+- [x] 326 testes passando

@@ -95,7 +95,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {!sidebarCollapsed && (
             <>
               <span className="text-lg font-bold text-[#203864] tracking-tight">GORGEN</span>
-              <span className="text-xs text-gray-400 font-medium">v3.5.6</span>
+              <span className="text-xs text-gray-400 font-medium">v3.5.7</span>
             </>
           )}
           {sidebarCollapsed && (
@@ -126,30 +126,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             const Icon = item.icon;
 
             return (
-              <Link key={item.path} href={item.path}>
-                <a
-                  className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1
-                    transition-all duration-150
-                    ${isActive
-                      ? "bg-[#E0E8F2] text-[#203864]"
-                      : "text-gray-600 hover:bg-gray-100"
-                    }
-                  `}
-                  title={sidebarCollapsed ? item.label : undefined}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                  {!sidebarCollapsed && (
-                    <>
-                      <span className="truncate">{item.label}</span>
-                      {item.badge && (
-                        <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-500">
-                          {item.badge}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </a>
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`
+                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1
+                  transition-all duration-150
+                  ${isActive
+                    ? "bg-[#E0E8F2] text-[#203864]"
+                    : "text-gray-600 hover:bg-gray-100"
+                  }
+                `}
+                title={sidebarCollapsed ? item.label : undefined}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                {!sidebarCollapsed && (
+                  <>
+                    <span className="truncate">{item.label}</span>
+                    {item.badge && (
+                      <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-500">
+                        {item.badge}
+                      </span>
+                    )}
+                  </>
+                )}
               </Link>
             );
           })}
