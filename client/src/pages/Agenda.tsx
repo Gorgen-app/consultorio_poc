@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { 
   ChevronLeft, 
@@ -22,6 +23,7 @@ import {
   AlertCircle,
   Ban,
   Lock,
+  Settings,
   // Ícones de status para consultas
   CalendarCheck,
   CalendarClock,
@@ -37,6 +39,10 @@ import {
   Search,
   Loader2
 } from "lucide-react";
+
+// ============================================
+// CONSTANTES
+// ============================================
 
 // Tipos de compromisso
 const TIPOS_COMPROMISSO = [
@@ -66,19 +72,18 @@ const LOCAIS = [
   "HMD CG",
 ];
 
-// Cores por tipo de compromisso
+// Cores por tipo de compromisso (estilo Google Calendar)
 const CORES_TIPO: Record<string, string> = {
   "Consulta": "bg-blue-500",
   "Cirurgia": "bg-red-500",
   "Visita internado": "bg-purple-500",
   "Procedimento em consultório": "bg-orange-500",
-  "Exame": "bg-emerald-500",
-  "Reunião": "bg-yellow-500",
+  "Exame": "bg-green-500",
+  "Reunião": "bg-yellow-600",
   "Bloqueio": "bg-gray-500",
 };
 
 // Feriados nacionais do Brasil (fixos e móveis para 2025-2027)
-// Feriados móveis são calculados com base na Páscoa
 const FERIADOS_FIXOS: Record<string, string> = {
   "01-01": "Confraternização Universal",
   "04-21": "Tiradentes",
@@ -90,8 +95,6 @@ const FERIADOS_FIXOS: Record<string, string> = {
   "12-25": "Natal",
 };
 
-// Feriados móveis (Carnaval, Sexta-feira Santa, Páscoa, Corpus Christi)
-// Calculados para cada ano
 const FERIADOS_MOVEIS: Record<string, string> = {
   // 2025
   "2025-03-03": "Carnaval",
@@ -119,13 +122,11 @@ function getFeriado(data: Date): string | null {
   const mes = String(data.getMonth() + 1).padStart(2, '0');
   const dia = String(data.getDate()).padStart(2, '0');
   
-  // Verificar feriados fixos
   const chaveFixa = `${mes}-${dia}`;
   if (FERIADOS_FIXOS[chaveFixa]) {
     return FERIADOS_FIXOS[chaveFixa];
   }
   
-  // Verificar feriados móveis
   const chaveMovel = `${ano}-${mes}-${dia}`;
   if (FERIADOS_MOVEIS[chaveMovel]) {
     return FERIADOS_MOVEIS[chaveMovel];
@@ -144,14 +145,13 @@ const CORES_STATUS: Record<string, string> = {
   "Cancelado": "border-l-4 border-l-red-500 opacity-50",
   "Reagendado": "border-l-4 border-l-amber-500 opacity-50",
   "Faltou": "border-l-4 border-l-orange-500 opacity-50",
-  // Status de cirurgia
   "Autorizada": "border-l-4 border-l-teal-500",
 };
 
 // Ícones de status para consultas
 const ICONES_STATUS_CONSULTA: Record<string, { icon: React.ElementType; color: string; label: string }> = {
   "Agendado": { icon: CalendarCheck, color: "text-blue-500", label: "Agendada" },
-  "Confirmado": { icon: UserCheck, color: "text-emerald-500", label: "Confirmada" },
+  "Confirmado": { icon: UserCheck, color: "text-green-500", label: "Confirmada" },
   "Aguardando": { icon: CalendarClock, color: "text-yellow-500", label: "Aguardando" },
   "Em atendimento": { icon: Stethoscope, color: "text-purple-500", label: "Em Consulta" },
   "Realizado": { icon: CheckCircle2, color: "text-gray-500", label: "Finalizada" },
@@ -164,12 +164,11 @@ const ICONES_STATUS_CONSULTA: Record<string, { icon: React.ElementType; color: s
 const ICONES_STATUS_CIRURGIA: Record<string, { icon: React.ElementType; color: string; label: string }> = {
   "Agendado": { icon: CalendarCheck, color: "text-blue-500", label: "Agendada" },
   "Autorizada": { icon: FileCheck, color: "text-teal-500", label: "Autorizada" },
-  "Confirmado": { icon: ClipboardCheck, color: "text-emerald-500", label: "Confirmada" },
+  "Confirmado": { icon: ClipboardCheck, color: "text-green-500", label: "Confirmada" },
   "Realizado": { icon: Scissors, color: "text-gray-500", label: "Realizada" },
   "Cancelado": { icon: XCircle, color: "text-red-400", label: "Cancelada" },
 };
 
-// Função para obter ícone de status
 function getStatusIcon(status: string, tipo: string) {
   if (tipo === "Cirurgia") {
     return ICONES_STATUS_CIRURGIA[status] || ICONES_STATUS_CONSULTA[status];
@@ -177,8 +176,29 @@ function getStatusIcon(status: string, tipo: string) {
   return ICONES_STATUS_CONSULTA[status];
 }
 
+// ============================================
+// CONFIGURAÇÕES DE HORÁRIO (ESTILO GOOGLE CALENDAR)
+// ============================================
+
+// Altura de cada hora em pixels (inspirado no Google Calendar)
+const HORA_ALTURA_PX = 60; // 60px por hora = 1px por minuto
+
+// Opções de intervalo de horas para o usuário escolher
+const OPCOES_INTERVALO_HORAS = [
+  { label: "Horário comercial (7h - 20h)", inicio: 7, fim: 20 },
+  { label: "Dia completo (0h - 24h)", inicio: 0, fim: 24 },
+  { label: "Manhã (6h - 12h)", inicio: 6, fim: 12 },
+  { label: "Tarde (12h - 18h)", inicio: 12, fim: 18 },
+  { label: "Noite (18h - 24h)", inicio: 18, fim: 24 },
+  { label: "Personalizado", inicio: -1, fim: -1 },
+];
+
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
+
 export default function Agenda() {
-  // toast from sonner
+  // Estados principais
   const [dataAtual, setDataAtual] = useState(new Date());
   const [visualizacao, setVisualizacao] = useState<"semana" | "dia" | "mes">("semana");
   const [modalNovoAberto, setModalNovoAberto] = useState(false);
@@ -186,11 +206,43 @@ export default function Agenda() {
   const [modalDetalhesAberto, setModalDetalhesAberto] = useState(false);
   const [modalCancelarAberto, setModalCancelarAberto] = useState(false);
   const [modalReagendarAberto, setModalReagendarAberto] = useState(false);
+  const [modalConfigAberto, setModalConfigAberto] = useState(false);
   const [agendamentoSelecionado, setAgendamentoSelecionado] = useState<any>(null);
   const [motivoCancelamento, setMotivoCancelamento] = useState("");
   const [novaData, setNovaData] = useState("");
   const [novaHoraInicio, setNovaHoraInicio] = useState("");
   const [novaHoraFim, setNovaHoraFim] = useState("");
+
+  // ============================================
+  // CONFIGURAÇÕES DE HORÁRIO DO USUÁRIO
+  // ============================================
+  const [configHorario, setConfigHorario] = useState({
+    horaInicio: 0,  // Padrão: 24 horas (conforme solicitado)
+    horaFim: 24,
+    intervaloSelecionado: "Dia completo (0h - 24h)",
+  });
+
+  // Gerar array de horários baseado na configuração do usuário
+  const horarios = useMemo(() => {
+    const { horaInicio, horaFim } = configHorario;
+    const qtdHoras = horaFim - horaInicio;
+    return Array.from({ length: qtdHoras }, (_, i) => horaInicio + i);
+  }, [configHorario]);
+
+  // Referência para scroll automático para hora atual
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll para hora atual ao carregar
+  useEffect(() => {
+    if (scrollContainerRef.current && visualizacao !== "mes") {
+      const horaAtual = new Date().getHours();
+      const { horaInicio } = configHorario;
+      if (horaAtual >= horaInicio) {
+        const offsetTop = (horaAtual - horaInicio) * HORA_ALTURA_PX;
+        scrollContainerRef.current.scrollTop = Math.max(0, offsetTop - 100);
+      }
+    }
+  }, [visualizacao, configHorario]);
 
   // Form state para novo agendamento
   const [novoAgendamento, setNovoAgendamento] = useState({
@@ -216,13 +268,12 @@ export default function Agenda() {
     descricao: "",
   });
 
-  // Busca de pacientes - otimizada com searchRapido
+  // Busca de pacientes
   const [buscaPaciente, setBuscaPaciente] = useState("");
   const [buscaPacienteDebounced, setBuscaPacienteDebounced] = useState("");
   const [showPacienteDropdown, setShowPacienteDropdown] = useState(false);
   const [pacienteSelecionadoInfo, setPacienteSelecionadoInfo] = useState<any>(null);
   
-  // Debounce da busca de pacientes (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       setBuscaPacienteDebounced(buscaPaciente);
@@ -230,7 +281,6 @@ export default function Agenda() {
     return () => clearTimeout(timer);
   }, [buscaPaciente]);
   
-  // Query otimizada - só busca quando tem pelo menos 2 caracteres
   const { data: pacientesSearch, isLoading: isSearchingPacientes } = trpc.pacientes.searchRapido.useQuery(
     { termo: buscaPacienteDebounced, limit: 15 },
     { enabled: buscaPacienteDebounced.length >= 2 }
@@ -248,7 +298,6 @@ export default function Agenda() {
       const diaSemana = inicio.getDay();
       inicio.setDate(inicio.getDate() - diaSemana);
       inicio.setHours(0, 0, 0, 0);
-      // Corrigir: fim deve ser calculado a partir do início já modificado
       fim.setTime(inicio.getTime());
       fim.setDate(fim.getDate() + 6);
       fim.setHours(23, 59, 59, 999);
@@ -260,7 +309,6 @@ export default function Agenda() {
       fim.setHours(23, 59, 59, 999);
     }
 
-    
     return { inicio, fim };
   }, [dataAtual, visualizacao]);
 
@@ -270,8 +318,6 @@ export default function Agenda() {
     dataFim: periodo.fim,
     incluirCancelados: true,
   });
-  
-  
 
   const { data: bloqueios, refetch: refetchBloqueios } = trpc.bloqueios.list.useQuery({
     dataInicio: periodo.inicio,
@@ -307,46 +353,132 @@ export default function Agenda() {
     },
   });
 
-  const cancelarAgendamento = trpc.agenda.cancelar.useMutation({
+  const cancelarAgendamentoMutation = trpc.agenda.cancelar.useMutation({
     onSuccess: () => {
-      toast.success("Agendamento cancelado");
+      toast.success("Agendamento cancelado!");
       setModalCancelarAberto(false);
       setModalDetalhesAberto(false);
       refetchAgendamentos();
+      setMotivoCancelamento("");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao cancelar: ${error.message}`);
     },
   });
 
-  const reagendarAgendamento = trpc.agenda.reagendar.useMutation({
+  const reagendarAgendamentoMutation = trpc.agenda.reagendar.useMutation({
     onSuccess: () => {
-      toast.success("Agendamento reagendado com sucesso!");
+      toast.success("Agendamento reagendado!");
       setModalReagendarAberto(false);
       setModalDetalhesAberto(false);
       refetchAgendamentos();
     },
+    onError: (error) => {
+      toast.error(`Erro ao reagendar: ${error.message}`);
+    },
   });
 
-  const confirmarAgendamento = trpc.agenda.confirmar.useMutation({
+  const confirmarAgendamentoMutation = trpc.agenda.confirmar.useMutation({
     onSuccess: () => {
       toast.success("Agendamento confirmado!");
       refetchAgendamentos();
     },
-  });
-
-  const realizarAgendamento = trpc.agenda.realizar.useMutation({
-    onSuccess: () => {
-      toast.success("Atendimento realizado!");
-      refetchAgendamentos();
+    onError: (error) => {
+      toast.error(`Erro ao confirmar: ${error.message}`);
     },
   });
 
-  const marcarFalta = trpc.agenda.marcarFalta.useMutation({
+  const realizarAgendamentoMutation = trpc.agenda.realizar.useMutation({
     onSuccess: () => {
-      toast.success("Falta registrada");
+      toast.success("Agendamento marcado como realizado!");
       refetchAgendamentos();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao marcar como realizado: ${error.message}`);
     },
   });
 
-  // Helpers
+  const marcarFaltaMutation = trpc.agenda.marcarFalta.useMutation({
+    onSuccess: () => {
+      toast.success("Falta registrada!");
+      refetchAgendamentos();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao registrar falta: ${error.message}`);
+    },
+  });
+
+  // Usar resultados da busca rápida otimizada
+  const pacientesFiltrados = pacientesSearch || [];
+
+  // Agrupar agendamentos por dia
+  const agendamentosPorDia = useMemo(() => {
+    const mapa: Record<string, any[]> = {};
+    
+    (agendamentos || []).forEach((ag: any) => {
+      const data = new Date(ag.dataHoraInicio);
+      const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+      
+      if (!mapa[chave]) mapa[chave] = [];
+      mapa[chave].push(ag);
+    });
+    
+    return mapa;
+  }, [agendamentos]);
+
+  // Dias da semana
+  const diasSemana = useMemo(() => {
+    const dias = [];
+    const inicio = new Date(periodo.inicio);
+    for (let i = 0; i < 7; i++) {
+      const dia = new Date(inicio);
+      dia.setDate(inicio.getDate() + i);
+      dias.push(dia);
+    }
+    return dias;
+  }, [periodo.inicio]);
+
+  // ============================================
+  // FUNÇÕES AUXILIARES
+  // ============================================
+
+  const formatarHora = (dataHora: string | Date) => {
+    const data = new Date(dataHora);
+    return data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatarDataLocal = (data: Date): string => {
+    return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+  };
+
+  const navegarPeriodo = (direcao: number) => {
+    const novaData = new Date(dataAtual);
+    if (visualizacao === "dia") {
+      novaData.setDate(novaData.getDate() + direcao);
+    } else if (visualizacao === "semana") {
+      novaData.setDate(novaData.getDate() + direcao * 7);
+    } else {
+      novaData.setMonth(novaData.getMonth() + direcao);
+    }
+    setDataAtual(novaData);
+  };
+
+  const irParaHoje = () => {
+    setDataAtual(new Date());
+  };
+
+  const getTituloPeriodo = () => {
+    if (visualizacao === "dia") {
+      return dataAtual.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    } else if (visualizacao === "semana") {
+      const inicio = new Date(periodo.inicio);
+      const fim = new Date(periodo.fim);
+      return `${inicio.getDate()} - ${fim.getDate()} de ${fim.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`;
+    } else {
+      return dataAtual.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    }
+  };
+
   const resetNovoAgendamento = () => {
     setNovoAgendamento({
       tipoCompromisso: "Consulta",
@@ -360,6 +492,7 @@ export default function Agenda() {
       descricao: "",
     });
     setBuscaPaciente("");
+    setPacienteSelecionadoInfo(null);
   };
 
   const resetNovoBloqueio = () => {
@@ -374,94 +507,21 @@ export default function Agenda() {
     });
   };
 
-  const navegarPeriodo = (direcao: number) => {
-    const novaData = new Date(dataAtual);
-    if (visualizacao === "dia") {
-      novaData.setDate(novaData.getDate() + direcao);
-    } else if (visualizacao === "semana") {
-      novaData.setDate(novaData.getDate() + (direcao * 7));
-    } else {
-      novaData.setMonth(novaData.getMonth() + direcao);
-    }
-    setDataAtual(novaData);
+  const abrirDetalhes = (ag: any) => {
+    setAgendamentoSelecionado(ag);
+    setModalDetalhesAberto(true);
   };
 
-  const irParaHoje = () => {
-    setDataAtual(new Date());
-  };
+  // ============================================
+  // HANDLERS
+  // ============================================
 
-  const formatarData = (data: Date) => {
-    return data.toLocaleDateString("pt-BR", { 
-      weekday: "short", 
-      day: "2-digit", 
-      month: "short" 
-    });
-  };
-
-  const formatarHora = (data: Date | string) => {
-    const d = new Date(data);
-    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  };
-
-  const getTituloPeriodo = () => {
-    if (visualizacao === "dia") {
-      return dataAtual.toLocaleDateString("pt-BR", { 
-        weekday: "long", 
-        day: "2-digit", 
-        month: "long", 
-        year: "numeric" 
-      });
-    } else if (visualizacao === "semana") {
-      const inicio = new Date(periodo.inicio);
-      const fim = new Date(periodo.fim);
-      return `${inicio.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} - ${fim.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}`;
-    } else {
-      return dataAtual.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
-    }
-  };
-
-  // Gerar dias da semana
-  const diasSemana = useMemo(() => {
-    const dias = [];
-    const inicio = new Date(periodo.inicio);
-    for (let i = 0; i < 7; i++) {
-      const dia = new Date(inicio);
-      dia.setDate(inicio.getDate() + i);
-      dias.push(dia);
-    }
-    return dias;
-  }, [periodo.inicio]);
-
-  // Horários do dia (7h às 20h)
-  const horarios = Array.from({ length: 14 }, (_, i) => i + 7);
-
-  // Usar resultados da busca rápida otimizada
-  const pacientesFiltrados = pacientesSearch || [];
-
-  // Agrupar agendamentos por dia e hora
-  const agendamentosPorDia = useMemo(() => {
-    const mapa: Record<string, any[]> = {};
-    
-    (agendamentos || []).forEach((ag: any) => {
-      const data = new Date(ag.dataHoraInicio);
-      // Usar data local para a chave (YYYY-MM-DD)
-      const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
-      
-      if (!mapa[chave]) mapa[chave] = [];
-      mapa[chave].push(ag);
-    });
-    
-    return mapa;
-  }, [agendamentos]);
-
-  // Handlers
   const handleCriarAgendamento = () => {
     if (!novoAgendamento.data || !novoAgendamento.horaInicio || !novoAgendamento.horaFim) {
       toast.error("Preencha data e horários");
       return;
     }
     
-    // Validar paciente para tipos que exigem
     if (novoAgendamento.tipoCompromisso !== "Reunião" && !novoAgendamento.pacienteId && !novoAgendamento.pacienteNome) {
       toast.error("Selecione um paciente ou digite o nome para criar um novo");
       return;
@@ -470,7 +530,6 @@ export default function Agenda() {
     const dataHoraInicio = new Date(`${novoAgendamento.data}T${novoAgendamento.horaInicio}`);
     const dataHoraFim = new Date(`${novoAgendamento.data}T${novoAgendamento.horaFim}`);
     
-    // Preparar dados do novo paciente se necessário
     const novoPaciente = !novoAgendamento.pacienteId && novoAgendamento.pacienteNome && novoAgendamento.tipoCompromisso !== "Reunião"
       ? {
           nome: novoAgendamento.pacienteNome,
@@ -515,11 +574,11 @@ export default function Agenda() {
   };
 
   const handleCancelar = () => {
-    if (!motivoCancelamento) {
+    if (!motivoCancelamento.trim()) {
       toast.error("Informe o motivo do cancelamento");
       return;
     }
-    cancelarAgendamento.mutate({
+    cancelarAgendamentoMutation.mutate({
       id: agendamentoSelecionado.id,
       motivo: motivoCancelamento,
     });
@@ -530,64 +589,112 @@ export default function Agenda() {
       toast.error("Preencha a nova data e horários");
       return;
     }
-
-    reagendarAgendamento.mutate({
-      idOriginal: agendamentoSelecionado.id,
+    reagendarAgendamentoMutation.mutate({
+      id: agendamentoSelecionado.id,
       novaDataInicio: new Date(`${novaData}T${novaHoraInicio}`),
       novaDataFim: new Date(`${novaData}T${novaHoraFim}`),
     });
   };
 
-  const abrirDetalhes = (agendamento: any) => {
-    setAgendamentoSelecionado(agendamento);
-    setModalDetalhesAberto(true);
+  const handleConfirmar = () => {
+    confirmarAgendamentoMutation.mutate({ id: agendamentoSelecionado.id });
   };
 
-  const selecionarPaciente = (paciente: any) => {
-    setNovoAgendamento({
-      ...novoAgendamento,
-      pacienteId: paciente.id,
-      pacienteNome: paciente.nome,
-    });
-    setBuscaPaciente(paciente.nome);
+  const handleRealizar = () => {
+    realizarAgendamentoMutation.mutate({ id: agendamentoSelecionado.id });
   };
 
-  // Renderizar agendamento no calendário
-  const renderAgendamento = (ag: any) => {
+  const handleMarcarFalta = () => {
+    marcarFaltaMutation.mutate({ id: agendamentoSelecionado.id });
+  };
+
+  // ============================================
+  // FUNÇÃO PARA CALCULAR POSIÇÃO E ALTURA DO EVENTO
+  // (Estilo Google Calendar - posicionamento preciso por minuto)
+  // ============================================
+
+  const calcularPosicaoEvento = (dataHoraInicio: Date, dataHoraFim: Date) => {
+    const horaInicio = dataHoraInicio.getHours();
+    const minutoInicio = dataHoraInicio.getMinutes();
+    const horaFim = dataHoraFim.getHours();
+    const minutoFim = dataHoraFim.getMinutes();
+
+    // Calcular posição top relativa à hora de início da grade
+    const minutosDesdeInicioDia = (horaInicio - configHorario.horaInicio) * 60 + minutoInicio;
+    const top = minutosDesdeInicioDia; // 1px por minuto
+
+    // Calcular duração em minutos
+    const duracaoMinutos = (horaFim * 60 + minutoFim) - (horaInicio * 60 + minutoInicio);
+    const altura = Math.max(15, duracaoMinutos); // Mínimo 15px
+
+    return { top, altura };
+  };
+
+  // ============================================
+  // RENDERIZAÇÃO DE EVENTO (ESTILO GOOGLE CALENDAR)
+  // ============================================
+
+  const renderAgendamentoGoogleStyle = (ag: any, isWeekView: boolean = false) => {
     const isCancelado = ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou";
     const statusInfo = getStatusIcon(ag.status, ag.tipoCompromisso);
     const StatusIcon = statusInfo?.icon;
     
-    // Calcular duração em minutos para definir altura proporcional
     const inicio = new Date(ag.dataHoraInicio);
     const fim = ag.dataHoraFim ? new Date(ag.dataHoraFim) : new Date(inicio.getTime() + 30 * 60000);
-    const duracaoMinutos = Math.max(15, Math.min(120, (fim.getTime() - inicio.getTime()) / 60000));
-    
-    // Altura proporcional: 60min = 48px (altura da célula h-12), 30min = 24px (metade)
-    // Cada minuto = 0.8px
-    const alturaPixels = Math.round(duracaoMinutos * 0.8);
-    
+    const { top, altura } = calcularPosicaoEvento(inicio, fim);
+
+    // Verificar se o evento está dentro do intervalo visível
+    const horaInicioEvento = inicio.getHours();
+    if (horaInicioEvento < configHorario.horaInicio || horaInicioEvento >= configHorario.horaFim) {
+      return null;
+    }
+
     return (
       <div
         key={ag.id}
         onClick={() => abrirDetalhes(ag)}
-        style={{ height: `${alturaPixels}px`, minHeight: '16px' }}
+        style={{ 
+          position: 'absolute',
+          top: `${top}px`,
+          height: `${altura}px`,
+          left: '2px',
+          right: '2px',
+          minHeight: '18px',
+          zIndex: 10,
+        }}
         className={`
-          px-1 py-0.5 rounded cursor-pointer text-white text-[10px] leading-tight overflow-hidden
+          px-1.5 py-0.5 rounded-md cursor-pointer text-white text-xs leading-tight overflow-hidden
           ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
-          ${isCancelado ? "opacity-40 line-through" : "hover:opacity-90"}
+          ${isCancelado ? "opacity-40 line-through" : "hover:opacity-90 shadow-sm"}
           ${CORES_STATUS[ag.status]}
+          transition-opacity duration-150
         `}
-        title={statusInfo?.label || ag.status}
+        title={`${formatarHora(ag.dataHoraInicio)} - ${formatarHora(fim)} | ${ag.pacienteNome || ag.titulo || ag.tipoCompromisso} | ${statusInfo?.label || ag.status}`}
       >
         <div className="font-medium truncate flex items-center gap-0.5">
           {StatusIcon && <StatusIcon className="w-3 h-3 flex-shrink-0" />}
-          <span>{formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}</span>
+          <span className="truncate">
+            {isWeekView ? (
+              <>
+                {formatarHora(ag.dataHoraInicio)} {ag.pacienteNome?.split(" ")[0] || ag.titulo || ag.tipoCompromisso}
+              </>
+            ) : (
+              <>
+                {formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
+              </>
+            )}
+          </span>
         </div>
-        {duracaoMinutos >= 30 && ag.local && <div className="text-[9px] opacity-80 truncate">{ag.local}</div>}
+        {altura >= 35 && ag.local && (
+          <div className="text-[10px] opacity-80 truncate mt-0.5">{ag.local}</div>
+        )}
       </div>
     );
   };
+
+  // ============================================
+  // RENDERIZAÇÃO
+  // ============================================
 
   return (
     <div className="p-4 space-y-3">
@@ -598,6 +705,9 @@ export default function Agenda() {
           <p className="text-sm text-muted-foreground">Gerencie seus compromissos e horários</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setModalConfigAberto(true)} title="Configurações da Agenda">
+            <Settings className="w-4 h-4" />
+          </Button>
           <Button variant="outline" onClick={() => setModalBloqueioAberto(true)}>
             <Lock className="w-4 h-4 mr-2" />
             Bloquear Horário
@@ -631,7 +741,7 @@ export default function Agenda() {
         <div className="flex items-center gap-3">
           {/* Legenda compacta */}
           <div className="hidden md:flex items-center gap-2 text-xs">
-            {Object.entries(CORES_TIPO).map(([tipo, cor]) => (
+            {Object.entries(CORES_TIPO).filter(([tipo]) => tipo !== "Bloqueio").map(([tipo, cor]) => (
               <div key={tipo} className="flex items-center gap-1" title={tipo}>
                 <div className={`w-2 h-2 rounded ${cor}`}></div>
                 <span className="hidden lg:inline">{tipo}</span>
@@ -674,7 +784,7 @@ export default function Agenda() {
 
       {/* Legenda mobile */}
       <div className="flex md:hidden flex-wrap gap-2 text-xs">
-        {Object.entries(CORES_TIPO).map(([tipo, cor]) => (
+        {Object.entries(CORES_TIPO).filter(([tipo]) => tipo !== "Bloqueio").map(([tipo, cor]) => (
           <div key={tipo} className="flex items-center gap-1">
             <div className={`w-2 h-2 rounded ${cor}`}></div>
             <span>{tipo}</span>
@@ -686,13 +796,16 @@ export default function Agenda() {
         </div>
       </div>
 
-      {/* Calendário - Visualização Semana */}
+      {/* ============================================ */}
+      {/* VISUALIZAÇÃO SEMANA (ESTILO GOOGLE CALENDAR) */}
+      {/* ============================================ */}
       {visualizacao === "semana" && (
         <Card>
           <CardContent className="p-0">
-            <div className="grid grid-cols-8 border-b">
-              <div className="px-1 py-1 text-center text-xs font-medium border-r bg-muted">
-                Horário
+            {/* Cabeçalho com dias da semana */}
+            <div className="grid grid-cols-8 border-b sticky top-0 bg-background z-20">
+              <div className="w-14 px-1 py-2 text-center text-xs font-medium border-r bg-muted">
+                {/* Coluna de horários - mais estreita */}
               </div>
               {diasSemana.map((dia, i) => {
                 const feriado = getFeriado(dia);
@@ -700,13 +813,15 @@ export default function Agenda() {
                 return (
                   <div 
                     key={i} 
-                    className={`px-1 py-1 text-center text-xs font-medium border-r ${
+                    className={`px-1 py-2 text-center text-xs font-medium border-r ${
                       isHoje ? "bg-blue-50" : feriado ? "bg-amber-100" : ""
                     }`}
                     title={feriado || undefined}
                   >
-                    <div className="capitalize">{dia.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</div>
-                    <div className="text-sm font-bold">{dia.getDate()}</div>
+                    <div className="capitalize text-muted-foreground">{dia.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</div>
+                    <div className={`text-lg font-bold ${isHoje ? "bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto" : ""}`}>
+                      {dia.getDate()}
+                    </div>
                     {feriado && (
                       <div className="text-[8px] text-amber-700 truncate" title={feriado}>
                         {feriado}
@@ -716,95 +831,167 @@ export default function Agenda() {
                 );
               })}
             </div>
-            <div>
-              {horarios.map((hora) => (
-                <div key={hora} className="grid grid-cols-8 border-b h-12">
-                  <div className="px-1 py-0.5 text-center text-xs text-muted-foreground border-r bg-muted flex items-center justify-center">
-                    {hora.toString().padStart(2, "0")}:00
-                  </div>
-                  {diasSemana.map((dia, i) => {
-                    // Usar data local para a chave (YYYY-MM-DD)
-                    const chave = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
-                    const agendamentosDia = agendamentosPorDia[chave] || [];
-                    const agendamentosHora = agendamentosDia.filter((ag: any) => {
-                      const horaAg = new Date(ag.dataHoraInicio).getHours();
-                      return horaAg === hora;
-                    });
-                    const feriado = getFeriado(dia);
-                    const isHoje = dia.toDateString() === new Date().toDateString();
-                    
-                    return (
-                      <div 
-                        key={i} 
-                        className={`px-0.5 py-0 border-r overflow-hidden ${
-                          isHoje ? "bg-blue-50/50" : feriado ? "bg-amber-50" : ""
-                        }`}
-                      >
-                        {agendamentosHora.map(renderAgendamento)}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Calendário - Visualização Dia */}
-      {visualizacao === "dia" && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-2">
-              {horarios.map((hora) => {
-                const chave = dataAtual.toISOString().split("T")[0];
-                const agendamentosDia = agendamentosPorDia[chave] || [];
-                const agendamentosHora = agendamentosDia.filter((ag: any) => {
-                  const horaAg = new Date(ag.dataHoraInicio).getHours();
-                  return horaAg === hora;
-                });
-
-                return (
-                  <div key={hora} className="flex gap-4 min-h-[50px] border-b pb-2">
-                    <div className="w-16 text-sm text-muted-foreground font-medium">
-                      {hora.toString().padStart(2, "0")}:00
+            
+            {/* Grade de horários com scroll */}
+            <div 
+              ref={scrollContainerRef}
+              className="overflow-y-auto"
+              style={{ maxHeight: 'calc(100vh - 300px)' }}
+            >
+              <div className="grid grid-cols-8 relative">
+                {/* Coluna de horários */}
+                <div className="w-14 border-r bg-muted">
+                  {horarios.map((hora) => (
+                    <div 
+                      key={hora} 
+                      className="text-[10px] text-muted-foreground text-right pr-1 relative"
+                      style={{ height: `${HORA_ALTURA_PX}px` }}
+                    >
+                      <span className="absolute -top-2 right-1">
+                        {hora.toString().padStart(2, "0")}
+                      </span>
                     </div>
-                    <div className="flex-1">
-                      {agendamentosHora.map((ag: any) => (
-                        <div
-                          key={ag.id}
-                          onClick={() => abrirDetalhes(ag)}
-                          className={`
-                            p-3 rounded cursor-pointer text-white mb-2
-                            ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
-                            ${ag.status === "Cancelado" || ag.status === "Reagendado" ? "opacity-40" : "hover:opacity-90"}
-                          `}
+                  ))}
+                </div>
+                
+                {/* Colunas dos dias */}
+                {diasSemana.map((dia, i) => {
+                  const chave = formatarDataLocal(dia);
+                  const agendamentosDia = agendamentosPorDia[chave] || [];
+                  const feriado = getFeriado(dia);
+                  const isHoje = dia.toDateString() === new Date().toDateString();
+                  
+                  return (
+                    <div 
+                      key={i} 
+                      className={`border-r relative ${
+                        isHoje ? "bg-blue-50/30" : feriado ? "bg-amber-50/50" : ""
+                      }`}
+                    >
+                      {/* Linhas de hora */}
+                      {horarios.map((hora) => (
+                        <div 
+                          key={hora}
+                          className="border-b border-gray-100"
+                          style={{ height: `${HORA_ALTURA_PX}px` }}
                         >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium">
-                                {formatarHora(ag.dataHoraInicio)} - {formatarHora(ag.dataHoraFim)}
-                              </div>
-                              <div className="text-sm opacity-90">
-                                {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
-                              </div>
-                            </div>
-                            <div className="text-xs opacity-80">
-                              {ag.local}
-                            </div>
-                          </div>
+                          {/* Linha de meia hora */}
+                          <div 
+                            className="border-b border-gray-50"
+                            style={{ height: `${HORA_ALTURA_PX / 2}px` }}
+                          />
                         </div>
                       ))}
+                      
+                      {/* Eventos posicionados absolutamente */}
+                      {agendamentosDia.map((ag) => renderAgendamentoGoogleStyle(ag, true))}
+                      
+                      {/* Linha indicadora de hora atual */}
+                      {isHoje && (() => {
+                        const agora = new Date();
+                        const horaAtual = agora.getHours();
+                        const minutoAtual = agora.getMinutes();
+                        if (horaAtual >= configHorario.horaInicio && horaAtual < configHorario.horaFim) {
+                          const topAtual = (horaAtual - configHorario.horaInicio) * 60 + minutoAtual;
+                          return (
+                            <div 
+                              className="absolute left-0 right-0 border-t-2 border-red-500 z-30"
+                              style={{ top: `${topAtual}px` }}
+                            >
+                              <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Calendário - Visualização Mês */}
+      {/* ============================================ */}
+      {/* VISUALIZAÇÃO DIA (ESTILO GOOGLE CALENDAR) */}
+      {/* ============================================ */}
+      {visualizacao === "dia" && (
+        <Card>
+          <CardContent className="p-0">
+            <div 
+              ref={scrollContainerRef}
+              className="overflow-y-auto"
+              style={{ maxHeight: 'calc(100vh - 280px)' }}
+            >
+              <div className="flex relative">
+                {/* Coluna de horários */}
+                <div className="w-16 border-r bg-muted flex-shrink-0">
+                  {horarios.map((hora) => (
+                    <div 
+                      key={hora} 
+                      className="text-xs text-muted-foreground text-right pr-2 relative"
+                      style={{ height: `${HORA_ALTURA_PX}px` }}
+                    >
+                      <span className="absolute -top-2 right-2">
+                        {hora.toString().padStart(2, "0")}:00
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Área de eventos */}
+                <div className="flex-1 relative">
+                  {/* Linhas de hora */}
+                  {horarios.map((hora) => (
+                    <div 
+                      key={hora}
+                      className="border-b border-gray-100"
+                      style={{ height: `${HORA_ALTURA_PX}px` }}
+                    >
+                      {/* Linha de meia hora */}
+                      <div 
+                        className="border-b border-gray-50"
+                        style={{ height: `${HORA_ALTURA_PX / 2}px` }}
+                      />
+                    </div>
+                  ))}
+                  
+                  {/* Eventos */}
+                  {(() => {
+                    const chave = formatarDataLocal(dataAtual);
+                    const agendamentosDia = agendamentosPorDia[chave] || [];
+                    return agendamentosDia.map((ag) => renderAgendamentoGoogleStyle(ag, false));
+                  })()}
+                  
+                  {/* Linha indicadora de hora atual */}
+                  {dataAtual.toDateString() === new Date().toDateString() && (() => {
+                    const agora = new Date();
+                    const horaAtual = agora.getHours();
+                    const minutoAtual = agora.getMinutes();
+                    if (horaAtual >= configHorario.horaInicio && horaAtual < configHorario.horaFim) {
+                      const topAtual = (horaAtual - configHorario.horaInicio) * 60 + minutoAtual;
+                      return (
+                        <div 
+                          className="absolute left-0 right-0 border-t-2 border-red-500 z-30"
+                          style={{ top: `${topAtual}px` }}
+                        >
+                          <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ============================================ */}
+      {/* VISUALIZAÇÃO MÊS */}
+      {/* ============================================ */}
       {visualizacao === "mes" && (
         <Card>
           <CardContent className="p-4">
@@ -822,42 +1009,66 @@ export default function Agenda() {
                 
                 const celulas = [];
                 
-                // Dias vazios antes do primeiro dia do mês
                 for (let i = 0; i < primeiroDiaSemana; i++) {
-                  celulas.push(<div key={`empty-${i}`} className="p-2 min-h-[80px]"></div>);
+                  celulas.push(<div key={`empty-${i}`} className="p-2 min-h-[100px]"></div>);
                 }
                 
-                // Dias do mês
                 for (let dia = 1; dia <= diasNoMes; dia++) {
                   const data = new Date(dataAtual.getFullYear(), dataAtual.getMonth(), dia);
-                  const chave = data.toISOString().split("T")[0];
+                  const chave = formatarDataLocal(data);
                   const agendamentosDia = agendamentosPorDia[chave] || [];
                   const isHoje = data.toDateString() === new Date().toDateString();
+                  const feriado = getFeriado(data);
+                  
+                  // Ordenar por hora de início
+                  const agendamentosOrdenados = [...agendamentosDia].sort((a, b) => 
+                    new Date(a.dataHoraInicio).getTime() - new Date(b.dataHoraInicio).getTime()
+                  );
                   
                   celulas.push(
                     <div 
                       key={dia} 
-                      className={`p-2 min-h-[80px] border rounded ${isHoje ? "bg-blue-50 border-blue-300" : "border-gray-200"}`}
+                      className={`p-1 min-h-[100px] border rounded cursor-pointer hover:bg-gray-50 ${
+                        isHoje ? "bg-blue-50 border-blue-300" : feriado ? "bg-amber-50 border-amber-200" : "border-gray-200"
+                      }`}
+                      onClick={() => {
+                        setDataAtual(data);
+                        setVisualizacao("dia");
+                      }}
                     >
-                      <div className={`text-sm font-medium mb-1 ${isHoje ? "text-blue-600" : ""}`}>
+                      <div className={`text-sm font-medium mb-1 ${
+                        isHoje ? "bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center" : ""
+                      }`}>
                         {dia}
                       </div>
-                      <div className="space-y-1">
-                        {agendamentosDia.slice(0, 3).map((ag: any) => (
-                          <div
-                            key={ag.id}
-                            onClick={() => abrirDetalhes(ag)}
-                            className={`
-                              text-xs p-1 rounded cursor-pointer text-white truncate
-                              ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
-                              ${ag.status === "Cancelado" || ag.status === "Reagendado" ? "opacity-40" : ""}
-                            `}
-                          >
-                            {formatarHora(ag.dataHoraInicio)} {ag.pacienteNome?.split(" ")[0] || ag.tipoCompromisso}
-                          </div>
-                        ))}
+                      {feriado && (
+                        <div className="text-[9px] text-amber-700 truncate mb-1" title={feriado}>
+                          {feriado}
+                        </div>
+                      )}
+                      <div className="space-y-0.5">
+                        {agendamentosOrdenados.slice(0, 3).map((ag: any) => {
+                          const isCancelado = ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou";
+                          return (
+                            <div
+                              key={ag.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                abrirDetalhes(ag);
+                              }}
+                              className={`
+                                text-[10px] px-1 py-0.5 rounded cursor-pointer text-white truncate
+                                ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
+                                ${isCancelado ? "opacity-40 line-through" : "hover:opacity-90"}
+                              `}
+                              title={`${formatarHora(ag.dataHoraInicio)} - ${ag.pacienteNome || ag.titulo || ag.tipoCompromisso}`}
+                            >
+                              {formatarHora(ag.dataHoraInicio)} {ag.pacienteNome?.split(" ")[0] || ag.tipoCompromisso}
+                            </div>
+                          );
+                        })}
                         {agendamentosDia.length > 3 && (
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[10px] text-muted-foreground font-medium">
                             +{agendamentosDia.length - 3} mais
                           </div>
                         )}
@@ -873,7 +1084,114 @@ export default function Agenda() {
         </Card>
       )}
 
-      {/* Modal Novo Agendamento */}
+      {/* ============================================ */}
+      {/* MODAL CONFIGURAÇÕES DE HORÁRIO */}
+      {/* ============================================ */}
+      <Dialog open={modalConfigAberto} onOpenChange={setModalConfigAberto}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Configurações da Agenda
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Intervalo de Horas Visíveis</Label>
+              <Select
+                value={configHorario.intervaloSelecionado}
+                onValueChange={(value) => {
+                  const opcao = OPCOES_INTERVALO_HORAS.find(o => o.label === value);
+                  if (opcao && opcao.inicio !== -1) {
+                    setConfigHorario({
+                      horaInicio: opcao.inicio,
+                      horaFim: opcao.fim,
+                      intervaloSelecionado: value,
+                    });
+                  } else {
+                    setConfigHorario(prev => ({
+                      ...prev,
+                      intervaloSelecionado: value,
+                    }));
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {OPCOES_INTERVALO_HORAS.map((opcao) => (
+                    <SelectItem key={opcao.label} value={opcao.label}>
+                      {opcao.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {configHorario.intervaloSelecionado === "Personalizado" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Hora Início</Label>
+                  <Select
+                    value={configHorario.horaInicio.toString()}
+                    onValueChange={(value) => setConfigHorario(prev => ({
+                      ...prev,
+                      horaInicio: parseInt(value),
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <SelectItem key={i} value={i.toString()}>
+                          {i.toString().padStart(2, "0")}:00
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Hora Fim</Label>
+                  <Select
+                    value={configHorario.horaFim.toString()}
+                    onValueChange={(value) => setConfigHorario(prev => ({
+                      ...prev,
+                      horaFim: parseInt(value),
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => i + 1).map((hora) => (
+                        <SelectItem key={hora} value={hora.toString()}>
+                          {hora.toString().padStart(2, "0")}:00
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            <div className="text-sm text-muted-foreground">
+              <p>Exibindo horários de <strong>{configHorario.horaInicio.toString().padStart(2, "0")}:00</strong> até <strong>{configHorario.horaFim.toString().padStart(2, "0")}:00</strong></p>
+              <p className="mt-1">Total: {configHorario.horaFim - configHorario.horaInicio} horas</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setModalConfigAberto(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============================================ */}
+      {/* MODAL NOVO AGENDAMENTO */}
+      {/* ============================================ */}
       <Dialog open={modalNovoAberto} onOpenChange={setModalNovoAberto}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -882,9 +1200,9 @@ export default function Agenda() {
           <div className="space-y-4">
             <div>
               <Label>Tipo de Compromisso</Label>
-              <Select 
-                value={novoAgendamento.tipoCompromisso} 
-                onValueChange={(v) => setNovoAgendamento({...novoAgendamento, tipoCompromisso: v as any})}
+              <Select
+                value={novoAgendamento.tipoCompromisso}
+                onValueChange={(value) => setNovoAgendamento({ ...novoAgendamento, tipoCompromisso: value as any })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -898,136 +1216,97 @@ export default function Agenda() {
             </div>
 
             {novoAgendamento.tipoCompromisso !== "Reunião" && (
-              <div className="space-y-2">
+              <div className="relative">
                 <Label>Paciente</Label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por nome, CPF ou ID..."
+                    placeholder="Buscar paciente..."
                     value={buscaPaciente}
                     onChange={(e) => {
                       setBuscaPaciente(e.target.value);
                       setShowPacienteDropdown(true);
-                      // Limpar seleção se o usuário editar o campo
-                      if (pacienteSelecionadoInfo && e.target.value !== pacienteSelecionadoInfo.nome) {
+                      if (!e.target.value) {
+                        setNovoAgendamento({ ...novoAgendamento, pacienteId: null, pacienteNome: "" });
                         setPacienteSelecionadoInfo(null);
-                        setNovoAgendamento(prev => ({ ...prev, pacienteId: null, pacienteNome: "" }));
                       }
                     }}
                     onFocus={() => setShowPacienteDropdown(true)}
-                    className="pl-9 pr-8"
+                    className="pl-8"
                   />
                   {isSearchingPacientes && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+                    <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
                   )}
                 </div>
                 
-                {/* Card do paciente selecionado */}
-                {pacienteSelecionadoInfo && (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-emerald-800">{pacienteSelecionadoInfo.nome}</div>
-                        <div className="text-xs text-emerald-600">
-                          ID: {pacienteSelecionadoInfo.idPaciente} | CPF: {pacienteSelecionadoInfo.cpf || "N/A"}
+                {showPacienteDropdown && buscaPaciente.length >= 2 && (
+                  <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {pacientesFiltrados.length > 0 ? (
+                      pacientesFiltrados.map((p: any) => (
+                        <div
+                          key={p.id}
+                          className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                          onClick={() => {
+                            setNovoAgendamento({ ...novoAgendamento, pacienteId: p.id, pacienteNome: p.nome });
+                            setBuscaPaciente(p.nome);
+                            setPacienteSelecionadoInfo(p);
+                            setShowPacienteDropdown(false);
+                          }}
+                        >
+                          <div className="font-medium">{p.nome}</div>
+                          {p.cpf && <div className="text-xs text-muted-foreground">CPF: {p.cpf}</div>}
                         </div>
-                        {pacienteSelecionadoInfo.telefone && (
-                          <div className="text-xs text-emerald-600">Tel: {pacienteSelecionadoInfo.telefone}</div>
-                        )}
-                        {pacienteSelecionadoInfo.operadora1 && (
-                          <div className="text-xs text-emerald-600">Convênio: {pacienteSelecionadoInfo.operadora1}</div>
-                        )}
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
+                        Nenhum paciente encontrado. O nome digitado será usado para criar um novo paciente.
                       </div>
+                    )}
+                  </div>
+                )}
+                
+                {pacienteSelecionadoInfo && (
+                  <div className="mt-2 p-2 bg-muted rounded text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{pacienteSelecionadoInfo.nome}</span>
                       <Button
-                        type="button"
                         variant="ghost"
                         size="sm"
+                        className="h-6 w-6 p-0"
                         onClick={() => {
-                          setPacienteSelecionadoInfo(null);
+                          setNovoAgendamento({ ...novoAgendamento, pacienteId: null, pacienteNome: "" });
                           setBuscaPaciente("");
-                          setNovoAgendamento(prev => ({ ...prev, pacienteId: null, pacienteNome: "" }));
+                          setPacienteSelecionadoInfo(null);
                         }}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 )}
                 
-                {/* Dropdown de resultados */}
-                {showPacienteDropdown && !pacienteSelecionadoInfo && buscaPaciente.length >= 2 && (
-                  <div className="border rounded-lg shadow-lg max-h-48 overflow-y-auto bg-background">
-                    {isSearchingPacientes ? (
-                      <div className="p-4 text-center text-muted-foreground">
-                        <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                        Buscando pacientes...
-                      </div>
-                    ) : pacientesFiltrados.length > 0 ? (
-                      pacientesFiltrados.map((p: any) => (
-                        <div
-                          key={p.id}
-                          className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 transition-colors"
-                          onClick={() => {
-                            selecionarPaciente(p);
-                            setPacienteSelecionadoInfo(p);
-                            setShowPacienteDropdown(false);
-                          }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <User className="w-4 h-4 text-primary" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">{p.nome}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {p.idPaciente} {p.cpf && `| CPF: ${p.cpf}`} {p.operadora1 && `| ${p.operadora1}`}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center">
-                        <div className="text-muted-foreground mb-2">Nenhum paciente encontrado</div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // Criar novo paciente com o nome digitado
-                            setNovoAgendamento(prev => ({ ...prev, pacienteNome: buscaPaciente }));
-                            setShowPacienteDropdown(false);
-                            toast.info("Paciente será criado automaticamente ao salvar o agendamento");
-                          }}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Criar novo paciente: "{buscaPaciente}"
-                        </Button>
-                      </div>
-                    )}
+                {!novoAgendamento.pacienteId && buscaPaciente && (
+                  <div className="mt-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Novo paciente será criado com o nome: "{buscaPaciente}"
+                    </Label>
+                    <Input
+                      type="hidden"
+                      value={buscaPaciente}
+                      onChange={() => setNovoAgendamento({ ...novoAgendamento, pacienteNome: buscaPaciente })}
+                    />
                   </div>
                 )}
               </div>
             )}
 
-            {novoAgendamento.tipoCompromisso === "Reunião" && (
-              <div>
-                <Label>Título da Reunião</Label>
-                <Input
-                  value={novoAgendamento.titulo}
-                  onChange={(e) => setNovoAgendamento({...novoAgendamento, titulo: e.target.value})}
-                  placeholder="Ex: Reunião de equipe"
-                />
-              </div>
-            )}
-
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2">
               <div>
                 <Label>Data</Label>
                 <Input
                   type="date"
                   value={novoAgendamento.data}
-                  onChange={(e) => setNovoAgendamento({...novoAgendamento, data: e.target.value})}
+                  onChange={(e) => setNovoAgendamento({ ...novoAgendamento, data: e.target.value })}
                 />
               </div>
               <div>
@@ -1035,7 +1314,7 @@ export default function Agenda() {
                 <Input
                   type="time"
                   value={novoAgendamento.horaInicio}
-                  onChange={(e) => setNovoAgendamento({...novoAgendamento, horaInicio: e.target.value})}
+                  onChange={(e) => setNovoAgendamento({ ...novoAgendamento, horaInicio: e.target.value })}
                 />
               </div>
               <div>
@@ -1043,16 +1322,16 @@ export default function Agenda() {
                 <Input
                   type="time"
                   value={novoAgendamento.horaFim}
-                  onChange={(e) => setNovoAgendamento({...novoAgendamento, horaFim: e.target.value})}
+                  onChange={(e) => setNovoAgendamento({ ...novoAgendamento, horaFim: e.target.value })}
                 />
               </div>
             </div>
 
             <div>
               <Label>Local</Label>
-              <Select 
-                value={novoAgendamento.local} 
-                onValueChange={(v) => setNovoAgendamento({...novoAgendamento, local: v})}
+              <Select
+                value={novoAgendamento.local}
+                onValueChange={(value) => setNovoAgendamento({ ...novoAgendamento, local: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o local" />
@@ -1065,12 +1344,24 @@ export default function Agenda() {
               </Select>
             </div>
 
+            {novoAgendamento.tipoCompromisso === "Reunião" && (
+              <div>
+                <Label>Título</Label>
+                <Input
+                  value={novoAgendamento.titulo}
+                  onChange={(e) => setNovoAgendamento({ ...novoAgendamento, titulo: e.target.value })}
+                  placeholder="Título da reunião"
+                />
+              </div>
+            )}
+
             <div>
               <Label>Observações</Label>
               <Textarea
                 value={novoAgendamento.descricao}
-                onChange={(e) => setNovoAgendamento({...novoAgendamento, descricao: e.target.value})}
+                onChange={(e) => setNovoAgendamento({ ...novoAgendamento, descricao: e.target.value })}
                 placeholder="Observações adicionais..."
+                rows={2}
               />
             </div>
           </div>
@@ -1079,13 +1370,16 @@ export default function Agenda() {
               Cancelar
             </Button>
             <Button onClick={handleCriarAgendamento} disabled={createAgendamento.isPending}>
-              {createAgendamento.isPending ? "Salvando..." : "Salvar"}
+              {createAgendamento.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Criar Agendamento
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal Bloqueio de Horário */}
+      {/* ============================================ */}
+      {/* MODAL BLOQUEIO */}
+      {/* ============================================ */}
       <Dialog open={modalBloqueioAberto} onOpenChange={setModalBloqueioAberto}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -1094,9 +1388,9 @@ export default function Agenda() {
           <div className="space-y-4">
             <div>
               <Label>Tipo de Bloqueio</Label>
-              <Select 
-                value={novoBloqueio.tipoBloqueio} 
-                onValueChange={(v) => setNovoBloqueio({...novoBloqueio, tipoBloqueio: v as any})}
+              <Select
+                value={novoBloqueio.tipoBloqueio}
+                onValueChange={(value) => setNovoBloqueio({ ...novoBloqueio, tipoBloqueio: value as any })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -1110,11 +1404,11 @@ export default function Agenda() {
             </div>
 
             <div>
-              <Label>Título</Label>
+              <Label>Título *</Label>
               <Input
                 value={novoBloqueio.titulo}
-                onChange={(e) => setNovoBloqueio({...novoBloqueio, titulo: e.target.value})}
-                placeholder="Ex: Férias de janeiro"
+                onChange={(e) => setNovoBloqueio({ ...novoBloqueio, titulo: e.target.value })}
+                placeholder="Ex: Férias de verão"
               />
             </div>
 
@@ -1124,7 +1418,7 @@ export default function Agenda() {
                 <Input
                   type="date"
                   value={novoBloqueio.dataInicio}
-                  onChange={(e) => setNovoBloqueio({...novoBloqueio, dataInicio: e.target.value})}
+                  onChange={(e) => setNovoBloqueio({ ...novoBloqueio, dataInicio: e.target.value })}
                 />
               </div>
               <div>
@@ -1132,7 +1426,7 @@ export default function Agenda() {
                 <Input
                   type="time"
                   value={novoBloqueio.horaInicio}
-                  onChange={(e) => setNovoBloqueio({...novoBloqueio, horaInicio: e.target.value})}
+                  onChange={(e) => setNovoBloqueio({ ...novoBloqueio, horaInicio: e.target.value })}
                 />
               </div>
             </div>
@@ -1143,7 +1437,7 @@ export default function Agenda() {
                 <Input
                   type="date"
                   value={novoBloqueio.dataFim}
-                  onChange={(e) => setNovoBloqueio({...novoBloqueio, dataFim: e.target.value})}
+                  onChange={(e) => setNovoBloqueio({ ...novoBloqueio, dataFim: e.target.value })}
                 />
               </div>
               <div>
@@ -1151,16 +1445,18 @@ export default function Agenda() {
                 <Input
                   type="time"
                   value={novoBloqueio.horaFim}
-                  onChange={(e) => setNovoBloqueio({...novoBloqueio, horaFim: e.target.value})}
+                  onChange={(e) => setNovoBloqueio({ ...novoBloqueio, horaFim: e.target.value })}
                 />
               </div>
             </div>
 
             <div>
-              <Label>Descrição (opcional)</Label>
+              <Label>Descrição</Label>
               <Textarea
                 value={novoBloqueio.descricao}
-                onChange={(e) => setNovoBloqueio({...novoBloqueio, descricao: e.target.value})}
+                onChange={(e) => setNovoBloqueio({ ...novoBloqueio, descricao: e.target.value })}
+                placeholder="Detalhes adicionais..."
+                rows={2}
               />
             </div>
           </div>
@@ -1169,165 +1465,91 @@ export default function Agenda() {
               Cancelar
             </Button>
             <Button onClick={handleCriarBloqueio} disabled={createBloqueio.isPending}>
-              {createBloqueio.isPending ? "Salvando..." : "Bloquear"}
+              {createBloqueio.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Criar Bloqueio
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal Detalhes do Agendamento */}
+      {/* ============================================ */}
+      {/* MODAL DETALHES DO AGENDAMENTO */}
+      {/* ============================================ */}
       <Dialog open={modalDetalhesAberto} onOpenChange={setModalDetalhesAberto}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded ${CORES_TIPO[agendamentoSelecionado?.tipoCompromisso] || "bg-gray-500"}`}></div>
-              {agendamentoSelecionado?.tipoCompromisso}
-            </DialogTitle>
+            <DialogTitle>Detalhes do Agendamento</DialogTitle>
           </DialogHeader>
           {agendamentoSelecionado && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">ID</Label>
-                  <p className="font-medium">{agendamentoSelecionado.idAgendamento}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Status</Label>
-                  <p className="font-medium">{agendamentoSelecionado.status}</p>
-                </div>
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded ${CORES_TIPO[agendamentoSelecionado.tipoCompromisso] || "bg-gray-500"}`} />
+                <span className="font-medium">{agendamentoSelecionado.tipoCompromisso}</span>
+                <span className={`text-xs px-2 py-0.5 rounded ${
+                  agendamentoSelecionado.status === "Cancelado" ? "bg-red-100 text-red-700" :
+                  agendamentoSelecionado.status === "Confirmado" ? "bg-green-100 text-green-700" :
+                  agendamentoSelecionado.status === "Realizado" ? "bg-gray-100 text-gray-700" :
+                  "bg-blue-100 text-blue-700"
+                }`}>
+                  {agendamentoSelecionado.status}
+                </span>
               </div>
 
               {agendamentoSelecionado.pacienteNome && (
-                <div>
-                  <Label className="text-muted-foreground">Paciente</Label>
-                  <p className="font-medium flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    {agendamentoSelecionado.pacienteNome}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span>{agendamentoSelecionado.pacienteNome}</span>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Data/Hora</Label>
-                  <p className="font-medium flex items-center gap-2">
-                    <CalendarIcon className="w-4 h-4" />
-                    {new Date(agendamentoSelecionado.dataHoraInicio).toLocaleDateString("pt-BR")}
-                  </p>
-                  <p className="text-sm flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    {formatarHora(agendamentoSelecionado.dataHoraInicio)} - {formatarHora(agendamentoSelecionado.dataHoraFim)}
-                  </p>
-                </div>
-                {agendamentoSelecionado.local && (
-                  <div>
-                    <Label className="text-muted-foreground">Local</Label>
-                    <p className="font-medium flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      {agendamentoSelecionado.local}
-                    </p>
-                  </div>
-                )}
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span>
+                  {new Date(agendamentoSelecionado.dataHoraInicio).toLocaleDateString("pt-BR")} às {formatarHora(agendamentoSelecionado.dataHoraInicio)}
+                  {agendamentoSelecionado.dataHoraFim && ` - ${formatarHora(agendamentoSelecionado.dataHoraFim)}`}
+                </span>
               </div>
 
+              {agendamentoSelecionado.local && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <span>{agendamentoSelecionado.local}</span>
+                </div>
+              )}
+
               {agendamentoSelecionado.descricao && (
-                <div>
-                  <Label className="text-muted-foreground">Observações</Label>
-                  <p>{agendamentoSelecionado.descricao}</p>
+                <div className="p-2 bg-muted rounded text-sm">
+                  {agendamentoSelecionado.descricao}
                 </div>
               )}
 
-              {agendamentoSelecionado.reagendadoDe && (
-                <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
-                  <p className="text-sm text-yellow-800">
-                    Este agendamento foi reagendado de outro compromisso anterior.
-                  </p>
-                </div>
-              )}
-
-              {agendamentoSelecionado.status === "Cancelado" && (
-                <div className="p-3 bg-red-50 rounded border border-red-200">
-                  <p className="text-sm text-red-800">
-                    <strong>Cancelado em:</strong> {new Date(agendamentoSelecionado.canceladoEm).toLocaleString("pt-BR")}
-                  </p>
-                  <p className="text-sm text-red-800">
-                    <strong>Motivo:</strong> {agendamentoSelecionado.motivoCancelamento}
-                  </p>
-                </div>
-              )}
-
-              {/* Ações baseadas no status */}
-              {agendamentoSelecionado.status === "Agendado" && (
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => confirmarAgendamento.mutate({ id: agendamentoSelecionado.id })}
-                  >
-                    <Check className="w-4 h-4 mr-1" />
-                    Confirmar
+              {/* Ações */}
+              {!["Cancelado", "Reagendado", "Realizado", "Faltou"].includes(agendamentoSelecionado.status) && (
+                <div className="flex flex-wrap gap-2 pt-2 border-t">
+                  {agendamentoSelecionado.status === "Agendado" && (
+                    <Button size="sm" variant="outline" onClick={handleConfirmar}>
+                      <Check className="w-4 h-4 mr-1" />
+                      Confirmar
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={handleRealizar}>
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    Realizado
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setNovaData(new Date(agendamentoSelecionado.dataHoraInicio).toISOString().split("T")[0]);
-                      setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
-                      setNovaHoraFim(formatarHora(agendamentoSelecionado.dataHoraFim));
-                      setModalReagendarAberto(true);
-                    }}
-                  >
+                  <Button size="sm" variant="outline" onClick={handleMarcarFalta}>
+                    <Ban className="w-4 h-4 mr-1" />
+                    Faltou
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    setNovaData(agendamentoSelecionado.dataHoraInicio.split("T")[0]);
+                    setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
+                    setNovaHoraFim(agendamentoSelecionado.dataHoraFim ? formatarHora(agendamentoSelecionado.dataHoraFim) : "");
+                    setModalReagendarAberto(true);
+                  }}>
                     <RefreshCw className="w-4 h-4 mr-1" />
                     Reagendar
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-red-600"
-                    onClick={() => setModalCancelarAberto(true)}
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    Cancelar
-                  </Button>
-                </div>
-              )}
-
-              {agendamentoSelecionado.status === "Confirmado" && (
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
-                  <Button 
-                    size="sm"
-                    onClick={() => realizarAgendamento.mutate({ id: agendamentoSelecionado.id })}
-                  >
-                    <Check className="w-4 h-4 mr-1" />
-                    Marcar como Realizado
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => marcarFalta.mutate({ id: agendamentoSelecionado.id })}
-                  >
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    Paciente Faltou
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setNovaData(new Date(agendamentoSelecionado.dataHoraInicio).toISOString().split("T")[0]);
-                      setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
-                      setNovaHoraFim(formatarHora(agendamentoSelecionado.dataHoraFim));
-                      setModalReagendarAberto(true);
-                    }}
-                  >
-                    <RefreshCw className="w-4 h-4 mr-1" />
-                    Reagendar
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-red-600"
-                    onClick={() => setModalCancelarAberto(true)}
-                  >
+                  <Button size="sm" variant="destructive" onClick={() => setModalCancelarAberto(true)}>
                     <X className="w-4 h-4 mr-1" />
                     Cancelar
                   </Button>
@@ -1338,47 +1560,50 @@ export default function Agenda() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Cancelar */}
+      {/* ============================================ */}
+      {/* MODAL CANCELAR */}
+      {/* ============================================ */}
       <Dialog open={modalCancelarAberto} onOpenChange={setModalCancelarAberto}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancelar Agendamento</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-muted-foreground">
-              O agendamento será marcado como cancelado, mas permanecerá visível no histórico (transparente).
+            <p className="text-sm text-muted-foreground">
+              Informe o motivo do cancelamento. Esta ação não pode ser desfeita.
             </p>
-            <div>
-              <Label>Motivo do Cancelamento</Label>
-              <Textarea
-                value={motivoCancelamento}
-                onChange={(e) => setMotivoCancelamento(e.target.value)}
-                placeholder="Informe o motivo..."
-              />
-            </div>
+            <Textarea
+              value={motivoCancelamento}
+              onChange={(e) => setMotivoCancelamento(e.target.value)}
+              placeholder="Motivo do cancelamento..."
+              rows={3}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalCancelarAberto(false)}>
               Voltar
             </Button>
-            <Button variant="destructive" onClick={handleCancelar} disabled={cancelarAgendamento.isPending}>
-              {cancelarAgendamento.isPending ? "Cancelando..." : "Confirmar Cancelamento"}
+            <Button variant="destructive" onClick={handleCancelar} disabled={cancelarAgendamentoMutation.isPending}>
+              {cancelarAgendamentoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Confirmar Cancelamento
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal Reagendar */}
+      {/* ============================================ */}
+      {/* MODAL REAGENDAR */}
+      {/* ============================================ */}
       <Dialog open={modalReagendarAberto} onOpenChange={setModalReagendarAberto}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reagendar</DialogTitle>
+            <DialogTitle>Reagendar Agendamento</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-muted-foreground">
-              O agendamento original ficará marcado como "Reagendado" (transparente) e um novo será criado.
+            <p className="text-sm text-muted-foreground">
+              O agendamento original será mantido como "Reagendado" e um novo será criado.
             </p>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2">
               <div>
                 <Label>Nova Data</Label>
                 <Input
@@ -1407,10 +1632,11 @@ export default function Agenda() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalReagendarAberto(false)}>
-              Voltar
+              Cancelar
             </Button>
-            <Button onClick={handleReagendar} disabled={reagendarAgendamento.isPending}>
-              {reagendarAgendamento.isPending ? "Reagendando..." : "Confirmar Reagendamento"}
+            <Button onClick={handleReagendar} disabled={reagendarAgendamentoMutation.isPending}>
+              {reagendarAgendamentoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Confirmar Reagendamento
             </Button>
           </DialogFooter>
         </DialogContent>

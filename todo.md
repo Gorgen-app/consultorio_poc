@@ -2315,3 +2315,29 @@ A dashboard deve integrar **medicina e administração**:
 - [x] server/routers.ts - Endpoint searchRapido corrigido
 - [x] server/busca-pacientes.test.ts - Novos testes unitários (19 testes passando)
 
+
+
+---
+
+## 🚀 GORGEN 1.9.4 - Melhorias no Módulo de Agenda v2 (15/01/2026)
+
+### Novas Funcionalidades
+- [x] Configuração de horários flexível (24h) com modal de configurações
+- [x] Opções de intervalo: Dia completo (0h-24h), Horário comercial (7h-20h), Manhã, Tarde, Noite, Personalizado
+- [x] Posicionamento preciso dos eventos (estilo Google Calendar) - 1 pixel por minuto
+- [x] Indicador de hora atual (linha vermelha com bolinha)
+- [x] Dia atual destacado com círculo azul (estilo Google Calendar)
+- [x] Linhas de meia hora com cor mais clara
+- [x] Auto-scroll para hora atual
+- [x] Cabeçalho fixo (sticky) durante scroll
+
+### Melhorias Visuais
+- [x] Coluna de horários mais estreita (apenas "08" em vez de "-08:00")
+- [x] Eventos posicionados exatamente nos minutos corretos
+- [x] Altura do evento proporcional à duração em minutos
+- [x] Legenda de tipos de compromisso
+
+### Arquivos
+- [x] Backup criado: Agenda_backup.tsx
+- [x] Novo arquivo: Agenda.tsx (v2)
+
