@@ -770,6 +770,18 @@ export default function Agenda() {
   const [filtroStatus, setFiltroStatus] = useState<string[]>([]);
   const [showFiltroDropdown, setShowFiltroDropdown] = useState(false);
 
+  // Busca por paciente na agenda (filtro)
+  const [buscaPacienteAgenda, setBuscaPacienteAgenda] = useState("");
+  const [debouncedBuscaPacienteAgenda, setDebouncedBuscaPacienteAgenda] = useState("");
+
+  // Debounce da busca por paciente na agenda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedBuscaPacienteAgenda(buscaPacienteAgenda);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [buscaPacienteAgenda]);
+
   // Toggle de status no filtro
   const toggleFiltroStatus = (status: string) => {
     setFiltroStatus(prev => 
@@ -780,7 +792,10 @@ export default function Agenda() {
   };
 
   // Limpar todos os filtros
-  const limparFiltros = () => setFiltroStatus([]);
+  const limparFiltros = () => {
+    setFiltroStatus([]);
+    setBuscaPacienteAgenda("");
+  };
 
   // Gerar array de horários
   const horarios = useMemo(() => {
@@ -1014,11 +1029,26 @@ export default function Agenda() {
   const pacientesFiltrados = pacientesSearch || [];
 
   // Agrupar agendamentos por dia
-  // Filtrar agendamentos por status
+  // Filtrar agendamentos por status e busca por paciente
   const agendamentosFiltrados = useMemo(() => {
-    if (filtroStatus.length === 0) return agendamentos || [];
-    return (agendamentos || []).filter((ag: any) => filtroStatus.includes(ag.status));
-  }, [agendamentos, filtroStatus]);
+    let resultado = agendamentos || [];
+    
+    // Filtrar por status
+    if (filtroStatus.length > 0) {
+      resultado = resultado.filter((ag: any) => filtroStatus.includes(ag.status));
+    }
+    
+    // Filtrar por nome de paciente
+    if (debouncedBuscaPacienteAgenda.trim()) {
+      const termoBusca = debouncedBuscaPacienteAgenda.toLowerCase().trim();
+      resultado = resultado.filter((ag: any) => {
+        const nomePaciente = (ag.pacienteNome || ag.titulo || "").toLowerCase();
+        return nomePaciente.includes(termoBusca);
+      });
+    }
+    
+    return resultado;
+  }, [agendamentos, filtroStatus, debouncedBuscaPacienteAgenda]);
 
   const agendamentosPorDia = useMemo(() => {
     const mapa: Record<string, any[]> = {};
@@ -1515,6 +1545,28 @@ export default function Agenda() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* Busca por Paciente */}
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar paciente..."
+              value={buscaPacienteAgenda}
+              onChange={(e) => setBuscaPacienteAgenda(e.target.value)}
+              onKeyDown={(e) => e.key === 'Escape' && setBuscaPacienteAgenda('')}
+              className={`h-7 w-40 pl-7 pr-7 text-xs ${buscaPacienteAgenda ? 'border-primary bg-primary/5' : ''}`}
+            />
+            {buscaPacienteAgenda && (
+              <button
+                type="button"
+                onClick={() => setBuscaPacienteAgenda('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
           {/* Filtro por Status */}
           <Popover open={showFiltroDropdown} onOpenChange={setShowFiltroDropdown}>
             <PopoverTrigger asChild>

@@ -2417,3 +2417,16 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Texto "Mostrando apenas: X, Y, Z" quando filtros ativos
 - [x] Filtragem em tempo real (sem necessidade de recarregar)
 
+
+
+---
+
+## 🚀 GORGEN 1.9.8 - Busca por Paciente na Agenda (16/01/2026)
+
+### Novas Funcionalidades
+- [x] Barra de busca por nome de paciente na agenda
+- [x] Filtrar agendamentos em tempo real pelo nome digitado (debounce 300ms)
+- [x] Destacar visualmente o campo quando há busca ativa (borda azul)
+- [x] Limpar busca com botão X ou tecla Escape
+- [x] Integração com filtro de status existente
+
