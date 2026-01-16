@@ -807,13 +807,13 @@ export async function getDashboardStats(tenantId: number) {
   // Evolução de atendimentos (6 meses)
   const evolucaoAtendimentosResult = await db
     .select({
-      mes: sql<string>`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m') as mes`,
-      total: sql<number>`COUNT(*) as total`,
+      mes: sql<string>`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m')`.as('mes'),
+      total: sql<number>`COUNT(*)`.as('total'),
     })
     .from(atendimentos)
     .where(eq(atendimentos.tenantId, tenantId))
-    .groupBy(sql`mes`)
-    .orderBy(sql`mes`)
+    .groupBy(sql`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m')`)
+    .orderBy(sql`DATE_FORMAT(${atendimentos.dataAtendimento}, '%Y-%m')`)
     .limit(12);
 
   const evolucaoAtendimentos = evolucaoAtendimentosResult.map(d => ({
