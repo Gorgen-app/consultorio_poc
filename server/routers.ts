@@ -8,6 +8,7 @@ import { invokeLLM } from "./_core/llm";
 import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
 import * as backup from "./backup";
+import { authRouter } from "./auth-router";
 
 // Schema de validação para Paciente
 const pacienteSchema = z.object({
@@ -78,6 +79,9 @@ const atendimentoSchema = z.object({
 
 export const appRouter = router({
   system: systemRouter,
+  
+  // Router de autenticação local (login/registro com senha)
+  localAuth: authRouter,
   
   // Router de métricas de performance (apenas admin)
   performance: router({

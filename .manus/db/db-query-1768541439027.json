@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `two_factor_auth` (\n  `id` INT AUTO_INCREMENT PRIMARY KEY,\n  `user_id` INT NOT NULL UNIQUE,\n  `secret` VARCHAR(255) NOT NULL,\n  `is_enabled` BOOLEAN DEFAULT FALSE NOT NULL,\n  `backup_codes` TEXT NULL,\n  `enabled_at` TIMESTAMP NULL,\n  `last_used_at` TIMESTAMP NULL,\n  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  \n  INDEX `idx_two_factor_auth_user_id` (`user_id`),\n  \n  CONSTRAINT `fk_two_factor_auth_user` \n    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) \n    ON DELETE CASCADE ON UPDATE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS `two_factor_auth` (\n  `id` INT AUTO_INCREMENT PRIMARY KEY,\n  `user_id` INT NOT NULL UNIQUE,\n  `secret` VARCHAR(255) NOT NULL,\n  `is_enabled` BOOLEAN DEFAULT FALSE NOT NULL,\n  `backup_codes` TEXT NULL,\n  `enabled_at` TIMESTAMP NULL,\n  `last_used_at` TIMESTAMP NULL,\n  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,\n  \n  INDEX `idx_two_factor_auth_user_id` (`user_id`),\n  \n  CONSTRAINT `fk_two_factor_auth_user` \n    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) \n    ON DELETE CASCADE ON UPDATE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 325
+}

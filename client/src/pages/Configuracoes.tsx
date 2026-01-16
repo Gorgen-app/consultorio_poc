@@ -30,9 +30,12 @@ import {
   AlertCircle,
   FlaskConical,
   HardDrive,
+  HelpCircle,
 } from "lucide-react";
 import { Link } from "wouter";
 import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especialidadesMedicas";
+import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { HelpSupport } from "@/components/settings/HelpSupport";
 
 // Mapeamento de perfis para labels e ícones
 const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -432,6 +435,28 @@ export default function Configuracoes() {
               </Button>
             </Link>
           )}
+          
+          {/* Aba de Segurança */}
+          <Button
+            variant={activeTab === "seguranca" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("seguranca")}
+            className="flex items-center gap-2"
+          >
+            <Lock className="h-4 w-4" />
+            <span className="hidden sm:inline">Segurança</span>
+          </Button>
+          
+          {/* Aba de Ajuda e Suporte */}
+          <Button
+            variant={activeTab === "ajuda" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("ajuda")}
+            className="flex items-center gap-2"
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Ajuda</span>
+          </Button>
         </div>
 
         {/* Conteúdo das abas */}
@@ -1058,6 +1083,16 @@ export default function Configuracoes() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Tab: Segurança */}
+        {activeTab === "seguranca" && (
+          <SecuritySettings />
+        )}
+
+        {/* Tab: Ajuda e Suporte */}
+        {activeTab === "ajuda" && (
+          <HelpSupport />
         )}
       </div>
     </div>

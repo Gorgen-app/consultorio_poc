@@ -2430,3 +2430,67 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Limpar busca com botão X ou tecla Escape
 - [x] Integração com filtro de status existente
 
+
+
+---
+
+## 🔐 GORGEN 3.5.1 - Arquitetura de Autenticação e Segurança (16/01/2026)
+
+### Backend - Banco de Dados ✅
+- [x] Aplicar migração SQL para criar tabelas de autenticação
+- [x] Adicionar auth-schema.ts ao drizzle
+
+### Backend - Rotas ✅
+- [x] Adicionar auth-db.ts com funções de acesso ao banco
+- [x] Adicionar auth-router.ts com endpoints tRPC
+- [x] Integrar authRouter no routers.ts
+
+### Frontend - Páginas ✅
+- [x] Adicionar página Login.tsx
+- [x] Adicionar página Register.tsx
+- [x] Adicionar página ForgotPassword.tsx
+- [x] Adicionar página ResetPassword.tsx
+
+### Frontend - Componentes ✅
+- [x] Adicionar SecuritySettings.tsx
+- [x] Adicionar HelpSupport.tsx
+
+### Frontend - Rotas e Configurações ✅
+- [x] Atualizar App.tsx com novas rotas
+- [x] Atualizar Configuracoes.tsx com novas abas
+
+### Dependências ✅
+- [x] Instalar bcrypt, speakeasy, qrcode
+- [x] Instalar @types/bcrypt, @types/speakeasy, @types/qrcode
+
+### Testes ✅
+- [x] Testar página de login
+- [x] Testar registro de nova conta
+- [x] Testar fluxo de esqueci minha senha
+- [x] Testar alteração de senha
+- [x] Testar 2FA
+- [x] Testar seção de Ajuda e Suporte
+
+
+---
+
+## 🚀 GORGEN 3.5.2 - Agenda v8.0 (16/01/2026)
+
+### Novas Funcionalidades
+- [ ] Drag and Drop para reagendar eventos
+- [ ] Criação Rápida por clique no horário
+- [ ] Busca de Eventos por paciente/tipo/status
+- [ ] Verificação de Conflitos antes de agendar
+- [ ] Horários de Trabalho configuráveis por dia da semana
+
+### Backend - Pendências
+- [ ] Endpoint agenda.mover para reagendamento via drag
+- [ ] Tabela horarios_trabalho no banco de dados
+- [ ] CRUD de horários de trabalho
+
+### Testes ✅
+- [ ] Testar drag and drop
+- [ ] Testar criação rápida
+- [ ] Testar busca e filtros
+- [ ] Testar verificação de conflitos
+- [ ] Testar configuração de horários de trabalho

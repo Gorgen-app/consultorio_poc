@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
@@ -23,8 +23,26 @@ import Performance from "./pages/Performance";
 import BackupSettings from "./pages/BackupSettings";
 import Dashboard from "./pages/DashboardCustom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+// Páginas de autenticação
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
-function Router() {
+// Rotas de autenticação (públicas, sem DashboardLayout)
+function AuthRouter() {
+  return (
+    <Switch>
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password/:token" component={ResetPassword} />
+    </Switch>
+  );
+}
+
+// Rotas protegidas (com DashboardLayout)
+function ProtectedRouter() {
   return (
     <Switch>
       <Route path="/">
@@ -120,15 +138,36 @@ function Router() {
   );
 }
 
+// Rotas públicas de autenticação (sem sidebar)
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
+
+function isAuthRoute(path: string): boolean {
+  return AUTH_ROUTES.some(route => path.startsWith(route));
+}
+
+function AppContent() {
+  const [location] = useLocation();
+  
+  // Se for rota de autenticação, renderiza sem DashboardLayout
+  if (isAuthRoute(location)) {
+    return <AuthRouter />;
+  }
+  
+  // Rotas protegidas com DashboardLayout
+  return (
+    <DashboardLayout>
+      <ProtectedRouter />
+    </DashboardLayout>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider>
           <Toaster />
-          <DashboardLayout>
-            <Router />
-          </DashboardLayout>
+          <AppContent />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
