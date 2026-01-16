@@ -2509,3 +2509,18 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Atualizar App.tsx com TooltipProvider global (delayDuration=2000ms)
 - [x] Aplicar migração automática dos botões existentes (309 botões em 47 arquivos)
 - [x] Testar funcionalidade - 311 testes passando
+
+
+---
+
+## ✅ GORGEN 3.5.4 - Agenda v8.1 Correções (16/01/2026)
+
+### Correções de Bugs
+- [x] Dropdown de Paciente - Substituir Select por Popover com busca
+- [x] Data Padrão - Pré-preencher data atual no modal de novo agendamento
+- [x] Criação Rápida - Adicionar busca de paciente no banco de dados
+- [x] Botão Expandir - Mover para canto superior direito como ícone (Maximize2)
+- [x] Botão Criar - Simplificar texto de "Criar Rápido" para "Criar"
+- [x] Corrigido import react-router-dom para wouter
+- [x] Corrigido chamadas de API (listar -> list, criar -> create)
+- [x] 311 testes passando
