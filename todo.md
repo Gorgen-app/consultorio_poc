@@ -2524,3 +2524,25 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Corrigido import react-router-dom para wouter
 - [x] Corrigido chamadas de API (listar -> list, criar -> create)
 - [x] 311 testes passando
+
+
+---
+
+## ✅ GORGEN 3.5.5 - Integração Google Calendar (16/01/2026)
+
+### Backend
+- [x] Explorar ferramentas MCP do Google Calendar
+- [x] Criar tabelas google_calendar_sync e google_calendar_config
+- [x] Implementar funções de banco de dados para sincronização
+- [x] Criar rotas tRPC para configuração e status
+- [x] Criar script de sincronização via MCP
+
+### Frontend
+- [x] Criar componente GoogleCalendarSettings
+- [x] Adicionar aba de Google Calendar em Configurações
+- [x] Interface para ativar/desativar sincronização
+- [x] Configurações de privacidade (LGPD)
+
+### Testes
+- [x] Testes unitários para funções de sincronização (15 testes)
+- [x] Total: 326 testes passando

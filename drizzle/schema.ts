@@ -1562,3 +1562,98 @@ export const delegadosAgenda = mysqlTable("delegados_agenda", {
 
 export type DelegadoAgenda = typeof delegadosAgenda.$inferSelect;
 export type InsertDelegadoAgenda = typeof delegadosAgenda.$inferInsert;
+
+
+/**
+ * Tabela de Sincronização Google Calendar
+ * Mapeia agendamentos do GORGEN com eventos do Google Calendar
+ * Permite sincronização bidirecional
+ */
+export const googleCalendarSync = mysqlTable("google_calendar_sync", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
+  
+  // Referência ao agendamento no GORGEN
+  agendamentoId: int("agendamento_id").notNull().references(() => agendamentos.id),
+  
+  // Referência ao evento no Google Calendar
+  googleEventId: varchar("google_event_id", { length: 255 }).notNull(),
+  googleCalendarId: varchar("google_calendar_id", { length: 255 }).default("primary"),
+  
+  // Status de sincronização
+  syncStatus: mysqlEnum("sync_status", [
+    "synced",           // Sincronizado com sucesso
+    "pending_to_google", // Pendente envio para Google
+    "pending_from_google", // Pendente importação do Google
+    "conflict",         // Conflito de dados
+    "error"             // Erro na sincronização
+  ]).default("synced").notNull(),
+  
+  // Direção da última sincronização
+  lastSyncDirection: mysqlEnum("last_sync_direction", ["to_google", "from_google"]),
+  
+  // Timestamps de sincronização
+  lastSyncAt: timestamp("last_sync_at"),
+  googleUpdatedAt: timestamp("google_updated_at"),
+  gorgenUpdatedAt: timestamp("gorgen_updated_at"),
+  
+  // Detalhes de erro (se houver)
+  errorMessage: text("error_message"),
+  errorCount: int("error_count").default(0),
+  
+  // Auditoria
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantIdx: index("idx_gcal_sync_tenant").on(table.tenantId),
+  agendamentoIdx: index("idx_gcal_sync_agendamento").on(table.agendamentoId),
+  googleEventIdx: index("idx_gcal_sync_google_event").on(table.googleEventId),
+  syncStatusIdx: index("idx_gcal_sync_status").on(table.syncStatus),
+}));
+export type GoogleCalendarSync = typeof googleCalendarSync.$inferSelect;
+export type InsertGoogleCalendarSync = typeof googleCalendarSync.$inferInsert;
+
+/**
+ * Configuração de Sincronização Google Calendar por Usuário
+ * Armazena as preferências de sincronização de cada usuário
+ */
+export const googleCalendarConfig = mysqlTable("google_calendar_config", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
+  userId: int("user_id").notNull().references(() => users.id),
+  
+  // Configurações de sincronização
+  syncEnabled: boolean("sync_enabled").default(false).notNull(),
+  syncDirection: mysqlEnum("sync_direction", [
+    "bidirectional",    // Sincroniza em ambas direções
+    "to_google_only",   // Apenas GORGEN -> Google
+    "from_google_only"  // Apenas Google -> GORGEN
+  ]).default("bidirectional"),
+  
+  // Calendário do Google a ser usado
+  googleCalendarId: varchar("google_calendar_id", { length: 255 }).default("primary"),
+  
+  // Filtros de sincronização
+  syncConsultas: boolean("sync_consultas").default(true),
+  syncCirurgias: boolean("sync_cirurgias").default(true),
+  syncReunions: boolean("sync_reunioes").default(true),
+  syncBloqueios: boolean("sync_bloqueios").default(false),
+  syncOutros: boolean("sync_outros").default(true),
+  
+  // Configurações de privacidade
+  includePatientName: boolean("include_patient_name").default(false), // Por LGPD, padrão é não incluir
+  includePatientPhone: boolean("include_patient_phone").default(false),
+  eventVisibility: mysqlEnum("event_visibility", ["default", "public", "private"]).default("private"),
+  
+  // Última sincronização
+  lastFullSyncAt: timestamp("last_full_sync_at"),
+  lastIncrementalSyncAt: timestamp("last_incremental_sync_at"),
+  
+  // Auditoria
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tenantUserIdx: index("idx_gcal_config_tenant_user").on(table.tenantId, table.userId),
+}));
+export type GoogleCalendarConfig = typeof googleCalendarConfig.$inferSelect;
+export type InsertGoogleCalendarConfig = typeof googleCalendarConfig.$inferInsert;

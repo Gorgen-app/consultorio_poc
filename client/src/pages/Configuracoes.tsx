@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especialidadesMedicas";
+import { GoogleCalendarSettings } from "@/components/settings/GoogleCalendarSettings";
 
 // Mapeamento de perfis para labels e ícones
 const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -405,6 +406,18 @@ export default function Configuracoes() {
           >
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Assinatura</span>
+          </Button>
+          
+          {/* Botão para Google Calendar */}
+          <Button
+            variant={activeTab === "googleCalendar" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("googleCalendar")}
+            className="flex items-center gap-2"
+            tooltip="Google Calendar"
+          >
+            <Calendar className="h-4 w-4" />
+            <span className="hidden sm:inline">Google Calendar</span>
           </Button>
           
           {/* Botão para Exames Favoritos */}
@@ -1057,6 +1070,13 @@ export default function Configuracoes() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+        
+        {/* Tab: Google Calendar */}
+        {activeTab === "googleCalendar" && (
+          <div className="space-y-4">
+            <GoogleCalendarSettings />
           </div>
         )}
       </div>
