@@ -83,6 +83,9 @@ export const appRouter = router({
   // Router de autenticação local (login/registro com senha)
   localAuth: authRouter,
   
+  // Alias para compatibilidade com frontend (trpc.auth.*)
+  auth: authRouter,
+  
   // Router de métricas de performance (apenas admin)
   performance: router({
     getOverview: protectedProcedure
@@ -380,16 +383,7 @@ export const appRouter = router({
       }),
   }),
 
-  auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
-    }),
-  }),
+  // auth: authRouter já definido acima como alias
 
   pacientes: router({
     getNextId: tenantProcedure
@@ -1875,6 +1869,70 @@ export const appRouter = router({
           ctx.user?.name || "Sistema",
           input.atendimentoId
         );
+      }),
+
+    // ===== AGENDA V8 - DRAG AND DROP =====
+    
+    // Mover agendamento via drag-and-drop (atualiza in-place sem criar novo registro)
+    mover: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        novaDataInicio: z.date(),
+        novaDataFim: z.date(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.moverAgendamento(
+          input.id,
+          input.novaDataInicio,
+          input.novaDataFim,
+          ctx.user?.name || "Sistema"
+        );
+       }),
+
+    // ===== ALIASES EM PORTUGUÊS =====
+    
+    // Alias para 'list' em português
+    listar: protectedProcedure
+      .input(z.object({
+        dataInicio: z.date().optional(),
+        dataFim: z.date().optional(),
+        pacienteId: z.number().optional(),
+        tipo: z.string().optional(),
+        status: z.string().optional(),
+        incluirCancelados: z.boolean().optional().default(true),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.listAgendamentos(input || {});
+      }),
+
+    // Alias para 'create' em português
+    criar: protectedProcedure
+      .input(z.object({
+        tipoCompromisso: z.enum(["Consulta", "Cirurgia", "Visita internado", "Procedimento em consultório", "Exame", "Reunião", "Bloqueio"]),
+        titulo: z.string().optional().nullable(),
+        dataHoraInicio: z.string(),
+        dataHoraFim: z.string().optional().nullable(),
+        local: z.string().optional().nullable(),
+        status: z.string().optional().default("Agendado"),
+        pacienteId: z.number().optional().nullable(),
+        pacienteNome: z.string().optional().nullable(),
+        descricao: z.string().optional().nullable(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const idAgendamento = await db.getNextAgendamentoId();
+        return await db.createAgendamento({
+          idAgendamento,
+          tipoCompromisso: input.tipoCompromisso,
+          titulo: input.titulo,
+          dataHoraInicio: new Date(input.dataHoraInicio),
+          dataHoraFim: input.dataHoraFim ? new Date(input.dataHoraFim) : new Date(new Date(input.dataHoraInicio).getTime() + 30 * 60000),
+          local: input.local,
+          status: input.status as any,
+          pacienteId: input.pacienteId,
+          pacienteNome: input.pacienteNome,
+          descricao: input.descricao,
+          criadoPor: ctx.user?.name || "Sistema",
+        } as any);
       }),
   }),
 

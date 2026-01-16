@@ -2193,6 +2193,60 @@ export async function reagendarAgendamento(
   return createAgendamento(novoAgendamento);
 }
 
+// Mover agendamento via drag-and-drop (atualiza in-place sem criar novo registro)
+export async function moverAgendamento(
+  id: number,
+  novaDataInicio: Date,
+  novaDataFim: Date,
+  movidoPor: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar agendamento original
+  const original = await getAgendamentoById(id);
+  if (!original) throw new Error("Agendamento não encontrado");
+  
+  // Não permitir mover agendamentos finalizados
+  if (["Cancelado", "Transferido", "Encerrado", "Falta"].includes(original.status)) {
+    throw new Error(`Não é possível mover agendamento com status ${original.status}`);
+  }
+  
+  // Formatar datas para log
+  const formatarDataHora = (data: Date | string): string => {
+    const d = typeof data === 'string' ? new Date(data) : data;
+    return d.toLocaleString('pt-BR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
+  // Atualizar data/hora do agendamento
+  await db.update(agendamentos)
+    .set({
+      dataHoraInicio: novaDataInicio,
+      dataHoraFim: novaDataFim,
+      updatedAt: new Date(),
+    })
+    .where(eq(agendamentos.id, id));
+  
+  // Registrar no histórico
+  await db.insert(historicoAgendamentos).values({
+    tenantId: original.tenantId,
+    agendamentoId: id,
+    tipoAlteracao: "Edição",
+    descricaoAlteracao: `Movido por ${movidoPor} de ${formatarDataHora(original.dataHoraInicio)} para ${formatarDataHora(novaDataInicio)}`,
+    valoresAnteriores: { dataHoraInicio: original.dataHoraInicio, dataHoraFim: original.dataHoraFim } as any,
+    valoresNovos: { dataHoraInicio: novaDataInicio, dataHoraFim: novaDataFim } as any,
+    realizadoPor: movidoPor,
+  });
+  
+  return await getAgendamentoById(id);
+}
+
 // Confirmar agendamento
 export async function confirmarAgendamento(id: number, confirmadoPor: string) {
   const db = await getDb();

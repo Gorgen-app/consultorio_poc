@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import * as authDb from "./auth-db";
 import * as speakeasy from "speakeasy";
 import * as QRCode from "qrcode";
+import { notifyOwner } from "./_core/notification";
 
 // Schemas de validação
 const usernameSchema = z
@@ -366,9 +367,37 @@ export const authRouter = router({
       // Gerar token de recuperação
       const token = await authDb.createPasswordResetToken(user.id);
 
-      // TODO: Enviar email com o link de recuperação
-      // Por enquanto, apenas logamos o token (em produção, isso seria enviado por email)
-      console.log(`[Password Reset] Token para ${input.email}: ${token}`);
+      // Construir URL de recuperação
+      const baseUrl = process.env.VITE_APP_URL || ctx.req?.headers?.origin || 'https://gorgen.manus.space';
+      const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+      
+      // Enviar notificação ao proprietário do sistema com o link de recuperação
+      try {
+        await notifyOwner({
+          title: `🔐 Solicitação de Recuperação de Senha - ${user.name || input.email}`,
+          content: `
+**Solicitação de Recuperação de Senha**
+
+Um usuário solicitou a recuperação de senha:
+
+- **Usuário:** ${user.name || 'Não informado'}
+- **E-mail:** ${input.email}
+- **Data/Hora:** ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+
+**Link de Recuperação:**
+${resetUrl}
+
+*Este link expira em 1 hora.*
+
+---
+*Notificação automática do sistema GORGEN*
+          `.trim()
+        });
+        console.log(`[Password Reset] Notificação enviada para ${input.email}`);
+      } catch (notifyError) {
+        console.error(`[Password Reset] Erro ao enviar notificação:`, notifyError);
+        // Continua mesmo se a notificação falhar
+      }
 
       await authDb.logAuthEvent(
         "password_reset_request",

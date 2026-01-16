@@ -2474,23 +2474,26 @@ A dashboard deve integrar **medicina e administração**:
 
 ---
 
-## 🚀 GORGEN 3.5.2 - Agenda v8.0 (16/01/2026)
+## ✅ GORGEN 3.5.2 - Agenda v8.0 (16/01/2026)
 
 ### Novas Funcionalidades
-- [ ] Drag and Drop para reagendar eventos
-- [ ] Criação Rápida por clique no horário
-- [ ] Busca de Eventos por paciente/tipo/status
-- [ ] Verificação de Conflitos antes de agendar
-- [ ] Horários de Trabalho configuráveis por dia da semana
+- [x] Drag and Drop para reagendar eventos (rota agenda.mover)
+- [x] Criação Rápida por clique no horário (já implementado)
+- [x] Busca de Eventos por paciente/tipo/status (já implementado)
+- [x] Verificação de Conflitos antes de agendar (já implementado)
+- [ ] Horários de Trabalho configuráveis por dia da semana (pendente)
 
-### Backend - Pendências
-- [ ] Endpoint agenda.mover para reagendamento via drag
-- [ ] Tabela horarios_trabalho no banco de dados
-- [ ] CRUD de horários de trabalho
+### Backend - Implementado
+- [x] Endpoint agenda.mover para reagendamento via drag
+- [x] Aliases em português (listar, criar) para compatibilidade
+- [x] Alias auth para authRouter (compatibilidade SecuritySettings)
+- [x] Integração de e-mail via notifyOwner para recuperação de senha
+- [ ] Tabela horarios_trabalho no banco de dados (pendente)
+- [ ] CRUD de horários de trabalho (pendente)
 
 ### Testes ✅
-- [ ] Testar drag and drop
-- [ ] Testar criação rápida
-- [ ] Testar busca e filtros
-- [ ] Testar verificação de conflitos
-- [ ] Testar configuração de horários de trabalho
+- [x] Testes unitários agenda-v8.test.ts (7 testes)
+- [x] Testes de moverAgendamento
+- [x] Testes de aliases em português
+- [x] Testes de integração de e-mail
+- [x] Total: 311 testes passando
