@@ -2497,3 +2497,26 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Testes de aliases em português
 - [x] Testes de integração de e-mail
 - [x] Total: 311 testes passando
+
+
+---
+
+## 📊 ANÁLISE DE FALHAS - 16/01/2026
+
+### Relatório Produzido
+- [x] Análise completa das versões 3.5.3 a 3.5.7
+- [x] Identificação de causas raiz de cada falha
+- [x] Cadeia de verificação de fatos aplicada
+- [x] Propostas de melhoria documentadas
+- [x] Cronograma de reimplementação definido
+- [x] Backup v3.6.0 criado
+
+### Funcionalidades Perdidas (a reimplementar)
+- [ ] v3.5.3 - Tooltip Global com delay 2s
+- [ ] v3.5.4 - Agenda v8.1 (Popover busca, data padrão)
+- [ ] v3.5.5 - Integração Google Calendar
+- [ ] v3.5.6 - Layout Dashboard (KPIPanel, MicroWidget)
+- [ ] v3.5.7 - Queries SQL corrigidas
+
+### Documento de Referência
+Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
