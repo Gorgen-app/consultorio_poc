@@ -1,0 +1,30 @@
+{
+  "query": "SELECT DISTINCT status, COUNT(*) as total FROM agendamentos GROUP BY status;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT DISTINCT status, COUNT(*) as total FROM agendamentos GROUP BY status;",
+  "rows": [
+    {
+      "status": "Agendado",
+      "total": "43"
+    },
+    {
+      "status": "Confirmado",
+      "total": "2"
+    },
+    {
+      "status": "Realizado",
+      "total": "2143"
+    },
+    {
+      "status": "Cancelado",
+      "total": "1"
+    },
+    {
+      "status": "Faltou",
+      "total": "195"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\ttotal\nAgendado\t43\nConfirmado\t2\nRealizado\t2143\nCancelado\t1\nFaltou\t195\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

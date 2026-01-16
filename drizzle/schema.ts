@@ -840,8 +840,14 @@ export const tipoCompromissoEnum = mysqlEnum("tipo_compromisso", [
 export const statusAgendamentoEnum = mysqlEnum("status", [
   "Agendado",
   "Confirmado",
-  "Realizado",
+  "Aguardando",
+  "Em atendimento",
+  "Encerrado",
   "Cancelado",
+  "Falta",
+  "Transferido",
+  // Status legados (manter para compatibilidade com dados existentes)
+  "Realizado",
   "Reagendado",
   "Faltou"
 ]);
@@ -897,6 +903,23 @@ export const agendamentos = mysqlTable("agendamentos", {
   // Falta
   marcadoFaltaEm: timestamp("marcado_falta_em"),
   marcadoFaltaPor: varchar("marcado_falta_por", { length: 255 }),
+  
+  // Transferência - referência ao novo agendamento criado
+  transferidoParaId: int("transferido_para_id").references((): any => agendamentos.id),
+  transferidoEm: timestamp("transferido_em"),
+  transferidoPor: varchar("transferido_por", { length: 255 }),
+  
+  // Aguardando (paciente chegou)
+  pacienteChegouEm: timestamp("paciente_chegou_em"),
+  pacienteChegouRegistradoPor: varchar("paciente_chegou_registrado_por", { length: 255 }),
+  
+  // Em atendimento
+  atendimentoIniciadoEm: timestamp("atendimento_iniciado_em"),
+  atendimentoIniciadoPor: varchar("atendimento_iniciado_por", { length: 255 }),
+  
+  // Encerrado
+  encerradoEm: timestamp("encerrado_em"),
+  encerradoPor: varchar("encerrado_por", { length: 255 }),
   
   // Vínculo com atendimento (quando realizado)
   atendimentoId: int("atendimento_id").references(() => atendimentos.id),
@@ -984,7 +1007,12 @@ export const historicoAgendamentos = mysqlTable("historico_agendamentos", {
     "Reagendamento",
     "Realização",
     "Falta",
-    "Edição"
+    "Edição",
+    "Transferência",
+    "Paciente Chegou",
+    "Atendimento Iniciado",
+    "Encerramento",
+    "Reativação"
   ]).notNull(),
   
   // Detalhes

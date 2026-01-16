@@ -1,17 +1,15 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useLocation } from "wouter";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   ChevronLeft, 
@@ -33,6 +31,7 @@ import {
   Shield,
   Eye,
   Edit3,
+  // Ícones de status para consultas
   CalendarCheck,
   CalendarClock,
   UserCheck,
@@ -41,30 +40,22 @@ import {
   XCircle,
   LogOut,
   ArrowRightLeft,
+  // Ícones de status para cirurgias
   FileCheck,
   ClipboardCheck,
   Scissors,
+  // Ícones gerais
   Search,
   Loader2,
   Building2,
-  CreditCard,
-  History,
-  FileText,
-  ChevronDown,
-  ChevronUp,
-  MessageCircle,
-  Play,
-  ClipboardList,
-  RotateCcw,
-  Send,
-  Copy,
-  ExternalLink
+  CreditCard
 } from "lucide-react";
 
 // ============================================
 // CONSTANTES
 // ============================================
 
+// Tipos de compromisso
 const TIPOS_COMPROMISSO = [
   "Consulta",
   "Cirurgia",
@@ -92,56 +83,19 @@ const LOCAIS = [
   "HMD CG",
 ];
 
-// Status de agendamento com ícones e cores
-// NOTA: "Transferido" agora é um STATUS (registro histórico do agendamento original)
+// Status de agendamento com ícones
 const STATUS_AGENDAMENTO = [
-  { value: "Agendado", label: "Agendado", icon: CalendarCheck, color: "text-blue-600", bgColor: "bg-blue-500", borderColor: "border-blue-500", lightBg: "bg-blue-50" },
-  { value: "Confirmado", label: "Confirmado", icon: UserCheck, color: "text-green-600", bgColor: "bg-green-500", borderColor: "border-green-500", lightBg: "bg-green-50" },
-  { value: "Aguardando", label: "Aguardando", icon: CalendarClock, color: "text-yellow-600", bgColor: "bg-yellow-500", borderColor: "border-yellow-500", lightBg: "bg-yellow-50" },
-  { value: "Em atendimento", label: "Em atendimento", icon: Stethoscope, color: "text-purple-600", bgColor: "bg-purple-500", borderColor: "border-purple-500", lightBg: "bg-purple-50" },
-  { value: "Encerrado", label: "Encerrado", icon: CheckCircle2, color: "text-gray-600", bgColor: "bg-gray-500", borderColor: "border-gray-500", lightBg: "bg-gray-50" },
-  { value: "Falta", label: "Falta", icon: Ban, color: "text-orange-600", bgColor: "bg-orange-500", borderColor: "border-orange-500", lightBg: "bg-orange-50" },
-  { value: "Transferido", label: "Transferido", icon: ArrowRightLeft, color: "text-amber-600", bgColor: "bg-amber-500", borderColor: "border-amber-500", lightBg: "bg-amber-50" },
-  { value: "Cancelado", label: "Cancelado", icon: XCircle, color: "text-red-600", bgColor: "bg-red-400", borderColor: "border-red-400", lightBg: "bg-red-50" },
+  { value: "Agendado", label: "Agendado", icon: CalendarCheck, color: "text-blue-500", bgColor: "bg-blue-500" },
+  { value: "Confirmado", label: "Confirmado", icon: UserCheck, color: "text-green-500", bgColor: "bg-green-500" },
+  { value: "Aguardando", label: "Aguardando", icon: CalendarClock, color: "text-yellow-500", bgColor: "bg-yellow-500" },
+  { value: "Em atendimento", label: "Em atendimento", icon: Stethoscope, color: "text-purple-500", bgColor: "bg-purple-500" },
+  { value: "Encerrado", label: "Encerrado", icon: CheckCircle2, color: "text-gray-500", bgColor: "bg-gray-500" },
+  { value: "Falta", label: "Falta", icon: Ban, color: "text-orange-500", bgColor: "bg-orange-500" },
+  { value: "Transferido", label: "Transferido", icon: ArrowRightLeft, color: "text-amber-500", bgColor: "bg-amber-500" },
+  { value: "Cancelado", label: "Cancelado", icon: XCircle, color: "text-red-400", bgColor: "bg-red-400" },
 ] as const;
 
-// ============================================
-// MÁQUINA DE ESTADOS - TRANSIÇÕES PERMITIDAS
-// ============================================
-
-type StatusType = "Agendado" | "Confirmado" | "Aguardando" | "Em atendimento" | "Encerrado" | "Falta" | "Transferido" | "Cancelado";
-
-// Transições via botões de ação (não inclui Transferido pois é via ação especial)
-const TRANSICOES_PERMITIDAS: Record<StatusType, StatusType[]> = {
-  "Agendado": ["Confirmado", "Cancelado"], // Transferir é ação especial
-  "Confirmado": ["Aguardando", "Em atendimento", "Falta", "Cancelado"], // Transferir é ação especial
-  "Aguardando": ["Em atendimento", "Cancelado"],
-  "Em atendimento": ["Encerrado"], // Encerra via Prontuário
-  "Encerrado": [], // Estado final
-  "Falta": [], // Estado final (mas permite novo agendamento)
-  "Transferido": [], // Estado final (registro histórico)
-  "Cancelado": ["Agendado"], // Pode reativar
-};
-
-// Status que podem usar a ação Transferir
-const STATUS_PODE_TRANSFERIR: StatusType[] = ["Agendado", "Confirmado"];
-
-// Função para verificar se uma transição é permitida
-function isTransicaoPermitida(statusAtual: string, novoStatus: string): boolean {
-  const transicoesDoStatus = TRANSICOES_PERMITIDAS[statusAtual as StatusType];
-  return transicoesDoStatus?.includes(novoStatus as StatusType) || false;
-}
-
-// Função para obter os próximos status possíveis
-function getProximosStatusPossiveis(statusAtual: string): StatusType[] {
-  return TRANSICOES_PERMITIDAS[statusAtual as StatusType] || [];
-}
-
-// Função para verificar se pode transferir
-function podeTransferir(status: string): boolean {
-  return STATUS_PODE_TRANSFERIR.includes(status as StatusType);
-}
-
+// Convênios disponíveis (pode ser carregado do backend)
 const CONVENIOS = [
   "Particular",
   "Cortesia",
@@ -157,6 +111,7 @@ const CONVENIOS = [
   "Outro",
 ];
 
+// Cores por tipo de compromisso (estilo Google Calendar)
 const CORES_TIPO: Record<string, string> = {
   "Consulta": "bg-blue-500",
   "Cirurgia": "bg-red-500",
@@ -167,6 +122,7 @@ const CORES_TIPO: Record<string, string> = {
   "Bloqueio": "bg-gray-500",
 };
 
+// Feriados nacionais do Brasil (fixos e móveis para 2025-2027)
 const FERIADOS_FIXOS: Record<string, string> = {
   "01-01": "Confraternização Universal",
   "04-21": "Tiradentes",
@@ -179,32 +135,61 @@ const FERIADOS_FIXOS: Record<string, string> = {
 };
 
 const FERIADOS_MOVEIS: Record<string, string> = {
-  "2025-03-03": "Carnaval", "2025-03-04": "Carnaval", "2025-04-18": "Sexta-feira Santa",
-  "2025-04-20": "Páscoa", "2025-06-19": "Corpus Christi",
-  "2026-02-16": "Carnaval", "2026-02-17": "Carnaval", "2026-04-03": "Sexta-feira Santa",
-  "2026-04-05": "Páscoa", "2026-06-04": "Corpus Christi",
-  "2027-02-08": "Carnaval", "2027-02-09": "Carnaval", "2027-03-26": "Sexta-feira Santa",
-  "2027-03-28": "Páscoa", "2027-05-27": "Corpus Christi",
+  // 2025
+  "2025-03-03": "Carnaval",
+  "2025-03-04": "Carnaval",
+  "2025-04-18": "Sexta-feira Santa",
+  "2025-04-20": "Páscoa",
+  "2025-06-19": "Corpus Christi",
+  // 2026
+  "2026-02-16": "Carnaval",
+  "2026-02-17": "Carnaval",
+  "2026-04-03": "Sexta-feira Santa",
+  "2026-04-05": "Páscoa",
+  "2026-06-04": "Corpus Christi",
+  // 2027
+  "2027-02-08": "Carnaval",
+  "2027-02-09": "Carnaval",
+  "2027-03-26": "Sexta-feira Santa",
+  "2027-03-28": "Páscoa",
+  "2027-05-27": "Corpus Christi",
 };
 
+// Função para verificar se uma data é feriado
 function getFeriado(data: Date): string | null {
   const ano = data.getFullYear();
   const mes = String(data.getMonth() + 1).padStart(2, '0');
   const dia = String(data.getDate()).padStart(2, '0');
+  
   const chaveFixa = `${mes}-${dia}`;
-  if (FERIADOS_FIXOS[chaveFixa]) return FERIADOS_FIXOS[chaveFixa];
+  if (FERIADOS_FIXOS[chaveFixa]) {
+    return FERIADOS_FIXOS[chaveFixa];
+  }
+  
   const chaveMovel = `${ano}-${mes}-${dia}`;
-  if (FERIADOS_MOVEIS[chaveMovel]) return FERIADOS_MOVEIS[chaveMovel];
+  if (FERIADOS_MOVEIS[chaveMovel]) {
+    return FERIADOS_MOVEIS[chaveMovel];
+  }
+  
   return null;
 }
 
+// Função para obter informações do status
 function getStatusInfo(status: string) {
   return STATUS_AGENDAMENTO.find(s => s.value === status) || STATUS_AGENDAMENTO[0];
 }
 
-const HORA_ALTURA_PX = 60;
+// ============================================
+// CONFIGURAÇÕES DE HORÁRIO (ESTILO GOOGLE CALENDAR)
+// ============================================
+
+// Altura de cada hora em pixels (inspirado no Google Calendar)
+const HORA_ALTURA_PX = 60; // 60px por hora = 1px por minuto
+
+// Duração padrão de consulta em minutos
 const DURACAO_CONSULTA_PADRAO = 30;
 
+// Opções de intervalo de horas para o usuário escolher
 const OPCOES_INTERVALO_HORAS = [
   { label: "Horário comercial (7h - 20h)", inicio: 7, fim: 20 },
   { label: "Dia completo (0h - 24h)", inicio: 0, fim: 24 },
@@ -228,510 +213,11 @@ interface Delegado {
   ativo: boolean;
 }
 
-interface LogEntry {
-  id: number;
-  tipoAlteracao: string;
-  descricaoAlteracao: string;
-  realizadoPor: string;
-  createdAt: string;
-  valoresAnteriores?: any;
-  valoresNovos?: any;
-}
-
-// ============================================
-// COMPONENTE: STATUS FLOW (Esteira de Status)
-// ============================================
-
-interface StatusFlowProps {
-  currentStatus: string;
-  onStatusChange: (newStatus: string) => void;
-  disabled?: boolean;
-}
-
-function StatusFlow({ currentStatus, onStatusChange, disabled = false }: StatusFlowProps) {
-  const currentStatusInfo = getStatusInfo(currentStatus);
-  const proximosStatus = getProximosStatusPossiveis(currentStatus);
-  
-  // Ordem da esteira para visualização (fluxo principal)
-  const esteiraStatus = ["Agendado", "Confirmado", "Aguardando", "Em atendimento", "Encerrado"];
-  
-  // Verificar se status atual está na esteira principal
-  const statusNaEsteira = esteiraStatus.includes(currentStatus);
-  const indiceAtual = esteiraStatus.indexOf(currentStatus);
-  
-  return (
-    <div className="space-y-3">
-      <Label className="text-sm font-medium">Esteira de Atendimento</Label>
-      
-      {/* Visualização da esteira principal */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-2">
-        {esteiraStatus.map((status, index) => {
-          const statusInfo = getStatusInfo(status);
-          const Icon = statusInfo.icon;
-          const isActive = currentStatus === status;
-          const isPast = statusNaEsteira && indiceAtual > index;
-          const isFuture = statusNaEsteira && indiceAtual < index;
-          const canTransition = proximosStatus.includes(status as StatusType);
-          
-          return (
-            <div key={status} className="flex items-center">
-              <button
-                type="button"
-                disabled={disabled || !canTransition}
-                onClick={() => canTransition && onStatusChange(status)}
-                className={`
-                  relative flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium
-                  transition-all duration-200 ease-in-out min-w-[80px]
-                  ${isActive 
-                    ? `${statusInfo.lightBg} ${statusInfo.color} ring-2 ${statusInfo.borderColor} shadow-md` 
-                    : isPast
-                      ? 'bg-gray-200 text-gray-500'
-                      : canTransition
-                        ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer'
-                        : 'bg-gray-50 text-gray-400'
-                  }
-                  ${disabled || !canTransition ? 'cursor-not-allowed' : 'cursor-pointer'}
-                `}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? statusInfo.color : isPast ? 'text-gray-500' : 'text-gray-400'}`} />
-                <span className="whitespace-nowrap">{statusInfo.label}</span>
-                {isActive && (
-                  <div className={`absolute -top-1 -right-1 w-3 h-3 ${statusInfo.bgColor} rounded-full border-2 border-white`} />
-                )}
-                {isPast && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gray-400 rounded-full border-2 border-white flex items-center justify-center">
-                    <Check className="w-2 h-2 text-white" />
-                  </div>
-                )}
-              </button>
-              {index < esteiraStatus.length - 1 && (
-                <ChevronRight className={`w-4 h-4 mx-1 ${isPast ? 'text-gray-400' : 'text-gray-300'}`} />
-              )}
-            </div>
-          );
-        })}
-      </div>
-      
-      {/* Status especiais (Falta, Cancelado, Transferido) */}
-      {currentStatus === "Falta" && (
-        <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
-          <Ban className="w-5 h-5 text-orange-500" />
-          <span className="text-sm text-orange-700 font-medium">
-            Paciente não compareceu
-          </span>
-        </div>
-      )}
-      
-      {currentStatus === "Cancelado" && (
-        <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-200">
-          <XCircle className="w-5 h-5 text-red-500" />
-          <span className="text-sm text-red-700 font-medium">
-            Agendamento cancelado
-          </span>
-        </div>
-      )}
-      
-      {currentStatus === "Transferido" && (
-        <div className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
-          <ArrowRightLeft className="w-5 h-5 text-amber-500" />
-          <span className="text-sm text-amber-700 font-medium">
-            Agendamento transferido para nova data
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================
-// COMPONENTE: BOTÕES CONTEXTUAIS POR STATUS
-// ============================================
-
-interface StatusActionsProps {
-  agendamento: any;
-  onWhatsApp: () => void;
-  onIniciarAtendimento: () => void;
-  onRegistrarAtendimento: () => void;
-  onConfirmar: () => void;
-  onAguardando: () => void;
-  onCancelar: () => void;
-  onFalta: () => void;
-  onTransferir: () => void;
-  onReativar: () => void;
-  onNovoAgendamentoReaproveitando: () => void;
-}
-
-function StatusActions({
-  agendamento,
-  onWhatsApp,
-  onIniciarAtendimento,
-  onRegistrarAtendimento,
-  onConfirmar,
-  onAguardando,
-  onCancelar,
-  onFalta,
-  onTransferir,
-  onReativar,
-  onNovoAgendamentoReaproveitando,
-}: StatusActionsProps) {
-  const status = agendamento.status;
-  
-  return (
-    <div className="space-y-3">
-      <Label className="text-sm font-medium">Ações Disponíveis</Label>
-      
-      <div className="flex flex-wrap gap-2">
-        {/* AGENDADO: WhatsApp, Confirmar, Transferir, Cancelar */}
-        {status === "Agendado" && (
-          <>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={onWhatsApp}
-              className="bg-green-50 hover:bg-green-100 border-green-300 text-green-700"
-            >
-              <MessageCircle className="w-4 h-4 mr-1" />
-              WhatsApp
-            </Button>
-            <Button size="sm" onClick={onConfirmar} className="bg-blue-500 hover:bg-blue-600">
-              <Check className="w-4 h-4 mr-1" />
-              Confirmar
-            </Button>
-            <Button size="sm" variant="outline" onClick={onTransferir}>
-              <ArrowRightLeft className="w-4 h-4 mr-1" />
-              Transferir
-            </Button>
-            <Button size="sm" variant="destructive" onClick={onCancelar}>
-              <X className="w-4 h-4 mr-1" />
-              Cancelar
-            </Button>
-          </>
-        )}
-        
-        {/* CONFIRMADO: Paciente Chegou, Iniciar Atendimento, Transferir, Falta, Cancelar */}
-        {status === "Confirmado" && (
-          <>
-            <Button 
-              size="sm" 
-              onClick={onAguardando}
-              className="bg-yellow-500 hover:bg-yellow-600"
-            >
-              <CalendarClock className="w-4 h-4 mr-1" />
-              Paciente Chegou
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={onIniciarAtendimento}
-              className="bg-purple-50 hover:bg-purple-100 border-purple-300 text-purple-700"
-            >
-              <Play className="w-4 h-4 mr-1" />
-              Iniciar Atendimento
-              <ExternalLink className="w-3 h-3 ml-1" />
-            </Button>
-            <Button size="sm" variant="outline" onClick={onTransferir}>
-              <ArrowRightLeft className="w-4 h-4 mr-1" />
-              Transferir
-            </Button>
-            <Button size="sm" variant="outline" onClick={onFalta} className="text-orange-600 border-orange-300 hover:bg-orange-50">
-              <Ban className="w-4 h-4 mr-1" />
-              Falta
-            </Button>
-            <Button size="sm" variant="destructive" onClick={onCancelar}>
-              <X className="w-4 h-4 mr-1" />
-              Cancelar
-            </Button>
-          </>
-        )}
-        
-        {/* AGUARDANDO: Registrar Atendimento, Cancelar */}
-        {status === "Aguardando" && (
-          <>
-            <Button 
-              size="sm" 
-              onClick={onRegistrarAtendimento}
-              className="bg-purple-500 hover:bg-purple-600"
-            >
-              <ClipboardList className="w-4 h-4 mr-1" />
-              Registrar Atendimento
-              <ExternalLink className="w-3 h-3 ml-1" />
-            </Button>
-            <Button size="sm" variant="destructive" onClick={onCancelar}>
-              <X className="w-4 h-4 mr-1" />
-              Cancelar
-            </Button>
-            <div className="w-full text-xs text-muted-foreground mt-1">
-              O botão "Registrar Atendimento" também está disponível na seção de Atendimentos.
-            </div>
-          </>
-        )}
-        
-        {/* EM ATENDIMENTO: Sem botões na agenda */}
-        {status === "Em atendimento" && (
-          <div className="flex flex-col gap-2 w-full">
-            <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg border border-purple-200">
-              <Stethoscope className="w-5 h-5 text-purple-500 animate-pulse" />
-              <span className="text-sm text-purple-700">
-                Atendimento em andamento
-              </span>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Para encerrar o atendimento, use o botão "Encerrar Atendimento" na tela de Evolução do Prontuário do paciente.
-            </div>
-          </div>
-        )}
-        
-        {/* ENCERRADO: Estado final */}
-        {status === "Encerrado" && (
-          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 w-full">
-            <CheckCircle2 className="w-5 h-5 text-gray-500" />
-            <span className="text-sm text-gray-600">
-              Atendimento encerrado. Nenhuma ação disponível.
-            </span>
-          </div>
-        )}
-        
-        {/* FALTA: Estado final, mas permite novo agendamento */}
-        {status === "Falta" && (
-          <div className="flex flex-col gap-2 w-full">
-            <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
-              <Ban className="w-5 h-5 text-orange-500" />
-              <span className="text-sm text-orange-700">
-                Paciente não compareceu
-              </span>
-            </div>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={onNovoAgendamentoReaproveitando}
-              className="w-fit"
-            >
-              <Copy className="w-4 h-4 mr-1" />
-              Novo Agendamento (reaproveitar dados)
-            </Button>
-            <div className="text-xs text-muted-foreground">
-              Cria um novo agendamento com os dados do paciente pré-preenchidos.
-            </div>
-          </div>
-        )}
-        
-        {/* TRANSFERIDO: Estado final (registro histórico) */}
-        {status === "Transferido" && (
-          <div className="flex flex-col gap-2 w-full">
-            <div className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
-              <ArrowRightLeft className="w-5 h-5 text-amber-500" />
-              <span className="text-sm text-amber-700">
-                Agendamento transferido para nova data
-              </span>
-            </div>
-            {agendamento.novoAgendamentoId && (
-              <div className="text-xs text-muted-foreground">
-                Novo agendamento: <strong>#{agendamento.novoAgendamentoId}</strong>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* CANCELADO: Reativar */}
-        {status === "Cancelado" && (
-          <div className="flex flex-col gap-2 w-full">
-            <Button 
-              size="sm" 
-              onClick={onReativar}
-              className="bg-blue-500 hover:bg-blue-600 w-fit"
-            >
-              <RotateCcw className="w-4 h-4 mr-1" />
-              Reativar Agendamento
-            </Button>
-            <div className="text-xs text-muted-foreground">
-              Ao reativar, você poderá manter a data original ou transferir para nova data.
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// COMPONENTE: LOG DE ALTERAÇÕES (Audit Trail)
-// ============================================
-
-interface AuditTrailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  agendamentoId: number | null;
-  agendamentoNome: string;
-}
-
-function AuditTrailModal({ isOpen, onClose, agendamentoId, agendamentoNome }: AuditTrailModalProps) {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && agendamentoId) {
-      setIsLoading(true);
-      setTimeout(() => {
-        setLogs([
-          {
-            id: 1,
-            tipoAlteracao: "Criação",
-            descricaoAlteracao: "Agendamento criado",
-            realizadoPor: "Dr. André Gorgen",
-            createdAt: new Date().toISOString(),
-          },
-        ]);
-        setIsLoading(false);
-      }, 500);
-    }
-  }, [isOpen, agendamentoId]);
-
-  const getIconForTipo = (tipo: string) => {
-    switch (tipo) {
-      case "Criação": return <Plus className="w-4 h-4 text-green-500" />;
-      case "Confirmação": return <Check className="w-4 h-4 text-blue-500" />;
-      case "Cancelamento": return <XCircle className="w-4 h-4 text-red-500" />;
-      case "Transferência": return <ArrowRightLeft className="w-4 h-4 text-amber-500" />;
-      case "Reativação": return <RotateCcw className="w-4 h-4 text-blue-500" />;
-      case "Realização": return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-      case "Falta": return <Ban className="w-4 h-4 text-orange-500" />;
-      case "Edição": return <Edit3 className="w-4 h-4 text-purple-500" />;
-      default: return <FileText className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <History className="w-5 h-5" />
-            Histórico de Alterações
-          </DialogTitle>
-          <DialogDescription>
-            Registro completo de todas as alterações em: {agendamentoNome}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <ScrollArea className="max-h-[400px] pr-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : logs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum registro de alteração encontrado.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {logs.map((log, index) => (
-                <div key={log.id} className="relative pl-6 pb-4">
-                  {index < logs.length - 1 && (
-                    <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-gray-200" />
-                  )}
-                  <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
-                    {getIconForTipo(log.tipoAlteracao)}
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-3 ml-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{log.tipoAlteracao}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(log.createdAt).toLocaleString("pt-BR")}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600">{log.descricaoAlteracao}</p>
-                    <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                      <User className="w-3 h-3" />
-                      <span>{log.realizadoPor}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Fechar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ============================================
-// COMPONENTE: MODAL DE REATIVAÇÃO
-// ============================================
-
-interface ReativarModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  agendamento: any;
-  onReativarMesmaData: () => void;
-  onReativarTransferir: () => void;
-}
-
-function ReativarModal({ isOpen, onClose, agendamento, onReativarMesmaData, onReativarTransferir }: ReativarModalProps) {
-  if (!agendamento) return null;
-  
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <RotateCcw className="w-5 h-5 text-blue-500" />
-            Reativar Agendamento
-          </DialogTitle>
-          <DialogDescription>
-            O agendamento será reativado com status "Agendado".
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-4">
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="text-sm">
-              <strong>Paciente:</strong> {agendamento.pacienteNome || "N/A"}
-            </div>
-            <div className="text-sm">
-              <strong>Data original:</strong> {new Date(agendamento.dataHoraInicio).toLocaleDateString("pt-BR")} às {new Date(agendamento.dataHoraInicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-            </div>
-          </div>
-          
-          <div className="text-sm text-muted-foreground">
-            Escolha como deseja reativar o agendamento:
-          </div>
-          
-          <div className="flex flex-col gap-2">
-            <Button onClick={onReativarMesmaData} className="w-full justify-start">
-              <CalendarCheck className="w-4 h-4 mr-2" />
-              Manter data e hora original
-            </Button>
-            <Button variant="outline" onClick={onReativarTransferir} className="w-full justify-start">
-              <ArrowRightLeft className="w-4 h-4 mr-2" />
-              Transferir para nova data
-            </Button>
-          </div>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 // ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
 
 export default function Agenda() {
-  const [, setLocation] = useLocation();
-  
   // Estados principais
   const [dataAtual, setDataAtual] = useState(new Date());
   const [visualizacao, setVisualizacao] = useState<"semana" | "dia" | "mes">("semana");
@@ -739,44 +225,48 @@ export default function Agenda() {
   const [modalBloqueioAberto, setModalBloqueioAberto] = useState(false);
   const [modalDetalhesAberto, setModalDetalhesAberto] = useState(false);
   const [modalCancelarAberto, setModalCancelarAberto] = useState(false);
-  const [modalTransferirAberto, setModalTransferirAberto] = useState(false);
+  const [modalReagendarAberto, setModalReagendarAberto] = useState(false);
   const [modalConfigAberto, setModalConfigAberto] = useState(false);
   const [modalDelegadosAberto, setModalDelegadosAberto] = useState(false);
-  const [modalHistoricoAberto, setModalHistoricoAberto] = useState(false);
-  const [modalReativarAberto, setModalReativarAberto] = useState(false);
   const [agendamentoSelecionado, setAgendamentoSelecionado] = useState<any>(null);
   const [motivoCancelamento, setMotivoCancelamento] = useState("");
   const [novaData, setNovaData] = useState("");
   const [novaHoraInicio, setNovaHoraInicio] = useState("");
   const [novaHoraFim, setNovaHoraFim] = useState("");
 
-  // Configurações de horário
+  // ============================================
+  // CONFIGURAÇÕES DE HORÁRIO DO USUÁRIO
+  // ============================================
   const [configHorario, setConfigHorario] = useState({
-    horaInicio: 0,
+    horaInicio: 0,  // Padrão: 24 horas (conforme solicitado)
     horaFim: 24,
     intervaloSelecionado: "Dia completo (0h - 24h)",
     duracaoConsultaPadrao: DURACAO_CONSULTA_PADRAO,
     localConsultaPadrao: "Consultório",
   });
 
-  // Sistema de delegados
-  const [delegados, setDelegados] = useState<Delegado[]>([]);
+  // ============================================
+  // SISTEMA DE DELEGADOS
+  // ============================================
+  const [delegados, setDelegados] = useState<Delegado[]>([
+    // Exemplo de delegados (normalmente viria do backend)
+  ]);
   const [novoDelegado, setNovoDelegado] = useState({
     email: "",
     permissao: "visualizar" as "visualizar" | "editar",
   });
 
-  // Gerar array de horários
+  // Gerar array de horários baseado na configuração do usuário
   const horarios = useMemo(() => {
     const { horaInicio, horaFim } = configHorario;
     const qtdHoras = horaFim - horaInicio;
     return Array.from({ length: qtdHoras }, (_, i) => horaInicio + i);
   }, [configHorario]);
 
-  // Referência para scroll
+  // Referência para scroll automático para hora atual
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll para hora atual
+  // Scroll para hora atual ao carregar
   useEffect(() => {
     if (scrollContainerRef.current && visualizacao !== "mes") {
       const horaAtual = new Date().getHours();
@@ -796,26 +286,27 @@ export default function Agenda() {
     data: "",
     horaInicio: "",
     horaFim: "",
-    local: "Consultório",
+    local: "Consultório", // Padrão para consultas
     titulo: "",
     descricao: "",
-    convenio: "Particular",
-    status: "Agendado",
+    convenio: "Particular", // Novo campo
+    status: "Agendado", // Novo campo
   });
 
-  // Efeito para calcular hora fim automaticamente
+  // Efeito para calcular automaticamente hora fim quando hora início muda (para consultas)
   useEffect(() => {
     if (novoAgendamento.tipoCompromisso === "Consulta" && novoAgendamento.horaInicio) {
       const [horas, minutos] = novoAgendamento.horaInicio.split(":").map(Number);
       const dataInicio = new Date();
       dataInicio.setHours(horas, minutos, 0, 0);
       dataInicio.setMinutes(dataInicio.getMinutes() + configHorario.duracaoConsultaPadrao);
+      
       const horaFim = `${String(dataInicio.getHours()).padStart(2, "0")}:${String(dataInicio.getMinutes()).padStart(2, "0")}`;
       setNovoAgendamento(prev => ({ ...prev, horaFim }));
     }
   }, [novoAgendamento.horaInicio, novoAgendamento.tipoCompromisso, configHorario.duracaoConsultaPadrao]);
 
-  // Efeito para definir local padrão
+  // Efeito para definir local padrão quando tipo muda para Consulta
   useEffect(() => {
     if (novoAgendamento.tipoCompromisso === "Consulta") {
       setNovoAgendamento(prev => ({ 
@@ -856,7 +347,7 @@ export default function Agenda() {
     { enabled: buscaPacienteDebounced.length >= 2 }
   );
 
-  // Calcular período
+  // Calcular período baseado na visualização
   const periodo = useMemo(() => {
     const inicio = new Date(dataAtual);
     const fim = new Date(dataAtual);
@@ -883,7 +374,7 @@ export default function Agenda() {
   }, [dataAtual, visualizacao]);
 
   // Queries
-  const { data: agendamentos, refetch: refetchAgendamentos } = trpc.agenda.list.useQuery({
+  const { data: agendamentos, refetch: refetchAgendamentos, error: agendamentosError } = trpc.agenda.list.useQuery({
     dataInicio: periodo.inicio,
     dataFim: periodo.fim,
     incluirCancelados: true,
@@ -936,23 +427,15 @@ export default function Agenda() {
     },
   });
 
-  const transferirAgendamentoMutation = trpc.agenda.transferir.useMutation({
-    onSuccess: (data) => {
-      toast.success("Agendamento transferido! Novo agendamento criado.");
-      setModalTransferirAberto(false);
+  const reagendarAgendamentoMutation = trpc.agenda.reagendar.useMutation({
+    onSuccess: () => {
+      toast.success("Agendamento reagendado!");
+      setModalReagendarAberto(false);
       setModalDetalhesAberto(false);
       refetchAgendamentos();
-      // Atualizar o agendamento selecionado para mostrar que foi transferido
-      if (agendamentoSelecionado) {
-        setAgendamentoSelecionado({ 
-          ...agendamentoSelecionado, 
-          status: "Transferido",
-          novoAgendamentoId: data?.novoAgendamentoId 
-        });
-      }
     },
     onError: (error) => {
-      toast.error(`Erro ao transferir: ${error.message}`);
+      toast.error(`Erro ao reagendar: ${error.message}`);
     },
   });
 
@@ -960,25 +443,19 @@ export default function Agenda() {
     onSuccess: () => {
       toast.success("Agendamento confirmado!");
       refetchAgendamentos();
-      if (agendamentoSelecionado) {
-        setAgendamentoSelecionado({ ...agendamentoSelecionado, status: "Confirmado" });
-      }
     },
     onError: (error) => {
       toast.error(`Erro ao confirmar: ${error.message}`);
     },
   });
 
-  const atualizarStatusMutation = trpc.agenda.atualizarStatus.useMutation({
-    onSuccess: (_, variables) => {
-      toast.success(`Status alterado para: ${variables.novoStatus}`);
+  const realizarAgendamentoMutation = trpc.agenda.realizar.useMutation({
+    onSuccess: () => {
+      toast.success("Agendamento marcado como realizado!");
       refetchAgendamentos();
-      if (agendamentoSelecionado) {
-        setAgendamentoSelecionado({ ...agendamentoSelecionado, status: variables.novoStatus });
-      }
     },
     onError: (error) => {
-      toast.error(`Erro ao alterar status: ${error.message}`);
+      toast.error(`Erro ao marcar como realizado: ${error.message}`);
     },
   });
 
@@ -986,26 +463,27 @@ export default function Agenda() {
     onSuccess: () => {
       toast.success("Falta registrada!");
       refetchAgendamentos();
-      if (agendamentoSelecionado) {
-        setAgendamentoSelecionado({ ...agendamentoSelecionado, status: "Falta" });
-      }
     },
     onError: (error) => {
       toast.error(`Erro ao registrar falta: ${error.message}`);
     },
   });
 
+  // Usar resultados da busca rápida otimizada
   const pacientesFiltrados = pacientesSearch || [];
 
   // Agrupar agendamentos por dia
   const agendamentosPorDia = useMemo(() => {
     const mapa: Record<string, any[]> = {};
+    
     (agendamentos || []).forEach((ag: any) => {
       const data = new Date(ag.dataHoraInicio);
       const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+      
       if (!mapa[chave]) mapa[chave] = [];
       mapa[chave].push(ag);
     });
+    
     return mapa;
   }, [agendamentos]);
 
@@ -1021,7 +499,10 @@ export default function Agenda() {
     return dias;
   }, [periodo.inicio]);
 
-  // Funções auxiliares
+  // ============================================
+  // FUNÇÕES AUXILIARES
+  // ============================================
+
   const formatarHora = (dataHora: string | Date) => {
     const data = new Date(dataHora);
     return data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -1043,7 +524,9 @@ export default function Agenda() {
     setDataAtual(novaData);
   };
 
-  const irParaHoje = () => setDataAtual(new Date());
+  const irParaHoje = () => {
+    setDataAtual(new Date());
+  };
 
   const getTituloPeriodo = () => {
     if (visualizacao === "dia") {
@@ -1093,7 +576,7 @@ export default function Agenda() {
   };
 
   // ============================================
-  // HANDLERS DE AÇÕES
+  // HANDLERS
   // ============================================
 
   const handleCriarAgendamento = () => {
@@ -1166,13 +649,12 @@ export default function Agenda() {
     });
   };
 
-  const handleTransferir = () => {
+  const handleReagendar = () => {
     if (!novaData || !novaHoraInicio || !novaHoraFim) {
       toast.error("Preencha a nova data e horários");
       return;
     }
-    // Transferir: Original fica como "Transferido", novo agendamento criado como "Agendado"
-    transferirAgendamentoMutation.mutate({
+    reagendarAgendamentoMutation.mutate({
       id: agendamentoSelecionado.id,
       novaDataInicio: new Date(`${novaData}T${novaHoraInicio}`),
       novaDataFim: new Date(`${novaData}T${novaHoraFim}`),
@@ -1180,117 +662,15 @@ export default function Agenda() {
   };
 
   const handleConfirmar = () => {
-    if (!agendamentoSelecionado) return;
     confirmarAgendamentoMutation.mutate({ id: agendamentoSelecionado.id });
   };
 
-  const handleAguardando = () => {
-    if (!agendamentoSelecionado) return;
-    atualizarStatusMutation.mutate({ 
-      id: agendamentoSelecionado.id, 
-      novoStatus: "Aguardando" 
-    });
+  const handleRealizar = () => {
+    realizarAgendamentoMutation.mutate({ id: agendamentoSelecionado.id });
   };
 
-  const handleFalta = () => {
-    if (!agendamentoSelecionado) return;
+  const handleMarcarFalta = () => {
     marcarFaltaMutation.mutate({ id: agendamentoSelecionado.id });
-  };
-
-  const handleWhatsApp = () => {
-    if (!agendamentoSelecionado) return;
-    // TODO: Implementar integração com WhatsApp
-    toast.info("Funcionalidade de WhatsApp será implementada em breve");
-  };
-
-  const handleIniciarAtendimento = () => {
-    if (!agendamentoSelecionado) return;
-    // Navegar para a seção de Atendimentos com o agendamento selecionado
-    // Primeiro atualiza o status para "Em atendimento"
-    atualizarStatusMutation.mutate({ 
-      id: agendamentoSelecionado.id, 
-      novoStatus: "Em atendimento" 
-    });
-    // Navegar para a tela de novo atendimento
-    setLocation(`/atendimentos/novo?agendamentoId=${agendamentoSelecionado.id}&pacienteId=${agendamentoSelecionado.pacienteId}`);
-    setModalDetalhesAberto(false);
-  };
-
-  const handleRegistrarAtendimento = () => {
-    if (!agendamentoSelecionado) return;
-    // Atualizar status para "Em atendimento" se ainda não estiver
-    if (agendamentoSelecionado.status === "Aguardando") {
-      atualizarStatusMutation.mutate({ 
-        id: agendamentoSelecionado.id, 
-        novoStatus: "Em atendimento" 
-      });
-    }
-    // Navegar para a tela de evolução no Prontuário do paciente
-    setLocation(`/prontuario/${agendamentoSelecionado.pacienteId}/evolucao/nova?agendamentoId=${agendamentoSelecionado.id}`);
-    setModalDetalhesAberto(false);
-  };
-
-  const handleReativar = () => {
-    setModalReativarAberto(true);
-  };
-
-  const handleReativarMesmaData = () => {
-    if (!agendamentoSelecionado) return;
-    // Reativar com a mesma data
-    atualizarStatusMutation.mutate({ 
-      id: agendamentoSelecionado.id, 
-      novoStatus: "Agendado" 
-    });
-    setModalReativarAberto(false);
-  };
-
-  const handleReativarTransferir = () => {
-    if (!agendamentoSelecionado) return;
-    // Primeiro reativa, depois abre modal de transferência
-    atualizarStatusMutation.mutate({ 
-      id: agendamentoSelecionado.id, 
-      novoStatus: "Agendado" 
-    });
-    setModalReativarAberto(false);
-    // Abrir modal de transferência
-    setNovaData("");
-    setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
-    setNovaHoraFim(agendamentoSelecionado.dataHoraFim ? formatarHora(agendamentoSelecionado.dataHoraFim) : "");
-    setModalTransferirAberto(true);
-  };
-
-  const handleAbrirTransferir = () => {
-    if (!agendamentoSelecionado) return;
-    setNovaData("");
-    setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
-    setNovaHoraFim(agendamentoSelecionado.dataHoraFim ? formatarHora(agendamentoSelecionado.dataHoraFim) : "");
-    setModalTransferirAberto(true);
-  };
-
-  const handleNovoAgendamentoReaproveitando = () => {
-    if (!agendamentoSelecionado) return;
-    // Preencher dados do novo agendamento com dados do agendamento de falta
-    setNovoAgendamento({
-      tipoCompromisso: agendamentoSelecionado.tipoCompromisso || "Consulta",
-      pacienteId: agendamentoSelecionado.pacienteId,
-      pacienteNome: agendamentoSelecionado.pacienteNome || "",
-      data: "",
-      horaInicio: formatarHora(agendamentoSelecionado.dataHoraInicio),
-      horaFim: agendamentoSelecionado.dataHoraFim ? formatarHora(agendamentoSelecionado.dataHoraFim) : "",
-      local: agendamentoSelecionado.local || configHorario.localConsultaPadrao,
-      titulo: agendamentoSelecionado.titulo || "",
-      descricao: "",
-      convenio: agendamentoSelecionado.convenio || "Particular",
-      status: "Agendado",
-    });
-    setBuscaPaciente(agendamentoSelecionado.pacienteNome || "");
-    setPacienteSelecionadoInfo({ 
-      id: agendamentoSelecionado.pacienteId, 
-      nome: agendamentoSelecionado.pacienteNome 
-    });
-    setModalDetalhesAberto(false);
-    setModalNovoAberto(true);
-    toast.info("Dados do paciente pré-preenchidos. Selecione a nova data.");
   };
 
   const handleAdicionarDelegado = () => {
@@ -1298,6 +678,7 @@ export default function Agenda() {
       toast.error("Informe o e-mail do delegado");
       return;
     }
+    // Aqui seria uma mutation para o backend
     const novo: Delegado = {
       id: Date.now(),
       nome: novoDelegado.email.split("@")[0],
@@ -1316,33 +697,47 @@ export default function Agenda() {
     toast.success("Delegado removido!");
   };
 
-  // Função para calcular posição do evento
+  // ============================================
+  // FUNÇÃO PARA CALCULAR POSIÇÃO E ALTURA DO EVENTO
+  // (Estilo Google Calendar - posicionamento preciso por minuto)
+  // ============================================
+
   const calcularPosicaoEvento = (dataHoraInicio: Date, dataHoraFim: Date) => {
     const horaInicio = dataHoraInicio.getHours();
     const minutoInicio = dataHoraInicio.getMinutes();
     const horaFim = dataHoraFim.getHours();
     const minutoFim = dataHoraFim.getMinutes();
 
+    // Calcular posição top relativa à hora de início da grade
     const minutosDesdeInicioDia = (horaInicio - configHorario.horaInicio) * 60 + minutoInicio;
-    const top = minutosDesdeInicioDia;
+    const top = minutosDesdeInicioDia; // 1px por minuto
 
+    // Calcular duração em minutos
     const duracaoMinutos = (horaFim * 60 + minutoFim) - (horaInicio * 60 + minutoInicio);
-    const altura = Math.max(15, duracaoMinutos);
+    const altura = Math.max(15, duracaoMinutos); // Mínimo 15px
 
     return { top, altura };
   };
 
-  // Função para calcular sobreposições
+  // ============================================
+  // FUNÇÃO PARA CALCULAR SOBREPOSIÇÕES
+  // ============================================
+
   const calcularSobreposicoes = (agendamentosDia: any[]) => {
+    // Filtrar apenas eventos ativos (não cancelados/faltou) para cálculo de colisão
     const eventosAtivos = agendamentosDia.filter(ag => 
-      !["Cancelado", "Falta", "Transferido"].includes(ag.status)
+      !["Cancelado", "Reagendado", "Falta"].includes(ag.status)
     );
     
+    // Ordenar por hora de início
     const ordenados = [...eventosAtivos].sort((a, b) => 
       new Date(a.dataHoraInicio).getTime() - new Date(b.dataHoraInicio).getTime()
     );
 
+    // Mapa de posições: { id: { coluna, totalColunas } }
     const posicoes: Record<number, { coluna: number; totalColunas: number }> = {};
+    
+    // Grupos de eventos que se sobrepõem
     const grupos: any[][] = [];
     let grupoAtual: any[] = [];
     let fimGrupo = 0;
@@ -1352,9 +747,11 @@ export default function Agenda() {
       const fim = new Date(evento.dataHoraFim || evento.dataHoraInicio).getTime();
 
       if (grupoAtual.length === 0 || inicio < fimGrupo) {
+        // Adiciona ao grupo atual
         grupoAtual.push(evento);
         fimGrupo = Math.max(fimGrupo, fim);
       } else {
+        // Novo grupo
         if (grupoAtual.length > 0) grupos.push(grupoAtual);
         grupoAtual = [evento];
         fimGrupo = fim;
@@ -1362,6 +759,7 @@ export default function Agenda() {
     });
     if (grupoAtual.length > 0) grupos.push(grupoAtual);
 
+    // Calcular posições dentro de cada grupo
     grupos.forEach((grupo) => {
       const totalColunas = grupo.length;
       grupo.forEach((evento, idx) => {
@@ -1369,6 +767,7 @@ export default function Agenda() {
       });
     });
 
+    // Adicionar eventos cancelados/falta com posição padrão
     agendamentosDia.forEach(ag => {
       if (!posicoes[ag.id]) {
         posicoes[ag.id] = { coluna: 0, totalColunas: 1 };
@@ -1378,13 +777,16 @@ export default function Agenda() {
     return posicoes;
   };
 
-  // Renderização de evento
+  // ============================================
+  // RENDERIZAÇÃO DE EVENTO (ESTILO GOOGLE CALENDAR)
+  // ============================================
+
   const renderAgendamentoGoogleStyle = (
     ag: any, 
     isWeekView: boolean = false,
     posicaoInfo?: { coluna: number; totalColunas: number }
   ) => {
-    const isInativo = ["Cancelado", "Falta", "Transferido"].includes(ag.status);
+    const isCanceladoOuFalta = ["Cancelado", "Reagendado", "Falta"].includes(ag.status);
     const statusInfo = getStatusInfo(ag.status);
     const StatusIcon = statusInfo?.icon;
     
@@ -1392,11 +794,13 @@ export default function Agenda() {
     const fim = ag.dataHoraFim ? new Date(ag.dataHoraFim) : new Date(inicio.getTime() + 30 * 60000);
     const { top, altura } = calcularPosicaoEvento(inicio, fim);
 
+    // Verificar se o evento está dentro do intervalo visível
     const horaInicioEvento = inicio.getHours();
     if (horaInicioEvento < configHorario.horaInicio || horaInicioEvento >= configHorario.horaFim) {
       return null;
     }
 
+    // Calcular largura e posição horizontal para eventos sobrepostos
     const { coluna = 0, totalColunas = 1 } = posicaoInfo || {};
     const larguraPercent = 100 / totalColunas;
     const leftPercent = coluna * larguraPercent;
@@ -1412,24 +816,28 @@ export default function Agenda() {
           left: `calc(${leftPercent}% + 2px)`,
           width: `calc(${larguraPercent}% - 4px)`,
           minHeight: '18px',
-          zIndex: isInativo ? 5 : 10,
+          zIndex: isCanceladoOuFalta ? 5 : 10,
         }}
         className={`
           px-1.5 py-0.5 rounded-md cursor-pointer text-white text-xs leading-tight overflow-hidden
           ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
-          ${isInativo ? "opacity-30 bg-opacity-50" : "hover:opacity-90 shadow-sm"}
+          ${isCanceladoOuFalta ? "opacity-30 bg-opacity-50" : "hover:opacity-90 shadow-sm"}
           transition-opacity duration-150
-          border-l-4 ${statusInfo?.borderColor || 'border-l-blue-500'}
+          border-l-2 ${statusInfo?.bgColor ? `border-l-${statusInfo.bgColor.replace('bg-', '')}` : 'border-l-blue-500'}
         `}
         title={`${formatarHora(ag.dataHoraInicio)} - ${formatarHora(fim)} | ${ag.pacienteNome || ag.titulo || ag.tipoCompromisso} | ${statusInfo?.label || ag.status}${ag.criadoPor ? ` | Criado por: ${ag.criadoPor}` : ''}`}
       >
         <div className="font-medium truncate flex items-center gap-0.5">
           {StatusIcon && <StatusIcon className="w-3 h-3 flex-shrink-0" />}
-          <span className={`truncate ${isInativo ? "line-through" : ""}`}>
+          <span className={`truncate ${isCanceladoOuFalta ? "line-through" : ""}`}>
             {isWeekView ? (
-              <>{formatarHora(ag.dataHoraInicio)} {ag.pacienteNome?.split(" ")[0] || ag.titulo || ag.tipoCompromisso}</>
+              <>
+                {formatarHora(ag.dataHoraInicio)} {ag.pacienteNome?.split(" ")[0] || ag.titulo || ag.tipoCompromisso}
+              </>
             ) : (
-              <>{formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}</>
+              <>
+                {formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
+              </>
             )}
           </span>
         </div>
@@ -1444,7 +852,7 @@ export default function Agenda() {
   };
 
   // ============================================
-  // RENDERIZAÇÃO PRINCIPAL
+  // RENDERIZAÇÃO
   // ============================================
 
   return (
@@ -1473,7 +881,7 @@ export default function Agenda() {
         </div>
       </div>
 
-      {/* Controles de navegação */}
+      {/* Controles de navegação e Legenda */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => navegarPeriodo(-1)}>
@@ -1493,7 +901,7 @@ export default function Agenda() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* Legenda */}
+          {/* Legenda compacta */}
           <div className="hidden md:flex items-center gap-2 text-xs">
             {Object.entries(CORES_TIPO).filter(([tipo]) => tipo !== "Bloqueio").map(([tipo, cor]) => (
               <div key={tipo} className="flex items-center gap-1" title={tipo}>
@@ -1501,9 +909,9 @@ export default function Agenda() {
                 <span className="hidden lg:inline">{tipo}</span>
               </div>
             ))}
-            <div className="flex items-center gap-1 ml-2" title="Inativo">
+            <div className="flex items-center gap-1 ml-2" title="Cancelado/Falta">
               <div className="w-2 h-2 rounded bg-gray-400 opacity-30"></div>
-              <span className="hidden lg:inline">Inativo</span>
+              <span className="hidden lg:inline">Cancelado</span>
             </div>
           </div>
           {/* Botões de visualização */}
@@ -1536,12 +944,31 @@ export default function Agenda() {
         </div>
       </div>
 
-      {/* Visualização Semana */}
+      {/* Legenda mobile */}
+      <div className="flex md:hidden flex-wrap gap-2 text-xs">
+        {Object.entries(CORES_TIPO).filter(([tipo]) => tipo !== "Bloqueio").map(([tipo, cor]) => (
+          <div key={tipo} className="flex items-center gap-1">
+            <div className={`w-2 h-2 rounded ${cor}`}></div>
+            <span>{tipo}</span>
+          </div>
+        ))}
+        <div className="flex items-center gap-2 ml-4">
+          <div className="w-3 h-3 rounded bg-gray-400 opacity-30"></div>
+          <span>Cancelado/Falta</span>
+        </div>
+      </div>
+
+      {/* ============================================ */}
+      {/* VISUALIZAÇÃO SEMANA (ESTILO GOOGLE CALENDAR) */}
+      {/* ============================================ */}
       {visualizacao === "semana" && (
         <Card>
           <CardContent className="p-0">
+            {/* Cabeçalho com dias da semana */}
             <div className="grid grid-cols-8 border-b sticky top-0 bg-background z-20">
-              <div className="w-14 px-1 py-2 text-center text-xs font-medium border-r bg-muted"></div>
+              <div className="w-14 px-1 py-2 text-center text-xs font-medium border-r bg-muted">
+                {/* Coluna de horários - mais estreita */}
+              </div>
               {diasSemana.map((dia, i) => {
                 const feriado = getFeriado(dia);
                 const isHoje = dia.toDateString() === new Date().toDateString();
@@ -1567,12 +994,14 @@ export default function Agenda() {
               })}
             </div>
             
+            {/* Grade de horários com scroll */}
             <div 
               ref={scrollContainerRef}
               className="overflow-y-auto"
               style={{ maxHeight: 'calc(100vh - 300px)' }}
             >
               <div className="grid grid-cols-8 relative">
+                {/* Coluna de horários */}
                 <div className="w-14 border-r bg-muted">
                   {horarios.map((hora) => (
                     <div 
@@ -1587,11 +1016,14 @@ export default function Agenda() {
                   ))}
                 </div>
                 
+                {/* Colunas dos dias */}
                 {diasSemana.map((dia, i) => {
                   const chave = formatarDataLocal(dia);
                   const agendamentosDia = agendamentosPorDia[chave] || [];
                   const feriado = getFeriado(dia);
                   const isHoje = dia.toDateString() === new Date().toDateString();
+                  
+                  // Calcular sobreposições
                   const posicoes = calcularSobreposicoes(agendamentosDia);
                   
                   return (
@@ -1601,12 +1033,14 @@ export default function Agenda() {
                         isHoje ? "bg-blue-50/30" : feriado ? "bg-amber-50/50" : ""
                       }`}
                     >
+                      {/* Linhas de hora */}
                       {horarios.map((hora) => (
                         <div 
                           key={hora}
                           className="border-b border-gray-100"
                           style={{ height: `${HORA_ALTURA_PX}px` }}
                         >
+                          {/* Linha de meia hora */}
                           <div 
                             className="border-b border-gray-50"
                             style={{ height: `${HORA_ALTURA_PX / 2}px` }}
@@ -1614,8 +1048,10 @@ export default function Agenda() {
                         </div>
                       ))}
                       
+                      {/* Eventos posicionados absolutamente */}
                       {agendamentosDia.map((ag) => renderAgendamentoGoogleStyle(ag, true, posicoes[ag.id]))}
                       
+                      {/* Linha indicadora de hora atual */}
                       {isHoje && (() => {
                         const agora = new Date();
                         const horaAtual = agora.getHours();
@@ -1642,7 +1078,9 @@ export default function Agenda() {
         </Card>
       )}
 
-      {/* Visualização Dia */}
+      {/* ============================================ */}
+      {/* VISUALIZAÇÃO DIA (ESTILO GOOGLE CALENDAR) */}
+      {/* ============================================ */}
       {visualizacao === "dia" && (
         <Card>
           <CardContent className="p-0">
@@ -1652,6 +1090,7 @@ export default function Agenda() {
               style={{ maxHeight: 'calc(100vh - 280px)' }}
             >
               <div className="flex relative">
+                {/* Coluna de horários */}
                 <div className="w-16 border-r bg-muted flex-shrink-0">
                   {horarios.map((hora) => (
                     <div 
@@ -1666,13 +1105,16 @@ export default function Agenda() {
                   ))}
                 </div>
                 
+                {/* Área de eventos */}
                 <div className="flex-1 relative">
+                  {/* Linhas de hora */}
                   {horarios.map((hora) => (
                     <div 
                       key={hora}
                       className="border-b border-gray-100"
                       style={{ height: `${HORA_ALTURA_PX}px` }}
                     >
+                      {/* Linha de meia hora */}
                       <div 
                         className="border-b border-gray-50"
                         style={{ height: `${HORA_ALTURA_PX / 2}px` }}
@@ -1680,6 +1122,7 @@ export default function Agenda() {
                     </div>
                   ))}
                   
+                  {/* Eventos */}
                   {(() => {
                     const chave = formatarDataLocal(dataAtual);
                     const agendamentosDia = agendamentosPorDia[chave] || [];
@@ -1687,6 +1130,7 @@ export default function Agenda() {
                     return agendamentosDia.map((ag) => renderAgendamentoGoogleStyle(ag, false, posicoes[ag.id]));
                   })()}
                   
+                  {/* Linha indicadora de hora atual */}
                   {dataAtual.toDateString() === new Date().toDateString() && (() => {
                     const agora = new Date();
                     const horaAtual = agora.getHours();
@@ -1711,7 +1155,9 @@ export default function Agenda() {
         </Card>
       )}
 
-      {/* Visualização Mês */}
+      {/* ============================================ */}
+      {/* VISUALIZAÇÃO MÊS */}
+      {/* ============================================ */}
       {visualizacao === "mes" && (
         <Card>
           <CardContent className="p-4">
@@ -1740,6 +1186,7 @@ export default function Agenda() {
                   const isHoje = data.toDateString() === new Date().toDateString();
                   const feriado = getFeriado(data);
                   
+                  // Ordenar por hora de início
                   const agendamentosOrdenados = [...agendamentosDia].sort((a, b) => 
                     new Date(a.dataHoraInicio).getTime() - new Date(b.dataHoraInicio).getTime()
                   );
@@ -1767,7 +1214,7 @@ export default function Agenda() {
                       )}
                       <div className="space-y-0.5">
                         {agendamentosOrdenados.slice(0, 3).map((ag: any) => {
-                          const isInativo = ["Cancelado", "Falta", "Transferido"].includes(ag.status);
+                          const isCanceladoOuFalta = ["Cancelado", "Reagendado", "Falta"].includes(ag.status);
                           const statusInfo = getStatusInfo(ag.status);
                           const StatusIcon = statusInfo?.icon;
                           return (
@@ -1780,12 +1227,12 @@ export default function Agenda() {
                               className={`
                                 text-[10px] px-1 py-0.5 rounded cursor-pointer text-white truncate flex items-center gap-0.5
                                 ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
-                                ${isInativo ? "opacity-30" : "hover:opacity-90"}
+                                ${isCanceladoOuFalta ? "opacity-30" : "hover:opacity-90"}
                               `}
                               title={`${formatarHora(ag.dataHoraInicio)} - ${ag.pacienteNome || ag.titulo || ag.tipoCompromisso} | ${statusInfo?.label}`}
                             >
                               {StatusIcon && <StatusIcon className="w-2.5 h-2.5 flex-shrink-0" />}
-                              <span className={isInativo ? "line-through" : ""}>
+                              <span className={isCanceladoOuFalta ? "line-through" : ""}>
                                 {formatarHora(ag.dataHoraInicio)} {ag.pacienteNome?.split(" ")[0] || ag.tipoCompromisso}
                               </span>
                             </div>
@@ -1809,10 +1256,8 @@ export default function Agenda() {
       )}
 
       {/* ============================================ */}
-      {/* MODAIS */}
+      {/* MODAL CONFIGURAÇÕES DE HORÁRIO */}
       {/* ============================================ */}
-
-      {/* MODAL CONFIGURAÇÕES */}
       <Dialog open={modalConfigAberto} onOpenChange={setModalConfigAberto}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -1846,7 +1291,7 @@ export default function Agenda() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={5}>
+                <SelectContent className="z-[100]">
                   {OPCOES_INTERVALO_HORAS.map((opcao) => (
                     <SelectItem key={opcao.label} value={opcao.label}>
                       {opcao.label}
@@ -1870,7 +1315,7 @@ export default function Agenda() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent position="popper" sideOffset={5}>
+                    <SelectContent className="z-[100]">
                       {Array.from({ length: 24 }, (_, i) => (
                         <SelectItem key={i} value={i.toString()}>
                           {i.toString().padStart(2, "0")}:00
@@ -1891,7 +1336,7 @@ export default function Agenda() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent position="popper" sideOffset={5}>
+                    <SelectContent className="z-[100]">
                       {Array.from({ length: 24 }, (_, i) => i + 1).map((hora) => (
                         <SelectItem key={hora} value={hora.toString()}>
                           {hora.toString().padStart(2, "0")}:00
@@ -1917,7 +1362,7 @@ export default function Agenda() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={5}>
+                <SelectContent className="z-[100]">
                   {[15, 20, 30, 45, 60].map((min) => (
                     <SelectItem key={min} value={min.toString()}>
                       {min} minutos
@@ -1939,7 +1384,7 @@ export default function Agenda() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={5}>
+                <SelectContent className="z-[100]">
                   {LOCAIS.map((local) => (
                     <SelectItem key={local} value={local}>
                       {local}
@@ -1962,7 +1407,9 @@ export default function Agenda() {
         </DialogContent>
       </Dialog>
 
+      {/* ============================================ */}
       {/* MODAL DELEGADOS */}
+      {/* ============================================ */}
       <Dialog open={modalDelegadosAberto} onOpenChange={setModalDelegadosAberto}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -1976,6 +1423,7 @@ export default function Agenda() {
               Delegados podem visualizar ou editar sua agenda. Todas as alterações são rastreadas.
             </p>
 
+            {/* Adicionar novo delegado */}
             <div className="flex gap-2">
               <div className="flex-1">
                 <Input
@@ -1991,7 +1439,7 @@ export default function Agenda() {
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={5}>
+                <SelectContent className="z-[100]">
                   <SelectItem value="visualizar">
                     <div className="flex items-center gap-1">
                       <Eye className="w-3 h-3" />
@@ -2013,6 +1461,7 @@ export default function Agenda() {
 
             <Separator />
 
+            {/* Lista de delegados */}
             <div className="space-y-2">
               <Label>Delegados Ativos</Label>
               {delegados.length === 0 ? (
@@ -2067,7 +1516,9 @@ export default function Agenda() {
         </DialogContent>
       </Dialog>
 
+      {/* ============================================ */}
       {/* MODAL NOVO AGENDAMENTO */}
+      {/* ============================================ */}
       <Dialog open={modalNovoAberto} onOpenChange={setModalNovoAberto}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -2083,7 +1534,7 @@ export default function Agenda() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={5}>
+                <SelectContent className="z-[100]">
                   {TIPOS_COMPROMISSO.map((tipo) => (
                     <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
                   ))}
@@ -2116,7 +1567,7 @@ export default function Agenda() {
                 </div>
                 
                 {showPacienteDropdown && buscaPaciente.length >= 2 && (
-                  <div className="absolute z-[200] w-full mt-1 bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  <div className="absolute z-[100] w-full mt-1 bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto">
                     {pacientesFiltrados.length > 0 ? (
                       pacientesFiltrados.map((p: any) => (
                         <div
@@ -2127,6 +1578,7 @@ export default function Agenda() {
                               ...novoAgendamento, 
                               pacienteId: p.id, 
                               pacienteNome: p.nome,
+                              // Se o paciente tem convênio cadastrado, usar
                               convenio: p.operadora1 || novoAgendamento.convenio,
                             });
                             setBuscaPaciente(p.nome);
@@ -2172,6 +1624,11 @@ export default function Agenda() {
                     <Label className="text-xs text-muted-foreground">
                       Novo paciente será criado com o nome: "{buscaPaciente}"
                     </Label>
+                    <Input
+                      type="hidden"
+                      value={buscaPaciente}
+                      onChange={() => setNovoAgendamento({ ...novoAgendamento, pacienteNome: buscaPaciente })}
+                    />
                   </div>
                 )}
               </div>
@@ -2214,7 +1671,7 @@ export default function Agenda() {
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o local" />
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={5}>
+                <SelectContent className="z-[100]">
                   {LOCAIS.map((local) => (
                     <SelectItem key={local} value={local}>{local}</SelectItem>
                   ))}
@@ -2239,7 +1696,8 @@ export default function Agenda() {
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o convênio" />
                       </SelectTrigger>
-                      <SelectContent position="popper" sideOffset={5} className="z-[200]">
+                      <SelectContent className="z-[100]">
+                        {/* Se paciente selecionado tem convênios, mostrar primeiro */}
                         {pacienteSelecionadoInfo?.operadora1 && (
                           <SelectItem value={pacienteSelecionadoInfo.operadora1}>
                             {pacienteSelecionadoInfo.operadora1} (cadastrado)
@@ -2259,15 +1717,29 @@ export default function Agenda() {
                   <div>
                     <Label className="flex items-center gap-1">
                       <CalendarCheck className="w-3 h-3" />
-                      Status Inicial
+                      Status
                     </Label>
-                    <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-blue-50 text-blue-700">
-                      <CalendarCheck className="w-4 h-4" />
-                      <span className="text-sm font-medium">Agendado</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Novos agendamentos sempre iniciam como "Agendado"
-                    </p>
+                    <Select
+                      value={novoAgendamento.status}
+                      onValueChange={(value) => setNovoAgendamento({ ...novoAgendamento, status: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="z-[100]">
+                        {STATUS_AGENDAMENTO.map((status) => {
+                          const Icon = status.icon;
+                          return (
+                            <SelectItem key={status.value} value={status.value}>
+                              <div className="flex items-center gap-2">
+                                <Icon className={`w-3 h-3 ${status.color}`} />
+                                {status.label}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </>
@@ -2306,7 +1778,9 @@ export default function Agenda() {
         </DialogContent>
       </Dialog>
 
+      {/* ============================================ */}
       {/* MODAL BLOQUEIO */}
+      {/* ============================================ */}
       <Dialog open={modalBloqueioAberto} onOpenChange={setModalBloqueioAberto}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -2322,7 +1796,7 @@ export default function Agenda() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent position="popper" sideOffset={5}>
+                <SelectContent className="z-[100]">
                   {TIPOS_BLOQUEIO.map((tipo) => (
                     <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
                   ))}
@@ -2399,18 +1873,29 @@ export default function Agenda() {
         </DialogContent>
       </Dialog>
 
+      {/* ============================================ */}
       {/* MODAL DETALHES DO AGENDAMENTO */}
+      {/* ============================================ */}
       <Dialog open={modalDetalhesAberto} onOpenChange={setModalDetalhesAberto}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Detalhes do Agendamento</DialogTitle>
           </DialogHeader>
           {agendamentoSelecionado && (
             <div className="space-y-4">
-              {/* Tipo e informações básicas */}
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded ${CORES_TIPO[agendamentoSelecionado.tipoCompromisso] || "bg-gray-500"}`} />
                 <span className="font-medium">{agendamentoSelecionado.tipoCompromisso}</span>
+                {(() => {
+                  const statusInfo = getStatusInfo(agendamentoSelecionado.status);
+                  const StatusIcon = statusInfo?.icon;
+                  return (
+                    <Badge variant="outline" className={`${statusInfo?.color}`}>
+                      {StatusIcon && <StatusIcon className="w-3 h-3 mr-1" />}
+                      {statusInfo?.label}
+                    </Badge>
+                  );
+                })()}
               </div>
 
               {agendamentoSelecionado.pacienteNome && (
@@ -2448,88 +1933,56 @@ export default function Agenda() {
                 </div>
               )}
 
-              <Separator />
-
-              {/* ESTEIRA DE STATUS */}
-              <StatusFlow
-                currentStatus={agendamentoSelecionado.status}
-                onStatusChange={(novoStatus) => {
-                  // Validar transição
-                  if (!isTransicaoPermitida(agendamentoSelecionado.status, novoStatus)) {
-                    toast.error(`Não é possível mudar de "${agendamentoSelecionado.status}" para "${novoStatus}"`);
-                    return;
-                  }
-                  atualizarStatusMutation.mutate({ 
-                    id: agendamentoSelecionado.id, 
-                    novoStatus 
-                  });
-                }}
-                disabled={["Encerrado", "Falta", "Transferido"].includes(agendamentoSelecionado.status)}
-              />
-
-              <Separator />
-
-              {/* BOTÕES DE AÇÃO CONTEXTUAIS */}
-              <StatusActions
-                agendamento={agendamentoSelecionado}
-                onWhatsApp={handleWhatsApp}
-                onIniciarAtendimento={handleIniciarAtendimento}
-                onRegistrarAtendimento={handleRegistrarAtendimento}
-                onConfirmar={handleConfirmar}
-                onAguardando={handleAguardando}
-                onCancelar={() => setModalCancelarAberto(true)}
-                onFalta={handleFalta}
-                onTransferir={handleAbrirTransferir}
-                onReativar={handleReativar}
-                onNovoAgendamentoReaproveitando={handleNovoAgendamentoReaproveitando}
-              />
-
-              <Separator />
-
               {/* Informações de rastreabilidade */}
-              <div className="text-xs text-muted-foreground border rounded p-3 bg-gray-50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-700">Informações de Rastreabilidade</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-6 px-2 text-xs"
-                    onClick={() => setModalHistoricoAberto(true)}
-                  >
-                    <History className="w-3 h-3 mr-1" />
-                    Ver Histórico
-                  </Button>
-                </div>
+              <div className="text-xs text-muted-foreground border-t pt-2">
                 {agendamentoSelecionado.criadoPor && (
-                  <p>Criado por: <strong>{agendamentoSelecionado.criadoPor}</strong></p>
+                  <p>Criado por: {agendamentoSelecionado.criadoPor}</p>
                 )}
                 {agendamentoSelecionado.createdAt && (
                   <p>Em: {new Date(agendamentoSelecionado.createdAt).toLocaleString("pt-BR")}</p>
                 )}
               </div>
+
+              {/* Ações */}
+              {!["Cancelado", "Reagendado", "Encerrado", "Falta"].includes(agendamentoSelecionado.status) && (
+                <div className="flex flex-wrap gap-2 pt-2 border-t">
+                  {agendamentoSelecionado.status === "Agendado" && (
+                    <Button size="sm" variant="outline" onClick={handleConfirmar}>
+                      <Check className="w-4 h-4 mr-1" />
+                      Confirmar
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={handleRealizar}>
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    Encerrado
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleMarcarFalta}>
+                    <Ban className="w-4 h-4 mr-1" />
+                    Falta
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    setNovaData(agendamentoSelecionado.dataHoraInicio.split("T")[0]);
+                    setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
+                    setNovaHoraFim(agendamentoSelecionado.dataHoraFim ? formatarHora(agendamentoSelecionado.dataHoraFim) : "");
+                    setModalReagendarAberto(true);
+                  }}>
+                    <RefreshCw className="w-4 h-4 mr-1" />
+                    Transferir
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setModalCancelarAberto(true)}>
+                    <X className="w-4 h-4 mr-1" />
+                    Cancelar
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* MODAL HISTÓRICO (AUDIT TRAIL) */}
-      <AuditTrailModal
-        isOpen={modalHistoricoAberto}
-        onClose={() => setModalHistoricoAberto(false)}
-        agendamentoId={agendamentoSelecionado?.id}
-        agendamentoNome={agendamentoSelecionado?.pacienteNome || agendamentoSelecionado?.titulo || "Agendamento"}
-      />
-
-      {/* MODAL REATIVAR */}
-      <ReativarModal
-        isOpen={modalReativarAberto}
-        onClose={() => setModalReativarAberto(false)}
-        agendamento={agendamentoSelecionado}
-        onReativarMesmaData={handleReativarMesmaData}
-        onReativarTransferir={handleReativarTransferir}
-      />
-
+      {/* ============================================ */}
       {/* MODAL CANCELAR */}
+      {/* ============================================ */}
       <Dialog open={modalCancelarAberto} onOpenChange={setModalCancelarAberto}>
         <DialogContent>
           <DialogHeader>
@@ -2537,7 +1990,7 @@ export default function Agenda() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Informe o motivo do cancelamento. O agendamento ficará visível na agenda com transparência.
+              Informe o motivo do cancelamento. Esta ação não pode ser desfeita.
             </p>
             <Textarea
               value={motivoCancelamento}
@@ -2558,21 +2011,18 @@ export default function Agenda() {
         </DialogContent>
       </Dialog>
 
-      {/* MODAL TRANSFERIR */}
-      <Dialog open={modalTransferirAberto} onOpenChange={setModalTransferirAberto}>
+      {/* ============================================ */}
+      {/* MODAL REAGENDAR/TRANSFERIR */}
+      {/* ============================================ */}
+      <Dialog open={modalReagendarAberto} onOpenChange={setModalReagendarAberto}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ArrowRightLeft className="w-5 h-5" />
-              Transferir Agendamento
-            </DialogTitle>
+            <DialogTitle>Transferir Agendamento</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-sm">
-              <p className="text-amber-800">
-                <strong>Atenção:</strong> O agendamento original ficará com status "Transferido" e um novo agendamento será criado na nova data com status "Agendado".
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              O agendamento original será mantido como "Transferido" e um novo será criado.
+            </p>
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <Label>Nova Data</Label>
@@ -2601,11 +2051,11 @@ export default function Agenda() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModalTransferirAberto(false)}>
+            <Button variant="outline" onClick={() => setModalReagendarAberto(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleTransferir} disabled={transferirAgendamentoMutation.isPending}>
-              {transferirAgendamentoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            <Button onClick={handleReagendar} disabled={reagendarAgendamentoMutation.isPending}>
+              {reagendarAgendamentoMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Confirmar Transferência
             </Button>
           </DialogFooter>

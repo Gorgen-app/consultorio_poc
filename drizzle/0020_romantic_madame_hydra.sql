@@ -1,0 +1,1 @@
+ALTER TABLE `agendamentos` MODIFY COLUMN `status` enum('Agendado','Confirmado','Aguardando','Em atendimento','Encerrado','Cancelado','Falta','Transferido','Realizado','Reagendado','Faltou') NOT NULL DEFAULT 'Agendado';

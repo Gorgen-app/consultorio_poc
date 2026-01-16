@@ -1777,6 +1777,101 @@ export const appRouter = router({
       .query(async () => {
         return await db.listAgendamentosPendentesVinculacao();
       }),
+
+    // ===== AGENDA V6 - NOVAS ROTAS =====
+    
+    // Transferir agendamento para nova data (cria novo e marca original como Transferido)
+    transferir: protectedProcedure
+      .input(z.object({
+        idOriginal: z.number(),
+        novaDataInicio: z.date(),
+        novaDataFim: z.date(),
+        motivo: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.transferirAgendamento(
+          input.idOriginal,
+          input.novaDataInicio,
+          input.novaDataFim,
+          ctx.user?.name || "Sistema",
+          input.motivo
+        );
+      }),
+
+    // Atualizar status com validação de transições
+    atualizarStatus: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        novoStatus: z.enum(["Agendado", "Confirmado", "Aguardando", "Em atendimento", "Encerrado", "Cancelado", "Falta", "Transferido"]),
+        motivo: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.atualizarStatusAgendamento(
+          input.id,
+          input.novoStatus,
+          ctx.user?.name || "Sistema",
+          input.motivo
+        );
+      }),
+
+    // Obter histórico completo de alterações do agendamento
+    getHistorico: protectedProcedure
+      .input(z.object({ agendamentoId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getHistoricoAgendamento(input.agendamentoId);
+      }),
+
+    // Reativar agendamento cancelado
+    reativar: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        manterDataOriginal: z.boolean().default(true),
+        novaDataInicio: z.date().optional(),
+        novaDataFim: z.date().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.reativarAgendamento(
+          input.id,
+          ctx.user?.name || "Sistema",
+          input.manterDataOriginal,
+          input.novaDataInicio,
+          input.novaDataFim
+        );
+      }),
+
+    // Marcar paciente como chegou (Aguardando)
+    pacienteChegou: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.marcarPacienteChegou(
+          input.id,
+          ctx.user?.name || "Sistema"
+        );
+      }),
+
+    // Iniciar atendimento
+    iniciarAtendimento: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.iniciarAtendimento(
+          input.id,
+          ctx.user?.name || "Sistema"
+        );
+      }),
+
+    // Encerrar atendimento
+    encerrarAtendimento: protectedProcedure
+      .input(z.object({ 
+        id: z.number(),
+        atendimentoId: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.encerrarAtendimento(
+          input.id,
+          ctx.user?.name || "Sistema",
+          input.atendimentoId
+        );
+      }),
   }),
 
   // ===== BLOQUEIOS DE HORÁRIO =====

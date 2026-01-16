@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `agendamentos` MODIFY COLUMN `status` enum('Agendado','Confirmado','Aguardando','Em atendimento','Encerrado','Cancelado','Falta','Transferido','Realizado','Reagendado','Faltou') NOT NULL DEFAULT 'Agendado';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE `agendamentos` MODIFY COLUMN `status` enum('Agendado','Confirmado','Aguardando','Em atendimento','Encerrado','Cancelado','Falta','Transferido','Realizado','Reagendado','Faltou') NOT NULL DEFAULT 'Agendado';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 933
+}

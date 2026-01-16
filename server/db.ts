@@ -4756,3 +4756,257 @@ export async function getDelegadoPermissoes(email: string): Promise<Array<{
     dataFim: d.dataFim,
   }));
 }
+
+
+// ===== AGENDA V6 - NOVAS FUNÇÕES =====
+
+// Mapa de transições válidas de status
+const transicoesValidas: Record<string, string[]> = {
+  "Agendado": ["Confirmado", "Cancelado", "Falta", "Transferido"],
+  "Confirmado": ["Aguardando", "Cancelado", "Falta", "Transferido"],
+  "Aguardando": ["Em atendimento", "Cancelado", "Falta"],
+  "Em atendimento": ["Encerrado"],
+  "Encerrado": [], // Estado final
+  "Cancelado": ["Agendado"], // Pode ser reativado
+  "Falta": ["Agendado", "Transferido"], // Pode ser reativado ou transferido
+  "Transferido": [], // Estado final
+  // Status legados
+  "Realizado": [],
+  "Reagendado": [],
+  "Faltou": ["Agendado", "Transferido"],
+};
+
+// Transferir agendamento para nova data
+export async function transferirAgendamento(
+  idOriginal: number,
+  novaDataInicio: Date,
+  novaDataFim: Date,
+  transferidoPor: string,
+  motivo?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar agendamento original
+  const original = await getAgendamentoById(idOriginal);
+  if (!original) throw new Error("Agendamento não encontrado");
+  
+  // Verificar se pode ser transferido
+  const statusAtual = original.status;
+  if (!transicoesValidas[statusAtual]?.includes("Transferido")) {
+    throw new Error(`Não é possível transferir um agendamento com status "${statusAtual}"`);
+  }
+  
+  // Gerar novo ID
+  const novoId = await getNextAgendamentoId();
+  
+  // Criar novo agendamento com os mesmos dados
+  const novoAgendamento = await db.insert(agendamentos).values({
+    tenantId: original.tenantId,
+    idAgendamento: novoId,
+    tipoCompromisso: original.tipoCompromisso as any,
+    pacienteId: original.pacienteId,
+    pacienteNome: original.pacienteNome,
+    dataHoraInicio: novaDataInicio,
+    dataHoraFim: novaDataFim,
+    local: original.local,
+    titulo: original.titulo,
+    descricao: original.descricao,
+    status: "Agendado" as any,
+    convenio: original.convenio,
+    cpfPaciente: original.cpfPaciente,
+    telefonePaciente: original.telefonePaciente,
+    emailPaciente: original.emailPaciente,
+    reagendadoDe: idOriginal,
+    criadoPor: transferidoPor,
+  });
+  
+  const novoAgendamentoId = Number(novoAgendamento[0].insertId);
+  
+  // Marcar original como transferido
+  await db.update(agendamentos)
+    .set({
+      status: "Transferido" as any,
+      transferidoParaId: novoAgendamentoId,
+      transferidoEm: new Date(),
+      transferidoPor: transferidoPor,
+    })
+    .where(eq(agendamentos.id, idOriginal));
+  
+  // Registrar histórico do original
+  await db.insert(historicoAgendamentos).values({
+    tenantId: original.tenantId,
+    agendamentoId: idOriginal,
+    tipoAlteracao: "Transferência" as any,
+    descricaoAlteracao: `Transferido para ${novoId} por ${transferidoPor}${motivo ? `. Motivo: ${motivo}` : ''}`,
+    valoresAnteriores: { status: statusAtual, dataHoraInicio: original.dataHoraInicio, dataHoraFim: original.dataHoraFim } as any,
+    valoresNovos: { status: "Transferido", transferidoParaId: novoAgendamentoId } as any,
+    realizadoPor: transferidoPor,
+  });
+  
+  // Registrar histórico do novo
+  await db.insert(historicoAgendamentos).values({
+    tenantId: original.tenantId,
+    agendamentoId: novoAgendamentoId,
+    tipoAlteracao: "Criação" as any,
+    descricaoAlteracao: `Criado por transferência de ${original.idAgendamento}`,
+    valoresNovos: { dataHoraInicio: novaDataInicio, dataHoraFim: novaDataFim, reagendadoDe: idOriginal } as any,
+    realizadoPor: transferidoPor,
+  });
+  
+  return {
+    original: await getAgendamentoById(idOriginal),
+    novo: await getAgendamentoById(novoAgendamentoId),
+  };
+}
+
+// Atualizar status com validação de transições
+export async function atualizarStatusAgendamento(
+  id: number,
+  novoStatus: string,
+  atualizadoPor: string,
+  motivo?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar agendamento
+  const agendamento = await getAgendamentoById(id);
+  if (!agendamento) throw new Error("Agendamento não encontrado");
+  
+  const statusAtual = agendamento.status;
+  
+  // Verificar se a transição é válida
+  if (!transicoesValidas[statusAtual]?.includes(novoStatus)) {
+    throw new Error(`Transição de "${statusAtual}" para "${novoStatus}" não é permitida`);
+  }
+  
+  // Preparar campos adicionais baseado no novo status
+  const camposExtras: Record<string, any> = {};
+  let tipoAlteracao = "Edição";
+  
+  switch (novoStatus) {
+    case "Confirmado":
+      camposExtras.confirmadoEm = new Date();
+      camposExtras.confirmadoPor = atualizadoPor;
+      tipoAlteracao = "Confirmação";
+      break;
+    case "Cancelado":
+      camposExtras.canceladoEm = new Date();
+      camposExtras.canceladoPor = atualizadoPor;
+      camposExtras.motivoCancelamento = motivo;
+      tipoAlteracao = "Cancelamento";
+      break;
+    case "Falta":
+      camposExtras.marcadoFaltaEm = new Date();
+      camposExtras.marcadoFaltaPor = atualizadoPor;
+      tipoAlteracao = "Falta";
+      break;
+    case "Aguardando":
+      camposExtras.pacienteChegouEm = new Date();
+      camposExtras.pacienteChegouRegistradoPor = atualizadoPor;
+      tipoAlteracao = "Paciente Chegou";
+      break;
+    case "Em atendimento":
+      camposExtras.atendimentoIniciadoEm = new Date();
+      camposExtras.atendimentoIniciadoPor = atualizadoPor;
+      tipoAlteracao = "Atendimento Iniciado";
+      break;
+    case "Encerrado":
+      camposExtras.encerradoEm = new Date();
+      camposExtras.encerradoPor = atualizadoPor;
+      tipoAlteracao = "Encerramento";
+      break;
+    case "Agendado":
+      // Reativação - limpar campos de cancelamento/falta
+      camposExtras.canceladoEm = null;
+      camposExtras.canceladoPor = null;
+      camposExtras.motivoCancelamento = null;
+      camposExtras.marcadoFaltaEm = null;
+      camposExtras.marcadoFaltaPor = null;
+      tipoAlteracao = "Reativação";
+      break;
+  }
+  
+  // Atualizar status
+  await db.update(agendamentos)
+    .set({
+      status: novoStatus as any,
+      ...camposExtras,
+    })
+    .where(eq(agendamentos.id, id));
+  
+  // Registrar histórico
+  await db.insert(historicoAgendamentos).values({
+    tenantId: agendamento.tenantId,
+    agendamentoId: id,
+    tipoAlteracao: tipoAlteracao as any,
+    descricaoAlteracao: `Status alterado de "${statusAtual}" para "${novoStatus}" por ${atualizadoPor}${motivo ? `. Motivo: ${motivo}` : ''}`,
+    valoresAnteriores: { status: statusAtual } as any,
+    valoresNovos: { status: novoStatus, ...camposExtras } as any,
+    realizadoPor: atualizadoPor,
+  });
+  
+  return getAgendamentoById(id);
+}
+
+// Reativar agendamento cancelado ou com falta
+export async function reativarAgendamento(
+  id: number,
+  reativadoPor: string,
+  manterDataOriginal: boolean = true,
+  novaDataInicio?: Date,
+  novaDataFim?: Date
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const agendamento = await getAgendamentoById(id);
+  if (!agendamento) throw new Error("Agendamento não encontrado");
+  
+  const statusAtual = agendamento.status;
+  
+  // Verificar se pode ser reativado
+  if (!["Cancelado", "Falta", "Faltou"].includes(statusAtual)) {
+    throw new Error(`Não é possível reativar um agendamento com status "${statusAtual}"`);
+  }
+  
+  if (manterDataOriginal) {
+    // Reativar na mesma data
+    return atualizarStatusAgendamento(id, "Agendado", reativadoPor, "Reativação na mesma data");
+  } else {
+    // Transferir para nova data
+    if (!novaDataInicio || !novaDataFim) {
+      throw new Error("Nova data de início e fim são obrigatórias para transferência");
+    }
+    return transferirAgendamento(id, novaDataInicio, novaDataFim, reativadoPor, "Reativação com nova data");
+  }
+}
+
+// Marcar paciente como chegou (status Aguardando)
+export async function marcarPacienteChegou(id: number, registradoPor: string) {
+  return atualizarStatusAgendamento(id, "Aguardando", registradoPor);
+}
+
+// Iniciar atendimento
+export async function iniciarAtendimento(id: number, iniciadoPor: string) {
+  return atualizarStatusAgendamento(id, "Em atendimento", iniciadoPor);
+}
+
+// Encerrar atendimento
+export async function encerrarAtendimento(id: number, encerradoPor: string, atendimentoId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Atualizar status
+  const resultado = await atualizarStatusAgendamento(id, "Encerrado", encerradoPor);
+  
+  // Se tiver atendimentoId, vincular
+  if (atendimentoId) {
+    await db.update(agendamentos)
+      .set({ atendimentoId })
+      .where(eq(agendamentos.id, id));
+  }
+  
+  return resultado;
+}

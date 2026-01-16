@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `transferido_para_id` int;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `transferido_em` timestamp NULL;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `transferido_por` varchar(255);\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `paciente_chegou_em` timestamp NULL;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `paciente_chegou_registrado_por` varchar(255);\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `atendimento_iniciado_em` timestamp NULL;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `atendimento_iniciado_por` varchar(255);\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `encerrado_em` timestamp NULL;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `encerrado_por` varchar(255);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `transferido_para_id` int;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `transferido_em` timestamp NULL;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `transferido_por` varchar(255);\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `paciente_chegou_em` timestamp NULL;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `paciente_chegou_registrado_por` varchar(255);\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `atendimento_iniciado_em` timestamp NULL;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `atendimento_iniciado_por` varchar(255);\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `encerrado_em` timestamp NULL;\nALTER TABLE `agendamentos` ADD COLUMN IF NOT EXISTS `encerrado_por` varchar(255);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3986
+}

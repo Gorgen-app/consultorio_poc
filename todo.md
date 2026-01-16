@@ -2364,3 +2364,29 @@ A dashboard deve integrar **medicina e administração**:
 - [x] Implementar CRUD de delegados no router
 - [ ] Adicionar verificação de permissões nas mutations (pendente)
 
+
+
+---
+
+## 🚀 GORGEN 1.9.6 - Agenda v6.0 com Máquina de Estados (16/01/2026)
+
+### Backend - Novas Rotas
+- [x] trpc.agenda.transferir - Criar novo agendamento e marcar original como "Transferido"
+- [x] trpc.agenda.atualizarStatus - Atualizar status com validação de transições
+- [x] trpc.agenda.getHistorico - Retornar log de alterações do agendamento
+- [x] trpc.agenda.reativar - Reativar agendamento cancelado ou com falta
+- [x] trpc.agenda.pacienteChegou - Marcar paciente como chegou (Aguardando)
+- [x] trpc.agenda.iniciarAtendimento - Iniciar atendimento
+- [x] trpc.agenda.encerrarAtendimento - Encerrar atendimento
+
+### Frontend - Novas Funcionalidades
+- [x] Status "Transferido" como estado final
+- [x] Botões contextuais por status (Agendado, Confirmado, Aguardando, etc.)
+- [x] Navegação para Atendimentos (Iniciar Atendimento)
+- [x] Navegação para Prontuário (Registrar Atendimento)
+- [x] Reaproveitamento de dados em caso de Falta
+- [x] Modal de Reativação (mesma data ou transferir)
+- [x] Visualização de eventos transferidos com transparência
+- [x] AuditTrailModal para histórico de alterações
+- [x] Esteira de atendimento visual (máquina de estados)
+
