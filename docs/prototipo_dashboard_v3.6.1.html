@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GORGEN 3.6.1 - Protótipo do Dashboard (Implementação Segura)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* GORGEN Design System - Cores */
+        :root {
+            --gorgen-50: #F0F4F9;
+            --gorgen-100: #E0E8F2;
+            --gorgen-200: #B8C9DE;
+            --gorgen-300: #8BA3C9;
+            --gorgen-400: #5A7DB0;
+            --gorgen-500: #3B5F96;
+            --gorgen-600: #2B4A7D;
+            --gorgen-700: #203864;
+            --gorgen-800: #1A2B47;
+            --gorgen-900: #152238;
+            
+            --gorgen-success: #10B981;
+            --gorgen-success-light: #D1FAE5;
+            --gorgen-warning: #F59E0B;
+            --gorgen-warning-light: #FEF3C7;
+            --gorgen-error: #EF4444;
+            --gorgen-error-light: #FEE2E2;
+            --gorgen-info: #3B82F6;
+            --gorgen-info-light: #DBEAFE;
+            
+            --gorgen-accent: #DC6B4A;
+            --gorgen-accent-light: #FEE8E2;
+        }
+
+        .bg-gorgen-100 { background-color: var(--gorgen-100); }
+        .bg-gorgen-700 { background-color: var(--gorgen-700); }
+        .text-gorgen-700 { color: var(--gorgen-700); }
+        .text-gorgen-600 { color: var(--gorgen-600); }
+        .border-gorgen-200 { border-color: var(--gorgen-200); }
+
+        /* Sidebar */
+        .sidebar {
+            background-color: #F9FAFB;
+            border-right: 1px solid #E5E7EB;
+        }
+
+        .sidebar-item {
+            color: #4B5563;
+            transition: all 0.15s ease;
+        }
+
+        .sidebar-item:hover {
+            background-color: #F3F4F6;
+        }
+
+        .sidebar-item-active {
+            background-color: var(--gorgen-100);
+            color: var(--gorgen-700);
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            transition: all 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .kpi-value {
+            color: var(--gorgen-700);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #F3F4F6;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+
+        /* Badge de categoria */
+        .badge-populacao {
+            background-color: var(--gorgen-100);
+            color: var(--gorgen-700);
+        }
+
+        .badge-atendimentos {
+            background-color: #DBEAFE;
+            color: #1D4ED8;
+        }
+
+        .badge-financeiro {
+            background-color: #D1FAE5;
+            color: #059669;
+        }
+
+        .badge-qualidade {
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+
+        /* Variação */
+        .variacao-positiva {
+            background-color: #D1FAE5;
+            color: #059669;
+        }
+
+        .variacao-negativa {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        /* Indicador de protótipo */
+        .prototipo-badge {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #203864, #3B5F96);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Widget micro */
+        .widget-micro {
+            height: 80px;
+        }
+
+        /* Collapsible menu */
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .submenu.open {
+            max-height: 200px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Badge de Protótipo -->
+    <div class="prototipo-badge">
+        ✨ PROTÓTIPO v3.6.1 - Implementação Segura
+    </div>
+
+    <div class="flex h-screen">
+        <!-- Sidebar (PRESERVADA - Estrutura atual mantida) -->
+        <aside class="sidebar w-64 flex flex-col">
+            <!-- Logo -->
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <button class="p-1.5 hover:bg-gray-100 rounded-lg">
+                        <i data-lucide="chevron-left" class="w-4 h-4 text-gray-400"></i>
+                    </button>
+                    <h1 class="text-lg font-bold text-gorgen-700">GORGEN</h1>
+                    <span class="text-xs text-gray-400">v3.6.1</span>
+                </div>
+                <button class="p-1.5 hover:bg-gray-100 rounded-lg relative">
+                    <i data-lucide="bell" class="w-5 h-5 text-gray-500"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">9</span>
+                </button>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+                <!-- Dashboard - Ativo -->
+                <a href="#" class="sidebar-item sidebar-item-active flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    Dashboard
+                </a>
+
+                <!-- Agenda -->
+                <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm">
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                    Agenda
+                </a>
+
+                <!-- Compartilhamento -->
+                <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm">
+                    <i data-lucide="share-2" class="w-5 h-5"></i>
+                    Compartilhamento
+                </a>
+
+                <!-- Pacientes (com submenu) -->
+                <div>
+                    <button onclick="toggleSubmenu('pacientes')" class="sidebar-item w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                            Pacientes
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 submenu-arrow" id="pacientes-arrow"></i>
+                    </button>
+                    <div class="submenu pl-8 space-y-1" id="pacientes-submenu">
+                        <a href="#" class="sidebar-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                            Novo Paciente
+                        </a>
+                        <a href="#" class="sidebar-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                            Buscar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Atendimentos (com submenu) -->
+                <div>
+                    <button onclick="toggleSubmenu('atendimentos')" class="sidebar-item w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="stethoscope" class="w-5 h-5"></i>
+                            Atendimentos
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 submenu-arrow" id="atendimentos-arrow"></i>
+                    </button>
+                    <div class="submenu pl-8 space-y-1" id="atendimentos-submenu">
+                        <a href="#" class="sidebar-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm">
+                            <i data-lucide="clipboard-plus" class="w-4 h-4"></i>
+                            Novo Atendimento
+                        </a>
+                        <a href="#" class="sidebar-item flex items-center gap-2 px-3 py-2 rounded-lg text-sm">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                            Relatórios
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Em breve -->
+                <div class="pt-2 mt-2 border-t border-gray-200">
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm opacity-60">
+                        <i data-lucide="receipt" class="w-5 h-5"></i>
+                        Faturamento
+                        <span class="ml-auto text-xs px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full">Em breve</span>
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm opacity-60">
+                        <i data-lucide="megaphone" class="w-5 h-5"></i>
+                        Marketing
+                        <span class="ml-auto text-xs px-2 py-0.5 bg-gray-200 text-gray-500 rounded-full">Em breve</span>
+                    </a>
+                </div>
+
+                <!-- Performance -->
+                <div class="pt-2 mt-2 border-t border-gray-200">
+                    <a href="#" class="sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm">
+                        <i data-lucide="activity" class="w-5 h-5"></i>
+                        Performance
+                    </a>
+                </div>
+            </nav>
+
+            <!-- User Profile -->
+            <div class="p-3 border-t border-gray-200">
+                <div class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                    <div class="w-9 h-9 rounded-full bg-gorgen-700 flex items-center justify-center text-white font-semibold text-sm">
+                        AG
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">Dr. André Gorgen</p>
+                        <p class="text-xs text-gray-500 truncate">Admin Master</p>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <div class="p-6">
+                <!-- Header com Filtro Global -->
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+                    <div class="flex items-center gap-3">
+                        <!-- Filtro Global de Período -->
+                        <div class="relative">
+                            <select class="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer">
+                                <option>Últimos 7 dias</option>
+                                <option selected>Últimos 30 dias</option>
+                                <option>Últimos 3 meses</option>
+                                <option>Últimos 6 meses</option>
+                                <option>Último ano</option>
+                                <option>Todo período</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        <!-- Botão Configurações -->
+                        <button class="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" title="Configurar Dashboard">
+                            <i data-lucide="settings" class="w-5 h-5 text-gray-500"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PAINEL DE KPIs (Painel de Voo) - NOVO COMPONENTE -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <!-- KPI: Faturamento Total -->
+                    <div class="kpi-card bg-white rounded-xl p-5 border border-gray-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-medium text-gray-500">Faturamento Total</span>
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
+                                <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span class="text-3xl font-bold kpi-value">R$ 423.993,63</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400">faturamento previsto</span>
+                            <span class="variacao-positiva inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md">
+                                <i data-lucide="trending-up" class="w-3 h-3"></i>
+                                +8.3%
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- KPI: Pacientes Ativos -->
+                    <div class="kpi-card bg-white rounded-xl p-5 border border-gray-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-medium text-gray-500">Pacientes Ativos</span>
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-gorgen-100 text-gorgen-700">
+                                <i data-lucide="users" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span class="text-3xl font-bold kpi-value">21.650</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400">de 21.650 cadastrados</span>
+                            <span class="variacao-positiva inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md">
+                                <i data-lucide="trending-up" class="w-3 h-3"></i>
+                                +2.1%
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- KPI: Atendimentos -->
+                    <div class="kpi-card bg-white rounded-xl p-5 border border-gray-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-medium text-gray-500">Atendimentos</span>
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600">
+                                <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span class="text-3xl font-bold kpi-value">1.345</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400">total de atendimentos</span>
+                            <span class="variacao-positiva inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md">
+                                <i data-lucide="trending-up" class="w-3 h-3"></i>
+                                +5.7%
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- KPI: Taxa de Recebimento -->
+                    <div class="kpi-card bg-white rounded-xl p-5 border border-gray-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-medium text-gray-500">Taxa de Recebimento</span>
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600">
+                                <i data-lucide="percent" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span class="text-3xl font-bold kpi-value">92.7%</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400">R$ 393.227,58 recebido</span>
+                            <span class="variacao-positiva inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md">
+                                <i data-lucide="trending-up" class="w-3 h-3"></i>
+                                +1.2%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid de Widgets (PRESERVADO - Estrutura existente) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Widget Micro: Total de Pacientes -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 widget-micro flex items-center gap-4 hover:shadow-md transition-shadow">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-500 mb-1">Total de Pacientes</p>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-2xl font-bold kpi-value">21.650</span>
+                            </div>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-gorgen-100 text-gorgen-700">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                        </div>
+                        <span class="badge-populacao text-xs font-medium px-2 py-1 rounded-full">População</span>
+                    </div>
+
+                    <!-- Widget Micro: Total de Atendimentos -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 widget-micro flex items-center gap-4 hover:shadow-md transition-shadow">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-500 mb-1">Total de Atendimentos</p>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-2xl font-bold kpi-value">87</span>
+                            </div>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600">
+                            <i data-lucide="stethoscope" class="w-5 h-5"></i>
+                        </div>
+                        <span class="badge-atendimentos text-xs font-medium px-2 py-1 rounded-full">Atendimentos</span>
+                    </div>
+
+                    <!-- Widget Micro: Faturamento Período -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 widget-micro flex items-center gap-4 hover:shadow-md transition-shadow">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-500 mb-1">Faturamento</p>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-2xl font-bold kpi-value">R$ 16.298,66</span>
+                            </div>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
+                            <i data-lucide="dollar-sign" class="w-5 h-5"></i>
+                        </div>
+                        <span class="badge-financeiro text-xs font-medium px-2 py-1 rounded-full">Econômico-Financeiro</span>
+                    </div>
+
+                    <!-- Widget: Evolução de Atendimentos (Gráfico) -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-medium text-gray-500">Evolução de Atendimentos</p>
+                            <span class="badge-atendimentos text-xs font-medium px-2 py-1 rounded-full">Atendimentos</span>
+                        </div>
+                        <div class="h-16">
+                            <canvas id="evolucaoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Widget Grande: Distribuição por Convênio -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 col-span-1 md:col-span-2 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-medium text-gray-500">Distribuição por Convênio</p>
+                            <span class="badge-populacao text-xs font-medium px-2 py-1 rounded-full">População</span>
+                        </div>
+                        <div class="h-48">
+                            <canvas id="convenioChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Widget Grande: Distribuição por Sexo -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 col-span-1 md:col-span-2 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm font-medium text-gray-500">Distribuição por Sexo</p>
+                            <span class="badge-populacao text-xs font-medium px-2 py-1 rounded-full">População</span>
+                        </div>
+                        <div class="h-48 flex items-center justify-center">
+                            <canvas id="sexoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Widget: Novos Pacientes -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-medium text-gray-500">Novos Pacientes</p>
+                            <span class="badge-populacao text-xs font-medium px-2 py-1 rounded-full">População</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-1">
+                                <span class="text-2xl font-bold kpi-value">47</span>
+                                <p class="text-xs text-gray-400">no período</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-gorgen-100 text-gorgen-700">
+                                <i data-lucide="user-plus" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Widget: Pacientes Inativos -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-medium text-gray-500">Pacientes Inativos</p>
+                            <span class="badge-populacao text-xs font-medium px-2 py-1 rounded-full">População</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-1">
+                                <span class="text-2xl font-bold kpi-value">1.234</span>
+                                <p class="text-xs text-gray-400">sem atendimento há 360+ dias</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600">
+                                <i data-lucide="user-minus" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Widget: Ticket Médio -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-medium text-gray-500">Ticket Médio</p>
+                            <span class="badge-financeiro text-xs font-medium px-2 py-1 rounded-full">Econômico-Financeiro</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-1">
+                                <span class="text-2xl font-bold kpi-value">R$ 315,35</span>
+                                <p class="text-xs text-gray-400">por atendimento</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
+                                <i data-lucide="receipt" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Widget: Tempo Médio de Acompanhamento -->
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-medium text-gray-500">Tempo Médio Acompanhamento</p>
+                            <span class="badge-qualidade text-xs font-medium px-2 py-1 rounded-full">Qualidade</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-1">
+                                <span class="text-2xl font-bold kpi-value">3.2</span>
+                                <p class="text-xs text-gray-400">anos em média</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
+                                <i data-lucide="clock" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nota de Implementação -->
+                <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5"></i>
+                        <div>
+                            <h3 class="font-semibold text-blue-900">Implementação Segura v3.6.1</h3>
+                            <p class="text-sm text-blue-700 mt-1">
+                                Este protótipo demonstra a integração do Design System GORGEN v3.5.5 de forma segura, 
+                                preservando todas as funcionalidades existentes (drag-and-drop, permissões, multi-tenant, 
+                                submenus colapsáveis) e adicionando o novo Painel de KPIs.
+                            </p>
+                            <ul class="text-sm text-blue-700 mt-2 space-y-1">
+                                <li>✅ Sidebar preservada com estrutura atual</li>
+                                <li>✅ Painel de KPIs (Painel de Voo) adicionado</li>
+                                <li>✅ Widgets existentes mantidos</li>
+                                <li>✅ Cores do Design System aplicadas</li>
+                                <li>✅ Tipografia Inter aplicada</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Inicializar ícones Lucide
+        lucide.createIcons();
+
+        // Toggle submenu
+        function toggleSubmenu(name) {
+            const submenu = document.getElementById(name + '-submenu');
+            const arrow = document.getElementById(name + '-arrow');
+            submenu.classList.toggle('open');
+            arrow.style.transform = submenu.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+
+        // Gráfico de Evolução
+        const evolucaoCtx = document.getElementById('evolucaoChart').getContext('2d');
+        new Chart(evolucaoCtx, {
+            type: 'line',
+            data: {
+                labels: ['Dez', 'Jan'],
+                datasets: [{
+                    data: [65, 87],
+                    borderColor: '#203864',
+                    backgroundColor: 'rgba(32, 56, 100, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                }
+            }
+        });
+
+        // Gráfico de Convênio
+        const convenioCtx = document.getElementById('convenioChart').getContext('2d');
+        new Chart(convenioCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Particular', 'Unimed', 'Bradesco', 'SulAmérica', 'Outros'],
+                datasets: [{
+                    data: [45, 25, 15, 10, 5],
+                    backgroundColor: ['#203864', '#3B5F96', '#5A7DB0', '#8BA3C9', '#B8C9DE'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: '#E5E7EB' }, ticks: { callback: v => v + '%' } }
+                }
+            }
+        });
+
+        // Gráfico de Sexo
+        const sexoCtx = document.getElementById('sexoChart').getContext('2d');
+        new Chart(sexoCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Feminino', 'Masculino', 'Outro'],
+                datasets: [{
+                    data: [58, 40, 2],
+                    backgroundColor: ['#203864', '#5A7DB0', '#B8C9DE'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { boxWidth: 12, padding: 15 }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    </script>
+</body>
+</html>
