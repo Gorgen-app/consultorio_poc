@@ -833,16 +833,18 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
   const [titulo, setTitulo] = useState("");
   const [duracao, setDuracao] = useState(30);
   
-  // Estados para autocomplete
+  // Estados para autocomplete unificado
   const [pacienteSelecionado, setPacienteSelecionado] = useState<{
     id: number;
     nome: string;
   } | null>(null);
-  const [buscaAberta, setBuscaAberta] = useState(false);
   const [termoBuscaPaciente, setTermoBuscaPaciente] = useState("");
+  const [inputFocado, setInputFocado] = useState(false);
   const [usarTextoLivre, setUsarTextoLivre] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
-  // Query de busca de pacientes no backend (ativada quando há 2+ caracteres)
+  // Query de busca de pacientes no backend (ativada quando há 3+ caracteres)
   const { data: pacientesBuscaBackend = [], isFetching: buscandoPacientes } = trpc.pacientes.list.useQuery(
     { 
       busca: termoBuscaPaciente.trim(),
@@ -855,17 +857,46 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
   );
   
   // Filtro de pacientes: SEGURANÇA - só mostra pacientes após 3+ caracteres digitados
-  // Isso previne seleção acidental de paciente errado (risco de erro médico)
   const pacientesFiltrados = useMemo(() => {
-    // CRÍTICO: Não mostrar nenhum paciente antes de 3 caracteres
-    // Isso força o usuário a buscar intencionalmente
     if (termoBuscaPaciente.trim().length < 3) {
       return [];
     }
-    
-    // Com 3+ caracteres, usa resultado do backend
     return pacientesBuscaBackend;
   }, [pacientesBuscaBackend, termoBuscaPaciente]);
+  
+  // Mostrar dropdown apenas quando: input focado E (tem 3+ chars OU paciente selecionado)
+  const mostrarDropdown = inputFocado && !pacienteSelecionado && termoBuscaPaciente.trim().length >= 1;
+  
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setInputFocado(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  const handleSelecionarPaciente = (paciente: { id: number; nome: string }) => {
+    setPacienteSelecionado(paciente);
+    setTermoBuscaPaciente(paciente.nome);
+    setTitulo(paciente.nome);
+    setInputFocado(false);
+  };
+  
+  const handleLimparSelecao = () => {
+    setPacienteSelecionado(null);
+    setTermoBuscaPaciente("");
+    setTitulo("");
+    inputRef.current?.focus();
+  };
   
   const handleCriarRapido = () => {
     if (!titulo.trim() && !pacienteSelecionado) {
@@ -894,7 +925,7 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
     setPacienteSelecionado(null);
     setTermoBuscaPaciente("");
     setUsarTextoLivre(false);
-    setBuscaAberta(false);
+    setInputFocado(false);
     onClose();
   };
   
@@ -933,11 +964,11 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Campo de Paciente com Autocomplete */}
+          {/* Campo de Paciente - UNIFICADO com dropdown */}
           <div>
             <Label>Paciente</Label>
             {usarTextoLivre ? (
-              // Fallback: Input simples
+              // Fallback: Input simples para texto livre
               <div className="flex gap-2">
                 <Input
                   value={titulo}
@@ -960,89 +991,91 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
                 </Button>
               </div>
             ) : (
-              // Autocomplete com Popover + Command
-              <Popover open={buscaAberta} onOpenChange={setBuscaAberta}>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start h-11 font-normal"
-                    role="combobox"
-                    aria-expanded={buscaAberta}
+              // Campo de busca UNIFICADO com dropdown inline
+              <div className="relative">
+                {/* Input único de busca */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    ref={inputRef}
+                    value={termoBuscaPaciente}
+                    onChange={(e) => {
+                      setTermoBuscaPaciente(e.target.value);
+                      if (pacienteSelecionado) {
+                        setPacienteSelecionado(null);
+                      }
+                    }}
+                    onFocus={() => setInputFocado(true)}
+                    placeholder="Buscar paciente por nome, CPF ou ID..."
+                    className={`h-11 pl-10 pr-10 ${pacienteSelecionado ? 'border-green-500 bg-green-50' : ''}`}
+                    autoFocus
+                  />
+                  {buscandoPacientes && (
+                    <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+                  )}
+                  {pacienteSelecionado && !buscandoPacientes && (
+                    <button
+                      onClick={handleLimparSelecao}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                
+                {/* Dropdown de resultados */}
+                {mostrarDropdown && (
+                  <div 
+                    ref={dropdownRef}
+                    className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto"
                   >
-                    <Search className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
-                    <span className="truncate">
-                      {pacienteSelecionado 
-                        ? pacienteSelecionado.nome 
-                        : "Buscar paciente..."}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent 
-                  className="w-[350px] p-0 z-[300]" 
-                  align="start"
-                  sideOffset={5}
-                >
-                  <Command shouldFilter={false}>
-                    <div className="flex h-9 items-center gap-2 border-b px-3">
-                      <Search className="size-4 shrink-0 opacity-50" />
-                      <input
-                        type="text"
-                        placeholder="Digite nome, CPF ou ID..."
-                        value={termoBuscaPaciente}
-                        onChange={(e) => setTermoBuscaPaciente(e.target.value)}
-                        className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                        autoFocus
-                      />
-                    </div>
-                    <CommandList>
-                      <CommandEmpty>
-                        <div className="py-4 text-center">
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {termoBuscaPaciente.trim().length < 3 
-                              ? "Digite pelo menos 3 caracteres para buscar"
-                              : "Nenhum paciente encontrado"}
-                          </p>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setUsarTextoLivre(true);
-                              setPacienteSelecionado(null);
-                              setTitulo(termoBuscaPaciente);
-                              setBuscaAberta(false);
-                            }}
-                          >
-                            Usar "{termoBuscaPaciente}" como título
-                          </Button>
+                    {termoBuscaPaciente.trim().length < 3 ? (
+                      <div className="p-3 text-center text-gray-500 text-sm">
+                        Digite pelo menos 3 caracteres para buscar
+                      </div>
+                    ) : pacientesFiltrados.length === 0 ? (
+                      <div className="p-3 text-center">
+                        <p className="text-sm text-gray-500 mb-2">Nenhum paciente encontrado</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setUsarTextoLivre(true);
+                            setTitulo(termoBuscaPaciente);
+                            setInputFocado(false);
+                          }}
+                        >
+                          Usar "{termoBuscaPaciente}" como título
+                        </Button>
+                      </div>
+                    ) : (
+                      pacientesFiltrados.map((p) => (
+                        <div
+                          key={p.id}
+                          onClick={() => handleSelecionarPaciente({ id: p.id, nome: p.nome })}
+                          className="p-3 cursor-pointer hover:bg-gray-100 border-b last:border-b-0 flex items-center gap-3"
+                        >
+                          <User className="w-4 h-4 text-gray-400" />
+                          <div className="flex flex-col">
+                            <span className="font-medium">{p.nome}</span>
+                            <span className="text-xs text-gray-500">
+                              ID: {p.id} {p.cpf && `| CPF: ${p.cpf}`}
+                            </span>
+                          </div>
                         </div>
-                      </CommandEmpty>
-                      <CommandGroup>
-                        {pacientesFiltrados.map((p) => (
-                          <CommandItem 
-                            key={p.id}
-                            value={String(p.id)}
-                            onSelect={() => {
-                              setPacienteSelecionado({ id: p.id, nome: p.nome });
-                              setTitulo(p.nome);
-                              setBuscaAberta(false);
-                              setTermoBuscaPaciente("");
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <User className="w-4 h-4 mr-2 text-muted-foreground" />
-                            <div className="flex flex-col">
-                              <span>{p.nome}</span>
-                              <span className="text-xs text-muted-foreground">
-                                ID: {p.id} {p.cpf && `| CPF: ${p.cpf}`}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                      ))
+                    )}
+                  </div>
+                )}
+                
+                {/* Indicador de paciente selecionado */}
+                {pacienteSelecionado && (
+                  <div className="mt-2 text-sm text-green-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Paciente selecionado
+                  </div>
+                )}
+              </div>
             )}
           </div>
           
@@ -1554,6 +1587,9 @@ export default function Agenda() {
   const [novoConvenio, setNovoConvenio] = useState("");
   const [novoStatus, setNovoStatus] = useState("Agendado");
   const [buscaPaciente, setBuscaPaciente] = useState("");
+  const [buscaPacienteFocado, setBuscaPacienteFocado] = useState(false);
+  const buscaPacienteRef = useRef<HTMLInputElement>(null);
+  const dropdownPacienteRef = useRef<HTMLDivElement>(null);
   
   // Estados de bloqueio
   const [bloqueioTipo, setBloqueioTipo] = useState("");
@@ -1594,6 +1630,23 @@ export default function Agenda() {
     }
     return []; // Não mostrar nenhum paciente sem busca intencional
   }, [pacientesBusca, buscaPaciente]);
+  
+  // Fechar dropdown de pacientes ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownPacienteRef.current && 
+        !dropdownPacienteRef.current.contains(event.target as Node) &&
+        buscaPacienteRef.current &&
+        !buscaPacienteRef.current.contains(event.target as Node)
+      ) {
+        setBuscaPacienteFocado(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   // Função para refetch unificado (agendamentos + bloqueios)
   const refetchTodos = useCallback(() => {
@@ -3087,59 +3140,89 @@ export default function Agenda() {
               </Select>
             </div>
             
-            {/* Paciente (se for consulta) */}
+            {/* Paciente (se for consulta) - Campo UNIFICADO com dropdown */}
             {novoTipoCompromisso === "Consulta" && (
               <div>
                 <Label className="text-base">Paciente *</Label>
-                <div className="space-y-2">
-                  {/* Campo de busca */}
+                <div className="relative">
+                  {/* Input único de busca */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
+                      ref={buscaPacienteRef}
                       value={buscaPaciente}
-                      onChange={(e) => setBuscaPaciente(e.target.value)}
+                      onChange={(e) => {
+                        setBuscaPaciente(e.target.value);
+                        // Se já tinha paciente selecionado e usuário começou a digitar algo diferente, limpa
+                        if (novoPacienteId && e.target.value !== pacientes.find((p: any) => p.id === novoPacienteId)?.nome) {
+                          setNovoPacienteId(null);
+                        }
+                      }}
+                      onFocus={() => setBuscaPacienteFocado(true)}
                       placeholder="Buscar paciente por nome, CPF ou ID..."
-                      className="h-11 pl-10"
+                      className={`h-11 pl-10 pr-10 ${novoPacienteId ? 'border-green-500 bg-green-50' : ''}`}
                     />
                     {buscandoPacientesModal && (
                       <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
                     )}
-                  </div>
-                  {/* Lista de pacientes */}
-                  <div className="border rounded-md max-h-48 overflow-y-auto">
-                    {pacientes.length === 0 ? (
-                      <div className="p-3 text-center text-gray-500 text-sm">
-                        {buscaPaciente.trim().length >= 3 
-                          ? "Nenhum paciente encontrado" 
-                          : "Digite pelo menos 3 caracteres para buscar"}
-                      </div>
-                    ) : (
-                      pacientes.map((p: any) => (
-                        <div
-                          key={p.id}
-                          onClick={() => {
-                            setNovoPacienteId(p.id);
-                            setBuscaPaciente(p.nome);
-                          }}
-                          className={`p-3 cursor-pointer hover:bg-gray-100 border-b last:border-b-0 flex items-center gap-3 ${
-                            novoPacienteId === p.id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-                          }`}
-                        >
-                          <User className="w-5 h-5 text-gray-400" />
-                          <div>
-                            <div className="font-medium">{p.nome}</div>
-                            <div className="text-xs text-gray-500">
-                              ID: {p.idPaciente || p.id} {p.cpf && `| CPF: ${p.cpf}`}
-                            </div>
-                          </div>
-                        </div>
-                      ))
+                    {novoPacienteId && !buscandoPacientesModal && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNovoPacienteId(null);
+                          setBuscaPaciente("");
+                          buscaPacienteRef.current?.focus();
+                        }}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
+                  
+                  {/* Dropdown de resultados - só aparece quando focado e sem paciente selecionado */}
+                  {buscaPacienteFocado && !novoPacienteId && buscaPaciente.trim().length >= 1 && (
+                    <div 
+                      ref={dropdownPacienteRef}
+                      className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto"
+                    >
+                      {buscaPaciente.trim().length < 3 ? (
+                        <div className="p-3 text-center text-gray-500 text-sm">
+                          Digite pelo menos 3 caracteres para buscar
+                        </div>
+                      ) : pacientes.length === 0 ? (
+                        <div className="p-3 text-center text-gray-500 text-sm">
+                          Nenhum paciente encontrado
+                        </div>
+                      ) : (
+                        pacientes.map((p: any) => (
+                          <div
+                            key={p.id}
+                            onClick={() => {
+                              setNovoPacienteId(p.id);
+                              setBuscaPaciente(p.nome);
+                              setBuscaPacienteFocado(false);
+                            }}
+                            className="p-3 cursor-pointer hover:bg-gray-100 border-b last:border-b-0 flex items-center gap-3"
+                          >
+                            <User className="w-5 h-5 text-gray-400" />
+                            <div>
+                              <div className="font-medium">{p.nome}</div>
+                              <div className="text-xs text-gray-500">
+                                ID: {p.idPaciente || p.id} {p.cpf && `| CPF: ${p.cpf}`}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Indicador de paciente selecionado */}
                   {novoPacienteId && (
-                    <div className="text-sm text-green-600 flex items-center gap-1">
+                    <div className="mt-2 text-sm text-green-600 flex items-center gap-1">
                       <CheckCircle2 className="w-4 h-4" />
-                      Paciente selecionado: {pacientes.find((p: any) => p.id === novoPacienteId)?.nome || buscaPaciente}
+                      Paciente selecionado
                     </div>
                   )}
                 </div>
