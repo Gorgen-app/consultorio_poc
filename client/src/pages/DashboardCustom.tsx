@@ -336,7 +336,7 @@ function MicroWidget({ label, value, unit, icon, categoria, onRemove }: MicroWid
   const cat = categorias.find(c => c.valor === categoria);
   
   return (
-    <Card className="p-4 h-[130px] transition-all duration-200 hover:shadow-sm group relative">
+    <Card className="p-4 h-[150px] transition-all duration-200 hover:shadow-sm group relative">
       {/* Botão de exclusão */}
       {onRemove && (
         <Button
@@ -426,8 +426,8 @@ function SortableWidget({
   // Classes de tamanho para o grid
   const tamanhoClasses: Record<TamanhoWidget, string> = {
     micro: 'col-span-1',
-    pequeno: 'col-span-1 h-[300px]',
-    medio: 'col-span-2 h-[300px]',
+    pequeno: 'col-span-1 h-[320px]',
+    medio: 'col-span-2 h-[320px]',
     grande: 'col-span-3 h-[400px]',
   };
 
