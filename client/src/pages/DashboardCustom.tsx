@@ -330,29 +330,80 @@ interface MicroWidgetProps {
   icon: React.ReactNode;
   categoria?: CategoriaMetrica;
   onRemove?: () => void;
+  onChangeTamanho?: (tamanho: TamanhoWidget) => void;
+  onOpenFullscreen?: () => void;
 }
 
-function MicroWidget({ label, value, unit, icon, categoria, onRemove }: MicroWidgetProps) {
+function MicroWidget({ label, value, unit, icon, categoria, onRemove, onChangeTamanho, onOpenFullscreen }: MicroWidgetProps) {
   const cat = categorias.find(c => c.valor === categoria);
   
   return (
     <Card className="p-4 h-[150px] transition-all duration-200 hover:shadow-sm group relative">
-      {/* Botão de exclusão */}
-      {onRemove && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-600"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          data-no-dnd="true"
-          title="Remover widget"
-        >
-          <X className="h-3 w-3" />
-        </Button>
-      )}
+      {/* Controles on-hover */}
+      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-white/80 backdrop-blur-sm rounded-md p-0.5 border border-slate-100 shadow-sm z-10">
+        {onChangeTamanho && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                title="Opções do widget"
+                data-no-dnd="true"
+              >
+                <MoreVertical className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Tamanho</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => onChangeTamanho('micro')} disabled={true}>
+                <Scaling className="mr-2 h-4 w-4" /> Micro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onChangeTamanho('pequeno')}>
+                <Scaling className="mr-2 h-4 w-4" /> Pequeno
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onChangeTamanho('medio')}>
+                <Scaling className="mr-2 h-4 w-4" /> Médio
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onChangeTamanho('grande')}>
+                <Scaling className="mr-2 h-4 w-4" /> Grande
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        
+        {onOpenFullscreen && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenFullscreen();
+            }}
+            data-no-dnd="true"
+            title="Expandir widget"
+          >
+            <Maximize2 className="h-3 w-3" />
+          </Button>
+        )}
+
+        {onRemove && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 hover:bg-red-100 hover:text-red-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            data-no-dnd="true"
+            title="Remover widget"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
       <div className="flex items-center justify-between h-full">
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium text-muted-foreground mb-1 truncate">
@@ -505,16 +556,16 @@ function SortableWidget({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Tamanho</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => onChangeTamanho('micro')} disabled={tamanho === 'micro'}>
-                <Scaling className="mr-2 h-4 w-4" /> Micro (0.5 col)
+                <Scaling className="mr-2 h-4 w-4" /> Micro
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onChangeTamanho('pequeno')} disabled={tamanho === 'pequeno'}>
-                <Scaling className="mr-2 h-4 w-4" /> Pequeno (1 col)
+                <Scaling className="mr-2 h-4 w-4" /> Pequeno
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onChangeTamanho('medio')} disabled={tamanho === 'medio'}>
-                <Scaling className="mr-2 h-4 w-4" /> Médio (2 col)
+                <Scaling className="mr-2 h-4 w-4" /> Médio
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onChangeTamanho('grande')} disabled={tamanho === 'grande'}>
-                <Scaling className="mr-2 h-4 w-4" /> Grande (3 col)
+                <Scaling className="mr-2 h-4 w-4" /> Grande
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -864,7 +915,7 @@ function MetricaConteudo({
               layout="vertical" 
               verticalAlign="middle"
               align="right"
-              wrapperStyle={{ paddingLeft: '10px', fontSize: '11px' }}
+              wrapperStyle={{ paddingLeft: '10px', fontSize: isFullscreen ? '14px' : '11px' }}
               formatter={formatLegend}
             />
           )}
@@ -997,6 +1048,12 @@ function MetricaConteudo({
 export default function DashboardCustom() {
   const [periodo, setPeriodo] = useState<PeriodoTempo>('30d');
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([
+    // KPIs convertidos em widgets micro
+    { id: 'fin_faturamento_total', tamanho: 'micro' },
+    { id: 'pac_ativos_total', tamanho: 'micro' },
+    { id: 'atd_total_periodo', tamanho: 'micro' },
+    { id: 'fin_taxa_recebimento', tamanho: 'micro' },
+    // Widgets originais
     { id: 'atd_evolucao_temporal', tamanho: 'medio' },
     { id: 'pac_novos_periodo', tamanho: 'micro' },
     { id: 'pac_inativos_periodo', tamanho: 'micro' },
@@ -1226,10 +1283,7 @@ export default function DashboardCustom() {
         </div>
       </div>
       
-      {/* Painel de KPIs (Painel de Voo) - CORRIGIDO */}
-      <KPIPanel stats={dashboardStats} periodo={periodo} isLoading={carregandoStats} />
-      
-      {/* Grid de Widgets com Drag-and-Drop */}
+        {/* Área de Widgets Dinâmicos */}Widgets com Drag-and-Drop */}
       {metricasExibidas.length === 0 ? (
         <Card className="p-12 text-center">
           <LayoutGrid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
