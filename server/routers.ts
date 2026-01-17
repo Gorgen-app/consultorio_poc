@@ -2024,9 +2024,58 @@ export const appRouter = router({
         pacienteId: z.number().optional().nullable(),
         pacienteNome: z.string().optional().nullable(),
         descricao: z.string().optional().nullable(),
+        convenio: z.string().optional().nullable(),
+        // Dados para criação automática de paciente
+        novoPaciente: z.object({
+          nome: z.string(),
+          telefone: z.string().optional(),
+          email: z.string().optional(),
+          cpf: z.string().optional(),
+          convenio: z.string().optional(),
+        }).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const idAgendamento = await db.getNextAgendamentoId(ctx.tenant.tenantId);
+        
+        let pacienteId = input.pacienteId;
+        let pacienteNome = input.pacienteNome;
+        
+        // Se não tem pacienteId mas tem novoPaciente, criar automaticamente
+        if (!pacienteId && input.novoPaciente && input.tipoCompromisso !== "Reunião") {
+          // Gerar próximo ID de paciente
+          const nextId = await db.getNextPacienteId(ctx.tenant.tenantId);
+          
+          // Criar paciente com dados mínimos
+          const novoPaciente = await db.createPaciente(ctx.tenant.tenantId, {
+            idPaciente: nextId,
+            nome: input.novoPaciente.nome,
+            telefone: input.novoPaciente.telefone || null,
+            email: input.novoPaciente.email || null,
+            cpf: input.novoPaciente.cpf || null,
+            operadora1: input.novoPaciente.convenio || input.convenio || null,
+            dataInclusao: new Date().toISOString().split('T')[0],
+          } as any);
+          
+          pacienteId = novoPaciente.id;
+          pacienteNome = input.novoPaciente.nome;
+          
+          // Registrar auditoria da criação automática
+          await db.createAuditLog(
+            "CREATE",
+            "paciente",
+            novoPaciente.id,
+            nextId,
+            null,
+            { ...input.novoPaciente, origem: "agendamento_automatico" },
+            {
+              userId: ctx.user?.id,
+              userName: ctx.user?.name || undefined,
+              userEmail: ctx.user?.email || undefined,
+              tenantId: ctx.tenant.tenantId,
+            }
+          );
+        }
+        
         return await db.createAgendamento({
           idAgendamento,
           tenantId: ctx.tenant.tenantId,
@@ -2036,8 +2085,8 @@ export const appRouter = router({
           dataHoraFim: input.dataHoraFim ? new Date(input.dataHoraFim) : new Date(new Date(input.dataHoraInicio).getTime() + 30 * 60000),
           local: input.local,
           status: input.status as any,
-          pacienteId: input.pacienteId,
-          pacienteNome: input.pacienteNome,
+          pacienteId,
+          pacienteNome,
           descricao: input.descricao,
           criadoPor: ctx.user?.name || "Sistema",
         } as any);
