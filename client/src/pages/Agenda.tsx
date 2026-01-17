@@ -849,22 +849,23 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
       limit: 20 
     },
     { 
-      enabled: termoBuscaPaciente.trim().length >= 2,
+      enabled: termoBuscaPaciente.trim().length >= 3, // SEGURANÇA: mínimo 3 caracteres
       staleTime: 1000, // Cache por 1 segundo para evitar buscas excessivas
     }
   );
   
-  // Filtro de pacientes: usa backend quando há busca, senão usa lista inicial
+  // Filtro de pacientes: SEGURANÇA - só mostra pacientes após 3+ caracteres digitados
+  // Isso previne seleção acidental de paciente errado (risco de erro médico)
   const pacientesFiltrados = useMemo(() => {
-    // Se há termo de busca com 2+ caracteres, usa resultado do backend
-    if (termoBuscaPaciente.trim().length >= 2) {
-      return pacientesBuscaBackend;
+    // CRÍTICO: Não mostrar nenhum paciente antes de 3 caracteres
+    // Isso força o usuário a buscar intencionalmente
+    if (termoBuscaPaciente.trim().length < 3) {
+      return [];
     }
     
-    // Sem busca suficiente, mostra os primeiros 10 da lista inicial
-    if (!pacientes || pacientes.length === 0) return [];
-    return pacientes.slice(0, 10);
-  }, [pacientes, pacientesBuscaBackend, termoBuscaPaciente]);
+    // Com 3+ caracteres, usa resultado do backend
+    return pacientesBuscaBackend;
+  }, [pacientesBuscaBackend, termoBuscaPaciente]);
   
   const handleCriarRapido = () => {
     if (!titulo.trim() && !pacienteSelecionado) {
@@ -997,7 +998,9 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
                       <CommandEmpty>
                         <div className="py-4 text-center">
                           <p className="text-sm text-muted-foreground mb-2">
-                            Nenhum paciente encontrado
+                            {termoBuscaPaciente.trim().length < 3 
+                              ? "Digite pelo menos 3 caracteres para buscar"
+                              : "Nenhum paciente encontrado"}
                           </p>
                           <Button 
                             variant="outline" 
@@ -1568,28 +1571,29 @@ export default function Agenda() {
   const { data: bloqueios = [], refetch: refetchBloqueios } = trpc.bloqueios.list.useQuery({
     incluirCancelados: false,
   });
-  // Query inicial de pacientes (primeiros 100 para lista inicial)
-  const { data: pacientesInicial = [] } = trpc.pacientes.list.useQuery({ limit: 100 });
+  // SEGURANÇA DO PACIENTE: Não carregar lista inicial de pacientes
+  // Isso previne seleção acidental de paciente errado (risco de erro médico)
+  // Pacientes só aparecem após digitar 3+ caracteres de busca
   
-  // Query de busca de pacientes no backend (ativada quando há 2+ caracteres)
+  // Query de busca de pacientes no backend (ativada quando há 3+ caracteres)
   const { data: pacientesBusca = [], isFetching: buscandoPacientesModal } = trpc.pacientes.list.useQuery(
     { 
       busca: buscaPaciente.trim(),
       limit: 30 
     },
     { 
-      enabled: buscaPaciente.trim().length >= 2,
+      enabled: buscaPaciente.trim().length >= 3, // SEGURANÇA: mínimo 3 caracteres
       staleTime: 1000,
     }
   );
   
-  // Combinar: se há busca, usa backend; senão, usa lista inicial
+  // SEGURANÇA: Só retorna pacientes se houver busca com 3+ caracteres
   const pacientes = useMemo(() => {
-    if (buscaPaciente.trim().length >= 2) {
+    if (buscaPaciente.trim().length >= 3) {
       return pacientesBusca;
     }
-    return pacientesInicial;
-  }, [pacientesInicial, pacientesBusca, buscaPaciente]);
+    return []; // Não mostrar nenhum paciente sem busca intencional
+  }, [pacientesBusca, buscaPaciente]);
   
   // Função para refetch unificado (agendamentos + bloqueios)
   const refetchTodos = useCallback(() => {
@@ -3105,9 +3109,9 @@ export default function Agenda() {
                   <div className="border rounded-md max-h-48 overflow-y-auto">
                     {pacientes.length === 0 ? (
                       <div className="p-3 text-center text-gray-500 text-sm">
-                        {buscaPaciente.trim().length >= 2 
+                        {buscaPaciente.trim().length >= 3 
                           ? "Nenhum paciente encontrado" 
-                          : "Digite pelo menos 2 caracteres para buscar"}
+                          : "Digite pelo menos 3 caracteres para buscar"}
                       </div>
                     ) : (
                       pacientes.map((p: any) => (
