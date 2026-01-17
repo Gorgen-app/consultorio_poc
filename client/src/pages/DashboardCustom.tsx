@@ -28,7 +28,8 @@ import {
   Clock,
   Receipt,
   CalendarCheck,
-  Percent
+  Percent,
+  X
 } from 'lucide-react';
 import {
   LineChart,
@@ -263,13 +264,30 @@ interface MicroWidgetProps {
   unit?: string;
   icon: React.ReactNode;
   categoria?: CategoriaMetrica;
+  onRemove?: () => void;
 }
 
-function MicroWidget({ label, value, unit, icon, categoria }: MicroWidgetProps) {
+function MicroWidget({ label, value, unit, icon, categoria, onRemove }: MicroWidgetProps) {
   const cat = categorias.find(c => c.valor === categoria);
   
   return (
-    <Card className="p-4 h-[130px] transition-all duration-200 hover:shadow-sm">
+    <Card className="p-4 h-[130px] transition-all duration-200 hover:shadow-sm group relative">
+      {/* Botão de exclusão */}
+      {onRemove && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-600"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          data-no-dnd="true"
+          title="Remover widget"
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      )}
       <div className="flex items-center justify-between h-full">
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium text-muted-foreground mb-1 truncate">
@@ -311,6 +329,7 @@ interface SortableWidgetProps {
   onChangeTamanho: (tamanho: TamanhoWidget) => void;
   onChangePeriodo: (periodo: PeriodoTempo | undefined) => void;
   onOpenFullscreen: () => void;
+  onRemove: () => void;
 }
 
 function SortableWidget({ 
@@ -319,7 +338,8 @@ function SortableWidget({
   config,
   onChangeTamanho,
   onChangePeriodo,
-  onOpenFullscreen
+  onOpenFullscreen,
+  onRemove
 }: SortableWidgetProps) {
   const {
     attributes,
@@ -359,6 +379,7 @@ function SortableWidget({
           unit={metrica.unidade}
           icon={categoria?.icone || <LayoutGrid className="h-5 w-5" />}
           categoria={metrica.categoria}
+          onRemove={onRemove}
         />
       </div>
     );
@@ -410,8 +431,22 @@ function SortableWidget({
             size="icon"
             className="h-6 w-6"
             onClick={onOpenFullscreen}
+            title="Expandir widget"
           >
             <Maximize2 className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 hover:bg-red-100 hover:text-red-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            data-no-dnd="true"
+            title="Remover widget"
+          >
+            <X className="h-3 w-3" />
           </Button>
         </div>
 
@@ -612,26 +647,106 @@ function MetricaConteudo({
     );
   }
   
-  // Gráficos de Pizza
+  // Gráficos de Pizza - COM LABELS CUSTOMIZADOS (formato: xx (yy%))
   if (metrica.tipoGrafico === 'pizza') {
-    let dados: { nome: string; valor: number }[] = [];
+    let dadosOriginais: { nome: string; valor: number }[] = [];
     
     if (metrica.id === 'pac_distribuicao_sexo' && pacDistribuicaoSexo?.dados) {
-      dados = pacDistribuicaoSexo.dados as { nome: string; valor: number }[];
+      dadosOriginais = pacDistribuicaoSexo.dados as { nome: string; valor: number }[];
     }
     if (metrica.id === 'pac_distribuicao_convenio' && pacDistribuicaoConvenio?.dados) {
-      dados = (pacDistribuicaoConvenio.dados as { nome: string; valor: number }[]).slice(0, 5);
+      dadosOriginais = pacDistribuicaoConvenio.dados as { nome: string; valor: number }[];
     }
     if (metrica.id === 'atd_por_tipo' && atdPorTipo?.dados) {
-      dados = atdPorTipo.dados as { nome: string; valor: number }[];
+      dadosOriginais = atdPorTipo.dados as { nome: string; valor: number }[];
     }
     if (metrica.id === 'fin_faturamento_convenio' && finFaturamentoConvenio?.dados) {
-      dados = (finFaturamentoConvenio.dados as { nome: string; valor: number }[]).slice(0, 5);
+      // Converter dados de faturamento por convênio para o formato padrão
+      dadosOriginais = (finFaturamentoConvenio.dados as unknown as { convenio: string; valor: number }[]).map(item => ({
+        nome: item.convenio,
+        valor: item.valor
+      }));
     }
     
-    if (dados.length === 0) {
+    if (dadosOriginais.length === 0) {
       return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Sem dados</div>;
     }
+    
+    // Agrupar categorias menores que 5% em "Outros"
+    const total = dadosOriginais.reduce((acc, item) => acc + item.valor, 0);
+    const dadosAgrupados: { nome: string; valor: number }[] = [];
+    let outrosValor = 0;
+    
+    dadosOriginais.forEach(item => {
+      const percentual = (item.valor / total) * 100;
+      if (percentual >= 5) {
+        dadosAgrupados.push(item);
+      } else {
+        outrosValor += item.valor;
+      }
+    });
+    
+    if (outrosValor > 0) {
+      dadosAgrupados.push({ nome: 'Outros', valor: outrosValor });
+    }
+    
+    const dados = dadosAgrupados;
+    
+    // Função para renderizar label customizado no formato "xx (yy%)"
+    const renderCustomLabel = ({
+      cx,
+      cy,
+      midAngle,
+      innerRadius,
+      outerRadius,
+      value,
+      index,
+    }: {
+      cx: number;
+      cy: number;
+      midAngle: number;
+      innerRadius: number;
+      outerRadius: number;
+      value: number;
+      index: number;
+    }) => {
+      const RADIAN = Math.PI / 180;
+      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+      const percentual = ((value / total) * 100).toFixed(1);
+      
+      // Só mostrar label se o setor for grande o suficiente (>= 10%)
+      if (parseFloat(percentual) < 10) return null;
+      
+      return (
+        <text
+          x={x}
+          y={y}
+          fill="white"
+          textAnchor="middle"
+          dominantBaseline="central"
+          style={{ fontSize: tamanho === 'pequeno' ? '9px' : '11px', fontWeight: 600 }}
+        >
+          <tspan x={x} dy="-0.4em">{value.toLocaleString('pt-BR')}</tspan>
+          <tspan x={x} dy="1.2em">({percentual}%)</tspan>
+        </text>
+      );
+    };
+    
+    // Função para formatar a legenda com valor e percentual
+    const formatLegend = (value: string, entry: any) => {
+      const item = dados.find(d => d.nome === value);
+      if (item) {
+        const percentual = ((item.valor / total) * 100).toFixed(1);
+        return (
+          <span className="text-xs">
+            {value}: {item.valor.toLocaleString('pt-BR')} ({percentual}%)
+          </span>
+        );
+      }
+      return <span className="text-xs">{value}</span>;
+    };
     
     return (
       <ResponsiveContainer width="100%" height={chartHeight}>
@@ -645,6 +760,8 @@ function MetricaConteudo({
             dataKey="valor"
             nameKey="nome"
             stroke="none"
+            label={tamanho !== 'micro' ? renderCustomLabel : undefined}
+            labelLine={false}
           >
             {dados.map((_, index) => (
               <Cell key={`cell-${index}`} fill={CORES_GRAFICOS[index % CORES_GRAFICOS.length]} />
@@ -652,12 +769,19 @@ function MetricaConteudo({
           </Pie>
           {tamanho !== 'micro' && (
             <Legend 
-              layout="horizontal" 
-              verticalAlign="bottom"
-              formatter={(value) => <span className="text-xs">{value}</span>}
+              layout="vertical" 
+              verticalAlign="middle"
+              align="right"
+              wrapperStyle={{ paddingLeft: '10px', fontSize: '11px' }}
+              formatter={formatLegend}
             />
           )}
-          <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
+          <Tooltip 
+            formatter={(value: number) => {
+              const percentual = ((value / total) * 100).toFixed(1);
+              return `${value.toLocaleString('pt-BR')} (${percentual}%)`;
+            }} 
+          />
         </RechartsPieChart>
       </ResponsiveContainer>
     );
@@ -677,7 +801,11 @@ function MetricaConteudo({
       dados = atdPorLocal.dados as { nome: string; valor: number }[];
     }
     if (metrica.id === 'atd_por_convenio' && atdPorConvenio?.dados) {
-      dados = (atdPorConvenio.dados as { nome: string; valor: number }[]).slice(0, 5);
+      // Converter dados de atendimentos por convênio para o formato padrão
+      dados = (atdPorConvenio.dados as unknown as { convenio: string; quantidade: number }[]).map(item => ({
+        nome: item.convenio,
+        valor: item.quantidade
+      })).slice(0, 5);
     }
     if (metrica.id === 'qua_diagnosticos_frequentes' && quaDiagnosticosFrequentes?.dados) {
       dados = (quaDiagnosticosFrequentes.dados as { nome: string; valor: number }[]).slice(0, tamanho === 'micro' ? 3 : tamanho === 'pequeno' ? 5 : 10);
@@ -940,6 +1068,12 @@ export default function DashboardCustom() {
     });
   };
 
+  // Função para remover widget e persistir a configuração
+  const handleRemoveWidget = (widgetId: string) => {
+    const newWidgets = widgetConfigs.filter(w => w.id !== widgetId);
+    handleSalvarConfig(newWidgets);
+  };
+
   const fullscreenMetrica = fullscreenWidget ? todasMetricas.find(m => m.id === fullscreenWidget) : null;
 
   if (carregandoConfig) {
@@ -1078,6 +1212,7 @@ export default function DashboardCustom() {
                           onChangeTamanho={(t) => updateWidgetTamanho(metrica.id, t)}
                           onChangePeriodo={(p) => updateWidgetPeriodo(metrica.id, p)}
                           onOpenFullscreen={() => setFullscreenWidget(metrica.id)}
+                          onRemove={() => handleRemoveWidget(metrica.id)}
                         />
                       ))}
                     </div>
@@ -1094,6 +1229,7 @@ export default function DashboardCustom() {
                     onChangeTamanho={(t) => updateWidgetTamanho(metrica.id, t)}
                     onChangePeriodo={(p) => updateWidgetPeriodo(metrica.id, p)}
                     onOpenFullscreen={() => setFullscreenWidget(metrica.id)}
+                    onRemove={() => handleRemoveWidget(metrica.id)}
                   />
                 );
               })}
