@@ -1,5 +1,11 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
+import { 
+  startOfDay, endOfDay, 
+  startOfWeek, endOfWeek, 
+  startOfMonth, endOfMonth,
+  startOfYear, endOfYear 
+} from "date-fns";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1647,8 +1653,42 @@ export default function Agenda() {
   // Ref para scroll automático
   const gradeRef = useRef<HTMLDivElement>(null);
   
-  // Queries tRPC
-  const { data: agendamentos = [], refetch: refetchAgendamentos } = trpc.agenda.listar.useQuery();
+  // Calcular período de visualização para filtrar agendamentos
+  // Isso otimiza a query e evita carregar dados desnecessários
+  const periodoVisualizacao = useMemo(() => {
+    let dataInicio: Date;
+    let dataFim: Date;
+    
+    switch (modoVisualizacao) {
+      case 'dia':
+        dataInicio = startOfDay(dataSelecionada);
+        dataFim = endOfDay(dataSelecionada);
+        break;
+      case 'semana':
+        dataInicio = startOfWeek(dataSelecionada, { weekStartsOn: 0 });
+        dataFim = endOfWeek(dataSelecionada, { weekStartsOn: 0 });
+        break;
+      case 'mes':
+        dataInicio = startOfMonth(dataSelecionada);
+        dataFim = endOfMonth(dataSelecionada);
+        break;
+      case 'ano':
+        dataInicio = startOfYear(dataSelecionada);
+        dataFim = endOfYear(dataSelecionada);
+        break;
+      default:
+        dataInicio = startOfWeek(dataSelecionada, { weekStartsOn: 0 });
+        dataFim = endOfWeek(dataSelecionada, { weekStartsOn: 0 });
+    }
+    
+    return { dataInicio, dataFim };
+  }, [dataSelecionada, modoVisualizacao]);
+  
+  // Queries tRPC - agora com filtros de data para otimização
+  const { data: agendamentos = [], refetch: refetchAgendamentos } = trpc.agenda.listar.useQuery({
+    dataInicio: periodoVisualizacao.dataInicio,
+    dataFim: periodoVisualizacao.dataFim,
+  });
   const { data: bloqueios = [], refetch: refetchBloqueios } = trpc.bloqueios.list.useQuery({
     incluirCancelados: false,
   });
