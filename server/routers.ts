@@ -1522,7 +1522,29 @@ export const appRouter = router({
           });
         }
         
-        // VALIDAÇÃO 2: Verificar conflitos de horário (se não forçado)
+        // VALIDAÇÃO 2: Não permitir agendamento no passado (Erro 4)
+        const agora = new Date();
+        // Permitir uma margem de 5 minutos para evitar problemas de sincronização
+        const margemMinutos = 5;
+        const limitePassado = new Date(agora.getTime() - margemMinutos * 60 * 1000);
+        if (dataHoraInicio < limitePassado) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Não é possível criar agendamentos em datas/horários passados.",
+          });
+        }
+        
+        // VALIDAÇÃO 3: Duração mínima de 5 minutos (Erro 13)
+        const duracaoMinutos = (dataHoraFim.getTime() - dataHoraInicio.getTime()) / (1000 * 60);
+        const duracaoMinima = 5; // minutos
+        if (duracaoMinutos < duracaoMinima) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `A duração mínima do agendamento é de ${duracaoMinima} minutos.`,
+          });
+        }
+        
+        // VALIDAÇÃO 4: Verificar conflitos de horário (se não forçado)
         if (!forcarConflito) {
           const conflitos = await db.verificarConflitosAgendamento(
             dataHoraInicio,

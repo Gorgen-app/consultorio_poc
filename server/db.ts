@@ -2146,6 +2146,9 @@ export async function listAgendamentos(filters?: {
   status?: string;
   incluirCancelados?: boolean;
   tenantId?: number;
+  // Paginação (Erro 9)
+  limite?: number;
+  offset?: number;
 }) {
   const db = await getDb();
   if (!db) return [];
@@ -2169,8 +2172,31 @@ export async function listAgendamentos(filters?: {
     conditions.push(eq(agendamentos.status, filters.status as any));
   }
   
+  // Calcular limite dinâmico baseado no período (Erro 9)
+  // Para visualizações de dia/semana: sem limite (ou limite alto)
+  // Para visualizações de mês/ano: limite para performance
+  let limiteFinal = filters?.limite;
+  if (!limiteFinal && filters?.dataInicio && filters?.dataFim) {
+    const diasDiferenca = Math.ceil(
+      (filters.dataFim.getTime() - filters.dataInicio.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    // Dia: até 1 dia -> sem limite
+    // Semana: até 7 dias -> sem limite
+    // Mês: até 31 dias -> limite de 1000
+    // Ano: mais de 31 dias -> limite de 2000
+    if (diasDiferenca <= 7) {
+      limiteFinal = 10000; // Praticamente sem limite para dia/semana
+    } else if (diasDiferenca <= 31) {
+      limiteFinal = 1000; // Limite razoável para mês
+    } else {
+      limiteFinal = 2000; // Limite para visualizações longas
+    }
+  } else if (!limiteFinal) {
+    limiteFinal = 500; // Fallback padrão
+  }
+  
   // Query otimizada com filtros SQL e limite de campos
-  const result = await db.select({
+  let query = db.select({
     id: agendamentos.id,
     idAgendamento: agendamentos.idAgendamento,
     tipoCompromisso: agendamentos.tipoCompromisso,
@@ -2189,9 +2215,14 @@ export async function listAgendamentos(filters?: {
     .from(agendamentos)
     .where(and(...conditions))
     .orderBy(asc(agendamentos.dataHoraInicio))
-    .limit(500); // Limitar para performance
+    .limit(limiteFinal);
   
-  return result;
+  // Aplicar offset se fornecido (para paginação)
+  if (filters?.offset) {
+    query = query.offset(filters.offset) as any;
+  }
+  
+  return await query;
 }
 
 // Cancelar agendamento (não apaga, apenas marca como cancelado)
