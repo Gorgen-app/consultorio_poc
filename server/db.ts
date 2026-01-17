@@ -1969,16 +1969,22 @@ export async function getEvolucaoIMC(pacienteId: number, meses = 12) {
 import { agendamentos, bloqueiosHorario, historicoAgendamentos, InsertAgendamento, InsertBloqueioHorario, InsertHistoricoAgendamento } from "../drizzle/schema";
 
 // Gerar próximo ID de agendamento (formato: AG-YYYY-NNNNN)
-export async function getNextAgendamentoId(): Promise<string> {
+export async function getNextAgendamentoId(tenantId?: number): Promise<string> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   const ano = new Date().getFullYear();
   const prefix = `AG-${ano}-`;
   
+  // Se tenantId fornecido, filtra por tenant; caso contrário, busca globalmente
+  const conditions = [like(agendamentos.idAgendamento, `${prefix}%`)];
+  if (tenantId) {
+    conditions.push(eq(agendamentos.tenantId, tenantId));
+  }
+  
   const result = await db.select({ idAgendamento: agendamentos.idAgendamento })
     .from(agendamentos)
-    .where(like(agendamentos.idAgendamento, `${prefix}%`))
+    .where(and(...conditions))
     .orderBy(desc(agendamentos.idAgendamento))
     .limit(1);
   
@@ -1994,16 +2000,22 @@ export async function getNextAgendamentoId(): Promise<string> {
 }
 
 // Gerar próximo ID de bloqueio (formato: BL-YYYY-NNNNN)
-export async function getNextBloqueioId(): Promise<string> {
+export async function getNextBloqueioId(tenantId?: number): Promise<string> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   const ano = new Date().getFullYear();
   const prefix = `BL-${ano}-`;
   
+  // Se tenantId fornecido, filtra por tenant; caso contrário, busca globalmente
+  const conditions = [like(bloqueiosHorario.idBloqueio, `${prefix}%`)];
+  if (tenantId) {
+    conditions.push(eq(bloqueiosHorario.tenantId, tenantId));
+  }
+  
   const result = await db.select({ idBloqueio: bloqueiosHorario.idBloqueio })
     .from(bloqueiosHorario)
-    .where(like(bloqueiosHorario.idBloqueio, `${prefix}%`))
+    .where(and(...conditions))
     .orderBy(desc(bloqueiosHorario.idBloqueio))
     .limit(1);
   
@@ -2108,13 +2120,18 @@ export async function createAgendamento(data: InsertAgendamento) {
 }
 
 // Buscar agendamento por ID
-export async function getAgendamentoById(id: number) {
+export async function getAgendamentoById(id: number, tenantId?: number) {
   const db = await getDb();
   if (!db) return undefined;
   
+  const conditions = [eq(agendamentos.id, id)];
+  if (tenantId) {
+    conditions.push(eq(agendamentos.tenantId, tenantId));
+  }
+  
   const result = await db.select()
     .from(agendamentos)
-    .where(eq(agendamentos.id, id))
+    .where(and(...conditions))
     .limit(1);
   
   return result[0];
@@ -2128,12 +2145,13 @@ export async function listAgendamentos(filters?: {
   tipo?: string;
   status?: string;
   incluirCancelados?: boolean;
+  tenantId?: number;
 }) {
   const db = await getDb();
   if (!db) return [];
   
   // Construir condições SQL para filtrar no banco (muito mais rápido)
-  const conditions = [eq(agendamentos.tenantId, 1)];
+  const conditions = [eq(agendamentos.tenantId, filters?.tenantId || 1)];
   
   if (filters?.dataInicio) {
     conditions.push(gte(agendamentos.dataHoraInicio, filters.dataInicio));
@@ -2177,13 +2195,18 @@ export async function listAgendamentos(filters?: {
 }
 
 // Cancelar agendamento (não apaga, apenas marca como cancelado)
-export async function cancelarAgendamento(id: number, motivo: string, canceladoPor: string) {
+export async function cancelarAgendamento(id: number, motivo: string, canceladoPor: string, tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar dados anteriores
-  const anterior = await getAgendamentoById(id);
+  const anterior = await getAgendamentoById(id, tenantId);
   if (!anterior) throw new Error("Agendamento não encontrado");
+  
+  // Verificar se pertence ao tenant correto
+  if (tenantId && anterior.tenantId !== tenantId) {
+    throw new Error("Acesso negado: agendamento pertence a outro tenant");
+  }
   
   // Atualizar status
   await db.update(agendamentos)
@@ -2214,14 +2237,20 @@ export async function reagendarAgendamento(
   novaDataInicio: Date,
   novaDataFim: Date,
   reagendadoPor: string,
-  motivo?: string
+  motivo?: string,
+  tenantId?: number
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento original
-  const original = await getAgendamentoById(idOriginal);
+  const original = await getAgendamentoById(idOriginal, tenantId);
   if (!original) throw new Error("Agendamento original não encontrado");
+  
+  // Verificar se pertence ao tenant correto
+  if (tenantId && original.tenantId !== tenantId) {
+    throw new Error("Acesso negado: agendamento pertence a outro tenant");
+  }
   
   // Marcar original como reagendado
   await db.update(agendamentos)
@@ -2266,13 +2295,14 @@ export async function moverAgendamento(
   id: number,
   novaDataInicio: Date,
   novaDataFim: Date,
-  movidoPor: string
+  movidoPor: string,
+  tenantId?: number
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento original
-  const original = await getAgendamentoById(id);
+  const original = await getAgendamentoById(id, tenantId);
   if (!original) throw new Error("Agendamento não encontrado");
   
   // Não permitir mover agendamentos finalizados
@@ -2316,12 +2346,12 @@ export async function moverAgendamento(
 }
 
 // Confirmar agendamento
-export async function confirmarAgendamento(id: number, confirmadoPor: string) {
+export async function confirmarAgendamento(id: number, confirmadoPor: string, tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento para obter tenantId
-  const agendamento = await getAgendamentoById(id);
+  const agendamento = await getAgendamentoById(id, tenantId);
   if (!agendamento) throw new Error("Agendamento não encontrado");
   
   await db.update(agendamentos)
@@ -2344,12 +2374,12 @@ export async function confirmarAgendamento(id: number, confirmadoPor: string) {
 }
 
 // Marcar como realizado
-export async function realizarAgendamento(id: number, realizadoPor: string, atendimentoId?: number) {
+export async function realizarAgendamento(id: number, realizadoPor: string, atendimentoId?: number, tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento para obter tenantId
-  const agendamento = await getAgendamentoById(id);
+  const agendamento = await getAgendamentoById(id, tenantId);
   if (!agendamento) throw new Error("Agendamento não encontrado");
   
   await db.update(agendamentos)
@@ -2373,12 +2403,12 @@ export async function realizarAgendamento(id: number, realizadoPor: string, aten
 }
 
 // Marcar falta
-export async function marcarFaltaAgendamento(id: number, marcadoPor: string) {
+export async function marcarFaltaAgendamento(id: number, marcadoPor: string, tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento para obter tenantId
-  const agendamento = await getAgendamentoById(id);
+  const agendamento = await getAgendamentoById(id, tenantId);
   if (!agendamento) throw new Error("Agendamento não encontrado");
   
   await db.update(agendamentos)
@@ -2502,11 +2532,17 @@ export async function listBloqueios(filters?: {
   dataInicio?: Date;
   dataFim?: Date;
   incluirCancelados?: boolean;
+  tenantId?: number;
 }) {
   const db = await getDb();
   if (!db) return [];
   
   const conditions = [];
+  
+  // Filtrar por tenant
+  if (filters?.tenantId) {
+    conditions.push(eq(bloqueiosHorario.tenantId, filters.tenantId));
+  }
   
   if (filters?.dataInicio) {
     conditions.push(sql`${bloqueiosHorario.dataHoraInicio} >= ${filters.dataInicio}`);
@@ -2529,9 +2565,14 @@ export async function listBloqueios(filters?: {
   return await query;
 }
 
-export async function cancelarBloqueio(id: number, motivo: string, canceladoPor: string) {
+export async function cancelarBloqueio(id: number, motivo: string, canceladoPor: string, tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  const conditions = [eq(bloqueiosHorario.id, id)];
+  if (tenantId) {
+    conditions.push(eq(bloqueiosHorario.tenantId, tenantId));
+  }
   
   await db.update(bloqueiosHorario)
     .set({
@@ -2540,19 +2581,24 @@ export async function cancelarBloqueio(id: number, motivo: string, canceladoPor:
       canceladoPor,
       motivoCancelamento: motivo,
     })
-    .where(eq(bloqueiosHorario.id, id));
+    .where(and(...conditions));
   
   return getBloqueioById(id);
 }
 
 // Buscar histórico de um agendamento
-export async function getHistoricoAgendamento(agendamentoId: number) {
+export async function getHistoricoAgendamento(agendamentoId: number, tenantId?: number) {
   const db = await getDb();
   if (!db) return [];
   
+  const conditions = [eq(historicoAgendamentos.agendamentoId, agendamentoId)];
+  if (tenantId) {
+    conditions.push(eq(historicoAgendamentos.tenantId, tenantId));
+  }
+  
   return await db.select()
     .from(historicoAgendamentos)
-    .where(eq(historicoAgendamentos.agendamentoId, agendamentoId))
+    .where(and(...conditions))
     .orderBy(desc(historicoAgendamentos.createdAt));
 }
 
@@ -4487,16 +4533,21 @@ export async function getCrossTenantStats(tenantId: number) {
 /**
  * Atualiza o google_uid de um agendamento após criar evento no Google
  */
-export async function atualizarAgendamentoGoogleUid(agendamentoId: number, googleUid: string) {
+export async function atualizarAgendamentoGoogleUid(agendamentoId: number, googleUid: string, tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  const conditions = [eq(agendamentos.id, agendamentoId)];
+  if (tenantId) {
+    conditions.push(eq(agendamentos.tenantId, tenantId));
+  }
   
   await db.update(agendamentos)
     .set({ 
       googleUid,
       updatedAt: new Date(),
     })
-    .where(eq(agendamentos.id, agendamentoId));
+    .where(and(...conditions));
   
   return { success: true };
 }
@@ -4507,12 +4558,13 @@ export async function atualizarAgendamentoGoogleUid(agendamentoId: number, googl
 export async function listAgendamentosNaoSincronizados(filters?: {
   dataInicio?: Date;
   dataFim?: Date;
+  tenantId?: number;
 }) {
   const db = await getDb();
   if (!db) return [];
   
   const conditions = [
-    eq(agendamentos.tenantId, 1),
+    eq(agendamentos.tenantId, filters?.tenantId || 1),
     isNull(agendamentos.googleUid),
     ne(agendamentos.status, 'Cancelado'),
   ];
@@ -4537,7 +4589,8 @@ export async function listAgendamentosNaoSincronizados(filters?: {
 export async function vincularAgendamentoPaciente(
   agendamentoId: number,
   pacienteId: number,
-  vinculadoPor: string
+  vinculadoPor: string,
+  tenantId?: number
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -4550,17 +4603,22 @@ export async function vincularAgendamentoPaciente(
   
   const nomePaciente = paciente[0]?.nome || null;
   
+  const conditions = [eq(agendamentos.id, agendamentoId)];
+  if (tenantId) {
+    conditions.push(eq(agendamentos.tenantId, tenantId));
+  }
+  
   await db.update(agendamentos)
     .set({ 
       pacienteId,
       pacienteNome: nomePaciente,
       updatedAt: new Date(),
     })
-    .where(eq(agendamentos.id, agendamentoId));
+    .where(and(...conditions));
   
   // Registrar no histórico
   await db.insert(historicoAgendamentos).values({
-    tenantId: 1,
+    tenantId: tenantId || 1,
     agendamentoId,
     tipoAlteracao: 'Edição',
     descricaoAlteracao: `Paciente vinculado: ID ${pacienteId} - ${nomePaciente}`,
@@ -4573,7 +4631,7 @@ export async function vincularAgendamentoPaciente(
 /**
  * Lista agendamentos pendentes de vinculação (com nome mas sem paciente_id)
  */
-export async function listAgendamentosPendentesVinculacao() {
+export async function listAgendamentosPendentesVinculacao(tenantId?: number) {
   const db = await getDb();
   if (!db) return [];
   
@@ -4589,7 +4647,7 @@ export async function listAgendamentosPendentesVinculacao() {
     .from(agendamentos)
     .where(
       and(
-        eq(agendamentos.tenantId, 1),
+        eq(agendamentos.tenantId, tenantId || 1),
         isNull(agendamentos.pacienteId),
         isNotNull(agendamentos.pacienteNome),
         ne(agendamentos.pacienteNome, '')
@@ -4904,14 +4962,20 @@ export async function transferirAgendamento(
   novaDataInicio: Date,
   novaDataFim: Date,
   transferidoPor: string,
-  motivo?: string
+  motivo?: string,
+  tenantId?: number
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento original
-  const original = await getAgendamentoById(idOriginal);
+  const original = await getAgendamentoById(idOriginal, tenantId);
   if (!original) throw new Error("Agendamento não encontrado");
+  
+  // Verificar se pertence ao tenant correto
+  if (tenantId && original.tenantId !== tenantId) {
+    throw new Error("Acesso negado: agendamento pertence a outro tenant");
+  }
   
   // Verificar se pode ser transferido
   const statusAtual = original.status;
@@ -4987,14 +5051,20 @@ export async function atualizarStatusAgendamento(
   id: number,
   novoStatus: string,
   atualizadoPor: string,
-  motivo?: string
+  motivo?: string,
+  tenantId?: number
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento
-  const agendamento = await getAgendamentoById(id);
+  const agendamento = await getAgendamentoById(id, tenantId);
   if (!agendamento) throw new Error("Agendamento não encontrado");
+  
+  // Verificar se pertence ao tenant correto
+  if (tenantId && agendamento.tenantId !== tenantId) {
+    throw new Error("Acesso negado: agendamento pertence a outro tenant");
+  }
   
   const statusAtual = agendamento.status;
   
@@ -5078,12 +5148,13 @@ export async function reativarAgendamento(
   reativadoPor: string,
   manterDataOriginal: boolean = true,
   novaDataInicio?: Date,
-  novaDataFim?: Date
+  novaDataFim?: Date,
+  tenantId?: number
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const agendamento = await getAgendamentoById(id);
+  const agendamento = await getAgendamentoById(id, tenantId);
   if (!agendamento) throw new Error("Agendamento não encontrado");
   
   const statusAtual = agendamento.status;
@@ -5106,22 +5177,22 @@ export async function reativarAgendamento(
 }
 
 // Marcar paciente como chegou (status Aguardando)
-export async function marcarPacienteChegou(id: number, registradoPor: string) {
-  return atualizarStatusAgendamento(id, "Aguardando", registradoPor);
+export async function marcarPacienteChegou(id: number, registradoPor: string, tenantId?: number) {
+  return atualizarStatusAgendamento(id, "Aguardando", registradoPor, undefined, tenantId);
 }
 
 // Iniciar atendimento
-export async function iniciarAtendimento(id: number, iniciadoPor: string) {
-  return atualizarStatusAgendamento(id, "Em atendimento", iniciadoPor);
+export async function iniciarAtendimento(id: number, iniciadoPor: string, tenantId?: number) {
+  return atualizarStatusAgendamento(id, "Em atendimento", iniciadoPor, undefined, tenantId);
 }
 
 // Encerrar atendimento
-export async function encerrarAtendimento(id: number, encerradoPor: string, atendimentoId?: number) {
+export async function encerrarAtendimento(id: number, encerradoPor: string, atendimentoId?: number, tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Atualizar status
-  const resultado = await atualizarStatusAgendamento(id, "Encerrado", encerradoPor);
+  const resultado = await atualizarStatusAgendamento(id, "Encerrado", encerradoPor, undefined, tenantId);
   
   // Se tiver atendimentoId, vincular
   if (atendimentoId) {
