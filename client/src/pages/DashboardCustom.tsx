@@ -3,6 +3,14 @@ import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,7 +37,9 @@ import {
   Receipt,
   CalendarCheck,
   Percent,
-  X
+  X,
+  MoreVertical,
+  Scaling
 } from 'lucide-react';
 import {
   LineChart,
@@ -426,6 +436,30 @@ function SortableWidget({
 
         {/* Controles on-hover */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-background/80 backdrop-blur-sm rounded-md p-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                title="Opções do widget"
+              >
+                <MoreVertical className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Tamanho</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => onChangeTamanho('pequeno')} disabled={tamanho === 'pequeno'}>
+                <Scaling className="mr-2 h-4 w-4" /> Pequeno (1 col)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onChangeTamanho('medio')} disabled={tamanho === 'medio'}>
+                <Scaling className="mr-2 h-4 w-4" /> Médio (2 col)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onChangeTamanho('grande')} disabled={tamanho === 'grande'}>
+                <Scaling className="mr-2 h-4 w-4" /> Grande (3 col)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="ghost"
             size="icon"
