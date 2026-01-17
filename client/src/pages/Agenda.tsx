@@ -12,6 +12,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { toast } from "sonner";
 import { 
   ChevronLeft, 
@@ -64,7 +72,8 @@ import {
   Move,
   AlertTriangle,
   Filter,
-  Briefcase
+  Briefcase,
+  Maximize2
 } from "lucide-react";
 
 // ============================================
@@ -763,27 +772,108 @@ interface CriacaoRapidaModalProps {
   data: Date;
   hora: string;
   onCriarCompleto: () => void;
-  onCriarRapido: (dados: { titulo: string; duracao: number }) => void;
+  onCriarRapido: (dados: { 
+    titulo: string; 
+    duracao: number;
+    pacienteId?: number;
+    pacienteNome?: string;
+  }) => void;
+  pacientes?: Array<{
+    id: number;
+    nome: string;
+    cpf?: string | null;
+  }>;
 }
 
-function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCriarRapido }: CriacaoRapidaModalProps) {
+function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCriarRapido, pacientes = [] }: CriacaoRapidaModalProps) {
   const [titulo, setTitulo] = useState("");
   const [duracao, setDuracao] = useState(30);
   
+  // Estados para autocomplete
+  const [pacienteSelecionado, setPacienteSelecionado] = useState<{
+    id: number;
+    nome: string;
+  } | null>(null);
+  const [buscaAberta, setBuscaAberta] = useState(false);
+  const [termoBuscaPaciente, setTermoBuscaPaciente] = useState("");
+  const [usarTextoLivre, setUsarTextoLivre] = useState(false);
+  
+  // Filtro de pacientes (busca por nome, CPF ou ID)
+  const pacientesFiltrados = useMemo(() => {
+    if (!pacientes || pacientes.length === 0) return [];
+    
+    if (!termoBuscaPaciente.trim()) {
+      return pacientes.slice(0, 10);
+    }
+    
+    const termo = termoBuscaPaciente.toLowerCase().trim();
+    
+    return pacientes
+      .filter((p: any) => {
+        if (p.nome?.toLowerCase().includes(termo)) return true;
+        if (p.cpf?.replace(/\D/g, '').includes(termo.replace(/\D/g, ''))) return true;
+        if (String(p.id).includes(termo)) return true;
+        return false;
+      })
+      .slice(0, 20);
+  }, [pacientes, termoBuscaPaciente]);
+  
   const handleCriarRapido = () => {
-    if (!titulo.trim()) {
-      toast.error("Informe um título para o agendamento");
+    if (!titulo.trim() && !pacienteSelecionado) {
+      toast.error("Selecione um paciente ou informe um título");
       return;
     }
-    onCriarRapido({ titulo, duracao });
+    
+    onCriarRapido({ 
+      titulo: titulo || pacienteSelecionado?.nome || "", 
+      duracao,
+      pacienteId: pacienteSelecionado?.id,
+      pacienteNome: pacienteSelecionado?.nome,
+    });
+    
+    // Reset estados
     setTitulo("");
     setDuracao(30);
+    setPacienteSelecionado(null);
+    setTermoBuscaPaciente("");
+    setUsarTextoLivre(false);
+  };
+  
+  const handleClose = () => {
+    setTitulo("");
+    setDuracao(30);
+    setPacienteSelecionado(null);
+    setTermoBuscaPaciente("");
+    setUsarTextoLivre(false);
+    setBuscaAberta(false);
+    onClose();
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md" showCloseButton={false}>
+        {/* Botões manuais no canto superior direito */}
+        <div className="absolute top-3 right-3 flex items-center gap-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-sm opacity-70 hover:opacity-100"
+            onClick={onCriarCompleto}
+            title="Abrir formulário completo"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 rounded-sm opacity-70 hover:opacity-100"
+            onClick={handleClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <DialogHeader className="pr-20">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Plus className="w-5 h-5 text-blue-500" />
             Novo Agendamento
@@ -792,17 +882,120 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
             {data.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })} às {hora}
           </DialogDescription>
         </DialogHeader>
+        
         <div className="space-y-4">
+          {/* Campo de Paciente com Autocomplete */}
           <div>
-            <Label>Título / Paciente</Label>
-            <Input
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              placeholder="Nome do paciente ou título"
-              className="h-11"
-              autoFocus
-            />
+            <Label>Paciente</Label>
+            {usarTextoLivre ? (
+              // Fallback: Input simples
+              <div className="flex gap-2">
+                <Input
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  placeholder="Nome ou título"
+                  className="h-11 flex-1"
+                  autoFocus
+                />
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="h-11 w-11"
+                  onClick={() => {
+                    setUsarTextoLivre(false);
+                    setTitulo("");
+                  }}
+                  title="Buscar paciente"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              // Autocomplete com Popover + Command
+              <Popover open={buscaAberta} onOpenChange={setBuscaAberta}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start h-11 font-normal"
+                    role="combobox"
+                    aria-expanded={buscaAberta}
+                  >
+                    <Search className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
+                    <span className="truncate">
+                      {pacienteSelecionado 
+                        ? pacienteSelecionado.nome 
+                        : "Buscar paciente..."}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-[350px] p-0 z-[300]" 
+                  align="start"
+                  sideOffset={5}
+                >
+                  <Command shouldFilter={false}>
+                    <div className="flex h-9 items-center gap-2 border-b px-3">
+                      <Search className="size-4 shrink-0 opacity-50" />
+                      <input
+                        type="text"
+                        placeholder="Digite nome, CPF ou ID..."
+                        value={termoBuscaPaciente}
+                        onChange={(e) => setTermoBuscaPaciente(e.target.value)}
+                        className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        autoFocus
+                      />
+                    </div>
+                    <CommandList>
+                      <CommandEmpty>
+                        <div className="py-4 text-center">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Nenhum paciente encontrado
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setUsarTextoLivre(true);
+                              setPacienteSelecionado(null);
+                              setTitulo(termoBuscaPaciente);
+                              setBuscaAberta(false);
+                            }}
+                          >
+                            Usar "{termoBuscaPaciente}" como título
+                          </Button>
+                        </div>
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {pacientesFiltrados.map((p) => (
+                          <CommandItem 
+                            key={p.id}
+                            value={String(p.id)}
+                            onSelect={() => {
+                              setPacienteSelecionado({ id: p.id, nome: p.nome });
+                              setTitulo(p.nome);
+                              setBuscaAberta(false);
+                              setTermoBuscaPaciente("");
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <User className="w-4 h-4 mr-2 text-muted-foreground" />
+                            <div className="flex flex-col">
+                              <span>{p.nome}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ID: {p.id} {p.cpf && `| CPF: ${p.cpf}`}
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
+          
+          {/* Campo de Duração */}
           <div>
             <Label>Duração</Label>
             <Select value={String(duracao)} onValueChange={(v) => setDuracao(Number(v))}>
@@ -820,15 +1013,13 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
             </Select>
           </div>
         </div>
+        
         <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button variant="outline" onClick={onCriarCompleto}>
-            Formulário Completo
-          </Button>
           <Button onClick={handleCriarRapido}>
-            Criar Rápido
+            Salvar
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1326,7 +1517,7 @@ export default function Agenda() {
   
   // Queries tRPC
   const { data: agendamentos = [], refetch: refetchAgendamentos } = trpc.agenda.listar.useQuery();
-  const { data: pacientes = [] } = trpc.pacientes.listar.useQuery();
+  const { data: pacientes = [] } = trpc.pacientes.list.useQuery({});
   
   // Mutations tRPC
   const criarAgendamentoMutation = trpc.agenda.criar.useMutation({
@@ -1527,7 +1718,12 @@ export default function Agenda() {
   };
   
   // Handler de criação rápida
-  const handleCriarRapido = (dados: { titulo: string; duracao: number }) => {
+  const handleCriarRapido = (dados: { 
+    titulo: string; 
+    duracao: number;
+    pacienteId?: number;
+    pacienteNome?: string;
+  }) => {
     const [hora, minuto] = horaCriacaoRapida.split(":").map(Number);
     const dataInicio = new Date(dataCriacaoRapida);
     dataInicio.setHours(hora, minuto, 0, 0);
@@ -1545,6 +1741,8 @@ export default function Agenda() {
         titulo: dados.titulo,
         dataInicio: dataInicio.toISOString(),
         dataFim: dataFim.toISOString(),
+        pacienteId: dados.pacienteId,
+        pacienteNome: dados.pacienteNome,
       });
       setModalConflitosAberto(true);
       setModalCriacaoRapidaAberto(false);
@@ -1555,6 +1753,8 @@ export default function Agenda() {
     criarAgendamentoMutation.mutate({
       tipoCompromisso: "Consulta",
       titulo: dados.titulo,
+      pacienteId: dados.pacienteId,
+      pacienteNome: dados.pacienteNome,
       dataHoraInicio: dataInicio.toISOString(),
       dataHoraFim: dataFim.toISOString(),
       local: "Consultório",
@@ -2634,9 +2834,9 @@ export default function Agenda() {
         onClose={() => setModalCriacaoRapidaAberto(false)}
         data={dataCriacaoRapida}
         hora={horaCriacaoRapida}
-        onCr
-iarCompleto={handleAbrirFormularioCompleto}
+        onCriarCompleto={handleAbrirFormularioCompleto}
         onCriarRapido={handleCriarRapido}
+        pacientes={pacientes}
       />
       
       {/* Modal de Conflitos */}

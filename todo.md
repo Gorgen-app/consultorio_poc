@@ -2520,3 +2520,35 @@ A dashboard deve integrar **medicina e administração**:
 
 ### Documento de Referência
 Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
+
+
+---
+
+## 🚀 GORGEN 3.6.2 - Modal Agendamento Rápido (16/01/2026)
+
+### Fase 1: UI + Interface
+- [x] Importar Maximize2 de lucide-react
+- [x] Importar Command components
+- [x] Modificar DialogContent com showCloseButton={false}
+- [x] Adicionar botões Maximize e X manuais
+- [x] Renomear botão "Criar Rápido" para "Salvar"
+- [x] Modificar interface CriacaoRapidaModalProps
+- [x] Modificar handler handleCriarRapido externo
+- [x] Testar Fase 1
+
+### Fase 2: Autocomplete
+- [x] Adicionar prop pacientes ao modal
+- [x] Criar estados para autocomplete
+- [x] Implementar Popover + Command
+- [x] Implementar filtro de busca (nome/CPF/ID)
+- [x] Implementar fallback texto livre
+- [x] Atualizar handleCriarRapido interno
+- [x] Testar Fase 2
+
+### Testes Realizados
+- [x] Botão Maximizar abre formulário completo
+- [x] Botão X fecha o modal
+- [x] Botão "Salvar" cria agendamento
+- [x] Autocomplete lista pacientes
+- [x] Seleção de paciente preenche campo
+- [x] Agendamento criado com sucesso (toast confirmado)
