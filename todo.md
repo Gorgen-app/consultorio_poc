@@ -2552,3 +2552,18 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - [x] Autocomplete lista pacientes
 - [x] Seleção de paciente preenche campo
 - [x] Agendamento criado com sucesso (toast confirmado)
+
+
+---
+
+## 🐛 BUGS REPORTADOS - GORGEN 3.6.2 (16/01/2026)
+
+### Bug 1: Busca por nome não funciona no autocomplete
+- [ ] Investigar filtro de busca por nome
+- [ ] Propor 3 soluções
+- [ ] Implementar correção
+
+### Bug 2: Site trava ao selecionar "consulta" no formulário completo
+- [ ] Investigar causa do travamento
+- [ ] Propor 3 soluções
+- [ ] Implementar correção

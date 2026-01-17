@@ -798,9 +798,36 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
   const [termoBuscaPaciente, setTermoBuscaPaciente] = useState("");
   const [usarTextoLivre, setUsarTextoLivre] = useState(false);
   
+  // Ref para o input de busca
+  const inputBuscaRef = useRef<HTMLInputElement>(null);
+  
+  // Forçar foco no input quando o Popover abrir
+  useEffect(() => {
+    if (buscaAberta && inputBuscaRef.current) {
+      // Pequeno delay para garantir que o Popover está renderizado
+      setTimeout(() => {
+        inputBuscaRef.current?.focus();
+      }, 50);
+    }
+  }, [buscaAberta]);
+  
+  // DEBUG: Verificar se o estado está mudando
+  useEffect(() => {
+    console.log('>>> termoBuscaPaciente mudou para:', termoBuscaPaciente);
+  }, [termoBuscaPaciente]);
+  
   // Filtro de pacientes (busca por nome, CPF ou ID)
   const pacientesFiltrados = useMemo(() => {
     if (!pacientes || pacientes.length === 0) return [];
+    
+    // DEBUG: Verificar estrutura dos dados
+    if (pacientes.length > 0) {
+      console.log('=== DEBUG FILTRO PACIENTES ===');
+      console.log('Total pacientes:', pacientes.length);
+      console.log('Primeiro paciente (estrutura completa):', JSON.stringify(pacientes[0], null, 2));
+      console.log('Campos do primeiro paciente:', Object.keys(pacientes[0]));
+      console.log('Termo de busca:', termoBuscaPaciente);
+    }
     
     if (!termoBuscaPaciente.trim()) {
       return pacientes.slice(0, 10);
@@ -808,14 +835,33 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
     
     const termo = termoBuscaPaciente.toLowerCase().trim();
     
-    return pacientes
-      .filter((p: any) => {
-        if (p.nome?.toLowerCase().includes(termo)) return true;
-        if (p.cpf?.replace(/\D/g, '').includes(termo.replace(/\D/g, ''))) return true;
-        if (String(p.id).includes(termo)) return true;
-        return false;
-      })
-      .slice(0, 20);
+    // DEBUG: Testar filtro manualmente
+    const resultados = pacientes.filter((p: any) => {
+      const nomeMatch = p.nome?.toLowerCase().includes(termo);
+      const cpfMatch = p.cpf?.replace(/\D/g, '').includes(termo.replace(/\D/g, ''));
+      const idMatch = String(p.id).includes(termo);
+      
+      // Log apenas para os primeiros 3 pacientes
+      if (pacientes.indexOf(p) < 3) {
+        console.log(`Paciente ${p.id}:`, {
+          nome: p.nome,
+          nomeType: typeof p.nome,
+          nomeLower: p.nome?.toLowerCase(),
+          termo,
+          nomeMatch,
+          cpfMatch,
+          idMatch
+        });
+      }
+      
+      if (nomeMatch) return true;
+      if (cpfMatch) return true;
+      if (idMatch) return true;
+      return false;
+    });
+    
+    console.log('Resultados encontrados:', resultados.length);
+    return resultados.slice(0, 20);
   }, [pacientes, termoBuscaPaciente]);
   
   const handleCriarRapido = () => {
@@ -937,12 +983,15 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
                     <div className="flex h-9 items-center gap-2 border-b px-3">
                       <Search className="size-4 shrink-0 opacity-50" />
                       <input
+                        ref={inputBuscaRef}
                         type="text"
                         placeholder="Digite nome, CPF ou ID..."
                         value={termoBuscaPaciente}
-                        onChange={(e) => setTermoBuscaPaciente(e.target.value)}
+                        onChange={(e) => {
+                          console.log('>>> onChange disparado:', e.target.value);
+                          setTermoBuscaPaciente(e.target.value);
+                        }}
                         className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                        autoFocus
                       />
                     </div>
                     <CommandList>
