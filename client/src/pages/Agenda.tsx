@@ -218,6 +218,43 @@ function getFeriado(data: Date): string | null {
 }
 
 // ============================================
+// FUNÇÃO DE HIGHLIGHT PARA BUSCA
+// ============================================
+
+/**
+ * Destaca os termos buscados em negrito dentro de um texto.
+ * Exemplo: highlightSearchTerm("Maria da Silva", "maria") => "<strong>Maria</strong> da Silva"
+ */
+function highlightSearchTerm(text: string, searchTerm: string): React.ReactNode {
+  if (!searchTerm || searchTerm.trim().length < 3) {
+    return text;
+  }
+  
+  // Escapar caracteres especiais de regex
+  const escapedTerm = searchTerm.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  // Criar regex case-insensitive
+  const regex = new RegExp(`(${escapedTerm})`, 'gi');
+  
+  // Dividir o texto em partes
+  const parts = text.split(regex);
+  
+  // Se não encontrou match, retorna texto original
+  if (parts.length === 1) {
+    return text;
+  }
+  
+  // Retorna com partes destacadas em negrito
+  return parts.map((part, index) => 
+    regex.test(part) ? (
+      <strong key={index} className="text-blue-600 font-bold">{part}</strong>
+    ) : (
+      <span key={index}>{part}</span>
+    )
+  );
+}
+
+// ============================================
 // INTERFACES
 // ============================================
 
@@ -1057,7 +1094,7 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
                         >
                           <User className="w-4 h-4 text-gray-400" />
                           <div className="flex flex-col">
-                            <span className="font-medium">{p.nome}</span>
+                            <span className="font-medium">{highlightSearchTerm(p.nome, termoBuscaPaciente)}</span>
                             <span className="text-xs text-gray-500">
                               ID: {p.id} {p.cpf && `| CPF: ${p.cpf}`}
                             </span>
@@ -3207,7 +3244,7 @@ export default function Agenda() {
                           >
                             <User className="w-5 h-5 text-gray-400" />
                             <div>
-                              <div className="font-medium">{p.nome}</div>
+                              <div className="font-medium">{highlightSearchTerm(p.nome, buscaPaciente)}</div>
                               <div className="text-xs text-gray-500">
                                 ID: {p.idPaciente || p.id} {p.cpf && `| CPF: ${p.cpf}`}
                               </div>
