@@ -1906,7 +1906,8 @@ export default function Agenda() {
     return dias;
   }, [dataSelecionada]);
   
-  // Fechar modal de novo agendamento
+  // Fechar modal de novo agendamento - LIMPA TODOS OS ESTADOS
+  // Garante que ao cancelar ou fechar, nenhum dado persiste para o próximo agendamento
   const fecharModalNovo = () => {
     setModalNovoAberto(false);
     setNovoTipoCompromisso("");
@@ -1920,6 +1921,7 @@ export default function Agenda() {
     setNovoConvenio("");
     setNovoStatus("Agendado");
     setBuscaPaciente("");
+    setBuscaPacienteFocado(false);
   };
   
   // Calcular hora fim automaticamente para consultas
@@ -3207,7 +3209,14 @@ export default function Agenda() {
       {/* Modal de Criação Rápida */}
       <CriacaoRapidaModal
         isOpen={modalCriacaoRapidaAberto}
-        onClose={() => setModalCriacaoRapidaAberto(false)}
+        onClose={() => {
+          // Limpar estados globais ao fechar/cancelar o modal rápido
+          // Garante que próximo agendamento inicie em branco
+          setModalCriacaoRapidaAberto(false);
+          setBuscaPaciente("");
+          setBuscaPacienteFocado(false);
+          setNovoPacienteId(null);
+        }}
         data={dataCriacaoRapida}
         hora={horaCriacaoRapida}
         onCriarCompleto={handleAbrirFormularioCompleto}
