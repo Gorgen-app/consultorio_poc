@@ -842,25 +842,29 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
   const [termoBuscaPaciente, setTermoBuscaPaciente] = useState("");
   const [usarTextoLivre, setUsarTextoLivre] = useState(false);
   
-  // Filtro de pacientes (busca por nome, CPF ou ID)
+  // Query de busca de pacientes no backend (ativada quando há 2+ caracteres)
+  const { data: pacientesBuscaBackend = [], isFetching: buscandoPacientes } = trpc.pacientes.list.useQuery(
+    { 
+      busca: termoBuscaPaciente.trim(),
+      limit: 20 
+    },
+    { 
+      enabled: termoBuscaPaciente.trim().length >= 2,
+      staleTime: 1000, // Cache por 1 segundo para evitar buscas excessivas
+    }
+  );
+  
+  // Filtro de pacientes: usa backend quando há busca, senão usa lista inicial
   const pacientesFiltrados = useMemo(() => {
-    if (!pacientes || pacientes.length === 0) return [];
-    
-    if (!termoBuscaPaciente.trim()) {
-      return pacientes.slice(0, 10);
+    // Se há termo de busca com 2+ caracteres, usa resultado do backend
+    if (termoBuscaPaciente.trim().length >= 2) {
+      return pacientesBuscaBackend;
     }
     
-    const termo = termoBuscaPaciente.toLowerCase().trim();
-    
-    return pacientes
-      .filter((p: any) => {
-        if (p.nome?.toLowerCase().includes(termo)) return true;
-        if (p.cpf?.replace(/\D/g, '').includes(termo.replace(/\D/g, ''))) return true;
-        if (String(p.id).includes(termo)) return true;
-        return false;
-      })
-      .slice(0, 20);
-  }, [pacientes, termoBuscaPaciente]);
+    // Sem busca suficiente, mostra os primeiros 10 da lista inicial
+    if (!pacientes || pacientes.length === 0) return [];
+    return pacientes.slice(0, 10);
+  }, [pacientes, pacientesBuscaBackend, termoBuscaPaciente]);
   
   const handleCriarRapido = () => {
     if (!titulo.trim() && !pacienteSelecionado) {
@@ -1564,7 +1568,28 @@ export default function Agenda() {
   const { data: bloqueios = [], refetch: refetchBloqueios } = trpc.bloqueios.list.useQuery({
     incluirCancelados: false,
   });
-  const { data: pacientes = [] } = trpc.pacientes.list.useQuery({});
+  // Query inicial de pacientes (primeiros 100 para lista inicial)
+  const { data: pacientesInicial = [] } = trpc.pacientes.list.useQuery({ limit: 100 });
+  
+  // Query de busca de pacientes no backend (ativada quando há 2+ caracteres)
+  const { data: pacientesBusca = [], isFetching: buscandoPacientesModal } = trpc.pacientes.list.useQuery(
+    { 
+      busca: buscaPaciente.trim(),
+      limit: 30 
+    },
+    { 
+      enabled: buscaPaciente.trim().length >= 2,
+      staleTime: 1000,
+    }
+  );
+  
+  // Combinar: se há busca, usa backend; senão, usa lista inicial
+  const pacientes = useMemo(() => {
+    if (buscaPaciente.trim().length >= 2) {
+      return pacientesBusca;
+    }
+    return pacientesInicial;
+  }, [pacientesInicial, pacientesBusca, buscaPaciente]);
   
   // Função para refetch unificado (agendamentos + bloqueios)
   const refetchTodos = useCallback(() => {
@@ -3062,21 +3087,58 @@ export default function Agenda() {
             {novoTipoCompromisso === "Consulta" && (
               <div>
                 <Label className="text-base">Paciente *</Label>
-                <Select 
-                  value={novoPacienteId ? String(novoPacienteId) : ""} 
-                  onValueChange={(v) => setNovoPacienteId(Number(v))}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Selecione o paciente" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" sideOffset={5} className="z-[200]">
-                    {pacientes.map((p: any) => (
-                      <SelectItem key={p.id} value={String(p.id)} className="text-base">
-                        {p.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  {/* Campo de busca */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      value={buscaPaciente}
+                      onChange={(e) => setBuscaPaciente(e.target.value)}
+                      placeholder="Buscar paciente por nome, CPF ou ID..."
+                      className="h-11 pl-10"
+                    />
+                    {buscandoPacientesModal && (
+                      <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+                    )}
+                  </div>
+                  {/* Lista de pacientes */}
+                  <div className="border rounded-md max-h-48 overflow-y-auto">
+                    {pacientes.length === 0 ? (
+                      <div className="p-3 text-center text-gray-500 text-sm">
+                        {buscaPaciente.trim().length >= 2 
+                          ? "Nenhum paciente encontrado" 
+                          : "Digite pelo menos 2 caracteres para buscar"}
+                      </div>
+                    ) : (
+                      pacientes.map((p: any) => (
+                        <div
+                          key={p.id}
+                          onClick={() => {
+                            setNovoPacienteId(p.id);
+                            setBuscaPaciente(p.nome);
+                          }}
+                          className={`p-3 cursor-pointer hover:bg-gray-100 border-b last:border-b-0 flex items-center gap-3 ${
+                            novoPacienteId === p.id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
+                          }`}
+                        >
+                          <User className="w-5 h-5 text-gray-400" />
+                          <div>
+                            <div className="font-medium">{p.nome}</div>
+                            <div className="text-xs text-gray-500">
+                              ID: {p.idPaciente || p.id} {p.cpf && `| CPF: ${p.cpf}`}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  {novoPacienteId && (
+                    <div className="text-sm text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Paciente selecionado: {pacientes.find((p: any) => p.id === novoPacienteId)?.nome || buscaPaciente}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             
