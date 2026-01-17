@@ -1555,7 +1555,7 @@ export default function Agenda() {
   
   // Estados básicos
   const [dataSelecionada, setDataSelecionada] = useState(new Date());
-  const [modoVisualizacao, setModoVisualizacao] = useState<"dia" | "semana" | "mes">("semana");
+  const [modoVisualizacao, setModoVisualizacao] = useState<"dia" | "semana" | "mes" | "ano">("semana");
   const [modalNovoAberto, setModalNovoAberto] = useState(false);
   const [modalBloqueioAberto, setModalBloqueioAberto] = useState(false);
   const [modalDetalhesAberto, setModalDetalhesAberto] = useState(false);
@@ -1874,8 +1874,10 @@ export default function Agenda() {
       novaData.setDate(novaData.getDate() - 1);
     } else if (modoVisualizacao === "semana") {
       novaData.setDate(novaData.getDate() - 7);
-    } else {
+    } else if (modoVisualizacao === "mes") {
       novaData.setMonth(novaData.getMonth() - 1);
+    } else {
+      novaData.setFullYear(novaData.getFullYear() - 1);
     }
     setDataSelecionada(novaData);
   };
@@ -1886,8 +1888,10 @@ export default function Agenda() {
       novaData.setDate(novaData.getDate() + 1);
     } else if (modoVisualizacao === "semana") {
       novaData.setDate(novaData.getDate() + 7);
-    } else {
+    } else if (modoVisualizacao === "mes") {
       novaData.setMonth(novaData.getMonth() + 1);
+    } else {
+      novaData.setFullYear(novaData.getFullYear() + 1);
     }
     setDataSelecionada(novaData);
   };
@@ -2733,9 +2737,6 @@ export default function Agenda() {
           {getFeriado(dataSelecionada) && (
             <div className="text-sm text-red-500">{getFeriado(dataSelecionada)}</div>
           )}
-          {!isDiaTrabalho && (
-            <div className="text-sm text-muted-foreground">Dia não útil</div>
-          )}
         </div>
         
         {/* Grade */}
@@ -2933,6 +2934,140 @@ export default function Agenda() {
     );
   };
   
+  // Renderizar visualização de ano
+  const renderizarVisualizacaoAno = () => {
+    const anoAtual = dataSelecionada.getFullYear();
+    const hoje = new Date();
+    const meses = [];
+    
+    // Gerar array de 12 meses
+    for (let mes = 0; mes < 12; mes++) {
+      meses.push(new Date(anoAtual, mes, 1));
+    }
+    
+    const NOMES_MESES = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    
+    return (
+      <ScrollArea className="h-full">
+        <div className="p-4">
+          {/* Título do ano */}
+          <div className="text-center mb-4">
+            <h2 className="text-xl font-bold">{anoAtual}</h2>
+          </div>
+          
+          {/* Grid de 12 meses (4x3) */}
+          <div className="grid grid-cols-4 gap-4">
+            {meses.map((mesData, mesIndex) => {
+              // Calcular primeiro e último dia do mês
+              const primeiroDia = new Date(anoAtual, mesIndex, 1);
+              const ultimoDia = new Date(anoAtual, mesIndex + 1, 0);
+              
+              // Ajustar para começar no domingo
+              const inicioCalendario = new Date(primeiroDia);
+              inicioCalendario.setDate(inicioCalendario.getDate() - inicioCalendario.getDay());
+              
+              // Gerar semanas do mês
+              const semanas = [];
+              let diaAtual = new Date(inicioCalendario);
+              
+              while (diaAtual <= ultimoDia || semanas.length < 6) {
+                const semana = [];
+                for (let i = 0; i < 7; i++) {
+                  semana.push(new Date(diaAtual));
+                  diaAtual.setDate(diaAtual.getDate() + 1);
+                }
+                semanas.push(semana);
+                if (semanas.length >= 6) break;
+              }
+              
+              // Contar agendamentos do mês
+              const agendamentosMes = agendamentosFiltrados.filter((ag: Agendamento) => {
+                const dataAg = new Date(ag.dataHoraInicio);
+                return dataAg.getMonth() === mesIndex && dataAg.getFullYear() === anoAtual;
+              });
+              
+              const isMesAtual = hoje.getMonth() === mesIndex && hoje.getFullYear() === anoAtual;
+              
+              return (
+                <div 
+                  key={mesIndex}
+                  className={`
+                    border rounded-lg p-2 cursor-pointer hover:bg-blue-50 transition-colors
+                    ${isMesAtual ? "ring-2 ring-blue-500" : ""}
+                  `}
+                  onClick={() => {
+                    setDataSelecionada(new Date(anoAtual, mesIndex, 1));
+                    setModoVisualizacao("mes");
+                  }}
+                >
+                  {/* Nome do mês */}
+                  <div className="text-center mb-2">
+                    <span className={`text-sm font-semibold ${isMesAtual ? "text-blue-600" : ""}`}>
+                      {NOMES_MESES[mesIndex]}
+                    </span>
+                    {agendamentosMes.length > 0 && (
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
+                        {agendamentosMes.length}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Mini calendário */}
+                  <div className="text-xs">
+                    {/* Cabeçalho dias da semana */}
+                    <div className="grid grid-cols-7 gap-0.5 mb-1">
+                      {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
+                        <div key={i} className="text-center text-muted-foreground font-medium">
+                          {d}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Semanas */}
+                    {semanas.map((semana, semanaIndex) => (
+                      <div key={semanaIndex} className="grid grid-cols-7 gap-0.5">
+                        {semana.map((dia, diaIndex) => {
+                          const isMesCorreto = dia.getMonth() === mesIndex;
+                          const isHoje = dia.toDateString() === hoje.toDateString();
+                          
+                          // Contar agendamentos do dia
+                          const agendamentosDia = agendamentosFiltrados.filter((ag: Agendamento) => {
+                            const dataAg = new Date(ag.dataHoraInicio);
+                            return dataAg.toDateString() === dia.toDateString();
+                          });
+                          
+                          const temAgendamentos = agendamentosDia.length > 0;
+                          
+                          return (
+                            <div 
+                              key={diaIndex}
+                              className={`
+                                text-center py-0.5 rounded
+                                ${!isMesCorreto ? "text-gray-300" : ""}
+                                ${isHoje ? "bg-blue-500 text-white font-bold" : ""}
+                                ${temAgendamentos && !isHoje ? "bg-blue-100 text-blue-700 font-medium" : ""}
+                              `}
+                              title={temAgendamentos ? `${agendamentosDia.length} agendamento(s)` : undefined}
+                            >
+                              {dia.getDate()}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </ScrollArea>
+    );
+  };
+  
   // Paciente selecionado info
   const pacienteSelecionadoInfo = useMemo(() => {
     if (!novoPacienteId) return null;
@@ -3000,6 +3135,14 @@ export default function Agenda() {
             >
               Mês
             </Button>
+            <Button 
+              variant={modoVisualizacao === "ano" ? "secondary" : "ghost"} 
+              size="sm"
+              onClick={() => setModoVisualizacao("ano")}
+              className="rounded-none"
+            >
+              Ano
+            </Button>
           </div>
           
           {/* Botões de ação */}
@@ -3029,6 +3172,7 @@ export default function Agenda() {
           {modoVisualizacao === "dia" && renderizarVisualizacaoDia()}
           {modoVisualizacao === "semana" && renderizarVisualizacaoSemana()}
           {modoVisualizacao === "mes" && renderizarVisualizacaoMes()}
+          {modoVisualizacao === "ano" && renderizarVisualizacaoAno()}
         </CardContent>
       </Card>
       
