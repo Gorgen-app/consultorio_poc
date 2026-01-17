@@ -247,7 +247,7 @@ function highlightSearchTerm(text: string, searchTerm: string): React.ReactNode 
   // Retorna com partes destacadas em negrito
   return parts.map((part, index) => 
     regex.test(part) ? (
-      <strong key={index} className="text-blue-600 font-bold">{part}</strong>
+      <strong key={index} className="font-bold" style={{ color: '#203864' }}>{part}</strong>
     ) : (
       <span key={index}>{part}</span>
     )
@@ -852,7 +852,11 @@ interface CriacaoRapidaModalProps {
   onClose: () => void;
   data: Date;
   hora: string;
-  onCriarCompleto: () => void;
+  onCriarCompleto: (dados: { 
+    pacienteId?: number;
+    pacienteNome?: string;
+    titulo?: string;
+  }) => void;
   onCriarRapido: (dados: { 
     titulo: string; 
     duracao: number;
@@ -975,7 +979,11 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
             variant="ghost" 
             size="icon" 
             className="h-8 w-8 rounded-sm opacity-70 hover:opacity-100"
-            onClick={onCriarCompleto}
+            onClick={() => onCriarCompleto({
+              pacienteId: pacienteSelecionado?.id,
+              pacienteNome: pacienteSelecionado?.nome || termoBuscaPaciente || titulo,
+              titulo: titulo,
+            })}
             title="Abrir formulário completo"
           >
             <Maximize2 className="h-4 w-4" />
@@ -1984,26 +1992,65 @@ export default function Agenda() {
       return;
     }
     
-    // Criar agendamento
-    criarAgendamentoMutation.mutate({
+    // Preparar dados do agendamento
+    const dadosAgendamento: any = {
       tipoCompromisso: "Consulta",
       titulo: dados.titulo,
-      pacienteId: dados.pacienteId,
-      pacienteNome: dados.pacienteNome,
       dataHoraInicio: dataInicio.toISOString(),
       dataHoraFim: dataFim.toISOString(),
       local: "Consultório",
       status: "Agendado",
-    });
+    };
+    
+    // Se tem pacienteId, usar o paciente existente
+    if (dados.pacienteId) {
+      dadosAgendamento.pacienteId = dados.pacienteId;
+      dadosAgendamento.pacienteNome = dados.pacienteNome;
+    } 
+    // Se não tem pacienteId mas tem nome (texto livre), criar paciente automaticamente
+    else if (dados.pacienteNome && dados.pacienteNome.trim()) {
+      dadosAgendamento.pacienteNome = dados.pacienteNome;
+      // Enviar dados para criação automática de paciente no backend
+      dadosAgendamento.novoPaciente = {
+        nome: dados.pacienteNome.trim(),
+      };
+    }
+    
+    // Criar agendamento (backend criará paciente automaticamente se necessário)
+    criarAgendamentoMutation.mutate(dadosAgendamento);
     
     setModalCriacaoRapidaAberto(false);
   };
   
-  // Handler de abrir formulário completo
-  const handleAbrirFormularioCompleto = () => {
+  // Handler de abrir formulário completo (recebe dados do paciente do modal rápido)
+  const handleAbrirFormularioCompleto = (dados: { 
+    pacienteId?: number;
+    pacienteNome?: string;
+    titulo?: string;
+  }) => {
     setModalCriacaoRapidaAberto(false);
     setNovaDataAgendamento(formatarDataISO(dataCriacaoRapida));
     setNovaHoraInicioAgendamento(horaCriacaoRapida);
+    
+    // Preservar dados do paciente selecionado no modal rápido
+    if (dados.pacienteId) {
+      setNovoPacienteId(dados.pacienteId);
+      setBuscaPaciente(dados.pacienteNome || "");
+    } else if (dados.pacienteNome) {
+      // Se não tem ID mas tem nome (texto livre), preencher busca
+      setBuscaPaciente(dados.pacienteNome);
+    }
+    
+    // Preencher título se fornecido
+    if (dados.titulo) {
+      setNovoTitulo(dados.titulo);
+    }
+    
+    // Definir tipo como Consulta por padrão se tem paciente
+    if (dados.pacienteId || dados.pacienteNome) {
+      setNovoTipoCompromisso("Consulta");
+    }
+    
     setModalNovoAberto(true);
   };
   
@@ -2102,14 +2149,30 @@ export default function Agenda() {
     if (!dadosPendentes) return;
     
     if (dadosPendentes.tipo === "criacaoRapida") {
-      criarAgendamentoMutation.mutate({
+      // Preparar dados do agendamento
+      const dadosAgendamento: any = {
         tipoCompromisso: "Consulta",
         titulo: dadosPendentes.titulo,
         dataHoraInicio: dadosPendentes.dataInicio,
         dataHoraFim: dadosPendentes.dataFim,
         local: "Consultório",
         status: "Agendado",
-      });
+      };
+      
+      // Se tem pacienteId, usar o paciente existente
+      if (dadosPendentes.pacienteId) {
+        dadosAgendamento.pacienteId = dadosPendentes.pacienteId;
+        dadosAgendamento.pacienteNome = dadosPendentes.pacienteNome;
+      } 
+      // Se não tem pacienteId mas tem nome (texto livre), criar paciente automaticamente
+      else if (dadosPendentes.pacienteNome && dadosPendentes.pacienteNome.trim()) {
+        dadosAgendamento.pacienteNome = dadosPendentes.pacienteNome;
+        dadosAgendamento.novoPaciente = {
+          nome: dadosPendentes.pacienteNome.trim(),
+        };
+      }
+      
+      criarAgendamentoMutation.mutate(dadosAgendamento);
     } else if (dadosPendentes.tipo === "dragDrop") {
       executarDragDrop(
         dadosPendentes.agendamentoId,
@@ -2348,17 +2411,34 @@ export default function Agenda() {
       return;
     }
     
-    criarAgendamentoMutation.mutate({
+    // Preparar dados do agendamento
+    const dadosAgendamento: any = {
       tipoCompromisso: novoTipoCompromisso,
       titulo: novoTitulo,
       dataHoraInicio: dataInicio.toISOString(),
       dataHoraFim: dataFim.toISOString(),
       local: novoLocal,
       descricao: novaDescricao,
-      pacienteId: novoPacienteId,
       convenio: novoConvenio,
       status: novoStatus,
-    });
+    };
+    
+    // Se tem pacienteId, usar o paciente existente
+    if (novoPacienteId) {
+      dadosAgendamento.pacienteId = novoPacienteId;
+    } 
+    // Se não tem pacienteId mas tem nome no campo de busca (texto livre), criar paciente automaticamente
+    else if (buscaPaciente && buscaPaciente.trim() && novoTipoCompromisso === "Consulta") {
+      dadosAgendamento.pacienteNome = buscaPaciente.trim();
+      // Enviar dados para criação automática de paciente no backend
+      dadosAgendamento.novoPaciente = {
+        nome: buscaPaciente.trim(),
+        convenio: novoConvenio || undefined,
+      };
+    }
+    
+    // Criar agendamento (backend criará paciente automaticamente se necessário)
+    criarAgendamentoMutation.mutate(dadosAgendamento);
   };
   
   // Renderizar evento na grade (agendamento)
