@@ -1874,6 +1874,12 @@ export default function Agenda() {
       ? new Date(`${novaDataAgendamento}T${novaHoraFimAgendamento}`)
       : new Date(dataInicio.getTime() + 30 * 60000);
     
+    // VALIDAÇÃO: Hora de fim deve ser posterior à hora de início
+    if (dataFim <= dataInicio) {
+      toast.error("A hora de término deve ser posterior à hora de início.");
+      return;
+    }
+    
     // Verificar horário de trabalho
     const verificacaoHorario = verificarHorarioTrabalho(
       dataInicio,

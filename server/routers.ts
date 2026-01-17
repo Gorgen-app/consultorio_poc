@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, tenantProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
@@ -1507,8 +1508,43 @@ export const appRouter = router({
           cpf: z.string().optional(),
           convenio: z.string().optional(),
         }).optional(),
+        // Flag para forçar agendamento mesmo com conflito
+        forcarConflito: z.boolean().optional().default(false),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { dataHoraInicio, dataHoraFim, forcarConflito } = input;
+        
+        // VALIDAÇÃO 1: Hora de fim deve ser posterior à hora de início
+        if (dataHoraFim <= dataHoraInicio) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "A hora de término deve ser posterior à hora de início.",
+          });
+        }
+        
+        // VALIDAÇÃO 2: Verificar conflitos de horário (se não forçado)
+        if (!forcarConflito) {
+          const conflitos = await db.verificarConflitosAgendamento(
+            dataHoraInicio,
+            dataHoraFim
+          );
+          
+          if (conflitos && conflitos.length > 0) {
+            const detalhes = conflitos.map((c: any) => {
+              const hora = new Date(c.dataHoraInicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+              if (c.tipo === 'bloqueio') {
+                return `[BLOQUEIO] ${c.titulo || c.tipoCompromisso} às ${hora}`;
+              }
+              return `${c.pacienteNome || c.tipoCompromisso} às ${hora}`;
+            }).join(", ");
+            
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: `Conflito de horário detectado com: ${detalhes}. Use a opção "forçar" para agendar mesmo assim.`,
+            });
+          }
+        }
+        
         let pacienteId = input.pacienteId;
         let pacienteNome = input.pacienteNome;
         
@@ -1594,8 +1630,43 @@ export const appRouter = router({
         novaDataInicio: z.date(),
         novaDataFim: z.date(),
         motivo: z.string().optional(),
+        forcarConflito: z.boolean().optional().default(false),
       }))
       .mutation(async ({ input, ctx }) => {
+        const { novaDataInicio, novaDataFim, forcarConflito, idOriginal } = input;
+        
+        // VALIDAÇÃO 1: Hora de fim deve ser posterior à hora de início
+        if (novaDataFim <= novaDataInicio) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "A hora de término deve ser posterior à hora de início.",
+          });
+        }
+        
+        // VALIDAÇÃO 2: Verificar conflitos de horário (excluindo o agendamento original)
+        if (!forcarConflito) {
+          const conflitos = await db.verificarConflitosAgendamento(
+            novaDataInicio,
+            novaDataFim,
+            idOriginal // Excluir o próprio agendamento da verificação
+          );
+          
+          if (conflitos && conflitos.length > 0) {
+            const detalhes = conflitos.map((c: any) => {
+              const hora = new Date(c.dataHoraInicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+              if (c.tipo === 'bloqueio') {
+                return `[BLOQUEIO] ${c.titulo || c.tipoCompromisso} às ${hora}`;
+              }
+              return `${c.pacienteNome || c.tipoCompromisso} às ${hora}`;
+            }).join(", ");
+            
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: `Conflito de horário detectado com: ${detalhes}. Use a opção "forçar" para reagendar mesmo assim.`,
+            });
+          }
+        }
+        
         return await db.reagendarAgendamento(
           input.idOriginal,
           input.novaDataInicio,

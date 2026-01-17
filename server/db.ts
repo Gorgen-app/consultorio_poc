@@ -1,4 +1,4 @@
-import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne, isNull, isNotNull } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, lt, inArray, notInArray, ne, isNull, isNotNull, not } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -2016,6 +2016,74 @@ export async function getNextBloqueioId(): Promise<string> {
   }
   
   return `${prefix}${String(nextNum).padStart(5, '0')}`;
+}
+
+// Verificar conflitos de horário com agendamentos existentes e bloqueios
+export async function verificarConflitosAgendamento(
+  dataHoraInicio: Date,
+  dataHoraFim: Date,
+  agendamentoIdExcluir?: number,
+  incluirBloqueios: boolean = true
+) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Status que não ocupam tempo na agenda (usando valores do enum)
+  const statusIgnorados: ("Cancelado" | "Reagendado" | "Faltou")[] = ["Cancelado", "Reagendado", "Faltou"];
+  
+  // Buscar agendamentos que se sobrepõem ao intervalo
+  // Dois intervalos [A, B] e [C, D] se sobrepõem se: A < D AND B > C
+  const conditionsAgendamentos = [
+    // Ignorar status que não ocupam tempo
+    notInArray(agendamentos.status, statusIgnorados),
+    // Lógica de sobreposição de intervalos
+    lt(agendamentos.dataHoraInicio, dataHoraFim),
+    gt(agendamentos.dataHoraFim, dataHoraInicio),
+  ];
+  
+  // Excluir o próprio agendamento (para edição/reagendamento)
+  if (agendamentoIdExcluir) {
+    conditionsAgendamentos.push(not(eq(agendamentos.id, agendamentoIdExcluir)));
+  }
+  
+  const conflitosAgendamentos = await db.select({
+    id: agendamentos.id,
+    tipo: sql<string>`'agendamento'`.as('tipo'),
+    tipoCompromisso: agendamentos.tipoCompromisso,
+    pacienteNome: agendamentos.pacienteNome,
+    titulo: agendamentos.titulo,
+    dataHoraInicio: agendamentos.dataHoraInicio,
+    dataHoraFim: agendamentos.dataHoraFim,
+  })
+    .from(agendamentos)
+    .where(and(...conditionsAgendamentos));
+  
+  // Verificar bloqueios de horário (se habilitado)
+  let conflitosBloqueios: any[] = [];
+  if (incluirBloqueios) {
+    const conditionsBloqueios = [
+      // Apenas bloqueios ativos (não cancelados)
+      eq(bloqueiosHorario.cancelado, false),
+      // Lógica de sobreposição de intervalos
+      lt(bloqueiosHorario.dataHoraInicio, dataHoraFim),
+      gt(bloqueiosHorario.dataHoraFim, dataHoraInicio),
+    ];
+    
+    conflitosBloqueios = await db.select({
+      id: bloqueiosHorario.id,
+      tipo: sql<string>`'bloqueio'`.as('tipo'),
+      tipoCompromisso: bloqueiosHorario.tipoBloqueio,
+      pacienteNome: sql<string>`NULL`.as('pacienteNome'),
+      titulo: bloqueiosHorario.titulo,
+      dataHoraInicio: bloqueiosHorario.dataHoraInicio,
+      dataHoraFim: bloqueiosHorario.dataHoraFim,
+    })
+      .from(bloqueiosHorario)
+      .where(and(...conditionsBloqueios));
+  }
+  
+  // Combinar resultados
+  return [...conflitosAgendamentos, ...conflitosBloqueios];
 }
 
 // Criar agendamento
