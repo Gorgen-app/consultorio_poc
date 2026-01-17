@@ -127,6 +127,61 @@ const CORES_GRAFICOS = [
 ];
 
 // ============================================
+// FUNÇÕES AUXILIARES
+// ============================================
+
+// Função para agrupar widgets micro em pares verticais
+function agruparWidgetsMicro(items: { metrica: MetricaDefinicao; config: WidgetConfig }[]) {
+  const resultado: (
+    | { tipo: 'normal'; metrica: MetricaDefinicao; config: WidgetConfig }
+    | { tipo: 'par_micro'; widgets: { metrica: MetricaDefinicao; config: WidgetConfig }[] }
+  )[] = [];
+
+  let bufferMicro: { metrica: MetricaDefinicao; config: WidgetConfig } | null = null;
+
+  items.forEach((item) => {
+    if (item.config.tamanho === 'micro') {
+      if (bufferMicro) {
+        // Temos um par completo
+        resultado.push({
+          tipo: 'par_micro',
+          widgets: [bufferMicro, item]
+        });
+        bufferMicro = null;
+      } else {
+        // Primeiro do par
+        bufferMicro = item;
+      }
+    } else {
+      // Se tiver um micro pendente, adiciona ele sozinho (vai ocupar metade do slot visualmente)
+      if (bufferMicro) {
+        resultado.push({
+          tipo: 'par_micro',
+          widgets: [bufferMicro]
+        });
+        bufferMicro = null;
+      }
+      // Adiciona widget normal
+      resultado.push({
+        tipo: 'normal',
+        metrica: item.metrica,
+        config: item.config
+      });
+    }
+  });
+
+  // Se sobrou um micro no final
+  if (bufferMicro) {
+    resultado.push({
+      tipo: 'par_micro',
+      widgets: [bufferMicro]
+    });
+  }
+
+  return resultado;
+}
+
+// ============================================
 // KPI PANEL - Painel de Voo (CORRIGIDO)
 // ============================================
 
@@ -449,6 +504,9 @@ function SortableWidget({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Tamanho</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => onChangeTamanho('micro')} disabled={tamanho === 'micro'}>
+                <Scaling className="mr-2 h-4 w-4" /> Micro (0.5 col)
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onChangeTamanho('pequeno')} disabled={tamanho === 'pequeno'}>
                 <Scaling className="mr-2 h-4 w-4" /> Pequeno (1 col)
               </DropdownMenuItem>
@@ -930,47 +988,7 @@ function MetricaConteudo({
   return <div className="flex items-center justify-center h-full text-muted-foreground">Carregando...</div>;
 }
 
-// ============================================
-// FUNÇÃO AUXILIAR - Agrupar widgets micro
-// ============================================
 
-function agruparWidgetsMicro(
-  metricasExibidas: { metrica: MetricaDefinicao; config: WidgetConfig }[]
-): (
-  | { metrica: MetricaDefinicao; config: WidgetConfig }
-  | { tipo: 'par_micro'; widgets: { metrica: MetricaDefinicao; config: WidgetConfig }[] }
-)[] {
-  const resultado: (
-    | { metrica: MetricaDefinicao; config: WidgetConfig }
-    | { tipo: 'par_micro'; widgets: { metrica: MetricaDefinicao; config: WidgetConfig }[] }
-  )[] = [];
-  
-  let microBuffer: { metrica: MetricaDefinicao; config: WidgetConfig }[] = [];
-  
-  for (const item of metricasExibidas) {
-    if (item.config.tamanho === 'micro') {
-      microBuffer.push(item);
-      if (microBuffer.length === 2) {
-        resultado.push({ tipo: 'par_micro', widgets: [...microBuffer] });
-        microBuffer = [];
-      }
-    } else {
-      // Se houver um micro sozinho no buffer, adiciona antes
-      if (microBuffer.length > 0) {
-        resultado.push({ tipo: 'par_micro', widgets: [...microBuffer] });
-        microBuffer = [];
-      }
-      resultado.push(item);
-    }
-  }
-  
-  // Se sobrou um micro no buffer
-  if (microBuffer.length > 0) {
-    resultado.push({ tipo: 'par_micro', widgets: microBuffer });
-  }
-  
-  return resultado;
-}
 
 // ============================================
 // COMPONENTE PRINCIPAL - Dashboard
