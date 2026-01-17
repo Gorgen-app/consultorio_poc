@@ -243,6 +243,38 @@ interface Agendamento {
   agendamentoOriginalId?: number;
 }
 
+interface Bloqueio {
+  id: number;
+  idBloqueio: string;
+  tipoBloqueio: string;
+  titulo: string;
+  descricao?: string;
+  dataHoraInicio: string;
+  dataHoraFim: string;
+  cancelado: boolean;
+  criadoPor?: string;
+}
+
+// Tipo unificado para eventos na grade (agendamentos + bloqueios)
+interface EventoGrade {
+  id: number;
+  tipo: 'agendamento' | 'bloqueio';
+  titulo: string;
+  dataHoraInicio: string;
+  dataHoraFim: string;
+  // Campos de agendamento
+  tipoCompromisso?: string;
+  pacienteNome?: string;
+  status?: string;
+  local?: string;
+  convenio?: string;
+  // Campos de bloqueio
+  tipoBloqueio?: string;
+  cancelado?: boolean;
+  // Dados originais
+  dadosOriginais: Agendamento | Bloqueio;
+}
+
 interface Delegado {
   id: number;
   email: string;
@@ -312,6 +344,18 @@ function formatarDataISO(data: Date): string {
   const mes = String(data.getMonth() + 1).padStart(2, '0');
   const dia = String(data.getDate()).padStart(2, '0');
   return `${ano}-${mes}-${dia}`;
+}
+
+// Função para criar ISO string preservando timezone local (Erro 3)
+// Evita problemas de conversão para UTC que causam datas erradas
+function toLocalISOString(data: Date): string {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+  const hora = String(data.getHours()).padStart(2, '0');
+  const minuto = String(data.getMinutes()).padStart(2, '0');
+  const segundo = String(data.getSeconds()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}T${hora}:${minuto}:${segundo}`;
 }
 
 function criarEntradaLog(params: {
@@ -798,36 +842,9 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
   const [termoBuscaPaciente, setTermoBuscaPaciente] = useState("");
   const [usarTextoLivre, setUsarTextoLivre] = useState(false);
   
-  // Ref para o input de busca
-  const inputBuscaRef = useRef<HTMLInputElement>(null);
-  
-  // Forçar foco no input quando o Popover abrir
-  useEffect(() => {
-    if (buscaAberta && inputBuscaRef.current) {
-      // Pequeno delay para garantir que o Popover está renderizado
-      setTimeout(() => {
-        inputBuscaRef.current?.focus();
-      }, 50);
-    }
-  }, [buscaAberta]);
-  
-  // DEBUG: Verificar se o estado está mudando
-  useEffect(() => {
-    console.log('>>> termoBuscaPaciente mudou para:', termoBuscaPaciente);
-  }, [termoBuscaPaciente]);
-  
   // Filtro de pacientes (busca por nome, CPF ou ID)
   const pacientesFiltrados = useMemo(() => {
     if (!pacientes || pacientes.length === 0) return [];
-    
-    // DEBUG: Verificar estrutura dos dados
-    if (pacientes.length > 0) {
-      console.log('=== DEBUG FILTRO PACIENTES ===');
-      console.log('Total pacientes:', pacientes.length);
-      console.log('Primeiro paciente (estrutura completa):', JSON.stringify(pacientes[0], null, 2));
-      console.log('Campos do primeiro paciente:', Object.keys(pacientes[0]));
-      console.log('Termo de busca:', termoBuscaPaciente);
-    }
     
     if (!termoBuscaPaciente.trim()) {
       return pacientes.slice(0, 10);
@@ -835,33 +852,14 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
     
     const termo = termoBuscaPaciente.toLowerCase().trim();
     
-    // DEBUG: Testar filtro manualmente
-    const resultados = pacientes.filter((p: any) => {
-      const nomeMatch = p.nome?.toLowerCase().includes(termo);
-      const cpfMatch = p.cpf?.replace(/\D/g, '').includes(termo.replace(/\D/g, ''));
-      const idMatch = String(p.id).includes(termo);
-      
-      // Log apenas para os primeiros 3 pacientes
-      if (pacientes.indexOf(p) < 3) {
-        console.log(`Paciente ${p.id}:`, {
-          nome: p.nome,
-          nomeType: typeof p.nome,
-          nomeLower: p.nome?.toLowerCase(),
-          termo,
-          nomeMatch,
-          cpfMatch,
-          idMatch
-        });
-      }
-      
-      if (nomeMatch) return true;
-      if (cpfMatch) return true;
-      if (idMatch) return true;
-      return false;
-    });
-    
-    console.log('Resultados encontrados:', resultados.length);
-    return resultados.slice(0, 20);
+    return pacientes
+      .filter((p: any) => {
+        if (p.nome?.toLowerCase().includes(termo)) return true;
+        if (p.cpf?.replace(/\D/g, '').includes(termo.replace(/\D/g, ''))) return true;
+        if (String(p.id).includes(termo)) return true;
+        return false;
+      })
+      .slice(0, 20);
   }, [pacientes, termoBuscaPaciente]);
   
   const handleCriarRapido = () => {
@@ -983,15 +981,12 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
                     <div className="flex h-9 items-center gap-2 border-b px-3">
                       <Search className="size-4 shrink-0 opacity-50" />
                       <input
-                        ref={inputBuscaRef}
                         type="text"
                         placeholder="Digite nome, CPF ou ID..."
                         value={termoBuscaPaciente}
-                        onChange={(e) => {
-                          console.log('>>> onChange disparado:', e.target.value);
-                          setTermoBuscaPaciente(e.target.value);
-                        }}
+                        onChange={(e) => setTermoBuscaPaciente(e.target.value)}
                         className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        autoFocus
                       />
                     </div>
                     <CommandList>
@@ -1566,7 +1561,16 @@ export default function Agenda() {
   
   // Queries tRPC
   const { data: agendamentos = [], refetch: refetchAgendamentos } = trpc.agenda.listar.useQuery();
+  const { data: bloqueios = [], refetch: refetchBloqueios } = trpc.bloqueios.list.useQuery({
+    incluirCancelados: false,
+  });
   const { data: pacientes = [] } = trpc.pacientes.list.useQuery({});
+  
+  // Função para refetch unificado (agendamentos + bloqueios)
+  const refetchTodos = useCallback(() => {
+    refetchAgendamentos();
+    refetchBloqueios();
+  }, [refetchAgendamentos, refetchBloqueios]);
   
   // Mutations tRPC
   const criarAgendamentoMutation = trpc.agenda.criar.useMutation({
@@ -1637,6 +1641,44 @@ export default function Agenda() {
     }));
   }, [usuarioAtual]);
   
+  // Unificar agendamentos e bloqueios em eventos (Erro 8)
+  const eventosUnificados = useMemo((): EventoGrade[] => {
+    const eventos: EventoGrade[] = [];
+    
+    // Converter agendamentos para eventos
+    agendamentos.forEach((ag: Agendamento) => {
+      eventos.push({
+        id: ag.id,
+        tipo: 'agendamento',
+        titulo: ag.pacienteNome || ag.titulo || ag.tipoCompromisso,
+        dataHoraInicio: ag.dataHoraInicio,
+        dataHoraFim: ag.dataHoraFim || ag.dataHoraInicio,
+        tipoCompromisso: ag.tipoCompromisso,
+        pacienteNome: ag.pacienteNome,
+        status: ag.status,
+        local: ag.local,
+        convenio: ag.convenio,
+        dadosOriginais: ag,
+      });
+    });
+    
+    // Converter bloqueios para eventos
+    bloqueios.forEach((bl: any) => {
+      eventos.push({
+        id: bl.id,
+        tipo: 'bloqueio',
+        titulo: bl.titulo || bl.tipoBloqueio,
+        dataHoraInicio: bl.dataHoraInicio,
+        dataHoraFim: bl.dataHoraFim,
+        tipoBloqueio: bl.tipoBloqueio,
+        cancelado: bl.cancelado,
+        dadosOriginais: bl,
+      });
+    });
+    
+    return eventos;
+  }, [agendamentos, bloqueios]);
+  
   // Filtrar agendamentos
   const agendamentosFiltrados = useMemo(() => {
     return agendamentos.filter((ag: Agendamento) => {
@@ -1658,6 +1700,31 @@ export default function Agenda() {
       return true;
     });
   }, [agendamentos, termoBusca, filtroTipo, filtroStatus]);
+  
+  // Filtrar eventos unificados (agendamentos + bloqueios)
+  const eventosFiltrados = useMemo(() => {
+    return eventosUnificados.filter((ev: EventoGrade) => {
+      // Bloqueios sempre aparecem (não são filtrados por busca/tipo/status)
+      if (ev.tipo === 'bloqueio') return true;
+      
+      // Filtro de busca para agendamentos
+      if (termoBusca) {
+        const termo = termoBusca.toLowerCase();
+        const matchPaciente = ev.pacienteNome?.toLowerCase().includes(termo);
+        const matchTipo = ev.tipoCompromisso?.toLowerCase().includes(termo);
+        const matchTitulo = ev.titulo?.toLowerCase().includes(termo);
+        if (!matchPaciente && !matchTipo && !matchTitulo) return false;
+      }
+      
+      // Filtro de tipo
+      if (filtroTipo !== "todos" && ev.tipoCompromisso !== filtroTipo) return false;
+      
+      // Filtro de status
+      if (filtroStatus !== "todos" && ev.status !== filtroStatus) return false;
+      
+      return true;
+    });
+  }, [eventosUnificados, termoBusca, filtroTipo, filtroStatus]);
   
   // Gerar array de horas
   const horas = useMemo(() => {
@@ -2175,7 +2242,7 @@ export default function Agenda() {
     });
   };
   
-  // Renderizar evento na grade
+  // Renderizar evento na grade (agendamento)
   const renderizarEvento = (agendamento: Agendamento, diaIndex?: number) => {
     const inicio = new Date(agendamento.dataHoraInicio);
     const fim = agendamento.dataHoraFim 
@@ -2235,6 +2302,49 @@ export default function Agenda() {
         {height > 30 && (
           <div className="truncate">
             {agendamento.pacienteNome || agendamento.titulo || agendamento.tipoCompromisso}
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  // Renderizar bloqueio na grade (Erro 8)
+  const renderizarBloqueio = (bloqueio: any, diaIndex?: number) => {
+    const inicio = new Date(bloqueio.dataHoraInicio);
+    const fim = new Date(bloqueio.dataHoraFim);
+    
+    const horaInicio = inicio.getHours();
+    const minutoInicio = inicio.getMinutes();
+    const horaFim = fim.getHours();
+    const minutoFim = fim.getMinutes();
+    
+    // Calcular posição e altura
+    const topMinutos = (horaInicio - horaInicioDia) * 60 + minutoInicio;
+    const duracaoMinutos = (horaFim - horaInicio) * 60 + (minutoFim - minutoInicio);
+    
+    const top = topMinutos;
+    const height = Math.max(duracaoMinutos, 20);
+    
+    return (
+      <div
+        key={`bloqueio-${bloqueio.id}`}
+        className="absolute left-1 right-1 rounded-md px-2 py-1 cursor-not-allowed overflow-hidden bg-gray-400 text-white text-xs border-2 border-dashed border-gray-600"
+        style={{
+          top: `${top}px`,
+          height: `${height}px`,
+          minHeight: "20px",
+        }}
+        title={`Bloqueio: ${bloqueio.titulo || bloqueio.tipoBloqueio}`}
+      >
+        <div className="flex items-center gap-1">
+          <Lock className="w-3 h-3" />
+          <span className="font-medium truncate">
+            {formatarHora(bloqueio.dataHoraInicio)}
+          </span>
+        </div>
+        {height > 30 && (
+          <div className="truncate">
+            {bloqueio.titulo || bloqueio.tipoBloqueio}
           </div>
         )}
       </div>
@@ -2309,6 +2419,12 @@ export default function Agenda() {
                 return dataAg.toDateString() === dia.toDateString();
               });
               
+              // Filtrar bloqueios do dia (Erro 8)
+              const bloqueiosDia = bloqueios.filter((bl: any) => {
+                const dataBl = new Date(bl.dataHoraInicio);
+                return dataBl.toDateString() === dia.toDateString() && !bl.cancelado;
+              });
+              
               return (
                 <div 
                   key={diaIndex} 
@@ -2368,6 +2484,9 @@ export default function Agenda() {
                   
                   {/* Eventos */}
                   {agendamentosDia.map((ag: Agendamento) => renderizarEvento(ag, diaIndex))}
+                  
+                  {/* Bloqueios (Erro 8) */}
+                  {bloqueiosDia.map((bl: any) => renderizarBloqueio(bl, diaIndex))}
                 </div>
               );
             })}
@@ -2391,6 +2510,12 @@ export default function Agenda() {
     const agendamentosDia = agendamentosFiltrados.filter((ag: Agendamento) => {
       const dataAg = new Date(ag.dataHoraInicio);
       return dataAg.toDateString() === dataSelecionada.toDateString();
+    });
+    
+    // Filtrar bloqueios do dia (Erro 8)
+    const bloqueiosDia = bloqueios.filter((bl: any) => {
+      const dataBl = new Date(bl.dataHoraInicio);
+      return dataBl.toDateString() === dataSelecionada.toDateString() && !bl.cancelado;
     });
     
     return (
@@ -2482,6 +2607,9 @@ export default function Agenda() {
               
               {/* Eventos */}
               {agendamentosDia.map((ag: Agendamento) => renderizarEvento(ag))}
+              
+              {/* Bloqueios (Erro 8) */}
+              {bloqueiosDia.map((bl: any) => renderizarBloqueio(bl))}
             </div>
           </div>
         </ScrollArea>
