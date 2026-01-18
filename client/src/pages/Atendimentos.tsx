@@ -490,7 +490,7 @@ export default function Atendimentos() {
             <p className="text-center py-8 text-muted-foreground">Carregando...</p>
           ) : atendimentosPaginados && atendimentosPaginados.length > 0 ? (
             <>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border border-widget overflow-x-auto bg-sidebar">
                 <Table>
                   <TableHeader>
                     <TableRow>

@@ -427,15 +427,15 @@ export default function Pacientes() {
 
       {/* Mensagem quando não há filtros */}
       {semFiltro && !isLoading && (
-        <Card className="border-dashed">
+        <Card className="border-dashed bg-sidebar border-widget">
           <CardContent className="py-12">
             <div className="flex flex-col items-center justify-center text-center space-y-4">
               <div className="p-4 bg-primary/10 rounded-full">
                 <Users className="h-12 w-12 text-primary" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold">Busque um paciente</h3>
-                <p className="text-muted-foreground max-w-md">
+                <h3 className="text-xl font-semibold text-widget-title">Busque um paciente</h3>
+                <p className="text-widget-description max-w-md">
                   Digite o <strong>nome</strong>, <strong>CPF</strong> ou <strong>ID</strong> do paciente no campo de busca acima, 
                   ou utilize os filtros avançados para encontrar pacientes específicos.
                 </p>
@@ -512,7 +512,7 @@ export default function Pacientes() {
               </div>
             ) : pacientesOrdenados.length > 0 ? (
               <>
-                <div className="rounded-md border overflow-x-auto">
+                <div className="rounded-md border border-widget overflow-x-auto bg-sidebar">
                   <Table>
                     <TableHeader>
                       <TableRow>

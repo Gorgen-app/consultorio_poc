@@ -202,7 +202,7 @@ interface KPIData {
 function KPICard({ kpi, isLoading }: { kpi: KPIData; isLoading?: boolean }) {
   if (isLoading) {
     return (
-      <Card className="p-5 bg-sidebar border border-slate-200">
+      <Card className="p-5 bg-sidebar border border-widget">
         <div className="flex items-center justify-between mb-3">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-8 rounded-lg" />
@@ -215,9 +215,9 @@ function KPICard({ kpi, isLoading }: { kpi: KPIData; isLoading?: boolean }) {
   }
 
   return (
-    <Card className="p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 bg-sidebar border border-slate-200">
+    <Card className="p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 bg-sidebar border border-widget">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-slate-700">
+        <span className="text-sm font-medium text-widget-label">
           {kpi.label}
         </span>
         <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', kpi.iconBg)}>
@@ -225,11 +225,11 @@ function KPICard({ kpi, isLoading }: { kpi: KPIData; isLoading?: boolean }) {
         </div>
       </div>
 
-      <div className="text-[32px] font-bold text-slate-800 leading-tight tracking-tight">
+      <div className="text-[32px] font-bold text-widget-value leading-tight tracking-tight">
         {kpi.value}
       </div>
 
-      <div className="text-sm text-slate-600 mt-1">
+      <div className="text-sm text-widget-description mt-1">
         {kpi.description}
       </div>
 
@@ -338,7 +338,7 @@ function MicroWidget({ label, value, unit, icon, categoria, onRemove, onChangeTa
   const cat = categorias.find(c => c.valor === categoria);
   
   return (
-    <Card className="p-4 h-[150px] transition-all duration-200 hover:shadow-sm group relative bg-sidebar border border-slate-200">
+    <Card className="p-4 h-[150px] transition-all duration-200 hover:shadow-sm group relative bg-sidebar border border-widget">
       {/* Controles on-hover */}
       <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-white/80 backdrop-blur-sm rounded-md p-0.5 border border-slate-100 shadow-sm z-10">
         {onChangeTamanho && (
@@ -406,15 +406,15 @@ function MicroWidget({ label, value, unit, icon, categoria, onRemove, onChangeTa
       </div>
       <div className="flex items-center justify-between h-full">
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-slate-700 mb-1 truncate">
+          <div className="text-sm font-medium text-widget-label mb-1 truncate">
             {label}
           </div>
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-slate-800 tracking-tight">
+            <span className="text-2xl font-bold text-widget-value tracking-tight">
               {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
             </span>
             {unit && (
-              <span className="text-sm font-normal text-slate-600">
+              <span className="text-sm font-normal text-widget-description">
                 {unit}
               </span>
             )}
@@ -510,7 +510,7 @@ function SortableWidget({
         isDragging && 'opacity-50 z-50',
       )}
     >
-      <Card className="h-full flex flex-col group relative overflow-hidden transition-all duration-200 hover:shadow-md bg-sidebar border border-slate-200">
+      <Card className="h-full flex flex-col group relative overflow-hidden transition-all duration-200 hover:shadow-md bg-sidebar border border-widget">
         {/* Header do Widget */}
         <div className="flex items-start justify-between p-4 pb-2">
           <div className="flex-1 min-w-0">
@@ -520,11 +520,11 @@ function SortableWidget({
                 {...listeners}
                 className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <GripVertical className="h-4 w-4 text-slate-500" />
+                <GripVertical className="h-4 w-4 text-widget-icon" />
               </button>
-              <h3 className="font-semibold text-sm truncate text-slate-800">{metrica.nome}</h3>
+              <h3 className="font-semibold text-sm truncate text-widget-title">{metrica.nome}</h3>
             </div>
-            <p className="text-xs text-slate-600 mt-0.5 truncate">{metrica.descricao}</p>
+            <p className="text-xs text-widget-description mt-0.5 truncate">{metrica.descricao}</p>
           </div>
           
           {/* Badge de categoria com cor correta */}
@@ -742,7 +742,7 @@ function MetricaConteudo({
           {typeof valor === 'number' ? valor.toLocaleString('pt-BR') : valor}
         </div>
         {unidade && (
-          <div className="text-sm text-slate-600 mt-1">{unidade}</div>
+          <div className="text-sm text-widget-description mt-1">{unidade}</div>
         )}
       </div>
     );
@@ -1285,10 +1285,10 @@ export default function DashboardCustom() {
       
         {/* Area de Widgets Dinamicos com Drag-and-Drop */}
       {metricasExibidas.length === 0 ? (
-        <Card className="p-12 text-center bg-sidebar border border-slate-200">
-          <LayoutGrid className="h-12 w-12 mx-auto text-slate-500 mb-4" />
-          <h3 className="text-lg font-medium mb-2 text-slate-800">Nenhum widget selecionado</h3>
-          <p className="text-slate-600 mb-4">
+        <Card className="p-12 text-center bg-sidebar border border-widget">
+          <LayoutGrid className="h-12 w-12 mx-auto text-widget-icon mb-4" />
+          <h3 className="text-lg font-medium mb-2 text-widget-title">Nenhum widget selecionado</h3>
+          <p className="text-widget-description mb-4">
             Clique em "Configurar Widgets" para selecionar as métricas que deseja visualizar.
           </p>
           <Button onClick={() => setDialogAberto(true)}>
