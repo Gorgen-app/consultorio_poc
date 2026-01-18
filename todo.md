@@ -2645,3 +2645,15 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - Descrições: text-slate-600 (bom contraste)
 - Labels: text-slate-700 (contraste médio-alto)
 - Ícones: text-slate-500 (contraste adequado)
+
+
+---
+
+## 🎨 GORGEN 3.9.0 - Padronização Visual Completa (17/01/2026)
+
+### Sincronização e Padronização
+- [ ] Sincronizar implementações com o repositório GitHub
+- [ ] Aplicar padrão visual na página de Pacientes
+- [ ] Aplicar padrão visual na página de Atendimentos
+- [ ] Criar protótipo do tema dark com cores de contraste adequadas
+- [ ] Documentar o Design System com tipografia
