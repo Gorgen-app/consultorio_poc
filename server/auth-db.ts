@@ -133,7 +133,7 @@ export async function validatePassword(
   }
   
   // Reset tentativas falhas em login bem-sucedido
-  if (credential.failedLoginAttempts > 0) {
+  if ((credential.failedLoginAttempts ?? 0) > 0) {
     await db
       .update(userCredentials)
       .set({

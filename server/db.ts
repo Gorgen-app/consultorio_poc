@@ -4841,9 +4841,11 @@ export async function createDelegadoAgenda(data: {
   });
 
   // Retornar o delegado criado
+  // Nota: MySQL retorna insertId no resultado do insert
+  const insertId = (result as any).insertId || (result as any)[0]?.insertId;
   const created = await db.select()
     .from(delegadosAgenda)
-    .where(eq(delegadosAgenda.id, Number(result.insertId)))
+    .where(eq(delegadosAgenda.id, Number(insertId)))
     .limit(1);
 
   return created[0] || null;

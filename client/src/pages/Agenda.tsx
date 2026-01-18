@@ -265,26 +265,31 @@ function highlightSearchTerm(text: string, searchTerm: string): React.ReactNode 
 // INTERFACES
 // ============================================
 
+// Tipo que corresponde ao retorno real da query listAgendamentos
+// Nota: Drizzle com superjson converte Date para string no transporte
 interface Agendamento {
   id: number;
-  idAgendamento?: string;
-  titulo?: string;
-  tipoCompromisso: string;
-  dataHoraInicio: string;
-  dataHoraFim?: string;
-  pacienteId?: number;
-  pacienteNome?: string;
-  pacienteTelefone?: string;
-  local?: string;
-  descricao?: string;
+  idAgendamento: string;
+  tipoCompromisso: "Consulta" | "Cirurgia" | "Visita internado" | "Procedimento em consultório" | "Exame" | "Reunião" | "Bloqueio";
+  pacienteId: number | null;
+  pacienteNome: string | null;
+  dataHoraInicio: string | Date;
+  dataHoraFim: string | Date | null;
   status: string;
-  convenio?: string;
-  criadoPor?: string;
-  atualizadoPor?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  motivoCancelamento?: string;
-  agendamentoOriginalId?: number;
+  local: string | null;
+  titulo: string | null;
+  descricao: string | null;
+  convenio: string | null;
+  telefonePaciente: string | null;
+  cpfPaciente: string | null;
+  // Campos adicionais usados na UI
+  pacienteTelefone?: string | null;
+  motivoCancelamento?: string | null;
+  criadoPor?: string | null;
+  atualizadoPor?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  agendamentoOriginalId?: number | null;
 }
 
 interface Bloqueio {
@@ -303,18 +308,18 @@ interface Bloqueio {
 interface EventoGrade {
   id: number;
   tipo: 'agendamento' | 'bloqueio';
-  titulo: string;
-  dataHoraInicio: string;
-  dataHoraFim: string;
+  titulo: string | null;
+  dataHoraInicio: string | Date;
+  dataHoraFim: string | Date | null;
   // Campos de agendamento
-  tipoCompromisso?: string;
-  pacienteNome?: string;
-  status?: string;
-  local?: string;
-  convenio?: string;
+  tipoCompromisso?: string | null;
+  pacienteNome?: string | null;
+  status?: string | null;
+  local?: string | null;
+  convenio?: string | null;
   // Campos de bloqueio
-  tipoBloqueio?: string;
-  cancelado?: boolean;
+  tipoBloqueio?: string | null;
+  cancelado?: boolean | null;
   // Dados originais
   dadosOriginais: Agendamento | Bloqueio;
 }
@@ -374,8 +379,8 @@ interface Conflito {
 // FUNÇÕES AUXILIARES
 // ============================================
 
-function formatarHora(dataString: string): string {
-  const data = new Date(dataString);
+function formatarHora(dataString: string | Date): string {
+  const data = typeof dataString === 'string' ? new Date(dataString) : dataString;
   return data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
@@ -1167,9 +1172,11 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
 // COMPONENTE: STATUS FLOW (ESTEIRA VISUAL)
 // ============================================
 
+type StatusAgendamento = "Agendado" | "Confirmado" | "Aguardando" | "Em atendimento" | "Encerrado" | "Falta" | "Transferido" | "Cancelado";
+
 interface StatusFlowProps {
   currentStatus: string;
-  onStatusChange: (novoStatus: string) => void;
+  onStatusChange: (novoStatus: StatusAgendamento) => void;
 }
 
 function StatusFlow({ currentStatus, onStatusChange }: StatusFlowProps) {
@@ -1193,7 +1200,7 @@ function StatusFlow({ currentStatus, onStatusChange }: StatusFlowProps) {
           return (
             <div key={status} className="flex items-center">
               <button
-                onClick={() => isNext && onStatusChange(status)}
+                onClick={() => isNext && onStatusChange(status as StatusAgendamento)}
                 disabled={!isNext && !isAtual}
                 className={`
                   flex flex-col items-center p-3 rounded-lg transition-all min-w-[90px]
@@ -2170,7 +2177,7 @@ export default function Agenda() {
     handleDragEnd();
   };
   
-  const executarDragDrop = (agendamentoId: number, novaDataInicio: Date, novaDataFim: Date, dataAnterior: string) => {
+  const executarDragDrop = (agendamentoId: number, novaDataInicio: Date, novaDataFim: Date, dataAnterior: string | Date) => {
     // Registrar log
     adicionarLog(
       agendamentoId,
@@ -2330,9 +2337,9 @@ export default function Agenda() {
     );
     
     transferirAgendamentoMutation.mutate({
-      id: agendamentoSelecionado.id,
-      novaDataHoraInicio: novaDataInicio.toISOString(),
-      novaDataHoraFim: novaDataFim.toISOString(),
+      idOriginal: agendamentoSelecionado.id,
+      novaDataInicio: novaDataInicio,
+      novaDataFim: novaDataFim,
     });
   };
   

@@ -2567,3 +2567,27 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - [ ] Investigar causa do travamento
 - [ ] Propor 3 soluções
 - [ ] Implementar correção
+
+
+---
+
+## 🔧 GORGEN 3.7.1 - Correções TypeScript (17/01/2026)
+
+### Correções de Erros TypeScript
+- [x] Corrigir interface Agendamento para corresponder ao tipo retornado pelo banco
+- [x] Corrigir interface EventoGrade para aceitar string | Date
+- [x] Corrigir função formatarHora para aceitar string | Date
+- [x] Corrigir função executarDragDrop para aceitar string | Date
+- [x] Corrigir chamada da mutation transferirAgendamentoMutation (campos corretos)
+- [x] Adicionar tipo StatusAgendamento e corrigir StatusFlowProps
+- [x] Corrigir Pacientes.tsx - remover propriedade semFiltro inexistente
+- [x] Corrigir auth-db.ts - tratar failedLoginAttempts possivelmente null
+- [x] Corrigir db.ts - usar type assertion para insertId
+- [x] Remover arquivos de backup que causavam erros TypeScript
+- [x] Corrigir KPIPanel.tsx - retornar undefined ao invés de null em calcularVariacao
+- [x] Corrigir DashboardCustom.tsx - remover comparação impossível de tamanho
+
+### Resultado
+- Build TypeScript sem erros
+- Servidor de desenvolvimento funcionando
+- Dashboard e Agenda operacionais

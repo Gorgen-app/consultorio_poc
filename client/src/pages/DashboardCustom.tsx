@@ -555,7 +555,7 @@ function SortableWidget({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Tamanho</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onChangeTamanho('micro')} disabled={tamanho === 'micro'}>
+              <DropdownMenuItem onClick={() => onChangeTamanho('micro')}>
                 <Scaling className="mr-2 h-4 w-4" /> Micro
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onChangeTamanho('pequeno')} disabled={tamanho === 'pequeno'}>

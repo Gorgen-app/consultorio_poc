@@ -135,8 +135,8 @@ export function KPIPanel({ data, isLoading }: KPIPanelProps) {
 // Dados padrão para o Dashboard (podem ser substituídos por dados reais)
 export function useKPIData(dashboardStats: any, periodo: string) {
   // Calcular variações (mock - substituir por cálculo real)
-  const calcularVariacao = (atual: number, anterior: number) => {
-    if (!anterior || anterior === 0) return null;
+  const calcularVariacao = (atual: number, anterior: number): { value: number; isPositive: boolean } | undefined => {
+    if (!anterior || anterior === 0) return undefined;
     const variacao = ((atual - anterior) / anterior) * 100;
     return {
       value: Math.abs(Number(variacao.toFixed(1))),

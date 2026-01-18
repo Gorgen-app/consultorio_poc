@@ -128,9 +128,10 @@ export default function Pacientes() {
   const pacientes = paginatedData?.pacientes || [];
   const totalPacientes = paginatedData?.total || 0;
   const totalPaginas = paginatedData?.totalPages || 1;
-  const semFiltro = paginatedData?.semFiltro || false;
-  const excedeuLimite = (paginatedData as any)?.excedeuLimite || false;
-  const totalBruto = (paginatedData as any)?.totalBruto || 0;
+  // Nota: semFiltro, excedeuLimite e totalBruto não são retornados pela query atual
+  const semFiltro = !temFiltrosAtivos;
+  const excedeuLimite = false;
+  const totalBruto = totalPacientes;
 
   // Verificar se há próxima página para pré-carregamento
   const hasNextPage = paginaAtual < totalPaginas;
