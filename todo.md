@@ -2626,3 +2626,22 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - Todos os widgets da dashboard agora usam bg-sidebar (#F5F7FA)
 - Visual mais uniforme e integrado com a barra lateral
 - Aparência mais suave e profissional
+
+
+---
+
+## 🎨 GORGEN 3.8.2 - Melhorias Visuais nos Widgets (17/01/2026)
+
+### Melhorias de Design como Padrão do Gorgen
+- [x] Adicionar borda sutil de 1px cinza claro nos widgets (border-slate-200)
+- [x] Aumentar contraste do texto nos widgets (text-slate-700, text-slate-800)
+- [x] Aumentar contraste dos ícones nos widgets (text-slate-500, text-slate-600)
+- [x] Definir como padrão do sistema
+
+### Resultado - Novo Padrão Visual Gorgen
+- Fundo dos widgets: bg-sidebar (#F5F7FA)
+- Borda dos widgets: border-slate-200 (1px cinza claro)
+- Títulos: text-slate-800 (alto contraste)
+- Descrições: text-slate-600 (bom contraste)
+- Labels: text-slate-700 (contraste médio-alto)
+- Ícones: text-slate-500 (contraste adequado)
