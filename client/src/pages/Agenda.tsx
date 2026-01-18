@@ -182,15 +182,16 @@ const CONVENIOS = [
   "Outro",
 ];
 
-// Paleta de cores harmônica com o azul institucional #203864
+// Paleta de cores Opção B - Azul Claro (#6B8CBE)
+// Cores mais suaves e elegantes, menor fadiga visual, mais profissional/médico
 const CORES_TIPO: Record<string, string> = {
-  "Consulta": "bg-[#203864]",           // Azul institucional Gorgen
-  "Cirurgia": "bg-[#8B2942]",            // Bordô (complementar)
-  "Visita internado": "bg-[#4A3864]",    // Roxo escuro (análogo)
-  "Procedimento em consultório": "bg-[#64502D]", // Dourado escuro (complementar)
-  "Exame": "bg-[#1D4D4F]",               // Verde-azulado (análogo)
-  "Reunião": "bg-[#5C5C5C]",             // Cinza neutro
-  "Bloqueio": "bg-[#7A7A7A]",            // Cinza claro
+  "Consulta": "bg-[#6B8CBE]",           // Azul claro (principal)
+  "Cirurgia": "bg-[#BE6B7D]",            // Rosa/Bordô suave
+  "Visita internado": "bg-[#8E7DBE]",    // Roxo suave
+  "Procedimento em consultório": "bg-[#BEA06B]", // Dourado suave
+  "Exame": "bg-[#6BB0BE]",               // Ciano/Verde-azulado suave
+  "Reunião": "bg-[#8A8A8A]",             // Cinza médio
+  "Bloqueio": "bg-[#ABABAB]",            // Cinza claro
 };
 
 const FERIADOS_FIXOS: Record<string, string> = {
@@ -254,7 +255,7 @@ function highlightSearchTerm(text: string, searchTerm: string): React.ReactNode 
   // Retorna com partes destacadas em negrito
   return parts.map((part, index) => 
     regex.test(part) ? (
-      <strong key={index} className="font-bold" style={{ color: '#203864' }}>{part}</strong>
+      <strong key={index} className="font-bold" style={{ color: '#6B8CBE' }}>{part}</strong>
     ) : (
       <span key={index}>{part}</span>
     )
@@ -2640,7 +2641,7 @@ export default function Agenda() {
                 </div>
                 <div className={`
                   text-lg font-semibold
-                  ${isHoje ? "bg-[#203864] text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto" : ""}
+                  ${isHoje ? "bg-[#6B8CBE] text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto" : ""}
                 `}>
                   {dia.getDate()}
                 </div>
@@ -2942,7 +2943,7 @@ export default function Agenda() {
                     <div className="flex items-center justify-between">
                       <span className={`
                         text-sm font-medium
-                        ${isHoje ? "bg-[#203864] text-white rounded-full w-6 h-6 flex items-center justify-center" : ""}
+                        ${isHoje ? "bg-[#6B8CBE] text-white rounded-full w-6 h-6 flex items-center justify-center" : ""}
                       `}>
                         {dia.getDate()}
                       </span>
@@ -3102,8 +3103,8 @@ export default function Agenda() {
                               className={`
                                 text-center py-0.5 rounded
                                 ${!isMesCorreto ? "text-gray-300" : ""}
-                                ${isHoje ? "bg-[#203864] text-white font-bold" : ""}
-                                ${temAgendamentos && !isHoje ? "bg-[#E8EEF5] text-[#203864] font-medium" : ""}
+                                ${isHoje ? "bg-[#6B8CBE] text-white font-bold" : ""}
+                                ${temAgendamentos && !isHoje ? "bg-[#E8F0F8] text-[#6B8CBE] font-medium" : ""}
                               `}
                               title={temAgendamentos ? `${agendamentosDia.length} agendamento(s)` : undefined}
                             >
@@ -3804,7 +3805,7 @@ export default function Agenda() {
                             setModalDetalhesAberto(false);
                             setLocation(`/prontuario/${agendamentoSelecionado.pacienteId}`);
                           }}
-                          className="font-semibold text-lg text-[#203864] hover:underline cursor-pointer flex items-center gap-2 group"
+                          className="font-semibold text-lg text-[#6B8CBE] hover:underline cursor-pointer flex items-center gap-2 group"
                         >
                           {agendamentoSelecionado.pacienteNome}
                           <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
