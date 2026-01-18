@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { storagePut } from "../storage";
 import { recordEndpointMetric } from "../performance";
+import { initializeBackupSystem } from "./backup-init";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -110,6 +111,10 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    
+    // Inicializar sistema de backup automático após servidor estar pronto
+    // O scheduler será ativado e executará backups diários às 03:00
+    initializeBackupSystem();
   });
 }
 
