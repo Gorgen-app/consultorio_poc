@@ -2611,3 +2611,18 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - Cores mais suaves e elegantes, menor fadiga visual
 - Consistência visual entre Agenda, Dashboard, e demais componentes
 - Variáveis CSS globais atualizadas para light e dark themes
+
+
+---
+
+## 🎨 GORGEN 3.8.1 - Protótipo Dashboard com Fundo Cinza (17/01/2026)
+
+### Protótipo de Widgets com Fundo Cinza
+- [x] Identificar a cor de fundo da sidebar (#F5F7FA)
+- [x] Aplicar a mesma cor de fundo nos widgets da dashboard
+- [x] Verificar resultado visual
+
+### Resultado
+- Todos os widgets da dashboard agora usam bg-sidebar (#F5F7FA)
+- Visual mais uniforme e integrado com a barra lateral
+- Aparência mais suave e profissional

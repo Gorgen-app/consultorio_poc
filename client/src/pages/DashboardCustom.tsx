@@ -202,7 +202,7 @@ interface KPIData {
 function KPICard({ kpi, isLoading }: { kpi: KPIData; isLoading?: boolean }) {
   if (isLoading) {
     return (
-      <Card className="p-5">
+      <Card className="p-5 bg-sidebar">
         <div className="flex items-center justify-between mb-3">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-8 rounded-lg" />
@@ -215,7 +215,7 @@ function KPICard({ kpi, isLoading }: { kpi: KPIData; isLoading?: boolean }) {
   }
 
   return (
-    <Card className="p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border-border/50">
+    <Card className="p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 border-border/50 bg-sidebar">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium text-muted-foreground">
           {kpi.label}
@@ -338,7 +338,7 @@ function MicroWidget({ label, value, unit, icon, categoria, onRemove, onChangeTa
   const cat = categorias.find(c => c.valor === categoria);
   
   return (
-    <Card className="p-4 h-[150px] transition-all duration-200 hover:shadow-sm group relative">
+    <Card className="p-4 h-[150px] transition-all duration-200 hover:shadow-sm group relative bg-sidebar">
       {/* Controles on-hover */}
       <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-white/80 backdrop-blur-sm rounded-md p-0.5 border border-slate-100 shadow-sm z-10">
         {onChangeTamanho && (
@@ -510,7 +510,7 @@ function SortableWidget({
         isDragging && 'opacity-50 z-50',
       )}
     >
-      <Card className="h-full flex flex-col group relative overflow-hidden transition-all duration-200 hover:shadow-md">
+      <Card className="h-full flex flex-col group relative overflow-hidden transition-all duration-200 hover:shadow-md bg-sidebar">
         {/* Header do Widget */}
         <div className="flex items-start justify-between p-4 pb-2">
           <div className="flex-1 min-w-0">
@@ -1285,7 +1285,7 @@ export default function DashboardCustom() {
       
         {/* Area de Widgets Dinamicos com Drag-and-Drop */}
       {metricasExibidas.length === 0 ? (
-        <Card className="p-12 text-center">
+        <Card className="p-12 text-center bg-sidebar">
           <LayoutGrid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium mb-2">Nenhum widget selecionado</h3>
           <p className="text-muted-foreground mb-4">
