@@ -1283,7 +1283,7 @@ export default function DashboardCustom() {
         </div>
       </div>
       
-        {/* Área de Widgets Dinâmicos */}Widgets com Drag-and-Drop */}
+        {/* Area de Widgets Dinamicos com Drag-and-Drop */}
       {metricasExibidas.length === 0 ? (
         <Card className="p-12 text-center">
           <LayoutGrid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
