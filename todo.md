@@ -2663,3 +2663,19 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - Classes CSS semânticas criadas para suporte a dark mode
 - Documentação completa do Design System em docs/DESIGN_SYSTEM.md
 - Tipografia Inter documentada com escala tipográfica completa
+
+
+---
+
+## 🎨 GORGEN 3.9.1 - Tema Dark Rejeitado (17/01/2026)
+
+### Decisão do Usuário
+- [x] Protótipo do tema dark apresentado para aprovação
+- [x] **REJEITADO** - Tema dark não será implementado
+- [x] Manter apenas tema light como padrão do Gorgen
+- [x] Remover suporte ao tema dark
+- [x] Atualizar documentação do Design System
+
+### Resultado
+- Sistema Gorgen utilizará exclusivamente o tema light
+- Paleta de cores Opção B (#6B8CBE) mantida como padrão

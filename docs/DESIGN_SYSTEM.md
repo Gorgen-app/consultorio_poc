@@ -1,6 +1,6 @@
 # 🎨 GORGEN Design System
 
-> **Documento de Referência** | Versão 1.0 | Atualizado em 17/01/2026
+> **Documento de Referência** | Versão 1.1 | Atualizado em 17/01/2026
 
 Este documento define os padrões visuais e de design do sistema Gorgen, garantindo consistência visual em todas as interfaces e componentes.
 
@@ -12,8 +12,7 @@ Este documento define os padrões visuais e de design do sistema Gorgen, garanti
 2. [Paleta de Cores](#2-paleta-de-cores)
 3. [Tipografia](#3-tipografia)
 4. [Componentes de Widget](#4-componentes-de-widget)
-5. [Temas Light e Dark](#5-temas-light-e-dark)
-6. [Guia de Implementação](#6-guia-de-implementação)
+5. [Guia de Implementação](#5-guia-de-implementação)
 
 ---
 
@@ -27,6 +26,8 @@ O design do Gorgen segue princípios fundamentais que priorizam a experiência d
 
 **Profissionalismo Médico**: Aparência elegante e profissional que transmite confiança e seriedade, adequada ao contexto de saúde.
 
+**Tema Único (Light)**: O Gorgen utiliza exclusivamente o tema light, otimizado para ambientes clínicos com boa iluminação.
+
 ---
 
 ## 2. Paleta de Cores
@@ -35,10 +36,13 @@ O design do Gorgen segue princípios fundamentais que priorizam a experiência d
 
 A paleta principal do Gorgen é baseada no **Azul Claro #6B8CBE**, escolhida por sua aparência profissional e menor fadiga visual.
 
-| Variável | Light Mode | Dark Mode | Uso |
-|----------|------------|-----------|-----|
-| `--primary` | #6B8CBE | #8BA3C9 | Cor principal de destaque |
-| `--primary-foreground` | #FFFFFF | #1E2D45 | Texto sobre cor primária |
+| Variável | Valor | Uso |
+|----------|-------|-----|
+| `--primary` | #6B8CBE | Cor principal de destaque |
+| `--primary-foreground` | #FFFFFF | Texto sobre cor primária |
+| `--background` | #FFFFFF | Fundo principal |
+| `--foreground` | #1A2B47 | Texto principal |
+| `--sidebar` | #F5F7FA | Fundo da sidebar e widgets |
 
 ### 2.2 Cores Complementares
 
@@ -72,6 +76,16 @@ As cores para visualizações de dados seguem uma progressão harmônica:
 | Exame | #6BB0BE | `.bg-tipo-exame` |
 | Reunião | #8A8A8A | `.bg-tipo-reuniao` |
 | Bloqueio | #ABABAB | `.bg-tipo-bloqueio` |
+
+### 2.5 Cores de Contraste para Texto
+
+| Elemento | Cor | Classe Tailwind | Uso |
+|----------|-----|-----------------|-----|
+| Títulos | #1E293B | `text-slate-800` | Títulos de widgets e seções |
+| Descrições | #475569 | `text-slate-600` | Textos auxiliares |
+| Labels | #334155 | `text-slate-700` | Rótulos de campos |
+| Valores | #0F172A | `text-slate-900` | Valores numéricos importantes |
+| Ícones | #64748B | `text-slate-500` | Ícones e elementos secundários |
 
 ---
 
@@ -129,25 +143,12 @@ Todos os widgets do Gorgen seguem uma estrutura visual consistente:
 
 | Propriedade | Valor | Classe CSS |
 |-------------|-------|------------|
-| Fundo | #F5F7FA (light) / #1E2D45 (dark) | `bg-sidebar` |
-| Borda | 1px solid | `border border-widget` |
-| Cor da Borda | #E2E8F0 (light) / #334155 (dark) | `border-widget` |
+| Fundo | #F5F7FA | `bg-sidebar` |
+| Borda | 1px solid #E2E8F0 | `border border-slate-200` |
 | Arredondamento | 8px | `rounded-lg` |
 | Sombra (hover) | shadow-md | `hover:shadow-md` |
 
-### 4.2 Classes de Texto para Widgets
-
-Para garantir contraste adequado em ambos os temas (light e dark), utilize as seguintes classes:
-
-| Classe | Light Mode | Dark Mode | Uso |
-|--------|------------|-----------|-----|
-| `.text-widget-title` | #1E293B (slate-800) | #F1F5F9 (slate-100) | Títulos de widgets |
-| `.text-widget-description` | #475569 (slate-600) | #CBD5E1 (slate-300) | Descrições |
-| `.text-widget-label` | #334155 (slate-700) | #E2E8F0 (slate-200) | Labels e rótulos |
-| `.text-widget-value` | #0F172A (slate-900) | #FFFFFF (white) | Valores numéricos |
-| `.text-widget-icon` | #64748B (slate-500) | #94A3B8 (slate-400) | Ícones |
-
-### 4.3 Tamanhos de Widget
+### 4.2 Tamanhos de Widget
 
 | Tamanho | Dimensões | Uso |
 |---------|-----------|-----|
@@ -158,101 +159,59 @@ Para garantir contraste adequado em ambos os temas (light e dark), utilize as se
 
 ---
 
-## 5. Temas Light e Dark
+## 5. Guia de Implementação
 
-### 5.1 Tema Light (Padrão)
-
-O tema light é o padrão do sistema, otimizado para uso diurno:
-
-```css
-:root {
-  --background: #FFFFFF;
-  --foreground: #1A2B47;
-  --sidebar: #F5F7FA;
-  --card: #FFFFFF;
-  --border: #E2E8F0;
-}
-```
-
-### 5.2 Tema Dark
-
-O tema dark é otimizado para uso noturno ou ambientes com baixa luminosidade:
-
-```css
-.dark {
-  --background: #0D1729;
-  --foreground: #F3F4F6;
-  --sidebar: #1E2D45;
-  --card: #152238;
-  --border: #334155;
-}
-```
-
-### 5.3 Transição entre Temas
-
-A transição entre temas deve ser suave:
-
-```css
-* {
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-```
-
----
-
-## 6. Guia de Implementação
-
-### 6.1 Estrutura de um Widget
+### 5.1 Estrutura de um Widget
 
 ```tsx
-<Card className="bg-sidebar border border-widget">
+<Card className="bg-sidebar border border-slate-200 rounded-lg">
   <div className="p-4">
-    <h3 className="text-widget-title font-semibold text-sm">
+    <h3 className="text-slate-800 font-semibold text-sm">
       Título do Widget
     </h3>
-    <p className="text-widget-description text-xs mt-1">
+    <p className="text-slate-600 text-xs mt-1">
       Descrição do widget
     </p>
-    <div className="text-widget-value text-2xl font-bold mt-4">
+    <div className="text-slate-900 text-2xl font-bold mt-4">
       1.234
     </div>
-    <span className="text-widget-label text-sm">
+    <span className="text-slate-700 text-sm">
       unidade
     </span>
   </div>
 </Card>
 ```
 
-### 6.2 Estrutura de uma Tabela
+### 5.2 Estrutura de uma Tabela
 
 ```tsx
-<div className="rounded-md border border-widget overflow-x-auto bg-sidebar">
+<div className="rounded-md border border-slate-200 overflow-x-auto bg-sidebar">
   <Table>
     <TableHeader>
       <TableRow>
-        <TableHead className="text-widget-label">Coluna</TableHead>
+        <TableHead className="text-slate-700">Coluna</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
       <TableRow>
-        <TableCell className="text-widget-description">Valor</TableCell>
+        <TableCell className="text-slate-600">Valor</TableCell>
       </TableRow>
     </TableBody>
   </Table>
 </div>
 ```
 
-### 6.3 Boas Práticas
+### 5.3 Boas Práticas
 
-1. **Sempre use classes semânticas**: Prefira `.text-widget-title` em vez de `text-slate-800` para garantir compatibilidade com dark mode.
+1. **Use classes Tailwind padrão**: Prefira `text-slate-800` para títulos e `text-slate-600` para descrições.
 
-2. **Mantenha consistência**: Todos os widgets devem seguir o mesmo padrão visual.
+2. **Mantenha consistência**: Todos os widgets devem seguir o mesmo padrão visual com `bg-sidebar` e `border-slate-200`.
 
-3. **Teste em ambos os temas**: Verifique se o contraste é adequado tanto no tema light quanto no dark.
+3. **Priorize legibilidade**: O contraste mínimo deve ser 4.5:1 para texto normal e 3:1 para texto grande.
 
 4. **Evite cores hardcoded**: Use as variáveis CSS definidas para facilitar manutenção.
 
-5. **Priorize legibilidade**: O contraste mínimo deve ser 4.5:1 para texto normal e 3:1 para texto grande.
+5. **Siga a escala tipográfica**: Use os tamanhos e pesos definidos para manter hierarquia visual.
 
 ---
 
@@ -260,6 +219,7 @@ A transição entre temas deve ser suave:
 
 | Versão | Data | Alterações |
 |--------|------|------------|
+| 1.1 | 17/01/2026 | Removido suporte a dark mode; apenas tema light |
 | 1.0 | 17/01/2026 | Versão inicial do Design System |
 
 ---
