@@ -182,14 +182,15 @@ const CONVENIOS = [
   "Outro",
 ];
 
+// Paleta de cores harmônica com o azul institucional #203864
 const CORES_TIPO: Record<string, string> = {
-  "Consulta": "bg-blue-500",
-  "Cirurgia": "bg-red-500",
-  "Visita internado": "bg-purple-500",
-  "Procedimento em consultório": "bg-orange-500",
-  "Exame": "bg-green-500",
-  "Reunião": "bg-yellow-600",
-  "Bloqueio": "bg-gray-500",
+  "Consulta": "bg-[#203864]",           // Azul institucional Gorgen
+  "Cirurgia": "bg-[#8B2942]",            // Bordô (complementar)
+  "Visita internado": "bg-[#4A3864]",    // Roxo escuro (análogo)
+  "Procedimento em consultório": "bg-[#64502D]", // Dourado escuro (complementar)
+  "Exame": "bg-[#1D4D4F]",               // Verde-azulado (análogo)
+  "Reunião": "bg-[#5C5C5C]",             // Cinza neutro
+  "Bloqueio": "bg-[#7A7A7A]",            // Cinza claro
 };
 
 const FERIADOS_FIXOS: Record<string, string> = {
@@ -2538,14 +2539,21 @@ export default function Agenda() {
         }}
       >
         <div className="flex items-center gap-1">
-          {isDraggable && <GripVertical className="w-3 h-3 opacity-50" />}
-          {StatusIcon && <StatusIcon className="w-3 h-3" />}
+          {isDraggable && <GripVertical className="w-3 h-3 opacity-50 flex-shrink-0" />}
+          {StatusIcon && <StatusIcon className="w-3 h-3 flex-shrink-0" />}
           <span className="font-medium truncate">
             {formatarHora(agendamento.dataHoraInicio)}
           </span>
+          {/* Sempre mostrar nome/título na mesma linha quando altura é pequena */}
+          {height <= 30 && (
+            <span className="truncate ml-1">
+              - {agendamento.pacienteNome || agendamento.titulo || agendamento.tipoCompromisso}
+            </span>
+          )}
         </div>
+        {/* Mostrar em linha separada quando há espaço */}
         {height > 30 && (
-          <div className="truncate">
+          <div className="truncate font-medium">
             {agendamento.pacienteNome || agendamento.titulo || agendamento.tipoCompromisso}
           </div>
         )}
@@ -2625,7 +2633,7 @@ export default function Agenda() {
                 </div>
                 <div className={`
                   text-lg font-semibold
-                  ${isHoje ? "bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto" : ""}
+                  ${isHoje ? "bg-[#203864] text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto" : ""}
                 `}>
                   {dia.getDate()}
                 </div>
@@ -2927,7 +2935,7 @@ export default function Agenda() {
                     <div className="flex items-center justify-between">
                       <span className={`
                         text-sm font-medium
-                        ${isHoje ? "bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center" : ""}
+                        ${isHoje ? "bg-[#203864] text-white rounded-full w-6 h-6 flex items-center justify-center" : ""}
                       `}>
                         {dia.getDate()}
                       </span>
@@ -3087,8 +3095,8 @@ export default function Agenda() {
                               className={`
                                 text-center py-0.5 rounded
                                 ${!isMesCorreto ? "text-gray-300" : ""}
-                                ${isHoje ? "bg-blue-500 text-white font-bold" : ""}
-                                ${temAgendamentos && !isHoje ? "bg-blue-100 text-blue-700 font-medium" : ""}
+                                ${isHoje ? "bg-[#203864] text-white font-bold" : ""}
+                                ${temAgendamentos && !isHoje ? "bg-[#E8EEF5] text-[#203864] font-medium" : ""}
                               `}
                               title={temAgendamentos ? `${agendamentosDia.length} agendamento(s)` : undefined}
                             >
@@ -3781,10 +3789,27 @@ export default function Agenda() {
                 <div className="p-4 bg-muted rounded-lg">
                   <div className="flex items-center gap-3">
                     <User className="w-6 h-6 text-muted-foreground" />
-                    <div>
-                      <div className="font-semibold text-lg">{agendamentoSelecionado.pacienteNome}</div>
+                    <div className="flex-1">
+                      {/* Nome do paciente clicável - vai direto para o prontuário */}
+                      {agendamentoSelecionado.pacienteId ? (
+                        <button
+                          onClick={() => {
+                            setModalDetalhesAberto(false);
+                            setLocation(`/prontuario/${agendamentoSelecionado.pacienteId}`);
+                          }}
+                          className="font-semibold text-lg text-[#203864] hover:underline cursor-pointer flex items-center gap-2 group"
+                        >
+                          {agendamentoSelecionado.pacienteNome}
+                          <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      ) : (
+                        <div className="font-semibold text-lg">{agendamentoSelecionado.pacienteNome}</div>
+                      )}
+                      {agendamentoSelecionado.pacienteId && (
+                        <div className="text-xs text-muted-foreground">Clique para abrir prontuário</div>
+                      )}
                       {agendamentoSelecionado.pacienteTelefone && (
-                        <div className="text-base text-muted-foreground flex items-center gap-2">
+                        <div className="text-base text-muted-foreground flex items-center gap-2 mt-1">
                           <Phone className="w-4 h-4" />
                           {agendamentoSelecionado.pacienteTelefone}
                         </div>
