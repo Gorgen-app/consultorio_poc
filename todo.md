@@ -2591,3 +2591,23 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - Build TypeScript sem erros
 - Servidor de desenvolvimento funcionando
 - Dashboard e Agenda operacionais
+
+
+---
+
+## 🎨 GORGEN 3.8.0 - Consistência Visual da Paleta de Cores (17/01/2026)
+
+### Aplicação da Paleta de Cores Opção B (#6B8CBE)
+- [x] Analisar paleta de cores atual na Agenda
+- [x] Atualizar variáveis CSS globais com a nova paleta
+- [x] Aplicar cores consistentes no Dashboard e widgets
+- [x] Atualizar cores na página de Pacientes
+- [x] Atualizar cores na página de Atendimentos
+- [x] Atualizar cores no DashboardLayout (sidebar)
+- [x] Verificar consistência visual em todos os componentes
+
+### Resultado
+- Paleta de cores Opção B (#6B8CBE) aplicada em todo o sistema
+- Cores mais suaves e elegantes, menor fadiga visual
+- Consistência visual entre Agenda, Dashboard, e demais componentes
+- Variáveis CSS globais atualizadas para light e dark themes

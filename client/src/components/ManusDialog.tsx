@@ -79,7 +79,7 @@ export function ManusDialog({
           {/* Login button - Azul Gorgen */}
           <Button
             onClick={onLogin}
-            className="w-full h-10 bg-[#203864] hover:bg-[#2B4A7D] text-white rounded-[10px] text-sm font-medium leading-5 tracking-[-0.154px]"
+            className="w-full h-10 bg-[#6B8CBE] hover:bg-[#5A7DB0] text-white rounded-[10px] text-sm font-medium leading-5 tracking-[-0.154px]"
           >
             Login with Manus
           </Button>

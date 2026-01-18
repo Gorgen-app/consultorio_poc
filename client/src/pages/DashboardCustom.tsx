@@ -104,26 +104,26 @@ const periodos: { valor: PeriodoTempo; label: string }[] = [
   { valor: 'todo', label: 'Todo período' },
 ];
 
-// Gorgen Design System - Cores das Categorias
+// Gorgen Design System - Cores das Categorias (Paleta Opção B)
 const categorias: { valor: CategoriaMetrica; label: string; cor: string; icone: React.ReactNode }[] = [
-  { valor: 'populacao_pacientes', label: 'População de Pacientes', cor: '#203864', icone: <Users className="h-4 w-4" /> },
+  { valor: 'populacao_pacientes', label: 'População de Pacientes', cor: '#6B8CBE', icone: <Users className="h-4 w-4" /> },
   { valor: 'atendimentos', label: 'Atendimentos', cor: '#10B981', icone: <Calendar className="h-4 w-4" /> },
-  { valor: 'economico_financeiro', label: 'Econômico-Financeiro', cor: '#F59E0B', icone: <DollarSign className="h-4 w-4" /> },
-  { valor: 'qualidade_atendimento', label: 'Qualidade do Atendimento', cor: '#8B5CF6', icone: <Heart className="h-4 w-4" /> },
-  { valor: 'diversas', label: 'Diversas', cor: '#DC6B4A', icone: <LayoutGrid className="h-4 w-4" /> },
+  { valor: 'economico_financeiro', label: 'Econômico-Financeiro', cor: '#BEA06B', icone: <DollarSign className="h-4 w-4" /> },
+  { valor: 'qualidade_atendimento', label: 'Qualidade do Atendimento', cor: '#8E7DBE', icone: <Heart className="h-4 w-4" /> },
+  { valor: 'diversas', label: 'Diversas', cor: '#BE6B7D', icone: <LayoutGrid className="h-4 w-4" /> },
 ];
 
-// Gorgen Design System - Cores para Gráficos
+// Gorgen Design System - Cores para Gráficos (Paleta Opção B)
 const CORES_GRAFICOS = [
-  '#203864', // Azul Gorgen 700 (principal)
-  '#3B5F96', // Azul Gorgen 500
-  '#5A7DB0', // Azul Gorgen 400
+  '#6B8CBE', // Azul Claro (principal)
+  '#BE6B7D', // Rosa/Bordô suave
+  '#8E7DBE', // Roxo suave
+  '#BEA06B', // Dourado suave
+  '#6BB0BE', // Ciano suave
   '#10B981', // Verde (sucesso)
   '#F59E0B', // Âmbar (alerta)
-  '#DC6B4A', // Coral Gorgen (accent)
-  '#8B5CF6', // Violeta
-  '#EC4899', // Rosa
-  '#6B7280', // Cinza
+  '#8A8A8A', // Cinza médio
+  '#5A7DB0', // Azul médio
 ];
 
 // ============================================
@@ -423,8 +423,8 @@ function MicroWidget({ label, value, unit, icon, categoria, onRemove, onChangeTa
         <div 
           className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
           style={{ 
-            backgroundColor: cat ? `${cat.cor}15` : '#20386415',
-            color: cat?.cor || '#203864'
+            backgroundColor: cat ? `${cat.cor}15` : '#6B8CBE15',
+            color: cat?.cor || '#6B8CBE'
           }}
         >
           {icon}
@@ -779,7 +779,7 @@ function MetricaConteudo({
               dataKey="value"
               stroke="none"
             >
-              <Cell fill="#203864" />
+              <Cell fill="#6B8CBE" />
               <Cell fill="#E5E7EB" />
             </Pie>
           </RechartsPieChart>
@@ -965,7 +965,7 @@ function MetricaConteudo({
           <XAxis type="number" tick={{ fontSize }} />
           <YAxis dataKey="nome" type="category" tick={{ fontSize }} width={tamanho === 'micro' ? 35 : 55} />
           <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
-          <Bar dataKey="valor" fill="#203864" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="valor" fill="#6B8CBE" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
@@ -993,8 +993,8 @@ function MetricaConteudo({
           <Area 
             type="monotone" 
             dataKey="valor" 
-            stroke="#203864"
-            fill="#20386420"
+            stroke="#6B8CBE"
+            fill="#6B8CBE20"
             strokeWidth={2}
           />
         </AreaChart>
@@ -1027,9 +1027,9 @@ function MetricaConteudo({
           <Line 
             type="monotone" 
             dataKey="valor" 
-            stroke="#203864"
+            stroke="#6B8CBE"
             strokeWidth={2}
-            dot={{ fill: '#203864', r: 3 }}
+            dot={{ fill: '#6B8CBE', r: 3 }}
           />
         </LineChart>
       </ResponsiveContainer>

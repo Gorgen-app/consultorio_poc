@@ -41,25 +41,32 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   
-  /* Gorgen Design System - Paleta de Cores */
-  /* Cor Primária: Azul Gorgen #203864 */
-  --gorgen-primary-50: #F0F4F9;
-  --gorgen-primary-100: #E0E8F2;
-  --gorgen-primary-200: #B8C9DE;
-  --gorgen-primary-300: #8BA3C9;
-  --gorgen-primary-400: #5A7DB0;
-  --gorgen-primary-500: #3B5F96;
-  --gorgen-primary-600: #2B4A7D;
-  --gorgen-primary-700: #203864;
-  --gorgen-primary-800: #1A2B47;
-  --gorgen-primary-900: #152238;
-  --gorgen-primary-950: #0D1729;
+  /* Gorgen Design System - Paleta de Cores Opção B */
+  /* Cor Primária: Azul Claro #6B8CBE (mais suave, menor fadiga visual) */
+  --gorgen-primary-50: #F5F7FA;
+  --gorgen-primary-100: #E8EDF5;
+  --gorgen-primary-200: #D1DBEA;
+  --gorgen-primary-300: #A8BEDA;
+  --gorgen-primary-400: #8BA3C9;
+  --gorgen-primary-500: #6B8CBE;
+  --gorgen-primary-600: #5A7DB0;
+  --gorgen-primary-700: #4A6A9A;
+  --gorgen-primary-800: #3B5580;
+  --gorgen-primary-900: #2E4366;
+  --gorgen-primary-950: #1E2D45;
   
-  /* Cor de Destaque (Accent): Coral */
-  --gorgen-accent-100: #FCEAE5;
-  --gorgen-accent-400: #F0A08D;
-  --gorgen-accent-500: #E8836A;
-  --gorgen-accent-600: #DC6B4A;
+  /* Cor de Destaque (Accent): Rosa/Bordô suave (harmônico com azul claro) */
+  --gorgen-accent-100: #F9E8EB;
+  --gorgen-accent-400: #D08A96;
+  --gorgen-accent-500: #BE6B7D;
+  --gorgen-accent-600: #A85A6B;
+  
+  /* Cores Complementares da Paleta Opção B */
+  --gorgen-purple: #8E7DBE;
+  --gorgen-gold: #BEA06B;
+  --gorgen-cyan: #6BB0BE;
+  --gorgen-gray-medium: #8A8A8A;
+  --gorgen-gray-light: #ABABAB;
   
   /* Cores Semânticas */
   --gorgen-success: #10B981;
@@ -85,24 +92,24 @@
 :root {
   /* ================================================
    * GORGEN DESIGN SYSTEM - Light Theme
-   * Paleta baseada no Azul Gorgen #203864
+   * Paleta Opção B: Azul Claro #6B8CBE
    * Tipografia: Inter
    * ================================================ */
   
-  /* Cor Primária - Azul Gorgen */
-  --primary: #203864;
+  /* Cor Primária - Azul Claro (Opção B) */
+  --primary: #6B8CBE;
   --primary-foreground: #FFFFFF;
   
   /* Sidebar */
-  --sidebar-primary: #2B4A7D;
+  --sidebar-primary: #5A7DB0;
   --sidebar-primary-foreground: #FFFFFF;
   
-  /* Gráficos - Escala do Azul Gorgen */
-  --chart-1: #203864;
-  --chart-2: #3B5F96;
-  --chart-3: #5A7DB0;
-  --chart-4: #8BA3C9;
-  --chart-5: #B8C9DE;
+  /* Gráficos - Escala da Paleta Opção B */
+  --chart-1: #6B8CBE;
+  --chart-2: #BE6B7D;
+  --chart-3: #8E7DBE;
+  --chart-4: #BEA06B;
+  --chart-5: #6BB0BE;
   
   /* Raio de borda padrão */
   --radius: 0.5rem;
@@ -127,9 +134,9 @@
   --muted: #F3F4F6;
   --muted-foreground: #6B7280;
   
-  /* Accent - Coral Gorgen */
-  --accent: #FCEAE5;
-  --accent-foreground: #DC6B4A;
+  /* Accent - Rosa/Bordô suave (harmônico com azul claro) */
+  --accent: #F9E8EB;
+  --accent-foreground: #BE6B7D;
   
   /* Destructive - Vermelho para ações destrutivas */
   --destructive: #EF4444;
@@ -138,36 +145,37 @@
   /* Bordas e Inputs */
   --border: #E5E7EB;
   --input: #E5E7EB;
-  --ring: #203864;
+  --ring: #6B8CBE;
   
   /* Sidebar */
-  --sidebar: #F9FAFB;
+  --sidebar: #F5F7FA;
   --sidebar-foreground: #111827;
-  --sidebar-accent: #E0E8F2;
-  --sidebar-accent-foreground: #203864;
-  --sidebar-border: #E5E7EB;
-  --sidebar-ring: #203864;
+  --sidebar-accent: #E8EDF5;
+  --sidebar-accent-foreground: #4A6A9A;
+  --sidebar-border: #D1DBEA;
+  --sidebar-ring: #6B8CBE;
 }
 
 .dark {
   /* ================================================
    * GORGEN DESIGN SYSTEM - Dark Theme
+   * Paleta Opção B: Azul Claro #6B8CBE
    * ================================================ */
   
-  /* Cor Primária - Azul Gorgen (mais claro no dark) */
-  --primary: #5A7DB0;
-  --primary-foreground: #FFFFFF;
+  /* Cor Primária - Azul Claro (mais brilhante no dark) */
+  --primary: #8BA3C9;
+  --primary-foreground: #1E2D45;
   
   /* Sidebar */
-  --sidebar-primary: #8BA3C9;
-  --sidebar-primary-foreground: #0D1729;
+  --sidebar-primary: #A8BEDA;
+  --sidebar-primary-foreground: #1E2D45;
   
-  /* Gráficos - Escala invertida para dark mode */
+  /* Gráficos - Cores mais brilhantes para dark mode */
   --chart-1: #8BA3C9;
-  --chart-2: #5A7DB0;
-  --chart-3: #3B5F96;
-  --chart-4: #2B4A7D;
-  --chart-5: #203864;
+  --chart-2: #D08A96;
+  --chart-3: #A899D0;
+  --chart-4: #D0BA8A;
+  --chart-5: #8AC9D0;
   
   /* Background e Foreground */
   --background: #0D1729;
@@ -189,9 +197,9 @@
   --muted: #1A2B47;
   --muted-foreground: #9CA3AF;
   
-  /* Accent - Coral (ajustado para dark) */
-  --accent: #2B4A7D;
-  --accent-foreground: #F0A08D;
+  /* Accent - Rosa/Bordô suave (ajustado para dark) */
+  --accent: #3B3040;
+  --accent-foreground: #D08A96;
   
   /* Destructive */
   --destructive: #DC2626;
@@ -200,15 +208,15 @@
   /* Bordas e Inputs */
   --border: #1A2B47;
   --input: #1A2B47;
-  --ring: #5A7DB0;
+  --ring: #8BA3C9;
   
   /* Sidebar */
-  --sidebar: #152238;
+  --sidebar: #1E2D45;
   --sidebar-foreground: #F3F4F6;
-  --sidebar-accent: #1A2B47;
-  --sidebar-accent-foreground: #8BA3C9;
-  --sidebar-border: #1A2B47;
-  --sidebar-ring: #5A7DB0;
+  --sidebar-accent: #2E4366;
+  --sidebar-accent-foreground: #A8BEDA;
+  --sidebar-border: #2E4366;
+  --sidebar-ring: #8BA3C9;
 }
 
 @layer base {
@@ -383,6 +391,25 @@
   .text-gorgen-error { color: var(--gorgen-error); }
   .bg-gorgen-info { background-color: var(--gorgen-info); }
   .text-gorgen-info { color: var(--gorgen-info); }
+  
+  /* Cores Complementares da Paleta Opção B */
+  .bg-gorgen-purple { background-color: var(--gorgen-purple); }
+  .text-gorgen-purple { color: var(--gorgen-purple); }
+  .bg-gorgen-gold { background-color: var(--gorgen-gold); }
+  .text-gorgen-gold { color: var(--gorgen-gold); }
+  .bg-gorgen-cyan { background-color: var(--gorgen-cyan); }
+  .text-gorgen-cyan { color: var(--gorgen-cyan); }
+  .bg-gorgen-gray-medium { background-color: var(--gorgen-gray-medium); }
+  .bg-gorgen-gray-light { background-color: var(--gorgen-gray-light); }
+  
+  /* Cores de Tipo de Compromisso (Agenda) */
+  .bg-tipo-consulta { background-color: #6B8CBE; }
+  .bg-tipo-cirurgia { background-color: #BE6B7D; }
+  .bg-tipo-visita { background-color: #8E7DBE; }
+  .bg-tipo-procedimento { background-color: #BEA06B; }
+  .bg-tipo-exame { background-color: #6BB0BE; }
+  .bg-tipo-reuniao { background-color: #8A8A8A; }
+  .bg-tipo-bloqueio { background-color: #ABABAB; }
 }
 
 /* ================================================
