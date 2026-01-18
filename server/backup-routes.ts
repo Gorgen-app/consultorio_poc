@@ -6,7 +6,9 @@
  */
 
 import { z } from "zod";
-import { router, adminMasterProcedure } from "./routers";
+import { router, tenantProcedure } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
+import { getUserProfile } from "./db";
 import {
   getSchedulerStatus,
   runTaskManually,
@@ -14,6 +16,29 @@ import {
   stopBackupScheduler,
 } from "./backup-scheduler";
 import { getBackupSystemInfo } from "./_core/backup-init";
+
+type TaskName = "daily-backup" | "cleanup" | "weekly-restore-test" | "integrity-check" | "monthly-report";
+
+/**
+ * Middleware para verificar se o usuário é admin_master
+ */
+const adminMasterProcedure = tenantProcedure.use(async ({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Usuário não autenticado",
+    });
+  }
+
+  const profile = await getUserProfile(ctx.user.id);
+  if (profile?.perfilAtivo !== "admin_master") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Apenas o administrador master pode acessar esta funcionalidade",
+    });
+  }
+  return next({ ctx });
+});
 
 /**
  * Router para administração do scheduler de backup
@@ -50,8 +75,9 @@ export const backupSchedulerRouter = router({
       ]),
     }))
     .mutation(async ({ input }) => {
-      await runTaskManually(input.taskName);
-      return { success: true, message: `Tarefa ${input.taskName} executada` };
+      const taskName = input.taskName as TaskName;
+      await runTaskManually(taskName);
+      return { success: true, message: `Tarefa ${taskName} executada` };
     }),
 
   /**

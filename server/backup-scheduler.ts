@@ -17,7 +17,7 @@
  * - Funcionalidade restrita ao usuário Master/Administrador
  */
 
-import cron from "node-cron";
+import cron, { ScheduledTask as CronScheduledTask } from "node-cron";
 import { getDb } from "./db";
 import { backupConfig, tenants } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -60,7 +60,7 @@ const DEFAULT_CONFIG: SchedulerConfig = {
 
 interface ScheduledTask {
   name: string;
-  task: cron.ScheduledTask;
+  task: CronScheduledTask;
   cronExpression: string;
   lastRun?: Date;
   lastStatus?: "success" | "failed";
@@ -110,7 +110,7 @@ async function getActiveTenantsWithBackup(): Promise<number[]> {
     const activeTenantsResult = await db
       .select({ id: tenants.id })
       .from(tenants)
-      .where(eq(tenants.isActive, true));
+      .where(eq(tenants.status, "ativo"));
 
     const tenantIds: number[] = [];
 
@@ -382,7 +382,6 @@ export function initializeBackupScheduler(config: Partial<SchedulerConfig> = {})
 
   // Agendar backup diário às 03:00
   const dailyBackupTask = cron.schedule(finalConfig.dailyBackupCron, runDailyBackup, {
-    scheduled: true,
     timezone: "America/Sao_Paulo",
   });
   scheduledTasks.set("daily-backup", {
@@ -393,7 +392,6 @@ export function initializeBackupScheduler(config: Partial<SchedulerConfig> = {})
 
   // Agendar limpeza diária às 02:00
   const cleanupTask = cron.schedule(finalConfig.cleanupCron, runCleanup, {
-    scheduled: true,
     timezone: "America/Sao_Paulo",
   });
   scheduledTasks.set("cleanup", {
@@ -404,7 +402,6 @@ export function initializeBackupScheduler(config: Partial<SchedulerConfig> = {})
 
   // Agendar teste de restauração semanal (domingos às 04:00)
   const weeklyTestTask = cron.schedule(finalConfig.weeklyTestCron, runWeeklyRestoreTest, {
-    scheduled: true,
     timezone: "America/Sao_Paulo",
   });
   scheduledTasks.set("weekly-restore-test", {
@@ -415,7 +412,6 @@ export function initializeBackupScheduler(config: Partial<SchedulerConfig> = {})
 
   // Agendar verificação de integridade semanal (segundas às 06:00)
   const integrityTask = cron.schedule(finalConfig.integrityCheckCron, runWeeklyIntegrityCheck, {
-    scheduled: true,
     timezone: "America/Sao_Paulo",
   });
   scheduledTasks.set("integrity-check", {
@@ -426,7 +422,6 @@ export function initializeBackupScheduler(config: Partial<SchedulerConfig> = {})
 
   // Agendar relatório mensal (dia 1 às 05:00)
   const monthlyReportTask = cron.schedule(finalConfig.monthlyReportCron, runMonthlyAuditReport, {
-    scheduled: true,
     timezone: "America/Sao_Paulo",
   });
   scheduledTasks.set("monthly-report", {
@@ -452,7 +447,7 @@ export function stopBackupScheduler(): void {
 
   logScheduler("info", "Parando scheduler de backup");
 
-  for (const [name, { task }] of scheduledTasks) {
+  for (const [name, { task }] of Array.from(scheduledTasks.entries())) {
     task.stop();
     logScheduler("info", `Tarefa ${name} parada`);
   }
