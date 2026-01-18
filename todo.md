@@ -2679,3 +2679,14 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 ### Resultado
 - Sistema Gorgen utilizará exclusivamente o tema light
 - Paleta de cores Opção B (#6B8CBE) mantida como padrão
+
+
+---
+
+## 📋 GORGEN 3.9.2 - Regra de Versionamento (17/01/2026)
+
+### Implementação da Regra de Versionamento
+- [x] Criar arquivo de configuração com regra de versionamento (VERSIONING.md)
+- [x] Documentar política de versionamento
+- [x] Atualizar package.json para versão 3.9.2
+- [ ] Sincronizar com GitHub
