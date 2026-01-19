@@ -182,7 +182,7 @@ const CONVENIOS = [
   "Outro",
 ];
 
-// Paleta de cores Opção B - Azul Claro (#6B8CBE)
+// Paleta de cores Opção B - Azul Claro (#0056A4)
 // Cores mais suaves e elegantes, menor fadiga visual, mais profissional/médico
 const CORES_TIPO: Record<string, string> = {
   "Consulta": "bg-[#6B8CBE]",           // Azul claro (principal)

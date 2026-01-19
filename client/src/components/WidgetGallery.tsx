@@ -232,7 +232,7 @@ const todasMetricas: MetricaDefinicao[] = [
 
 // Gorgen Design System - Cores das Categorias
 const categorias: { valor: CategoriaMetrica; label: string; cor: string }[] = [
-  { valor: 'populacao_pacientes', label: 'População', cor: '#6B8CBE' },  // Azul Gorgen
+  { valor: 'populacao_pacientes', label: 'População', cor: '#0056A4' },  // Azul Gorgen
   { valor: 'atendimentos', label: 'Atendimentos', cor: '#10B981' },         // Verde
   { valor: 'economico_financeiro', label: 'Financeiro', cor: '#F59E0B' },   // Âmbar
   { valor: 'qualidade_atendimento', label: 'Qualidade', cor: '#8B5CF6' },   // Violeta

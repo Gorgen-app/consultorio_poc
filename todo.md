@@ -2765,3 +2765,37 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - empty.tsx: Hover de links
 - field.tsx: Hover de links
 - item.tsx: Hover de links
+
+
+---
+
+## 🎨 PROTÓTIPO - Substituição de #6B8CBE por #0056A4 (18/01/2026)
+
+### Resultado: REJEITADO
+- [x] Protótipo criado com #0056A4 como cor primária
+- [x] Apresentado para aprovação
+- [x] **Decisão: NÃO APROVADO** - Manter #6B8CBE como cor primária
+- [x] Revertido para configuração original
+
+### Conclusão
+A cor #6B8CBE permanece como cor primária do Gorgen.
+A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de pacientes).
+
+
+---
+
+## 🔒 GORGEN 3.9.7 - Integração do Rate Limiting (19/01/2026)
+
+### Implementação
+- [x] Adicionar import do Rate Limiting no index.ts
+- [x] Inserir middlewares após body parser
+- [x] Adicionar log informativo
+- [x] Reiniciar servidor
+- [x] Verificar funcionamento (headers RateLimit-* confirmados)
+- [x] Criar testes unitários (12 testes passando)
+- [ ] Salvar checkpoint
+
+### Resultado
+- Rate Limiting ativo: 100 req/min por IP, 300 req/min por usuário
+- Headers de resposta: RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset
+- Testes: 12/12 passando

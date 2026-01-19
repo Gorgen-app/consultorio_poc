@@ -14,6 +14,26 @@
 import rateLimit from "express-rate-limit";
 import type { Request, Response, NextFunction } from "express";
 
+/**
+ * Normaliza endereços IPv6 para IPv4 quando possível
+ * Isso garante consistência no rate limiting
+ */
+function normalizeIP(ip: string | undefined): string {
+  if (!ip) return "unknown";
+  
+  // Remove prefixo IPv6 de endereços IPv4-mapped (::ffff:192.168.1.1 -> 192.168.1.1)
+  if (ip.startsWith("::ffff:")) {
+    return ip.substring(7);
+  }
+  
+  // Normaliza localhost IPv6 para IPv4
+  if (ip === "::1") {
+    return "127.0.0.1";
+  }
+  
+  return ip;
+}
+
 // Configuração de limites
 export const RATE_LIMITS = {
   // Limite global por IP (proteção contra bots)
@@ -95,9 +115,10 @@ export const globalRateLimiter = rateLimit({
   legacyHeaders: false, // Desabilita headers `X-RateLimit-*`
   message: RATE_LIMITS.GLOBAL_IP.message,
   keyGenerator: (req: Request) => {
-    // Usa IP real considerando proxies
-    return req.ip || req.socket.remoteAddress || "unknown";
+    // Usa IP real considerando proxies, normalizado para IPv4 quando possível
+    return normalizeIP(req.ip || req.socket.remoteAddress);
   },
+  validate: { xForwardedForHeader: false },
   skip: (req: Request) => {
     // Pula health checks e assets estáticos
     return req.path === "/health" || req.path.startsWith("/assets/");
@@ -114,10 +135,11 @@ export const userRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: RATE_LIMITS.USER.message,
-  keyGenerator: (req: Request) => {
+keyGenerator: (req: Request) => {
     const userId = getUserId(req);
-    return userId || req.ip || "anonymous";
+    return userId || normalizeIP(req.ip || req.socket.remoteAddress);
   },
+  validate: { xForwardedForHeader: false },
   skip: (req: Request) => {
     // Pula se não há usuário autenticado
     return !getUserId(req);
@@ -134,10 +156,11 @@ export const tenantRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: RATE_LIMITS.TENANT.message,
-  keyGenerator: (req: Request) => {
+keyGenerator: (req: Request) => {
     const tenantId = getTenantId(req);
-    return tenantId ? `tenant:${tenantId}` : req.ip || "unknown";
+    return tenantId ? `tenant:${tenantId}` : normalizeIP(req.ip || req.socket.remoteAddress);
   },
+  validate: { xForwardedForHeader: false },
   skip: (req: Request) => {
     // Pula se não há tenant identificado
     return !getTenantId(req);
@@ -158,8 +181,10 @@ export const sensitiveRateLimiter = rateLimit({
     // Combina IP + email/username para evitar ataques distribuídos
     const body = req.body || {};
     const identifier = body.email || body.username || "";
-    return `${req.ip}:${identifier}`;
+    const ip = normalizeIP(req.ip || req.socket.remoteAddress);
+    return `${ip}:${identifier}`;
   },
+  validate: { xForwardedForHeader: false },
 });
 
 /**
@@ -174,8 +199,10 @@ export const writeRateLimiter = rateLimit({
   message: RATE_LIMITS.WRITE.message,
   keyGenerator: (req: Request) => {
     const userId = getUserId(req);
-    return userId ? `write:${userId}` : `write:${req.ip}`;
+    const ip = normalizeIP(req.ip || req.socket.remoteAddress);
+    return userId ? `write:${userId}` : `write:${ip}`;
   },
+  validate: { xForwardedForHeader: false },
   skip: (req: Request) => {
     // Aplica apenas a métodos de escrita
     return !["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
