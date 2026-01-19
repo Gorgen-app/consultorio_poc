@@ -553,6 +553,15 @@ function DashboardLayoutContent({
             </div>
             <div className="flex items-center gap-2">
               <NotificacoesDropdown />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={logout}
+                className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                title="Sair"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
             </div>
           </div>
         )}

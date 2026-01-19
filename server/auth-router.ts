@@ -2,6 +2,7 @@ import { z } from "zod";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { sdk } from "./_core/sdk";
 import { TRPCError } from "@trpc/server";
 import * as authDb from "./auth-db";
 import * as speakeasy from "speakeasy";
@@ -211,8 +212,18 @@ export const authRouter = router({
         });
       }
 
-      // Criar sessão
-      const sessionToken = await authDb.createUserSession(
+      // Criar sessão JWT compatível com o sistema OAuth
+      // Usamos o openId do usuário para manter compatibilidade
+      const sessionToken = await sdk.createSessionToken(
+        user.openId,
+        { 
+          expiresInMs: ONE_YEAR_MS,
+          name: user.name || ""
+        }
+      );
+      
+      // Também registrar na tabela de sessões locais para auditoria
+      await authDb.createUserSession(
         validation.userId,
         ctx.req?.ip,
         ctx.req?.headers["user-agent"],

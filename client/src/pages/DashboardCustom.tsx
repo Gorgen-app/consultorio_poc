@@ -39,8 +39,10 @@ import {
   Percent,
   X,
   MoreVertical,
-  Scaling
+  Scaling,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '@/_core/hooks/useAuth';
 import {
   LineChart,
   Line,
@@ -1046,6 +1048,7 @@ function MetricaConteudo({
 // ============================================
 
 export default function DashboardCustom() {
+  const { logout } = useAuth();
   const [periodo, setPeriodo] = useState<PeriodoTempo>('30d');
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([
     // KPIs convertidos em widgets micro
