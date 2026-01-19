@@ -2846,3 +2846,20 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Busca parcial de CPF desabilitada (usuários digitam CPF completo)
 - [x] Prazo estendido para 09/02/2026
 - [x] Segurança priorizada (AES-256-GCM + PBKDF2 100k)
+
+
+### Fase 2: Integração com Schema (19/01/2026) ✅ CONCLUÍDO
+- [x] Analisar schema atual e identificar campos PII
+- [x] Adicionar campos criptografados ao schema.ts (cpf_encrypted, cpf_hash, etc.)
+- [x] Executar migração do banco de dados (SQL direto)
+- [x] Refatorar db.ts para usar encrypt/decrypt nos campos PII
+- [x] Criar script de migração de dados existentes (scripts/migrate-encrypt-pii.ts)
+- [x] Executar testes de integração (416/417 passando)
+- [ ] Validar busca por CPF completo (pendente teste manual)
+
+### Fase 3: Migração de Dados Existentes (PENDENTE)
+- [ ] Configurar ENCRYPTION_MASTER_KEY em produção
+- [ ] Executar script migrate-encrypt-pii.ts em dry-run
+- [ ] Executar migração real dos dados
+- [ ] Validar dados migrados
+- [ ] Remover campos originais (cpf, email, telefone) após validação

@@ -162,6 +162,13 @@
       "when": 1768577922628,
       "tag": "0022_freezing_clint_barton",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1768826377596,
+      "tag": "0023_lowly_vulcan",
+      "breakpoints": true
     }
   ]
 }

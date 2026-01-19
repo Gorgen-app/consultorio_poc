@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS cpf_encrypted TEXT NULL AFTER cpf,\n  ADD COLUMN IF NOT EXISTS cpf_hash VARCHAR(100) NULL AFTER cpf_encrypted;\n\nALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS email_encrypted TEXT NULL AFTER email,\n  ADD COLUMN IF NOT EXISTS email_hash VARCHAR(100) NULL AFTER email_encrypted;\n\nALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS telefone_encrypted TEXT NULL AFTER telefone;\n\nALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS responsavel_telefone_encrypted TEXT NULL AFTER responsavel_telefone;\n\nALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS responsavel_email_encrypted TEXT NULL AFTER responsavel_email;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS cpf_encrypted TEXT NULL AFTER cpf,\n  ADD COLUMN IF NOT EXISTS cpf_hash VARCHAR(100) NULL AFTER cpf_encrypted;\n\nALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS email_encrypted TEXT NULL AFTER email,\n  ADD COLUMN IF NOT EXISTS email_hash VARCHAR(100) NULL AFTER email_encrypted;\n\nALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS telefone_encrypted TEXT NULL AFTER telefone;\n\nALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS responsavel_telefone_encrypted TEXT NULL AFTER responsavel_telefone;\n\nALTER TABLE pacientes \n  ADD COLUMN IF NOT EXISTS responsavel_email_encrypted TEXT NULL AFTER responsavel_email;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'cpf_encrypted' in 'pacientes'"
+  ]
+}

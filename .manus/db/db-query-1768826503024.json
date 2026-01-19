@@ -1,0 +1,410 @@
+{
+  "query": "DESCRIBE pacientes",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute DESCRIBE pacientes",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "id_paciente",
+      "Type": "varchar(64)",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "data_inclusao",
+      "Type": "date",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "pasta_paciente",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "nome",
+      "Type": "varchar(255)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "data_nascimento",
+      "Type": "date",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "sexo",
+      "Type": "enum('M','F','Outro')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cpf",
+      "Type": "varchar(14)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "nome_mae",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "email",
+      "Type": "varchar(320)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "telefone",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "endereco",
+      "Type": "varchar(500)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "bairro",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cep",
+      "Type": "varchar(10)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cidade",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "uf",
+      "Type": "varchar(2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "pais",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "Brasil",
+      "Extra": ""
+    },
+    {
+      "Field": "operadora_1",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "plano_modalidade_1",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "matricula_convenio_1",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "vigente_1",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "privativo_1",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "operadora_2",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "plano_modalidade_2",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "matricula_convenio_2",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "vigente_2",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "privativo_2",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "obito_perda",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "data_obito_last_fu",
+      "Type": "date",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "status_caso",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "Ativo",
+      "Extra": ""
+    },
+    {
+      "Field": "grupo_diagnostico",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "diagnostico_especifico",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "tempo_seguimento_anos",
+      "Type": "decimal(10,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "created_at",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updated_at",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "deleted_at",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "deleted_by",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "responsavel_nome",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "responsavel_parentesco",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "responsavel_telefone",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "responsavel_email",
+      "Type": "varchar(320)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "tenant_id",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "codigo_legado",
+      "Type": "varchar(64)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cpf_encrypted",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cpf_hash",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "email_encrypted",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "email_hash",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "telefone_encrypted",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "responsavel_telefone_encrypted",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "responsavel_email_encrypted",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint(11)\tNO\tPRI\tNULL\tauto_increment\nid_paciente\tvarchar(64)\tNO\tUNI\tNULL\t\ndata_inclusao\tdate\tYES\t\tNULL\t\npasta_paciente\tvarchar(255)\tYES\t\tNULL\t\nnome\tvarchar(255)\tNO\t\tNULL\t\ndata_nascimento\tdate\tYES\t\tNULL\t\nsexo\tenum('M','F','Outro')\tYES\t\tNULL\t\ncpf\tvarchar(14)\tYES\t\tNULL\t\nnome_mae\tvarchar(255)\tYES\t\tNULL\t\nemail\tvarchar(320)\tYES\t\tNULL\t\ntelefone\tvarchar(20)\tYES\t\tNULL\t\nendereco\tvarchar(500)\tYES\t\tNULL\t\nbairro\tvarchar(100)\tYES\t\tNULL\t\ncep\tvarchar(10)\tYES\t\tNULL\t\ncidade\tvarchar(100)\tYES\t\tNULL\t\nuf\tvarchar(2)\tYES\t\tNULL\t\npais\tvarchar(100)\tYES\t\tBrasil\t\noperadora_1\tvarchar(100)\tYES\t\tNULL\t\nplano_modalidade_1\tvarchar(100)\tYES\t\tNULL\t\nmatricula_convenio_1\tvarchar(100)\tYES\t\tNULL\t\nvigente_1\tvarchar(50)\tYES\t\tNULL\t\nprivativo_1\tvarchar(50)\tYES\t\tNULL\t\noperadora_2\tvarchar(100)\tYES\t\tNULL\t\nplano_modalidade_2\tvarchar(100)\tYES\t\tNULL\t\nmatricula_convenio_2\tvarchar(100)\tYES\t\tNULL\t\nvigente_2\tvarchar(50)\tYES\t\tNULL\t\nprivativo_2\tvarchar(50)\tYES\t\tNULL\t\nobito_perda\tvarchar(100)\tYES\t\tNULL\t\ndata_obito_last_fu\tdate\tYES\t\tNULL\t\nstatus_caso\tvarchar(50)\tYES\t\tAtivo\t\ngrupo_diagnostico\tvarchar(100)\tYES\t\tNULL\t\ndiagnostico_especifico\ttext\tYES\t\tNULL\t\ntempo_seguimento_anos\tdecimal(10,2)\tYES\t\tNULL\t\ncreated_at\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdated_at\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\ndeleted_at\ttimestamp\tYES\t\tNULL\t\ndeleted_by\tint(11)\tYES\t\tNULL\t\nresponsavel_nome\tvarchar(255)\tYES\t\tNULL\t\nresponsavel_parentesco\tvarchar(100)\tYES\t\tNULL\t\nresponsavel_telefone\tvarchar(20)\tYES\t\tNULL\t\nresponsavel_email\tvarchar(320)\tYES\t\tNULL\t\ntenant_id\tint(11)\tYES\tMUL\t1\t\ncodigo_legado\tvarchar(64)\tYES\t\tNULL\t\ncpf_encrypted\ttext\tYES\t\tNULL\t\ncpf_hash\tvarchar(100)\tYES\t\tNULL\t\nemail_encrypted\ttext\tYES\t\tNULL\t\nemail_hash\tvarchar(100)\tYES\t\tNULL\t\ntelefone_encrypted\ttext\tYES\t\tNULL\t\nresponsavel_telefone_encrypted\ttext\tYES\t\tNULL\t\nresponsavel_email_encrypted\ttext\tYES\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

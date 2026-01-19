@@ -1,0 +1,9 @@
+{
+  "query": "CREATE INDEX idx_pacientes_tenant_cpf_hash ON pacientes(tenant_id, cpf_hash);\nCREATE INDEX idx_pacientes_tenant_email_hash ON pacientes(tenant_id, email_hash)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE INDEX idx_pacientes_tenant_cpf_hash ON pacientes(tenant_id, cpf_hash);\nCREATE INDEX idx_pacientes_tenant_email_hash ON pacientes(tenant_id, email_hash)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 45921
+}

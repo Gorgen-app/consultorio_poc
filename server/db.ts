@@ -1,5 +1,7 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, lt, inArray, notInArray, ne, isNull, isNotNull, not } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
+import { EncryptionService } from "./services/EncryptionService";
+import { HashingService } from "./services/HashingService";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -9,6 +11,158 @@ import { ENV } from './_core/env';
  */
 export async function getDb() {
   return await getPooledDb();
+}
+
+// ============================================================================
+// CRIPTOGRAFIA DE CAMPOS PII
+// ============================================================================
+
+// Chave mestra de criptografia (deve ser configurada via env)
+const ENCRYPTION_KEY = process.env.ENCRYPTION_MASTER_KEY || 'gorgen-dev-key-change-in-production-32ch';
+const HASH_SECRET = process.env.HASH_SECRET_KEY || 'gorgen-hash-secret-change-in-production';
+
+// Instâncias dos serviços de criptografia (singleton por tenant)
+const encryptionServices = new Map<number, EncryptionService>();
+const hashingServices = new Map<number, HashingService>();
+
+function getEncryptionService(tenantId: number): EncryptionService {
+  if (!encryptionServices.has(tenantId)) {
+    encryptionServices.set(tenantId, new EncryptionService({
+      masterKey: ENCRYPTION_KEY,
+      tenantId: tenantId,
+      useFixedSalt: true
+    }));
+  }
+  return encryptionServices.get(tenantId)!;
+}
+
+function getHashingService(tenantId: number): HashingService {
+  if (!hashingServices.has(tenantId)) {
+    hashingServices.set(tenantId, new HashingService({
+      secretKey: HASH_SECRET,
+      tenantId: tenantId
+    }));
+  }
+  return hashingServices.get(tenantId)!;
+}
+
+/**
+ * Criptografa campos PII de um paciente antes de salvar no banco
+ */
+function encryptPacientePII(tenantId: number, data: Partial<InsertPaciente>): Partial<InsertPaciente> {
+  const encryption = getEncryptionService(tenantId);
+  const hashing = getHashingService(tenantId);
+  const result = { ...data };
+  
+  // CPF: criptografar e gerar hash para busca
+  if (data.cpf) {
+    const cpfNormalizado = data.cpf.replace(/\D/g, ''); // Remove pontuação
+    const encResult = encryption.encrypt(data.cpf);
+    result.cpfEncrypted = encResult.encrypted;
+    const hashResult = hashing.hash(cpfNormalizado);
+    result.cpfHash = hashResult.hash;
+  }
+  
+  // Email: criptografar e gerar hash para busca
+  if (data.email) {
+    const encResult = encryption.encrypt(data.email);
+    result.emailEncrypted = encResult.encrypted;
+    const hashResult = hashing.hash(data.email.toLowerCase());
+    result.emailHash = hashResult.hash;
+  }
+  
+  // Telefone: apenas criptografar (sem hash, busca por telefone não é comum)
+  if (data.telefone) {
+    const encResult = encryption.encrypt(data.telefone);
+    result.telefoneEncrypted = encResult.encrypted;
+  }
+  
+  // Responsável telefone
+  if (data.responsavelTelefone) {
+    const encResult = encryption.encrypt(data.responsavelTelefone);
+    result.responsavelTelefoneEncrypted = encResult.encrypted;
+  }
+  
+  // Responsável email
+  if (data.responsavelEmail) {
+    const encResult = encryption.encrypt(data.responsavelEmail);
+    result.responsavelEmailEncrypted = encResult.encrypted;
+  }
+  
+  return result;
+}
+
+/**
+ * Descriptografa campos PII de um paciente após ler do banco
+ * Retorna os valores descriptografados nos campos originais
+ */
+function decryptPacientePII(tenantId: number, paciente: Paciente): Paciente {
+  const encryption = getEncryptionService(tenantId);
+  const result = { ...paciente };
+  
+  // Se temos dados criptografados, descriptografar para os campos originais
+  // Isso mantém compatibilidade com código existente que usa os campos originais
+  
+  if (paciente.cpfEncrypted) {
+    try {
+      result.cpf = encryption.decrypt(paciente.cpfEncrypted);
+    } catch (e) {
+      console.warn(`[Crypto] Falha ao descriptografar CPF do paciente ${paciente.id}`);
+    }
+  }
+  
+  if (paciente.emailEncrypted) {
+    try {
+      result.email = encryption.decrypt(paciente.emailEncrypted);
+    } catch (e) {
+      console.warn(`[Crypto] Falha ao descriptografar email do paciente ${paciente.id}`);
+    }
+  }
+  
+  if (paciente.telefoneEncrypted) {
+    try {
+      result.telefone = encryption.decrypt(paciente.telefoneEncrypted);
+    } catch (e) {
+      console.warn(`[Crypto] Falha ao descriptografar telefone do paciente ${paciente.id}`);
+    }
+  }
+  
+  if (paciente.responsavelTelefoneEncrypted) {
+    try {
+      result.responsavelTelefone = encryption.decrypt(paciente.responsavelTelefoneEncrypted);
+    } catch (e) {
+      console.warn(`[Crypto] Falha ao descriptografar telefone do responsável do paciente ${paciente.id}`);
+    }
+  }
+  
+  if (paciente.responsavelEmailEncrypted) {
+    try {
+      result.responsavelEmail = encryption.decrypt(paciente.responsavelEmailEncrypted);
+    } catch (e) {
+      console.warn(`[Crypto] Falha ao descriptografar email do responsável do paciente ${paciente.id}`);
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * Gera hash de CPF para busca exata
+ */
+export function hashCpfForSearch(tenantId: number, cpf: string): string {
+  const hashing = getHashingService(tenantId);
+  const cpfNormalizado = cpf.replace(/\D/g, '');
+  const result = hashing.hash(cpfNormalizado);
+  return result.hash;
+}
+
+/**
+ * Gera hash de email para busca exata
+ */
+export function hashEmailForSearch(tenantId: number, email: string): string {
+  const hashing = getHashingService(tenantId);
+  const result = hashing.hash(email.toLowerCase());
+  return result.hash;
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -88,13 +242,18 @@ export async function createPaciente(tenantId: number, data: Omit<InsertPaciente
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Criptografar campos PII antes de salvar
+  const encryptedData = encryptPacientePII(tenantId, data);
+  
   // Garantir que o tenantId seja definido
-  const dataWithTenant = { ...data, tenantId };
-  const result = await db.insert(pacientes).values(dataWithTenant);
+  const dataWithTenant = { ...encryptedData, tenantId };
+  const result = await db.insert(pacientes).values(dataWithTenant as InsertPaciente);
   const insertedId = Number(result[0].insertId);
   
   const inserted = await db.select().from(pacientes).where(eq(pacientes.id, insertedId)).limit(1);
-  return inserted[0]!;
+  
+  // Descriptografar antes de retornar
+  return decryptPacientePII(tenantId, inserted[0]!);
 }
 
 export async function getPacienteById(tenantId: number, id: number): Promise<Paciente | undefined> {
@@ -104,7 +263,9 @@ export async function getPacienteById(tenantId: number, id: number): Promise<Pac
   const result = await db.select().from(pacientes)
     .where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)))
     .limit(1);
-  return result[0];
+  
+  // Descriptografar antes de retornar
+  return result[0] ? decryptPacientePII(tenantId, result[0]) : undefined;
 }
 
 export async function getPacienteByIdPaciente(tenantId: number, idPaciente: string): Promise<Paciente | undefined> {
@@ -114,7 +275,9 @@ export async function getPacienteByIdPaciente(tenantId: number, idPaciente: stri
   const result = await db.select().from(pacientes)
     .where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.idPaciente, idPaciente)))
     .limit(1);
-  return result[0];
+  
+  // Descriptografar antes de retornar
+  return result[0] ? decryptPacientePII(tenantId, result[0]) : undefined;
 }
 
 // Tipo para filtros de pacientes com paginação server-side
@@ -179,15 +342,16 @@ function buildPacienteConditions(tenantId: number, filters?: PacienteFilters) {
       sql`LOWER(${pacientes.idPaciente}) LIKE LOWER(${`%${termoEscapado}%`})`
     ];
     
-    // Busca por CPF: normalizar removendo pontuação
-    if (termoNumerico.length > 0) {
+    // Busca por CPF: usar hash se for CPF completo (11 dígitos), senão busca parcial no campo original
+    if (termoNumerico.length === 11) {
+      // CPF completo: buscar pelo hash (mais seguro e eficiente)
+      const cpfHash = hashCpfForSearch(tenantId, termoNumerico);
+      searchConditions.push(eq(pacientes.cpfHash, cpfHash));
+    } else if (termoNumerico.length > 0) {
+      // CPF parcial: buscar no campo original (para dados ainda não migrados)
+      // NOTA: Após migração completa, esta busca parcial não funcionará mais
       searchConditions.push(
         sql`REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', '') LIKE ${`%${termoNumerico}%`}`
-      );
-    } else {
-      // Se não tem números, busca pelo CPF como está
-      searchConditions.push(
-        sql`LOWER(${pacientes.cpf}) LIKE LOWER(${`%${termoEscapado}%`})`
       );
     }
     
@@ -201,7 +365,12 @@ function buildPacienteConditions(tenantId: number, filters?: PacienteFilters) {
   }
   if (filters?.cpf) {
     const cpfNumerico = filters.cpf.replace(/\D/g, '');
-    if (cpfNumerico.length > 0) {
+    // Busca por CPF: usar hash se for CPF completo (11 dígitos)
+    if (cpfNumerico.length === 11) {
+      const cpfHash = hashCpfForSearch(tenantId, cpfNumerico);
+      conditions.push(eq(pacientes.cpfHash, cpfHash));
+    } else if (cpfNumerico.length > 0) {
+      // CPF parcial: buscar no campo original (para dados ainda não migrados)
       conditions.push(
         sql`REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', '') LIKE ${`%${cpfNumerico}%`}`
       );
@@ -275,9 +444,12 @@ export async function listPacientes(tenantId: number, filters?: PacienteFilters)
 
   const result = await query;
   
+  // Descriptografar campos PII de cada paciente
+  const decryptedResult = result.map((p: Paciente) => decryptPacientePII(tenantId, p));
+  
   // Adicionar idade calculada a cada paciente
   const { adicionarIdadeAosPacientes } = await import('./idade-helper');
-  return adicionarIdadeAosPacientes(result);
+  return adicionarIdadeAosPacientes(decryptedResult);
 }
 
 // ===== CACHE DE MÉTRICAS =====
@@ -569,7 +741,10 @@ export async function updatePaciente(tenantId: number, id: number, data: Partial
   const existing = await getPacienteById(tenantId, id);
   if (!existing) return undefined;
 
-  await db.update(pacientes).set(data).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
+  // Criptografar campos PII antes de atualizar
+  const encryptedData = encryptPacientePII(tenantId, data);
+
+  await db.update(pacientes).set(encryptedData).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   return getPacienteById(tenantId, id);
 }
 
