@@ -2919,3 +2919,26 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 
 - [x] Corrigir títulos usando cor #0056A4 (text-gorgen-700/600) - devem usar cores neutras
 - [ ] Corrigir todos os 79 erros TypeScript (boolean/number, Date/string, null/undefined, overloads)
+
+
+---
+
+## 🎯 DEMANDAS CEO - 19/01/2026
+
+### Página Inicial Pública
+- [ ] Landing page com apresentação da plataforma Gorgen
+- [ ] Sistema de login e senha
+- [ ] Página de signup/cadastro
+- [ ] Página de planos e preços de assinatura
+
+### Usuários
+- [ ] Criar usuário para secretária
+- [ ] Criar usuário para Dra. Letícia Uzeila (perfil médico)
+
+### Arquitetura
+- [ ] Documentar definições de tenant
+- [ ] Documentar papel dos pacientes na plataforma
+- [ ] Documentar papel dos médicos na plataforma
+
+### Prontuário
+- [ ] Planejar próximas implementações do prontuário
