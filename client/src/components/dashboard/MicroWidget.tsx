@@ -39,7 +39,7 @@ export function MicroWidget({
             {label}
           </div>
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-gorgen-700 tracking-tight">
+            <span className="text-2xl font-bold text-foreground tracking-tight">
               {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
             </span>
             {unit && (
@@ -62,7 +62,7 @@ export function MicroWidget({
             </div>
           )}
         </div>
-        <div className="w-10 h-10 rounded-lg bg-gorgen-50 flex items-center justify-center text-gorgen-600 shrink-0">
+        <div className="w-10 h-10 rounded-lg bg-gorgen-50 flex items-center justify-center text-gorgen-500 shrink-0">
           {icon}
         </div>
       </div>

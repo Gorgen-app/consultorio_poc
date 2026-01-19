@@ -283,7 +283,7 @@ function KPIPanel({ stats, periodo, isLoading }: { stats: any; periodo: PeriodoT
       change: undefined, // Pacientes não têm variação por período
       icon: <Users className="w-[18px] h-[18px]" />,
       iconBg: 'bg-gorgen-100',
-      iconColor: 'text-gorgen-700',
+      iconColor: 'text-gorgen-500',
     },
     {
       id: 'atendimentos',
@@ -736,7 +736,7 @@ function MetricaConteudo({
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <div className={cn(
-          "font-bold text-gorgen-700",
+          "font-bold text-foreground",
           tamanho === 'micro' ? 'text-2xl' : 'text-4xl'
         )}>
           {typeof valor === 'number' ? valor.toLocaleString('pt-BR') : valor}
@@ -784,7 +784,7 @@ function MetricaConteudo({
             </Pie>
           </RechartsPieChart>
         </ResponsiveContainer>
-        <div className="text-3xl font-bold text-gorgen-700 -mt-8">{valor.toFixed(1)}%</div>
+        <div className="text-3xl font-bold text-foreground -mt-8">{valor.toFixed(1)}%</div>
         <div className="text-sm text-muted-foreground">{metrica.unidade}</div>
       </div>
     );
@@ -1256,7 +1256,7 @@ export default function DashboardCustom() {
 
       {/* Header do Dashboard */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gorgen-700">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         
         <div className="flex items-center gap-3">
           {/* Filtro Global de Período */}
@@ -1346,7 +1346,7 @@ export default function DashboardCustom() {
       
       {/* Resumo das categorias - CORES CORRIGIDAS */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-gorgen-700 mb-4">Métricas por Categoria</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Métricas por Categoria</h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {categorias.map(cat => {
             const qtdTotal = todasMetricas.filter(m => m.categoria === cat.valor).length;

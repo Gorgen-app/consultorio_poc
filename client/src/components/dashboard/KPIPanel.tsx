@@ -41,7 +41,7 @@ const iconMap = {
 const variantStyles = {
   primary: {
     iconBg: 'bg-gorgen-100',
-    iconColor: 'text-gorgen-700',
+    iconColor: 'text-gorgen-500',
   },
   success: {
     iconBg: 'bg-green-100',
@@ -92,7 +92,7 @@ function KPICard({ kpi, isLoading }: { kpi: KPIData; isLoading?: boolean }) {
       </div>
 
       {/* Valor principal */}
-      <div className="text-[32px] font-bold text-gorgen-700 leading-tight tracking-tight">
+      <div className="text-[32px] font-bold text-foreground leading-tight tracking-tight">
         {kpi.value}
       </div>
 

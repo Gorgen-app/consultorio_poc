@@ -2907,3 +2907,14 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [ ] Publicação funciona sem problemas
 - [ ] Criptografia de campos PII funcionando
 
+
+
+---
+
+## 🎨 VERIFICAÇÃO DE CORES - PROBLEMA RECORRENTE (19/01/2026)
+
+- [ ] Verificar onde #0056A4 está sendo usado indevidamente (não apenas em texto)
+- [ ] Corrigir para usar #6B8CBE em elementos visuais (gráficos, backgrounds, etc.)
+- [ ] Manter #0056A4 apenas em texto/caracteres
+
+- [x] Corrigir títulos usando cor #0056A4 (text-gorgen-700/600) - devem usar cores neutras
