@@ -537,7 +537,7 @@ export default function BackupSettings() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Backup Automático</span>
                   <Switch 
-                    checked={config?.backupEnabled ?? true}
+                    checked={config?.backupEnabled === 1 || config?.backupEnabled === undefined}
                     onCheckedChange={(checked) => handleConfigChange("backupEnabled", checked)}
                   />
                 </div>
@@ -654,7 +654,7 @@ export default function BackupSettings() {
                     </p>
                   </div>
                   <Switch 
-                    checked={config?.notifyOnSuccess ?? false}
+                    checked={config?.notifyOnSuccess === 1}
                     onCheckedChange={(checked) => handleConfigChange("notifyOnSuccess", checked)}
                   />
                 </div>
@@ -666,7 +666,7 @@ export default function BackupSettings() {
                     </p>
                   </div>
                   <Switch 
-                    checked={config?.notifyOnFailure ?? true}
+                    checked={config?.notifyOnFailure === 1 || config?.notifyOnFailure === undefined}
                     onCheckedChange={(checked) => handleConfigChange("notifyOnFailure", checked)}
                   />
                 </div>

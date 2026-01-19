@@ -231,7 +231,7 @@ export async function executeFullBackup(
     tenantId,
     backupType: "full",
     status: "running",
-    startedAt: new Date(),
+    startedAt: new Date().toISOString(),
     filePath: "pending",
     triggeredBy,
     createdByUserId: userId,
@@ -292,13 +292,13 @@ export async function executeFullBackup(
       .update(backupHistory)
       .set({
         status: "success",
-        completedAt: new Date(),
+        completedAt: new Date().toISOString(),
         filePath: fileName,
         fileSizeBytes: encryptedData.length,
         checksumSha256: checksum,
         databaseRecords: totalRecords,
         destination: "s3_primary",
-        isEncrypted: true, // Marcar como criptografado
+        isEncrypted: 1, // Marcar como criptografado (TINYINT)
         encryptionAlgorithm: "AES-256-GCM",
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -344,7 +344,7 @@ export async function executeFullBackup(
       .update(backupHistory)
       .set({
         status: "failed",
-        completedAt: new Date(),
+        completedAt: new Date().toISOString(),
         errorMessage,
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -503,7 +503,7 @@ export async function generateOfflineBackup(
     tenantId,
     backupType: "offline",
     status: "running",
-    startedAt: new Date(),
+    startedAt: new Date().toISOString(),
     filePath: "pending",
     destination: "offline_hd",
     triggeredBy: "manual",
@@ -569,7 +569,7 @@ export async function generateOfflineBackup(
       .update(backupHistory)
       .set({
         status: "success",
-        completedAt: new Date(),
+        completedAt: new Date().toISOString(),
         filePath: fileName,
         fileSizeBytes: compressedData.length,
         checksumSha256: checksum,
@@ -592,7 +592,7 @@ export async function generateOfflineBackup(
       .update(backupHistory)
       .set({
         status: "failed",
-        completedAt: new Date(),
+        completedAt: new Date().toISOString(),
         errorMessage,
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -1236,7 +1236,7 @@ export async function validateBackupFile(
 
 interface IncrementalBackupState {
   lastBackupId: number;
-  lastBackupDate: Date;
+  lastBackupDate: string;
   lastChecksum: string;
 }
 
@@ -1272,8 +1272,10 @@ async function exportModifiedRecords(
   db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
   tableName: string,
   tenantId: number,
-  sinceDate: Date
+  sinceDate: Date | string
 ): Promise<TableData & { modifiedCount: number; newCount: number }> {
+  // Converter string para Date se necessário
+  const sinceDateObj = typeof sinceDate === 'string' ? new Date(sinceDate) : sinceDate;
   // Verificar se a tabela tem colunas de auditoria
   const columnsResult = await db.execute(
     sql.raw(`SHOW COLUMNS FROM \`${tableName}\``)
@@ -1293,7 +1295,7 @@ async function exportModifiedRecords(
     };
   }
   
-  const sinceDateStr = sinceDate.toISOString().slice(0, 19).replace("T", " ");
+  const sinceDateStr = sinceDateObj.toISOString().slice(0, 19).replace("T", " ");
   let query: string;
   
   // Construir query para registros novos ou modificados
@@ -1368,7 +1370,7 @@ export async function executeIncrementalBackup(
     tenantId,
     backupType: "incremental",
     status: "running",
-    startedAt: new Date(),
+    startedAt: new Date().toISOString(),
     filePath: "pending",
     triggeredBy,
     createdByUserId: userId,
@@ -1410,12 +1412,12 @@ export async function executeIncrementalBackup(
         .update(backupHistory)
         .set({
           status: "success",
-          completedAt: new Date(),
+          completedAt: new Date().toISOString(),
           filePath: "no_changes",
           fileSizeBytes: 0,
           databaseRecords: 0,
           destination: "s3_primary",
-          isEncrypted: false,
+          isEncrypted: 0,
         })
         .where(eq(backupHistory.id, Number(backupId)));
       
@@ -1435,7 +1437,7 @@ export async function executeIncrementalBackup(
       tenantId,
       createdAt: new Date().toISOString(),
       baseBackupId: lastBackupState.lastBackupId,
-      baseBackupDate: lastBackupState.lastBackupDate.toISOString(),
+      baseBackupDate: lastBackupState.lastBackupDate, // Já é string
       baseChecksum: lastBackupState.lastChecksum,
       tables: incrementalData,
       metadata: {
@@ -1469,13 +1471,13 @@ export async function executeIncrementalBackup(
       .update(backupHistory)
       .set({
         status: "success",
-        completedAt: new Date(),
+        completedAt: new Date().toISOString(),
         filePath: fileName,
         fileSizeBytes: encryptedData.length,
         checksumSha256: checksum,
         databaseRecords: totalRecords,
         destination: "s3_primary",
-        isEncrypted: true,
+        isEncrypted: 1,
         encryptionAlgorithm: "AES-256-GCM",
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -1520,7 +1522,7 @@ export async function executeIncrementalBackup(
       .update(backupHistory)
       .set({
         status: "failed",
-        completedAt: new Date(),
+        completedAt: new Date().toISOString(),
         errorMessage,
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -1560,7 +1562,7 @@ export interface IntegrityReportResult {
   validCount: number;
   invalidCount: number;
   results: IntegrityCheckResult[];
-  checkedAt: Date;
+  checkedAt: string;
 }
 
 /**
@@ -1677,7 +1679,7 @@ export async function runIntegrityCheck(
       validCount: 0,
       invalidCount: 0,
       results: [],
-      checkedAt: new Date(),
+      checkedAt: new Date().toISOString(),
     };
   }
   
@@ -1724,7 +1726,7 @@ export async function runIntegrityCheck(
     validCount,
     invalidCount,
     results,
-    checkedAt: new Date(),
+    checkedAt: new Date().toISOString(),
   };
 }
 
@@ -1734,7 +1736,7 @@ export async function runIntegrityCheck(
 
 export interface BackupAuditEntry {
   id: number;
-  date: Date;
+  date: string;
   type: string;
   status: string;
   triggeredBy: string;
@@ -1769,7 +1771,7 @@ export interface BackupAuditReport {
   };
   entries: BackupAuditEntry[];
   integrityStatus: {
-    lastCheck?: Date;
+    lastCheck?: string;
     validBackups: number;
     invalidBackups: number;
   };
@@ -1780,7 +1782,7 @@ export interface BackupAuditReport {
     encryptionCompliance: boolean;
     retentionCompliance: boolean;
   };
-  generatedAt: Date;
+  generatedAt: string;
   generatedBy: string;
 }
 
@@ -1803,9 +1805,10 @@ export async function generateBackupAuditReport(
     .where(eq(backupHistory.tenantId, tenantId))
     .orderBy(desc(backupHistory.completedAt));
   
-  // Filtrar por período
+  // Filtrar por período (converter strings para Date para comparação)
   const periodBackups = backups.filter(b => {
-    const backupDate = b.completedAt || b.startedAt;
+    const backupDateStr = b.completedAt || b.startedAt;
+    const backupDate = new Date(backupDateStr);
     return backupDate >= startDate && backupDate <= endDate;
   });
   
@@ -1856,7 +1859,7 @@ export async function generateBackupAuditReport(
     userAgent: b.userAgent || undefined,
     fileSize: b.fileSizeBytes || undefined,
     records: b.databaseRecords || undefined,
-    encrypted: b.isEncrypted || false,
+    encrypted: Boolean(b.isEncrypted),
     duration: b.completedAt && b.startedAt 
       ? new Date(b.completedAt).getTime() - new Date(b.startedAt).getTime()
       : undefined,
@@ -1900,7 +1903,7 @@ export async function generateBackupAuditReport(
       encryptionCompliance,
       retentionCompliance,
     },
-    generatedAt: new Date(),
+    generatedAt: new Date().toISOString(),
     generatedBy,
   };
 }
@@ -2150,7 +2153,7 @@ export async function runRestoreTest(
     // Registrar resultado do teste no histórico
     await db.update(backupHistory)
       .set({
-        lastVerifiedAt: testCompletedAt,
+        lastVerifiedAt: testCompletedAt.toISOString(),
         verificationStatus: result.success ? "valid" : "invalid",
       })
       .where(eq(backupHistory.id, backup.id));
@@ -2292,8 +2295,8 @@ export async function getRestoreTestHistory(
   limit: number = 10
 ): Promise<Array<{
   backupId: number;
-  backupDate: Date;
-  lastTestedAt: Date | null;
+  backupDate: string;
+  lastTestedAt: string | null;
   verificationStatus: string | null;
 }>> {
   const db = await getDb();

@@ -43,7 +43,8 @@ interface Paciente {
   vigente2: string | null;
   privativo2: string | null;
   obitoPerda: string | null;
-  dataObitoLastFU: string | Date | null;
+  dataObitoLastFu?: string | Date | null; // Campo do schema
+  dataObitoLastFU?: string | Date | null; // Alias para compatibilidade
   statusCaso: string | null;
   grupoDiagnostico: string | null;
   diagnosticoEspecifico: string | null;

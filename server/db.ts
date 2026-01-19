@@ -10,10 +10,33 @@ import { ENV } from './_core/env';
 // ============================================================================
 
 /**
+ * Converte boolean para number (0/1) para compatibilidade com MySQL TINYINT
+ */
+function toBooleanInt(value: boolean | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  return value ? 1 : 0;
+}
+
+/**
+ * Converte number (0/1) para boolean para leitura do MySQL TINYINT
+ */
+function fromBooleanInt(value: number | null | undefined): boolean {
+  return value === 1;
+}
+
+/**
+ * Converte number | null para boolean | null
+ */
+function fromBooleanIntNullable(value: number | null | undefined): boolean | null {
+  if (value === null || value === undefined) return null;
+  return value === 1;
+}
+
+/**
  * Converte Date para string ISO para compatibilidade com schema mode: 'string'
  */
-function toDateString(date: Date | string | null | undefined): string | null {
-  if (!date) return null;
+function toDateString(date: Date | string | null | undefined): string | undefined {
+  if (!date) return undefined;
   if (typeof date === 'string') return date;
   return date.toISOString();
 }
@@ -2071,7 +2094,7 @@ export async function registrarMedida(tenantId: number, data: {
   const result = await db.insert(historicoMedidas).values({
     tenantId,
     pacienteId: data.pacienteId,
-    dataMedicao: new Date(),
+    dataMedicao: new Date().toISOString(),
     peso: data.peso ? String(data.peso) : null,
     altura: data.altura ? String(data.altura) : null,
     imc: imc ? String(imc) : null,
@@ -2142,6 +2165,7 @@ export async function getEvolucaoIMC(pacienteId: number, meses = 12) {
   if (!db) return [];
   const dataInicio = new Date();
   dataInicio.setMonth(dataInicio.getMonth() - meses);
+  const dataInicioStr = dataInicio.toISOString();
   
   return await db.select({
     data: historicoMedidas.dataMedicao,
@@ -2153,7 +2177,7 @@ export async function getEvolucaoIMC(pacienteId: number, meses = 12) {
     .where(
       and(
         eq(historicoMedidas.pacienteId, pacienteId),
-        gte(historicoMedidas.dataMedicao, dataInicio)
+        gte(historicoMedidas.dataMedicao, dataInicioStr)
       )
     )
     .orderBy(asc(historicoMedidas.dataMedicao));
@@ -2228,13 +2252,17 @@ export async function getNextBloqueioId(tenantId?: number): Promise<string> {
 
 // Verificar conflitos de horário com agendamentos existentes e bloqueios
 export async function verificarConflitosAgendamento(
-  dataHoraInicio: Date,
-  dataHoraFim: Date,
+  dataHoraInicio: Date | string,
+  dataHoraFim: Date | string,
   agendamentoIdExcluir?: number,
   incluirBloqueios: boolean = true
 ) {
   const db = await getDb();
   if (!db) return [];
+  
+  // Converter para string se necessário
+  const dataHoraInicioStr = typeof dataHoraInicio === 'string' ? dataHoraInicio : dataHoraInicio.toISOString();
+  const dataHoraFimStr = typeof dataHoraFim === 'string' ? dataHoraFim : dataHoraFim.toISOString();
   
   // Status que não ocupam tempo na agenda (usando valores do enum)
   const statusIgnorados: ("Cancelado" | "Reagendado" | "Faltou")[] = ["Cancelado", "Reagendado", "Faltou"];
@@ -2245,8 +2273,8 @@ export async function verificarConflitosAgendamento(
     // Ignorar status que não ocupam tempo
     notInArray(agendamentos.status, statusIgnorados),
     // Lógica de sobreposição de intervalos
-    lt(agendamentos.dataHoraInicio, dataHoraFim),
-    gt(agendamentos.dataHoraFim, dataHoraInicio),
+    lt(agendamentos.dataHoraInicio, dataHoraFimStr),
+    gt(agendamentos.dataHoraFim, dataHoraInicioStr),
   ];
   
   // Excluir o próprio agendamento (para edição/reagendamento)
@@ -2273,8 +2301,8 @@ export async function verificarConflitosAgendamento(
       // Apenas bloqueios ativos (não cancelados)
       eq(bloqueiosHorario.cancelado, 0),
       // Lógica de sobreposição de intervalos
-      lt(bloqueiosHorario.dataHoraInicio, dataHoraFim),
-      gt(bloqueiosHorario.dataHoraFim, dataHoraInicio),
+      lt(bloqueiosHorario.dataHoraInicio, dataHoraFimStr),
+      gt(bloqueiosHorario.dataHoraFim, dataHoraInicioStr),
     ];
     
     conflitosBloqueios = await db.select({
@@ -2335,8 +2363,8 @@ export async function getAgendamentoById(id: number, tenantId?: number) {
 
 // Listar agendamentos por período
 export async function listAgendamentos(filters?: {
-  dataInicio?: Date;
-  dataFim?: Date;
+  dataInicio?: Date | string;
+  dataFim?: Date | string;
   pacienteId?: number;
   tipo?: string;
   status?: string;
@@ -2353,10 +2381,12 @@ export async function listAgendamentos(filters?: {
   const conditions = [eq(agendamentos.tenantId, filters?.tenantId || 1)];
   
   if (filters?.dataInicio) {
-    conditions.push(gte(agendamentos.dataHoraInicio, filters.dataInicio));
+    const dataInicioStr = typeof filters.dataInicio === 'string' ? filters.dataInicio : filters.dataInicio.toISOString();
+    conditions.push(gte(agendamentos.dataHoraInicio, dataInicioStr));
   }
   if (filters?.dataFim) {
-    conditions.push(lte(agendamentos.dataHoraInicio, filters.dataFim));
+    const dataFimStr = typeof filters.dataFim === 'string' ? filters.dataFim : filters.dataFim.toISOString();
+    conditions.push(lte(agendamentos.dataHoraInicio, dataFimStr));
   }
   if (filters?.pacienteId) {
     conditions.push(eq(agendamentos.pacienteId, filters.pacienteId));
@@ -2373,8 +2403,10 @@ export async function listAgendamentos(filters?: {
   // Para visualizações de mês/ano: limite para performance
   let limiteFinal = filters?.limite;
   if (!limiteFinal && filters?.dataInicio && filters?.dataFim) {
+    const dataInicioDate = typeof filters.dataInicio === 'string' ? new Date(filters.dataInicio) : filters.dataInicio;
+    const dataFimDate = typeof filters.dataFim === 'string' ? new Date(filters.dataFim) : filters.dataFim;
     const diasDiferenca = Math.ceil(
-      (filters.dataFim.getTime() - filters.dataInicio.getTime()) / (1000 * 60 * 60 * 24)
+      (dataFimDate.getTime() - dataInicioDate.getTime()) / (1000 * 60 * 60 * 24)
     );
     // Dia: até 1 dia -> sem limite
     // Semana: até 7 dias -> sem limite
@@ -2676,8 +2708,8 @@ export async function createAgendamentoImportado(data: {
   googleUid: string;
   tipoCompromisso: string;
   pacienteNome?: string | null;
-  dataHoraInicio: Date;
-  dataHoraFim: Date;
+  dataHoraInicio: Date | string;
+  dataHoraFim: Date | string;
   local?: string | null;
   titulo?: string | null;
   descricao?: string | null;
@@ -2692,6 +2724,10 @@ export async function createAgendamentoImportado(data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Converter datas para string se necessário
+  const dataHoraInicioStr = typeof data.dataHoraInicio === 'string' ? data.dataHoraInicio : data.dataHoraInicio.toISOString();
+  const dataHoraFimStr = typeof data.dataHoraFim === 'string' ? data.dataHoraFim : data.dataHoraFim.toISOString();
+  
   // Obter tenantId padrão
   const tenantResult = await db.select().from(tenants).limit(1);
   const tenantId = tenantResult[0]?.id || 1;
@@ -2702,8 +2738,8 @@ export async function createAgendamentoImportado(data: {
     googleUid: data.googleUid,
     tipoCompromisso: data.tipoCompromisso as any,
     pacienteNome: data.pacienteNome,
-    dataHoraInicio: data.dataHoraInicio,
-    dataHoraFim: data.dataHoraFim,
+    dataHoraInicio: dataHoraInicioStr,
+    dataHoraFim: dataHoraFimStr,
     local: data.local,
     titulo: data.titulo,
     descricao: data.descricao,
@@ -2984,7 +3020,7 @@ export async function ensureUserProfile(userId: number, userData: { name?: strin
       nomeCompleto: userData.name || null,
       email: userData.email || null,
       perfilAtivo: "paciente",
-      isPaciente: true,
+      isPaciente: 1,
     });
   }
   
@@ -3029,8 +3065,8 @@ export async function criarVinculo(
     tenantId,
     secretariaUserId,
     medicoUserId,
-    dataInicio,
-    dataValidade,
+    dataInicio: dataInicio.toISOString(),
+    dataValidade: dataValidade.toISOString(),
     status: "ativo",
     notificacaoEnviada: 0,
   });
@@ -3310,7 +3346,7 @@ export async function listDocumentosExternos(pacienteId: number, categoria?: str
       .from(documentosExternos)
       .where(and(
         eq(documentosExternos.pacienteId, pacienteId),
-        eq(documentosExternos.categoria, categoria as any)
+        eq(documentosExternos.categoriaDocumento, categoria as any)
       ))
       .orderBy(desc(documentosExternos.dataDocumento));
   }
@@ -3438,9 +3474,9 @@ export async function getFluxogramaLaboratorial(pacienteId: number): Promise<{
   
   for (const r of todos) {
     const exame = r.nomeExameOriginal;
-    // dataColeta pode ser Date ou string dependendo do driver
-    const dataStr = r.dataColeta instanceof Date 
-      ? r.dataColeta.toISOString().split('T')[0] 
+    // dataColeta é sempre string no modo 'string' do schema
+    const dataStr = typeof r.dataColeta === 'object' && r.dataColeta !== null && 'toISOString' in r.dataColeta
+      ? (r.dataColeta as Date).toISOString().split('T')[0] 
       : String(r.dataColeta);
     
     examesSet.add(exame);
@@ -3449,7 +3485,7 @@ export async function getFluxogramaLaboratorial(pacienteId: number): Promise<{
     if (!resultados[exame]) resultados[exame] = {};
     resultados[exame][dataStr] = {
       valor: r.resultado,
-      foraRef: r.foraReferencia || false,
+      foraRef: fromBooleanInt(r.foraReferencia),
       tipo: r.tipoAlteracao || 'Normal'
     };
   }
@@ -3472,13 +3508,13 @@ export async function createResultadoLaboratorial(data: InsertResultadoLaborator
     const max = data.valorReferenciaMax ? Number(data.valorReferenciaMax) : null;
     
     if (min !== null && valor < min) {
-      data.foraReferencia = true;
+      data.foraReferencia = 1;
       data.tipoAlteracao = 'Diminuído';
     } else if (max !== null && valor > max) {
-      data.foraReferencia = true;
+      data.foraReferencia = 1;
       data.tipoAlteracao = 'Aumentado';
     } else {
-      data.foraReferencia = false;
+      data.foraReferencia = 0;
       data.tipoAlteracao = 'Normal';
     }
   }
@@ -3683,9 +3719,9 @@ export interface ExameFavorito {
   nomeExame: string;
   categoria: string | null;
   ordem: number | null;
-  ativo: boolean | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  ativo: number | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export async function listExamesFavoritos(userId: string): Promise<ExameFavorito[]> {
@@ -3741,7 +3777,7 @@ export async function addExameFavorito(tenantId: number, userId: string, nomeExa
     ativo: 1,
   });
   
-  return { id: result.insertId, tenantId, userId, nomeExame, categoria: categoria || "Geral", ordem, ativo: 1, createdAt: toDateString(new Date()), updatedAt: toDateString(new Date()) };
+  return { id: result.insertId, tenantId, userId, nomeExame, categoria: categoria || "Geral", ordem, ativo: 1, createdAt: toDateString(new Date()) ?? null, updatedAt: toDateString(new Date()) ?? null };
 }
 
 export async function removeExameFavorito(userId: string, nomeExame: string): Promise<void> {
@@ -3896,10 +3932,10 @@ export async function createCrossTenantAutorizacao(data: {
     tipoAutorizacao: data.tipoAutorizacao || "leitura",
     escopoAutorizacao: data.escopoAutorizacao || "completo",
     motivo: data.motivo || null,
-    dataFim: data.dataFim || null,
+    dataFim: data.dataFim ? data.dataFim.toISOString() : null,
     status: "pendente",
-    consentimentoLGPD: data.consentimentoLGPD || false,
-    dataConsentimento: data.consentimentoLGPD ? new Date() : null,
+    consentimentoLgpd: data.consentimentoLGPD ? 1 : 0,
+    dataConsentimento: data.consentimentoLGPD ? new Date().toISOString() : null,
     ipConsentimento: data.ipConsentimento || null,
   });
   
@@ -4026,8 +4062,8 @@ export async function approveCrossTenantAutorizacao(id: number, consentimentoLGP
   await db.update(pacienteAutorizacoes)
     .set({ 
       status: "ativa",
-      consentimentoLGPD,
-      dataConsentimento: new Date(),
+      consentimentoLgpd: consentimentoLGPD ? 1 : 0,
+      dataConsentimento: new Date().toISOString(),
       ipConsentimento: ipConsentimento || null,
     })
     .where(eq(pacienteAutorizacoes.id, id));
@@ -4115,7 +4151,7 @@ export async function getUserTenants(userId: number) {
   
   if (userResult.length === 0) return [];
   
-  const primaryTenantId = userResult[0].tenantId;
+  const primaryTenantId = userResult[0].tenantId ?? 1;
   
   // Buscar tenants através de vínculos ativos
   // Nota: secretariaUserId é varchar, então convertemos userId para string
@@ -4131,7 +4167,7 @@ export async function getUserTenants(userId: number) {
   
   // Combinar IDs únicos
   const tenantIds = new Set<number>([primaryTenantId]);
-  vinculosResult.forEach(v => tenantIds.add(v.tenantId));
+  vinculosResult.forEach(v => { if (v.tenantId) tenantIds.add(v.tenantId); });
   
   // Buscar informações completas dos tenants
   const tenantsResult = await db.select().from(tenants)
@@ -4213,7 +4249,7 @@ export async function getUserActiveTenant(userId: number) {
   
   if (userResult.length === 0) return null;
   
-  return getTenantById(userResult[0].tenantId);
+  return getTenantById(userResult[0].tenantId ?? 1);
 }
 
 
@@ -4309,12 +4345,10 @@ export async function inviteUserToTenant(
     tenantId,
     medicoUserId,
     secretariaUserId,
-    dataInicio: new Date(),
-    dataValidade,
+    dataInicio: new Date().toISOString(),
+    dataValidade: dataValidade.toISOString(),
     status: "ativo",
     notificacaoEnviada: 0,
-    createdAt: toDateString(new Date()),
-    updatedAt: toDateString(new Date()),
   });
   
   return result[0].insertId;
@@ -4484,7 +4518,8 @@ export async function listCrossTenantAccessLogs(filters: {
     conditions.push(eq(crossTenantAccessLogs.autorizacaoId, filters.autorizacaoId));
   }
   if (filters.dataInicio) {
-    conditions.push(gte(crossTenantAccessLogs.createdAt, filters.dataInicio));
+    const dataInicioStr = typeof filters.dataInicio === 'string' ? filters.dataInicio : filters.dataInicio.toISOString();
+    conditions.push(gte(crossTenantAccessLogs.createdAt, dataInicioStr));
   }
   
   let query = db.select({
@@ -4652,8 +4687,8 @@ export async function getAutorizacoesExpirando(diasAntecedencia: number = 7) {
     .where(
       and(
         eq(pacienteAutorizacoes.status, 'ativa'),
-        lte(pacienteAutorizacoes.dataFim, dataLimite),
-        gt(pacienteAutorizacoes.dataFim, new Date())
+        lte(pacienteAutorizacoes.dataFim, dataLimite.toISOString()),
+        gt(pacienteAutorizacoes.dataFim, new Date().toISOString())
       )
     );
   
@@ -4668,16 +4703,17 @@ export async function atualizarAutorizacoesExpiradas() {
   if (!db) return { atualizadas: 0 };
   
   const agora = new Date();
+  const agoraStr = agora.toISOString();
   
   const result = await db.update(pacienteAutorizacoes)
     .set({ 
       status: 'expirada',
-      updatedAt: agora,
+      updatedAt: agoraStr,
     })
     .where(
       and(
         eq(pacienteAutorizacoes.status, 'ativa'),
-        lte(pacienteAutorizacoes.dataFim, agora)
+        lte(pacienteAutorizacoes.dataFim, agoraStr)
       )
     );
   
@@ -4782,8 +4818,8 @@ export async function atualizarAgendamentoGoogleUid(agendamentoId: number, googl
  * Lista agendamentos não sincronizados com Google Calendar
  */
 export async function listAgendamentosNaoSincronizados(filters?: {
-  dataInicio?: Date;
-  dataFim?: Date;
+  dataInicio?: Date | string;
+  dataFim?: Date | string;
   tenantId?: number;
 }) {
   const db = await getDb();
@@ -4796,10 +4832,12 @@ export async function listAgendamentosNaoSincronizados(filters?: {
   ];
   
   if (filters?.dataInicio) {
-    conditions.push(gte(agendamentos.dataHoraInicio, filters.dataInicio));
+    const dataInicioStr = typeof filters.dataInicio === 'string' ? filters.dataInicio : filters.dataInicio.toISOString();
+    conditions.push(gte(agendamentos.dataHoraInicio, dataInicioStr));
   }
   if (filters?.dataFim) {
-    conditions.push(lte(agendamentos.dataHoraInicio, filters.dataFim));
+    const dataFimStr = typeof filters.dataFim === 'string' ? filters.dataFim : filters.dataFim.toISOString();
+    conditions.push(lte(agendamentos.dataHoraInicio, dataFimStr));
   }
   
   return await db.select()
@@ -4973,7 +5011,7 @@ export async function listDelegadosAgenda(medicoUserId: number): Promise<Delegad
     .where(
       and(
         eq(delegadosAgenda.medicoUserId, medicoUserId),
-        eq(delegadosAgenda.ativo, 1)
+        eq(delegadosAgenda.ativo, true)
       )
     )
     .orderBy(desc(delegadosAgenda.createdAt));
@@ -5000,7 +5038,7 @@ export async function createDelegadoAgenda(data: {
       and(
         eq(delegadosAgenda.medicoUserId, data.medicoUserId),
         eq(delegadosAgenda.delegadoEmail, data.delegadoEmail),
-        eq(delegadosAgenda.ativo, 1)
+        eq(delegadosAgenda.ativo, true)
       )
     )
     .limit(1);
@@ -5028,11 +5066,9 @@ export async function createDelegadoAgenda(data: {
     medicoUserId: data.medicoUserId,
     delegadoUserId: delegadoUser[0]?.id || null,
     delegadoEmail: data.delegadoEmail,
-    delegadoNome: data.delegadoNome,
     permissao: data.permissao,
-    dataFim: data.dataFim,
-    criadoPor: data.criadoPor,
-    ativo: 1,
+    dataFim: data.dataFim ? data.dataFim.toISOString() : null,
+    ativo: true,
   });
 
   // Retornar o delegado criado
@@ -5078,7 +5114,7 @@ export async function updateDelegadoAgenda(
 
   const updateData: Partial<InsertDelegadoAgenda> = {};
   if (data.permissao !== undefined) updateData.permissao = data.permissao;
-  if (data.dataFim !== undefined) updateData.dataFim = data.dataFim;
+  if (data.dataFim !== undefined) updateData.dataFim = data.dataFim ? data.dataFim.toISOString() : null;
   if (data.ativo !== undefined) updateData.ativo = data.ativo;
 
   await db.update(delegadosAgenda)
@@ -5111,7 +5147,7 @@ export async function removeDelegadoAgenda(id: number, medicoUserId: number): Pr
   }
 
   await db.update(delegadosAgenda)
-    .set({ ativo: 0 })
+    .set({ ativo: false })
     .where(eq(delegadosAgenda.id, id));
 
   return true;
@@ -5126,13 +5162,13 @@ export async function getDelegadoPermissoes(email: string): Promise<Array<{
   medicoNome: string | null;
   medicoEmail: string | null;
   permissao: "visualizar" | "editar";
-  dataInicio: Date;
-  dataFim: Date | null;
+  dataInicio: string | null;
+  dataFim: string | null;
 }>> {
   const db = await getDb();
   if (!db) return [];
 
-  const now = new Date();
+  const nowStr = new Date().toISOString();
 
   const delegacoes = await db.select({
     medicoUserId: delegadosAgenda.medicoUserId,
@@ -5147,10 +5183,10 @@ export async function getDelegadoPermissoes(email: string): Promise<Array<{
     .where(
       and(
         eq(delegadosAgenda.delegadoEmail, email),
-        eq(delegadosAgenda.ativo, 1),
+        eq(delegadosAgenda.ativo, true),
         or(
           isNull(delegadosAgenda.dataFim),
-          gte(delegadosAgenda.dataFim, now)
+          gte(delegadosAgenda.dataFim, nowStr)
         )
       )
     );
@@ -5159,7 +5195,7 @@ export async function getDelegadoPermissoes(email: string): Promise<Array<{
     medicoUserId: d.medicoUserId,
     medicoNome: d.medicoNome,
     medicoEmail: d.medicoEmail,
-    permissao: d.permissao,
+    permissao: (d.permissao as "visualizar" | "editar") || "visualizar",
     dataInicio: d.dataInicio,
     dataFim: d.dataFim,
   }));
@@ -5216,13 +5252,12 @@ export async function transferirAgendamento(
   
   // Criar novo agendamento com os mesmos dados
   const novoAgendamento = await db.insert(agendamentos).values({
-    tenantId: original.tenantId,
     idAgendamento: novoId,
     tipoCompromisso: original.tipoCompromisso as any,
     pacienteId: original.pacienteId,
     pacienteNome: original.pacienteNome,
-    dataHoraInicio: novaDataInicio,
-    dataHoraFim: novaDataFim,
+    dataHoraInicio: novaDataInicio.toISOString(),
+    dataHoraFim: novaDataFim.toISOString(),
     local: original.local,
     titulo: original.titulo,
     descricao: original.descricao,

@@ -2224,11 +2224,21 @@ export const appRouter = router({
           throw new Error("Acesso negado: apenas administradores podem gerenciar perfis");
         }
         
+        // Converter boolean para number (TINYINT) para compatibilidade com MySQL
+        // Remover campos que não existem no schema (isFinanceiro, isVisualizador)
+        const { isFinanceiro, isVisualizador, ...validInput } = input;
+        const profileInput = {
+          ...validInput,
+          isAdminMaster: validInput.isAdminMaster !== undefined ? (validInput.isAdminMaster ? 1 : 0) : undefined,
+          isMedico: validInput.isMedico !== undefined ? (validInput.isMedico ? 1 : 0) : undefined,
+          isSecretaria: validInput.isSecretaria !== undefined ? (validInput.isSecretaria ? 1 : 0) : undefined,
+        };
+        
         const existing = await db.getUserProfile(input.userId);
         if (existing) {
-          return await db.updateUserProfile(input.userId, input);
+          return await db.updateUserProfile(input.userId, profileInput);
         } else {
-          const { userId, ...profileData } = input;
+          const { userId, ...profileData } = profileInput;
           return await db.createUserProfile({
             userId,
             ...profileData,
@@ -3643,7 +3653,15 @@ Retorne um JSON válido com a estrutura:
         offlineBackupEnabled: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        await backup.upsertBackupConfig(ctx.tenant.tenantId, input);
+        // Converter boolean para number (TINYINT) para compatibilidade com MySQL
+        const configData = {
+          ...input,
+          backupEnabled: input.backupEnabled !== undefined ? (input.backupEnabled ? 1 : 0) : undefined,
+          notifyOnSuccess: input.notifyOnSuccess !== undefined ? (input.notifyOnSuccess ? 1 : 0) : undefined,
+          notifyOnFailure: input.notifyOnFailure !== undefined ? (input.notifyOnFailure ? 1 : 0) : undefined,
+          offlineBackupEnabled: input.offlineBackupEnabled !== undefined ? (input.offlineBackupEnabled ? 1 : 0) : undefined,
+        };
+        await backup.upsertBackupConfig(ctx.tenant.tenantId, configData);
         return { success: true };
       }),
 

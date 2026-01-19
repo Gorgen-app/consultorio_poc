@@ -164,7 +164,7 @@ async function validateUserTenantAccess(
   }
   
   // Verificar se tem vínculo ativo com o tenant
-  const now = new Date();
+  const now = new Date().toISOString();
   const vinculoResult = await db
     .select({ id: vinculoSecretariaMedico.id })
     .from(vinculoSecretariaMedico)

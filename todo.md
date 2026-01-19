@@ -2918,3 +2918,4 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [ ] Manter #0056A4 apenas em texto/caracteres
 
 - [x] Corrigir títulos usando cor #0056A4 (text-gorgen-700/600) - devem usar cores neutras
+- [ ] Corrigir todos os 79 erros TypeScript (boolean/number, Date/string, null/undefined, overloads)
