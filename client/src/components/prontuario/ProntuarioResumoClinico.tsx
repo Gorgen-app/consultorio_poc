@@ -426,7 +426,7 @@ export default function ProntuarioResumoClinico({
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <Pill className="h-4 w-4 text-blue-500" />
+              <Pill className="h-4 w-4 text-[#0056A4]" />
               Medicamentos em Uso
             </CardTitle>
             <CardDescription>Medicamentos de uso contínuo</CardDescription>

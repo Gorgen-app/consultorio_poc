@@ -124,7 +124,7 @@ export default function CrossTenantAutorizacoes() {
 
   const getTipoIcon = (tipo: string) => {
     switch (tipo) {
-      case "leitura": return <Eye className="h-4 w-4 text-blue-500" />;
+      case "leitura": return <Eye className="h-4 w-4 text-[#0056A4]" />;
       case "escrita": return <FileText className="h-4 w-4 text-yellow-500" />;
       case "completo": return <Download className="h-4 w-4 text-emerald-500" />;
       default: return <Eye className="h-4 w-4" />;
@@ -260,10 +260,10 @@ export default function CrossTenantAutorizacoes() {
         <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <AlertTriangle className="h-6 w-6 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <AlertTriangle className="h-6 w-6 text-[#0056A4] dark:text-blue-400 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-900 dark:text-blue-100">Conformidade LGPD</h3>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                <h3 className="font-semibold text-[#0056A4] dark:text-blue-100">Conformidade LGPD</h3>
+                <p className="text-sm text-[#0056A4] dark:text-blue-300 mt-1">
                   Todo compartilhamento de dados entre clínicas requer consentimento explícito do paciente.
                   Os acessos são registrados em log de auditoria para fins de conformidade.
                 </p>

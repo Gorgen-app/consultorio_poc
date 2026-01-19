@@ -266,7 +266,7 @@ export default function Relatorios() {
               onClick={exportarExcel}
               disabled={isLoading || exportando || pacientesFiltrados.length === 0}
               variant="outline"
-              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              className="border-blue-600 text-[#0056A4] hover:bg-blue-50"
             >
               {exportando ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

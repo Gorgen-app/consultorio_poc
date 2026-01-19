@@ -108,7 +108,7 @@ export default function ProntuarioAtendimentos({ pacienteId }: ProntuarioAtendim
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-blue-600">{formatarMoeda(totalFaturamento)}</p>
+            <p className="text-2xl font-bold text-[#0056A4]">{formatarMoeda(totalFaturamento)}</p>
           </CardContent>
         </Card>
         <Card>

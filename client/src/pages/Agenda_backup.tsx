@@ -150,7 +150,7 @@ const CORES_STATUS: Record<string, string> = {
 
 // Ícones de status para consultas
 const ICONES_STATUS_CONSULTA: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  "Agendado": { icon: CalendarCheck, color: "text-blue-500", label: "Agendada" },
+  "Agendado": { icon: CalendarCheck, color: "text-[#0056A4]", label: "Agendada" },
   "Confirmado": { icon: UserCheck, color: "text-emerald-500", label: "Confirmada" },
   "Aguardando": { icon: CalendarClock, color: "text-yellow-500", label: "Aguardando" },
   "Em atendimento": { icon: Stethoscope, color: "text-purple-500", label: "Em Consulta" },
@@ -162,7 +162,7 @@ const ICONES_STATUS_CONSULTA: Record<string, { icon: React.ElementType; color: s
 
 // Ícones de status para cirurgias
 const ICONES_STATUS_CIRURGIA: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  "Agendado": { icon: CalendarCheck, color: "text-blue-500", label: "Agendada" },
+  "Agendado": { icon: CalendarCheck, color: "text-[#0056A4]", label: "Agendada" },
   "Autorizada": { icon: FileCheck, color: "text-teal-500", label: "Autorizada" },
   "Confirmado": { icon: ClipboardCheck, color: "text-emerald-500", label: "Confirmada" },
   "Realizado": { icon: Scissors, color: "text-gray-500", label: "Realizada" },
@@ -839,7 +839,7 @@ export default function Agenda() {
                       key={dia} 
                       className={`p-2 min-h-[80px] border rounded ${isHoje ? "bg-blue-50 border-blue-300" : "border-gray-200"}`}
                     >
-                      <div className={`text-sm font-medium mb-1 ${isHoje ? "text-blue-600" : ""}`}>
+                      <div className={`text-sm font-medium mb-1 ${isHoje ? "text-[#0056A4]" : ""}`}>
                         {dia}
                       </div>
                       <div className="space-y-1">

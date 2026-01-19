@@ -125,7 +125,7 @@ const LOCAIS = [
 
 // Status de agendamento com ícones e cores
 const STATUS_AGENDAMENTO = [
-  { value: "Agendado", label: "Agendado", icon: CalendarCheck, color: "text-blue-600", bgColor: "bg-blue-500", borderColor: "border-blue-500", lightBg: "bg-blue-50" },
+  { value: "Agendado", label: "Agendado", icon: CalendarCheck, color: "text-[#0056A4]", bgColor: "bg-blue-500", borderColor: "border-blue-500", lightBg: "bg-blue-50" },
   { value: "Confirmado", label: "Confirmado", icon: UserCheck, color: "text-green-600", bgColor: "bg-green-500", borderColor: "border-green-500", lightBg: "bg-green-50" },
   { value: "Aguardando", label: "Aguardando", icon: CalendarClock, color: "text-yellow-600", bgColor: "bg-yellow-500", borderColor: "border-yellow-500", lightBg: "bg-yellow-50" },
   { value: "Em atendimento", label: "Em atendimento", icon: Stethoscope, color: "text-purple-600", bgColor: "bg-purple-500", borderColor: "border-purple-500", lightBg: "bg-purple-50" },
@@ -255,7 +255,7 @@ function highlightSearchTerm(text: string, searchTerm: string): React.ReactNode 
   // Retorna com partes destacadas em negrito
   return parts.map((part, index) => 
     regex.test(part) ? (
-      <strong key={index} className="font-bold" style={{ color: '#6B8CBE' }}>{part}</strong>
+      <strong key={index} className="font-bold" style={{ color: '#0056A4' }}>{part}</strong>
     ) : (
       <span key={index}>{part}</span>
     )
@@ -770,7 +770,7 @@ function HorariosTrabalhoModal({ isOpen, onClose, horariosTrabalho, onSave }: Ho
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <Briefcase className="w-6 h-6 text-blue-500" />
+            <Briefcase className="w-6 h-6 text-[#0056A4]" />
             Horários de Trabalho
           </DialogTitle>
           <DialogDescription className="text-base">
@@ -1013,7 +1013,7 @@ function CriacaoRapidaModal({ isOpen, onClose, data, hora, onCriarCompleto, onCr
         
         <DialogHeader className="pr-20">
           <DialogTitle className="flex items-center gap-2 text-lg">
-            <Plus className="w-5 h-5 text-blue-500" />
+            <Plus className="w-5 h-5 text-[#0056A4]" />
             Novo Agendamento
           </DialogTitle>
           <DialogDescription>
@@ -1426,11 +1426,11 @@ function AuditTrailModal({ isOpen, onClose, agendamentoId, agendamentoNome, logs
   const getIconForTipo = (tipo: string) => {
     switch (tipo) {
       case "Criação": return <Plus className="w-4 h-4 text-green-500" />;
-      case "Mudança de Status": return <RefreshCw className="w-4 h-4 text-blue-500" />;
+      case "Mudança de Status": return <RefreshCw className="w-4 h-4 text-[#0056A4]" />;
       case "Confirmação": return <Check className="w-4 h-4 text-green-500" />;
       case "Cancelamento": return <XCircle className="w-4 h-4 text-red-500" />;
       case "Transferência": return <ArrowRightLeft className="w-4 h-4 text-amber-500" />;
-      case "Reativação": return <RotateCcw className="w-4 h-4 text-blue-500" />;
+      case "Reativação": return <RotateCcw className="w-4 h-4 text-[#0056A4]" />;
       case "Falta": return <Ban className="w-4 h-4 text-orange-500" />;
       case "WhatsApp Enviado": return <WhatsAppIcon className="w-4 h-4 text-green-500" />;
       case "Drag and Drop": return <Move className="w-4 h-4 text-purple-500" />;
@@ -1443,7 +1443,7 @@ function AuditTrailModal({ isOpen, onClose, agendamentoId, agendamentoNome, logs
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <History className="w-6 h-6 text-blue-500" />
+            <History className="w-6 h-6 text-[#0056A4]" />
             Histórico de Alterações
           </DialogTitle>
           <DialogDescription className="text-base">
@@ -1524,7 +1524,7 @@ function ReativarModal({ isOpen, onClose, agendamento, onReativarMesmaData, onRe
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <RotateCcw className="w-6 h-6 text-blue-500" />
+            <RotateCcw className="w-6 h-6 text-[#0056A4]" />
             Reativar Agendamento
           </DialogTitle>
         </DialogHeader>
@@ -3061,11 +3061,11 @@ export default function Agenda() {
                 >
                   {/* Nome do mês */}
                   <div className="text-center mb-2">
-                    <span className={`text-sm font-semibold ${isMesAtual ? "text-blue-600" : ""}`}>
+                    <span className={`text-sm font-semibold ${isMesAtual ? "text-[#0056A4]" : ""}`}>
                       {NOMES_MESES[mesIndex]}
                     </span>
                     {agendamentosMes.length > 0 && (
-                      <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
+                      <span className="ml-2 text-xs bg-blue-100 text-[#0056A4] px-1.5 py-0.5 rounded-full">
                         {agendamentosMes.length}
                       </span>
                     )}
@@ -3104,7 +3104,7 @@ export default function Agenda() {
                                 text-center py-0.5 rounded
                                 ${!isMesCorreto ? "text-gray-300" : ""}
                                 ${isHoje ? "bg-[#6B8CBE] text-white font-bold" : ""}
-                                ${temAgendamentos && !isHoje ? "bg-[#E8F0F8] text-[#6B8CBE] font-medium" : ""}
+                                ${temAgendamentos && !isHoje ? "bg-[#E8F0F8] text-[#0056A4] font-medium" : ""}
                               `}
                               title={temAgendamentos ? `${agendamentosDia.length} agendamento(s)` : undefined}
                             >
@@ -3311,7 +3311,7 @@ export default function Agenda() {
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
-              <Users className="w-6 h-6 text-blue-500" />
+              <Users className="w-6 h-6 text-[#0056A4]" />
               Delegados da Agenda
             </DialogTitle>
             <DialogDescription className="text-base">
@@ -3362,7 +3362,7 @@ export default function Agenda() {
                   <div key={delegado.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <User className="w-5 h-5 text-blue-600" />
+                        <User className="w-5 h-5 text-[#0056A4]" />
                       </div>
                       <div>
                         <div className="font-medium">{delegado.nome}</div>
@@ -3446,7 +3446,7 @@ export default function Agenda() {
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
-              <Plus className="w-6 h-6 text-blue-500" />
+              <Plus className="w-6 h-6 text-[#0056A4]" />
               Novo Agendamento
             </DialogTitle>
           </DialogHeader>
@@ -3651,7 +3651,7 @@ export default function Agenda() {
                   <SelectContent position="popper" sideOffset={5} className="z-[200]">
                     <SelectItem value="Agendado" className="text-base">
                       <div className="flex items-center gap-2">
-                        <CalendarCheck className="w-4 h-4 text-blue-500" />
+                        <CalendarCheck className="w-4 h-4 text-[#0056A4]" />
                         Agendado
                       </div>
                     </SelectItem>
@@ -3805,7 +3805,7 @@ export default function Agenda() {
                             setModalDetalhesAberto(false);
                             setLocation(`/prontuario/${agendamentoSelecionado.pacienteId}`);
                           }}
-                          className="font-semibold text-lg text-[#6B8CBE] hover:underline cursor-pointer flex items-center gap-2 group"
+                          className="font-semibold text-lg text-[#0056A4] hover:underline cursor-pointer flex items-center gap-2 group"
                         >
                           {agendamentoSelecionado.pacienteNome}
                           <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />

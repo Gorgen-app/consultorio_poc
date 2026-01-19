@@ -347,7 +347,7 @@ export default function BackupSettings() {
       case "full":
         return <Badge variant="outline"><Database className="w-3 h-3 mr-1" /> Completo</Badge>;
       case "incremental":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200"><TrendingUp className="w-3 h-3 mr-1" /> Incremental</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-[#0056A4] border-blue-200"><TrendingUp className="w-3 h-3 mr-1" /> Incremental</Badge>;
       case "offline":
         return <Badge variant="outline"><HardDrive className="w-3 h-3 mr-1" /> Offline</Badge>;
       default:
@@ -368,9 +368,9 @@ export default function BackupSettings() {
 
       {/* Alerta de Pilar Fundamental */}
       <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950">
-        <Shield className="h-4 w-4 text-blue-500" />
-        <AlertTitle className="text-blue-700 dark:text-blue-300">Pilar Fundamental: Imutabilidade</AlertTitle>
-        <AlertDescription className="text-blue-600 dark:text-blue-400">
+        <Shield className="h-4 w-4 text-[#0056A4]" />
+        <AlertTitle className="text-[#0056A4] dark:text-blue-300">Pilar Fundamental: Imutabilidade</AlertTitle>
+        <AlertDescription className="text-[#0056A4] dark:text-blue-400">
           "Em saúde, a informação é o retrato do momento do paciente. Todo dado inserido é perpétuo."
           Os backups garantem a preservação histórica de todos os dados.
         </AlertDescription>
@@ -1053,8 +1053,8 @@ export default function BackupSettings() {
                         <p className="text-xs text-red-600">Falhas</p>
                       </div>
                       <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg text-center">
-                        <p className="text-xl font-bold text-blue-600">{auditReport.summary.encryptionRate.toFixed(0)}%</p>
-                        <p className="text-xs text-blue-600">Criptografados</p>
+                        <p className="text-xl font-bold text-[#0056A4]">{auditReport.summary.encryptionRate.toFixed(0)}%</p>
+                        <p className="text-xs text-[#0056A4]">Criptografados</p>
                       </div>
                     </div>
                   </div>
@@ -1068,7 +1068,7 @@ export default function BackupSettings() {
                         <span className="text-sm">{auditReport.summary.fullBackups} Completos</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-blue-500" />
+                        <TrendingUp className="h-4 w-4 text-[#0056A4]" />
                         <span className="text-sm">{auditReport.summary.incrementalBackups} Incrementais</span>
                       </div>
                       <div className="flex items-center gap-2">

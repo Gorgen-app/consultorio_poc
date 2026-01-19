@@ -1,6 +1,6 @@
 # 🎨 GORGEN Design System
 
-> **Documento de Referência** | Versão 1.1 | Atualizado em 17/01/2026
+> **Documento de Referência** | Versão 1.2 | Atualizado em 18/01/2026
 
 Este documento define os padrões visuais e de design do sistema Gorgen, garantindo consistência visual em todas as interfaces e componentes.
 
@@ -86,6 +86,7 @@ As cores para visualizações de dados seguem uma progressão harmônica:
 | Labels | #334155 | `text-slate-700` | Rótulos de campos |
 | Valores | #0F172A | `text-slate-900` | Valores numéricos importantes |
 | Ícones | #64748B | `text-slate-500` | Ícones e elementos secundários |
+| **Texto Azul** | **#0056A4** | `text-[#0056A4]` | Links, destaques azuis com alto contraste |
 
 ---
 
@@ -219,10 +220,11 @@ Todos os widgets do Gorgen seguem uma estrutura visual consistente:
 
 | Versão | Data | Alterações |
 |--------|------|------------|
+| 1.2 | 18/01/2026 | Adicionada cor de texto azul #0056A4 para melhor contraste |
 | 1.1 | 17/01/2026 | Removido suporte a dark mode; apenas tema light |
 | 1.0 | 17/01/2026 | Versão inicial do Design System |
 
 ---
 
 **Autor**: Manus AI  
-**Última atualização**: 17 de Janeiro de 2026
+**Última atualização**: 18 de Janeiro de 2026

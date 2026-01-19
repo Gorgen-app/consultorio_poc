@@ -2729,3 +2729,20 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - [x] Remover propriedade scheduled das opções do cron (v4.x)
 - [x] Criar adminMasterProcedure no backup-routes.ts
 - [x] Corrigir iteração de Map usando Array.from()
+
+
+---
+
+## 🎨 GORGEN 3.9.5 - Ajuste de Contraste de Texto Azul (18/01/2026)
+
+### Mudança de Cor de Caracteres Azuis
+- [x] Identificar onde o azul é usado em textos/caracteres
+- [x] Substituir azul atual por #0056A4 apenas em textos
+- [x] Verificar contraste de leitura melhorado
+
+### Resultado
+- Nova variável CSS criada: --gorgen-text-blue: #0056A4
+- Classes text-gorgen-600 e text-gorgen-700 atualizadas
+- Todas as ocorrências de text-blue-500/600/700/800/900 substituídas
+- Estilos inline color: '#6B8CBE' substituídos por '#0056A4'
+- Contraste de leitura significativamente melhorado

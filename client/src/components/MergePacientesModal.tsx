@@ -254,7 +254,7 @@ export function MergePacientesModal({
         ) : (
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
+              <p className="text-sm text-[#0056A4]">
                 <strong>Registro principal:</strong> {pacientePrincipalObj?.nome} ({pacientePrincipalObj?.idPaciente})
               </p>
             </div>

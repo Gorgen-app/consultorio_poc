@@ -78,6 +78,9 @@
   --gorgen-info: #3B82F6;
   --gorgen-info-light: #DBEAFE;
   
+  /* Cor de Texto Azul com Alto Contraste */
+  --gorgen-text-blue: #0056A4;
+  
   /* Cores Neutras */
   --gorgen-gray-50: #F9FAFB;
   --gorgen-gray-100: #F3F4F6;
@@ -376,8 +379,8 @@
   .text-gorgen-300 { color: var(--gorgen-primary-300); }
   .text-gorgen-400 { color: var(--gorgen-primary-400); }
   .text-gorgen-500 { color: var(--gorgen-primary-500); }
-  .text-gorgen-600 { color: var(--gorgen-primary-600); }
-  .text-gorgen-700 { color: var(--gorgen-primary-700); }
+  .text-gorgen-600 { color: var(--gorgen-text-blue); }
+  .text-gorgen-700 { color: var(--gorgen-text-blue); }
   .text-gorgen-800 { color: var(--gorgen-primary-800); }
   .text-gorgen-900 { color: var(--gorgen-primary-900); }
   .text-gorgen-950 { color: var(--gorgen-primary-950); }

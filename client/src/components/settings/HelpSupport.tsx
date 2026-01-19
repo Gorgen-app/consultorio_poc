@@ -208,7 +208,7 @@ function ContactSupportSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-center gap-3 p-4 border rounded-lg">
             <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
-              <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <Mail className="h-5 w-5 text-[#0056A4] dark:text-blue-400" />
             </div>
             <div>
               <p className="font-medium">E-mail</p>

@@ -121,7 +121,7 @@ export default function Performance() {
     return (
       <div className="p-6 space-y-6">
         <div className="flex items-center gap-3">
-          <Activity className="h-8 w-8 text-blue-600" />
+          <Activity className="h-8 w-8 text-[#0056A4]" />
           <div>
             <h1 className="text-2xl font-bold">Painel de Performance</h1>
             <p className="text-muted-foreground">Carregando métricas...</p>
@@ -172,7 +172,7 @@ export default function Performance() {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Activity className="h-8 w-8 text-blue-600" />
+          <Activity className="h-8 w-8 text-[#0056A4]" />
           <div>
             <h1 className="text-2xl font-bold">Painel de Performance</h1>
             <p className="text-muted-foreground">Métricas de desempenho da aplicação em tempo real</p>
@@ -340,7 +340,7 @@ export default function Performance() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Tempo Médio</CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
+            <Clock className="h-4 w-4 text-[#0056A4]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{overview?.stats.avgResponseTime || 0}ms</div>

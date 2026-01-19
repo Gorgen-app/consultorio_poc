@@ -255,7 +255,7 @@ export default function RelatorioDuplicados() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1 text-blue-600 border-blue-300 hover:bg-blue-50"
+                              className="gap-1 text-[#0056A4] border-blue-300 hover:bg-blue-50"
                               onClick={() => {
                                 setPacientesParaMerge(grupo.pacientes);
                                 setMergeModalOpen(true);
@@ -331,7 +331,7 @@ export default function RelatorioDuplicados() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1 text-blue-600 border-blue-300 hover:bg-blue-50"
+                              className="gap-1 text-[#0056A4] border-blue-300 hover:bg-blue-50"
                               onClick={() => {
                                 setPacientesParaMerge(grupo.pacientes);
                                 setMergeModalOpen(true);

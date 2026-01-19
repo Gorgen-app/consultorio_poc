@@ -313,7 +313,7 @@ export function DocumentoUpload({
 
             {/* Indicador de OCR automático */}
             <div className="flex items-center gap-2 pt-2 border-t text-sm text-muted-foreground">
-              <ScanText className="h-4 w-4 text-blue-500" />
+              <ScanText className="h-4 w-4 text-[#0056A4]" />
               <span>O texto será extraído automaticamente após o upload (OCR)</span>
             </div>
           </div>
@@ -393,7 +393,7 @@ export function DocumentosList({ pacienteId, categoria }: DocumentosListProps) {
           >
             <div className="flex items-center gap-2">
               {doc.arquivoOriginalTipo?.startsWith("image/") ? (
-                <Image className="h-4 w-4 text-blue-500" />
+                <Image className="h-4 w-4 text-[#0056A4]" />
               ) : (
                 <FileText className="h-4 w-4 text-red-500" />
               )}
@@ -404,7 +404,7 @@ export function DocumentosList({ pacienteId, categoria }: DocumentosListProps) {
                     ? new Date(doc.dataDocumento).toLocaleDateString("pt-BR")
                     : "Data não informada"}
                   {doc.textoOcr && (
-                    <span className="ml-2 text-blue-500">
+                    <span className="ml-2 text-[#0056A4]">
                       <ScanText className="h-3 w-3 inline" /> OCR
                     </span>
                   )}

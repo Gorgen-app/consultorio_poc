@@ -547,7 +547,7 @@ export default function Pacientes() {
                             onClick={() => setLocation(`/prontuario/${paciente.id}`)}
                           >
                           <TableCell>{paciente.idPaciente}</TableCell>
-                          <TableCell className="font-medium max-w-[200px] truncate text-blue-600 hover:text-blue-800 hover:underline">{paciente.nome}</TableCell>
+                          <TableCell className="font-medium max-w-[200px] truncate text-[#0056A4] hover:text-[#0056A4] hover:underline">{paciente.nome}</TableCell>
                           <TableCell>{paciente.idade || "-"}</TableCell>
                           <TableCell>{paciente.cpf || "-"}</TableCell>
                           <TableCell>{paciente.telefone || "-"}</TableCell>
@@ -559,7 +559,7 @@ export default function Pacientes() {
                             {paciente.diagnosticoEspecifico || paciente.grupoDiagnostico || "-"}
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className={`font-medium ${(metricas?.totalAtendimentos || 0) > 0 ? 'text-blue-600' : 'text-muted-foreground'}`}>
+                            <span className={`font-medium ${(metricas?.totalAtendimentos || 0) > 0 ? 'text-[#0056A4]' : 'text-muted-foreground'}`}>
                               {metricas?.totalAtendimentos ?? "-"}
                             </span>
                           </TableCell>
@@ -589,7 +589,7 @@ export default function Pacientes() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setLocation(`/prontuario/${paciente.id}`)}
-                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                className="h-8 w-8 p-0 text-[#0056A4] hover:text-[#0056A4] hover:bg-blue-50"
                                 title="Ver Prontuário"
                               >
                                 <ClipboardList className="h-4 w-4" />

@@ -546,7 +546,7 @@ export default function Atendimentos() {
                                   variant="ghost"
                                   size="sm"
                                   title="Ver prontuário do paciente"
-                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  className="text-[#0056A4] hover:text-[#0056A4] hover:bg-blue-50"
                                 >
                                   <FileText className="h-4 w-4" />
                                 </Button>

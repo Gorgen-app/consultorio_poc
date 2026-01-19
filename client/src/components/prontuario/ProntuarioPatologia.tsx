@@ -221,7 +221,7 @@ export default function ProntuarioPatologia({ pacienteId, onUpdate }: Prontuario
                 
                 {patologia.conclusao && (
                   <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-xs font-medium text-blue-600 mb-1">Conclusão</p>
+                    <p className="text-xs font-medium text-[#0056A4] mb-1">Conclusão</p>
                     <p className="text-sm">{patologia.conclusao}</p>
                   </div>
                 )}

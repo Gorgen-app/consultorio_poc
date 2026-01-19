@@ -397,7 +397,7 @@ export default function Prontuario() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Nº de atendimentos:</span>
-                  <span className="font-medium text-blue-600">{totalAtendimentos ?? 0}</span>
+                  <span className="font-medium text-[#0056A4]">{totalAtendimentos ?? 0}</span>
                 </div>
               </div>
             </div>
@@ -469,7 +469,7 @@ export default function Prontuario() {
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-gray-400" />
                   {paciente.email ? (
-                    <a href={`mailto:${paciente.email}`} className="truncate text-blue-600 hover:underline">
+                    <a href={`mailto:${paciente.email}`} className="truncate text-[#0056A4] hover:underline">
                       {paciente.email}
                     </a>
                   ) : (
@@ -514,7 +514,7 @@ export default function Prontuario() {
                       onClick={() => setModalGraficoAberto(true)}
                       title="Ver evolução"
                     >
-                      <LineChart className="h-3.5 w-3.5 text-gray-500 hover:text-blue-600" />
+                      <LineChart className="h-3.5 w-3.5 text-gray-500 hover:text-[#0056A4]" />
                     </Button>
                     {/* Botão de Edição (inserir novo dado) */}
                     <Button
@@ -524,7 +524,7 @@ export default function Prontuario() {
                       onClick={() => setModalMedidaAberto(true)}
                       title="Registrar nova medida"
                     >
-                      <Pencil className="h-3.5 w-3.5 text-gray-500 hover:text-blue-600" />
+                      <Pencil className="h-3.5 w-3.5 text-gray-500 hover:text-[#0056A4]" />
                     </Button>
                   </div>
                 </div>
@@ -532,7 +532,7 @@ export default function Prontuario() {
               <CardContent>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-2xl font-bold text-blue-600">
+                    <p className="text-2xl font-bold text-[#0056A4]">
                       {peso ? `${peso}` : "-"}
                     </p>
                     <p className="text-xs text-gray-500">Peso (kg)</p>
@@ -580,7 +580,7 @@ export default function Prontuario() {
                         onClick={() => setModalTimelineAlergias(true)}
                         title="Ver timeline"
                       >
-                        <LineChart className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                        <LineChart className="h-3 w-3 text-gray-400 hover:text-[#0056A4]" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -589,7 +589,7 @@ export default function Prontuario() {
                         onClick={() => setModalNovaAlergia(true)}
                         title="Adicionar alergia"
                       >
-                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-[#0056A4]" />
                       </Button>
                     </div>
                   </div>
@@ -627,7 +627,7 @@ export default function Prontuario() {
                         onClick={() => setModalTimelineProblemas(true)}
                         title="Ver timeline"
                       >
-                        <LineChart className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                        <LineChart className="h-3 w-3 text-gray-400 hover:text-[#0056A4]" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -636,7 +636,7 @@ export default function Prontuario() {
                         onClick={() => setModalNovoProblema(true)}
                         title="Adicionar problema"
                       >
-                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-[#0056A4]" />
                       </Button>
                     </div>
                   </div>
@@ -644,7 +644,7 @@ export default function Prontuario() {
                     <p key={p.id} className="text-xs truncate">{p.descricao}</p>
                   ))}
                   {problemasAtivos.filter(p => p.ativo).length > 3 && (
-                    <p className="text-xs text-blue-600">+{problemasAtivos.filter(p => p.ativo).length - 3} mais...</p>
+                    <p className="text-xs text-[#0056A4]">+{problemasAtivos.filter(p => p.ativo).length - 3} mais...</p>
                   )}
                 </div>
                 
@@ -663,7 +663,7 @@ export default function Prontuario() {
                         onClick={() => setModalTimelineMedicamentos(true)}
                         title="Ver timeline"
                       >
-                        <LineChart className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                        <LineChart className="h-3 w-3 text-gray-400 hover:text-[#0056A4]" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -672,7 +672,7 @@ export default function Prontuario() {
                         onClick={() => setModalNovoMedicamento(true)}
                         title="Adicionar medicamento"
                       >
-                        <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-600" />
+                        <Pencil className="h-3 w-3 text-gray-400 hover:text-[#0056A4]" />
                       </Button>
                     </div>
                   </div>
@@ -680,7 +680,7 @@ export default function Prontuario() {
                     <p key={m.id} className="text-xs truncate">{m.medicamento}</p>
                   ))}
                   {medicamentosUso.length > 2 && (
-                    <p className="text-xs text-blue-600">+{medicamentosUso.length - 2} mais...</p>
+                    <p className="text-xs text-[#0056A4]">+{medicamentosUso.length - 2} mais...</p>
                   )}
                 </div>
               </CardContent>
@@ -702,7 +702,7 @@ export default function Prontuario() {
                   onClick={() => setSecaoAtiva(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${
                     secaoAtiva === item.id
-                      ? "bg-blue-50 text-blue-700 font-medium"
+                      ? "bg-blue-50 text-[#0056A4] font-medium"
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
@@ -856,7 +856,7 @@ export default function Prontuario() {
             </div>
             {(novoPeso || novaAltura) && (
               <div className="bg-blue-50 p-3 rounded-lg">
-                <p className="text-sm text-blue-800">
+                <p className="text-sm text-[#0056A4]">
                   <strong>IMC Calculado:</strong>{" "}
                   {novoPeso && (novaAltura || altura) 
                     ? (parseFloat(novoPeso) / Math.pow(parseFloat(novaAltura || String(altura)), 2)).toFixed(1)
@@ -898,7 +898,7 @@ export default function Prontuario() {
                 {/* Gráfico de Peso */}
                 <div>
                   <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <Scale className="h-4 w-4 text-blue-600" />
+                    <Scale className="h-4 w-4 text-[#0056A4]" />
                     Evolução do Peso (kg)
                   </h4>
                   <div className="h-48 bg-gray-50 rounded-lg p-4">
@@ -911,7 +911,7 @@ export default function Prontuario() {
                         const heightPercent = ((d.peso! - minPeso) / range) * 70 + 20;
                         return (
                           <div key={i} className="flex flex-col items-center flex-1 min-w-0">
-                            <span className="text-xs font-medium text-blue-600 mb-1">{d.peso}</span>
+                            <span className="text-xs font-medium text-[#0056A4] mb-1">{d.peso}</span>
                             <div 
                               className="w-full bg-blue-500 rounded-t transition-all hover:bg-blue-600 cursor-pointer"
                               style={{ height: `${heightPercent}%` }}
@@ -974,7 +974,7 @@ export default function Prontuario() {
                         {dadosGrafico.slice().reverse().map((d, i) => (
                           <tr key={i} className="border-t hover:bg-gray-50">
                             <td className="px-3 py-2">{d.dataCompleta}</td>
-                            <td className="px-3 py-2 text-right font-medium text-blue-600">{d.peso || "-"}</td>
+                            <td className="px-3 py-2 text-right font-medium text-[#0056A4]">{d.peso || "-"}</td>
                             <td className="px-3 py-2 text-right">{d.altura || "-"}</td>
                             <td className="px-3 py-2 text-right font-medium text-emerald-600">{d.imc || "-"}</td>
                             <td className="px-3 py-2 text-gray-500 text-xs">{d.registradoPor}</td>
@@ -1114,7 +1114,7 @@ export default function Prontuario() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Stethoscope className="h-5 w-5 text-blue-500" />
+              <Stethoscope className="h-5 w-5 text-[#0056A4]" />
               Registrar Novo Problema
             </DialogTitle>
           </DialogHeader>
@@ -1183,7 +1183,7 @@ export default function Prontuario() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Stethoscope className="h-5 w-5 text-blue-500" />
+              <Stethoscope className="h-5 w-5 text-[#0056A4]" />
               Timeline de Problemas de Saúde
             </DialogTitle>
           </DialogHeader>

@@ -292,10 +292,10 @@ export default function ExamesFavoritos() {
         {/* Instruções */}
         <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
           <CardContent className="pt-6">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+            <h3 className="font-semibold text-[#0056A4] dark:text-blue-100 mb-2">
               Como funciona?
             </h3>
-            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+            <ul className="text-sm text-[#0056A4] dark:text-blue-200 space-y-1">
               <li>• Selecione os exames que você deseja acompanhar regularmente</li>
               <li>• Ao fazer upload de um laudo laboratorial, o sistema buscará apenas esses exames</li>
               <li>• Os resultados serão exibidos no fluxograma do prontuário do paciente</li>

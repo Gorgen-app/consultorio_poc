@@ -95,7 +95,7 @@ function HistoricoAlteracoes({ pacienteId }: { pacienteId: number }) {
 
   const actionLabels: Record<string, { label: string; color: string }> = {
     CREATE: { label: "Cadastro", color: "bg-emerald-100 text-emerald-800" },
-    UPDATE: { label: "Alteração", color: "bg-blue-100 text-blue-800" },
+    UPDATE: { label: "Alteração", color: "bg-blue-100 text-[#0056A4]" },
     DELETE: { label: "Exclusão", color: "bg-red-100 text-red-800" },
     RESTORE: { label: "Restauração", color: "bg-purple-100 text-purple-800" },
   };
@@ -470,7 +470,7 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="cep">CEP {buscandoCep && <span className="text-xs text-blue-500 ml-2">Buscando...</span>}</Label>
+                    <Label htmlFor="cep">CEP {buscandoCep && <span className="text-xs text-[#0056A4] ml-2">Buscando...</span>}</Label>
                     <MaskedInput
                       mask="cep"
                       id="cep"

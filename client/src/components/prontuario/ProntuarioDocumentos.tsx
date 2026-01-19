@@ -22,7 +22,7 @@ interface Props {
 }
 
 const tiposDocumento = [
-  { value: "Receita", label: "Receita Simples", icon: Pill, cor: "bg-blue-100 text-blue-700" },
+  { value: "Receita", label: "Receita Simples", icon: Pill, cor: "bg-blue-100 text-[#0056A4]" },
   { value: "Receita Especial", label: "Receita Especial (Controlado)", icon: Pill, cor: "bg-purple-100 text-purple-700" },
   { value: "Solicitação de Exames", label: "Solicitação de Exames", icon: ClipboardList, cor: "bg-emerald-100 text-emerald-700" },
   { value: "Atestado Comparecimento", label: "Atestado de Comparecimento", icon: FileCheck, cor: "bg-yellow-100 text-yellow-700" },

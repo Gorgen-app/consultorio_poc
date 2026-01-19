@@ -319,7 +319,7 @@ export default function NovoPaciente() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cep">CEP {buscandoCep && <span className="text-xs text-blue-500 ml-2">Buscando...</span>}</Label>
+                  <Label htmlFor="cep">CEP {buscandoCep && <span className="text-xs text-[#0056A4] ml-2">Buscando...</span>}</Label>
                   <MaskedInput 
                     mask="cep" 
                     id="cep" 

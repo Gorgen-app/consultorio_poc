@@ -260,7 +260,7 @@ export default function HistoricoMedidas({ pacienteId, onUpdate }: Props) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Scale className="h-5 w-5 text-blue-500" />
+              <Scale className="h-5 w-5 text-[#0056A4]" />
               <span className="text-2xl font-bold">
                 {ultimaMedida?.peso ? `${ultimaMedida.peso} kg` : "—"}
               </span>
@@ -400,7 +400,7 @@ export default function HistoricoMedidas({ pacienteId, onUpdate }: Props) {
 
       {/* Nota sobre preservação de dados */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-800">
+        <p className="text-sm text-[#0056A4]">
           <strong>Pilar Fundamental - Imutabilidade:</strong> Todas as medidas registradas são 
           preservadas permanentemente para análise longitudinal. Os dados não são editados ou 
           excluídos, garantindo rastreabilidade completa da evolução do paciente.

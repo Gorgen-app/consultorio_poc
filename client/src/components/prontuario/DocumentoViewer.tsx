@@ -129,7 +129,7 @@ export function DocumentoViewer({ documento, isOpen, onClose }: DocumentoViewerP
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isImage ? (
-              <Image className="h-5 w-5 text-blue-500" />
+              <Image className="h-5 w-5 text-[#0056A4]" />
             ) : (
               <FileText className="h-5 w-5 text-red-500" />
             )}

@@ -76,7 +76,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
       case "Aumentado":
         return <TrendingUp className="h-3 w-3 text-red-500" />;
       case "Diminuído":
-        return <TrendingDown className="h-3 w-3 text-blue-500" />;
+        return <TrendingDown className="h-3 w-3 text-[#0056A4]" />;
       default:
         return <Minus className="h-3 w-3 text-emerald-500" />;
     }
@@ -172,7 +172,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
                                 className={cn(
                                   resultado.foraRef && "font-semibold",
                                   resultado.tipo === "Aumentado" && "text-red-600",
-                                  resultado.tipo === "Diminuído" && "text-blue-600"
+                                  resultado.tipo === "Diminuído" && "text-[#0056A4]"
                                 )}
                               >
                                 {resultado.valor}

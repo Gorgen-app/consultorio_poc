@@ -328,7 +328,7 @@ function WidgetPreview({
             </div>
           </div>
           <span className="text-[10px] font-medium truncate flex-1">{metrica.nome}</span>
-          {isSelected && <Check className="h-3 w-3 text-blue-500" />}
+          {isSelected && <Check className="h-3 w-3 text-[#0056A4]" />}
         </div>
         
         {/* Preview visual baseado no tipo de gráfico */}
@@ -598,7 +598,7 @@ export function WidgetGallery({ open, onOpenChange, selectedWidgets, onSave }: W
                           style={{ backgroundColor: categoriaAtiva === cat.valor ? 'white' : cat.cor }}
                         >
                           {categoriaAtiva === cat.valor ? (
-                            <span className="text-blue-500 text-xs font-bold">{selectedCount}</span>
+                            <span className="text-[#0056A4] text-xs font-bold">{selectedCount}</span>
                           ) : (
                             <span className="text-white text-xs font-bold">{count}</span>
                           )}

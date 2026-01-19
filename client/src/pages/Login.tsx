@@ -89,7 +89,7 @@ export default function Login() {
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-                <Shield className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <Shield className="h-8 w-8 text-[#0056A4] dark:text-blue-400" />
               </div>
             </div>
             <CardTitle className="text-2xl font-bold">Verificação em Duas Etapas</CardTitle>
