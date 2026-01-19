@@ -11,6 +11,7 @@ import { storagePut } from "../storage";
 import { recordEndpointMetric } from "../performance";
 import { initializeBackupSystem } from "./backup-init";
 import { combinedRateLimiter, addRateLimitHeaders } from "./rateLimit";
+import { cronRouter } from "../cron-router";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -92,6 +93,15 @@ async function startServer() {
       res.status(500).json({ error: "Erro ao fazer upload do arquivo" });
     }
   });
+  
+  // ==========================================
+  // ENDPOINTS DE CRON JOB EXTERNO (GitHub Actions)
+  // ==========================================
+  // Registrar rotas para agendadores externos chamarem as tarefas de backup
+  // Autenticação via Bearer Token (CRON_SECRET)
+  app.use("/api/cron", cronRouter);
+  console.log("[GORGEN] Endpoints de cron job externo registrados em /api/cron/*");
+
   // tRPC API
   app.use(
     "/api/trpc",
@@ -119,7 +129,7 @@ async function startServer() {
     console.log(`[GORGEN] Rate Limiting ativo: 100 req/min por IP, 300 req/min por usuário`);
     
     // Inicializar sistema de backup automático após servidor estar pronto
-    // O scheduler será ativado e executará backups diários às 03:00
+    // Modo híbrido: agendamento via GitHub Actions, execução via endpoints /api/cron/*
     initializeBackupSystem();
   });
 }
