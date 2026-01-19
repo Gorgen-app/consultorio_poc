@@ -224,7 +224,7 @@ export function FluxogramaLaboratorial({ pacienteId }: FluxogramaLaboratorialPro
                         {refMin !== null && (
                           <ReferenceLine
                             y={refMin}
-                            stroke="#0056A4"
+                            stroke="#6B8CBE"
                             strokeDasharray="5 5"
                             label={{ value: "Mín", position: "left", fontSize: 10 }}
                           />

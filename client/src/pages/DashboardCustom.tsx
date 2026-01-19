@@ -106,7 +106,7 @@ const periodos: { valor: PeriodoTempo; label: string }[] = [
 
 // Gorgen Design System - Cores das Categorias (Paleta Opção B)
 const categorias: { valor: CategoriaMetrica; label: string; cor: string; icone: React.ReactNode }[] = [
-  { valor: 'populacao_pacientes', label: 'População de Pacientes', cor: '#0056A4', icone: <Users className="h-4 w-4" /> },
+  { valor: 'populacao_pacientes', label: 'População de Pacientes', cor: '#6B8CBE', icone: <Users className="h-4 w-4" /> },
   { valor: 'atendimentos', label: 'Atendimentos', cor: '#10B981', icone: <Calendar className="h-4 w-4" /> },
   { valor: 'economico_financeiro', label: 'Econômico-Financeiro', cor: '#BEA06B', icone: <DollarSign className="h-4 w-4" /> },
   { valor: 'qualidade_atendimento', label: 'Qualidade do Atendimento', cor: '#8E7DBE', icone: <Heart className="h-4 w-4" /> },
@@ -115,7 +115,7 @@ const categorias: { valor: CategoriaMetrica; label: string; cor: string; icone: 
 
 // Gorgen Design System - Cores para Gráficos (Paleta Opção B)
 const CORES_GRAFICOS = [
-  '#0056A4', // Azul Claro (principal)
+  '#6B8CBE', // Azul Claro (principal - Paleta Opção B)
   '#BE6B7D', // Rosa/Bordô suave
   '#8E7DBE', // Roxo suave
   '#BEA06B', // Dourado suave
@@ -423,8 +423,8 @@ function MicroWidget({ label, value, unit, icon, categoria, onRemove, onChangeTa
         <div 
           className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
           style={{ 
-            backgroundColor: cat ? `${cat.cor}15` : '#0056A415',
-            color: cat?.cor || '#0056A4'
+            backgroundColor: cat ? `${cat.cor}15` : '#6B8CBE15',
+            color: cat?.cor || '#6B8CBE'
           }}
         >
           {icon}
@@ -779,7 +779,7 @@ function MetricaConteudo({
               dataKey="value"
               stroke="none"
             >
-              <Cell fill="#0056A4" />
+              <Cell fill="#6B8CBE" />
               <Cell fill="#E5E7EB" />
             </Pie>
           </RechartsPieChart>
@@ -965,7 +965,7 @@ function MetricaConteudo({
           <XAxis type="number" tick={{ fontSize }} />
           <YAxis dataKey="nome" type="category" tick={{ fontSize }} width={tamanho === 'micro' ? 35 : 55} />
           <Tooltip formatter={(value: number) => value.toLocaleString('pt-BR')} />
-          <Bar dataKey="valor" fill="#0056A4" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="valor" fill="#6B8CBE" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
@@ -993,8 +993,8 @@ function MetricaConteudo({
           <Area 
             type="monotone" 
             dataKey="valor" 
-            stroke="#0056A4"
-            fill="#0056A420"
+            stroke="#6B8CBE"
+            fill="#6B8CBE20"
             strokeWidth={2}
           />
         </AreaChart>
@@ -1027,9 +1027,9 @@ function MetricaConteudo({
           <Line 
             type="monotone" 
             dataKey="valor" 
-            stroke="#0056A4"
+            stroke="#6B8CBE"
             strokeWidth={2}
-            dot={{ fill: '#0056A4', r: 3 }}
+            dot={{ fill: '#6B8CBE', r: 3 }}
           />
         </LineChart>
       </ResponsiveContainer>

@@ -2819,3 +2819,14 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [ ] Testar Busca de CEP (ViaCEP)
 - [ ] Testar Google Fonts
 
+
+
+## 🎨 CORREÇÃO DE CORES (19/01/2026)
+
+### Desvio de Paleta - #0056A4 em gráficos
+- [x] Corrigir DashboardCustom.tsx - Cell fill
+- [x] Corrigir DashboardCustom.tsx - Bar fill
+- [x] Corrigir DashboardCustom.tsx - stroke/fill em gráficos de linha
+- [x] Corrigir WidgetGallery.tsx - cor de categoria
+- [x] Corrigir FluxogramaLaboratorial.tsx - stroke
+- [x] Verificar e testar correções
