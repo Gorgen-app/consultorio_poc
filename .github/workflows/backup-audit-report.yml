@@ -1,0 +1,138 @@
+# =============================================================================
+# GORGEN - Workflow de Relatório de Auditoria Mensal
+# =============================================================================
+# Este workflow gera o relatório de auditoria de backups no 1º dia de cada mês
+# 
+# Horário: 09:00 UTC = 06:00 BRT (Brasília)
+# Frequência: Dia 1 de cada mês
+# =============================================================================
+
+name: 📊 Relatório de Auditoria Mensal
+
+on:
+  # Agendamento automático (cron em UTC)
+  schedule:
+    - cron: '0 9 1 * *'  # 09:00 UTC = 06:00 BRT, Dia 1 do mês
+  
+  # Permite execução manual via interface do GitHub
+  workflow_dispatch:
+    inputs:
+      month:
+        description: 'Mês do relatório (opcional, formato: YYYY-MM)'
+        required: false
+        type: string
+
+env:
+  GORGEN_API_URL: ${{ secrets.GORGEN_API_URL }}
+  CRON_SECRET: ${{ secrets.CRON_SECRET }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+jobs:
+  # =========================================================================
+  # Job: Gerar Relatório de Auditoria
+  # =========================================================================
+  audit-report:
+    name: 📊 Gerar Relatório
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    outputs:
+      report_success: ${{ steps.audit.outputs.success }}
+      total_backups: ${{ steps.audit.outputs.total_backups }}
+      success_rate: ${{ steps.audit.outputs.success_rate }}
+      compliance_status: ${{ steps.audit.outputs.compliance_status }}
+    
+    steps:
+      - name: 🔐 Verificar configuração
+        run: |
+          if [ -z "$GORGEN_API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "❌ Variáveis de ambiente não configuradas"
+            exit 1
+          fi
+          echo "✅ Configuração válida"
+      
+      - name: 📊 Gerar relatório de auditoria
+        id: audit
+        run: |
+          echo "Gerando relatório de auditoria mensal..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            "$GORGEN_API_URL/api/cron/audit-report")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Geração do relatório falhou (HTTP $HTTP_CODE)"
+            echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"
+            echo "success=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Extrair estatísticas
+          TOTAL=$(echo "$BODY" | jq -r '.results[0].details.totalBackups // 0')
+          SUCCESS_RATE=$(echo "$BODY" | jq -r '.results[0].details.successRate // 0')
+          
+          # Verificar compliance
+          DAILY_MET=$(echo "$BODY" | jq -r '.results[0].details.compliance.dailyBackupsMet // false')
+          ENCRYPTION_MET=$(echo "$BODY" | jq -r '.results[0].details.compliance.encryptionCompliance // false')
+          
+          if [ "$DAILY_MET" == "true" ] && [ "$ENCRYPTION_MET" == "true" ]; then
+            COMPLIANCE="✅ Em conformidade"
+          else
+            COMPLIANCE="⚠️ Não conformidade detectada"
+          fi
+          
+          echo "total_backups=$TOTAL" >> $GITHUB_OUTPUT
+          echo "success_rate=$SUCCESS_RATE" >> $GITHUB_OUTPUT
+          echo "compliance_status=$COMPLIANCE" >> $GITHUB_OUTPUT
+          echo "success=true" >> $GITHUB_OUTPUT
+          
+          echo "✅ Relatório gerado com sucesso"
+          echo "$BODY" | jq '.'
+      
+      - name: 📝 Registrar resultado
+        if: always()
+        run: |
+          echo "=========================================="
+          echo "📊 RESUMO DO RELATÓRIO DE AUDITORIA"
+          echo "=========================================="
+          echo "Período: Mês anterior"
+          echo "Total de Backups: ${{ steps.audit.outputs.total_backups }}"
+          echo "Taxa de Sucesso: ${{ steps.audit.outputs.success_rate }}%"
+          echo "Compliance: ${{ steps.audit.outputs.compliance_status }}"
+          echo "=========================================="
+
+  # =========================================================================
+  # Job: Notificar Resultado
+  # =========================================================================
+  notify-result:
+    name: 📣 Notificar Resultado
+    runs-on: ubuntu-latest
+    needs: audit-report
+    if: always()
+    
+    steps:
+      - name: 📣 Notificar Slack
+        if: env.SLACK_WEBHOOK_URL != ''
+        run: |
+          MONTH=$(date -d "last month" '+%B %Y')
+          
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{
+              \"attachments\": [{
+                \"color\": \"#36a64f\",
+                \"title\": \"📊 Relatório de Auditoria de Backups - $MONTH\",
+                \"fields\": [
+                  {\"title\": \"Total de Backups\", \"value\": \"${{ needs.audit-report.outputs.total_backups }}\", \"short\": true},
+                  {\"title\": \"Taxa de Sucesso\", \"value\": \"${{ needs.audit-report.outputs.success_rate }}%\", \"short\": true},
+                  {\"title\": \"Compliance\", \"value\": \"${{ needs.audit-report.outputs.compliance_status }}\", \"short\": false}
+                ],
+                \"footer\": \"GitHub Actions\",
+                \"ts\": $(date +%s)
+              }]
+            }" \
+            "$SLACK_WEBHOOK_URL" || true
