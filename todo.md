@@ -2799,3 +2799,23 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - Rate Limiting ativo: 100 req/min por IP, 300 req/min por usuário
 - Headers de resposta: RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset
 - Testes: 12/12 passando
+
+---
+
+## 🔒 SEGURANÇA - Validação de CSP (19/01/2026)
+
+### Headers de Segurança
+- [x] Verificar Content-Security-Policy
+- [x] Verificar X-Frame-Options: DENY
+- [x] Verificar X-Content-Type-Options: nosniff
+- [x] Verificar X-XSS-Protection: 1; mode=block
+- [x] Verificar Referrer-Policy: strict-origin-when-cross-origin
+
+### Funcionalidades Críticas
+- [ ] Testar Google Maps
+- [ ] Testar Gráficos do Dashboard
+- [ ] Testar Impressão de PDF
+- [ ] Testar Upload de imagem para S3
+- [ ] Testar Busca de CEP (ViaCEP)
+- [ ] Testar Google Fonts
+

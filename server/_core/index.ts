@@ -12,6 +12,7 @@ import { recordEndpointMetric } from "../performance";
 import { initializeBackupSystem } from "./backup-init";
 import { combinedRateLimiter, addRateLimitHeaders } from "./rateLimit";
 import { cronRouter } from "../cron-router";
+import { securityHeaders } from "./securityHeaders";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,9 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  
+  // Headers de Segurança (CSP, X-Frame-Options, etc.)
+  app.use(securityHeaders);
   
   // Rate Limiting - Proteção contra abuso
   app.use(addRateLimitHeaders);
@@ -127,6 +131,7 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     console.log(`[GORGEN] Rate Limiting ativo: 100 req/min por IP, 300 req/min por usuário`);
+    console.log(`[GORGEN] Headers de Segurança (CSP) ativos`);
     
     // Inicializar sistema de backup automático após servidor estar pronto
     // Modo híbrido: agendamento via GitHub Actions, execução via endpoints /api/cron/*

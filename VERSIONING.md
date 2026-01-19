@@ -14,7 +14,7 @@
 
 ---
 
-## Versão Atual: 3.9.1
+## Versão Atual: 3.9.8
 
 ---
 
@@ -56,6 +56,13 @@ Após cada checkpoint salvo com alterações, o desenvolvedor deve:
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 3.9.8 | 19/01/2026 | Headers de Segurança (CSP) implementados |
+| 3.9.7 | 18/01/2026 | Rate Limiting integrado ao middleware principal |
+| 3.9.6 | 18/01/2026 | Correção de texto azul restante |
+| 3.9.5 | 18/01/2026 | Ajuste de contraste de texto azul (#0056A4) |
+| 3.9.4 | 18/01/2026 | Sistema de backup automático integrado |
+| 3.9.3 | 17/01/2026 | Avaliação completa do sistema |
+| 3.9.2 | 17/01/2026 | Regra de versionamento implementada |
 | 3.9.1 | 17/01/2026 | Tema dark removido, apenas tema light |
 | 3.9.0 | 17/01/2026 | Padronização visual completa, Design System v1.1 |
 | 3.8.2 | 17/01/2026 | Bordas sutis e contraste melhorado nos widgets |
@@ -78,4 +85,4 @@ Após cada checkpoint salvo com alterações, o desenvolvedor deve:
 
 **Proprietário**: Dr. André Gorgen  
 **Implementado por**: Manus AI  
-**Última atualização**: 17 de Janeiro de 2026
+**Última atualização**: 19 de Janeiro de 2026
