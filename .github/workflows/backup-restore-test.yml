@@ -1,0 +1,198 @@
+# =============================================================================
+# GORGEN - Workflow de Teste de Restauração Semanal
+# =============================================================================
+# Este workflow executa o teste de restauração do backup aos domingos às 04:00
+# 
+# Horário: 07:00 UTC = 04:00 BRT (Brasília)
+# Frequência: Domingos
+# =============================================================================
+
+name: 🔄 Teste de Restauração Semanal
+
+on:
+  # Agendamento automático (cron em UTC)
+  schedule:
+    - cron: '0 7 * * 0'  # 07:00 UTC = 04:00 BRT, Domingos
+  
+  # Permite execução manual via interface do GitHub
+  workflow_dispatch:
+    inputs:
+      backup_id:
+        description: 'ID do backup específico para testar (opcional)'
+        required: false
+        type: string
+
+env:
+  GORGEN_API_URL: ${{ secrets.GORGEN_API_URL }}
+  CRON_SECRET: ${{ secrets.CRON_SECRET }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+jobs:
+  # =========================================================================
+  # Job: Executar Teste de Restauração
+  # =========================================================================
+  restore-test:
+    name: 🔄 Teste de Restauração
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    outputs:
+      test_success: ${{ steps.restore-test.outputs.success }}
+      test_duration: ${{ steps.restore-test.outputs.duration }}
+      validations_passed: ${{ steps.restore-test.outputs.validations_passed }}
+      validations_total: ${{ steps.restore-test.outputs.validations_total }}
+    
+    steps:
+      - name: 🔐 Verificar configuração
+        run: |
+          if [ -z "$GORGEN_API_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "❌ Variáveis de ambiente não configuradas"
+            exit 1
+          fi
+          echo "✅ Configuração válida"
+      
+      - name: 🏥 Verificar saúde do serviço
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$GORGEN_API_URL/api/cron/health")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Serviço não está saudável"
+            exit 1
+          fi
+          echo "✅ Serviço saudável"
+      
+      - name: 🔄 Executar teste de restauração
+        id: restore-test
+        run: |
+          echo "Iniciando teste de restauração..."
+          START_TIME=$(date +%s)
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            --max-time 3600 \
+            "$GORGEN_API_URL/api/cron/restore-test")
+          
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Teste falhou (HTTP $HTTP_CODE)"
+            echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"
+            echo "success=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          SUCCESS=$(echo "$BODY" | jq -r '.success')
+          
+          # Extrair estatísticas de validação
+          PASSED=$(echo "$BODY" | jq -r '.results[0].details.summary.passedValidations // 0')
+          TOTAL=$(echo "$BODY" | jq -r '.results[0].details.summary.totalValidations // 0')
+          
+          echo "validations_passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "validations_total=$TOTAL" >> $GITHUB_OUTPUT
+          
+          if [ "$SUCCESS" != "true" ]; then
+            echo "❌ Teste de restauração falhou"
+            echo "$BODY" | jq '.'
+            echo "success=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "✅ Teste de restauração concluído com sucesso"
+          echo "$BODY" | jq '.'
+          echo "success=true" >> $GITHUB_OUTPUT
+      
+      - name: 📝 Registrar resultado
+        if: always()
+        run: |
+          echo "=========================================="
+          echo "📊 RESUMO DO TESTE DE RESTAURAÇÃO"
+          echo "=========================================="
+          echo "Data/Hora: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Duração: ${{ steps.restore-test.outputs.duration }}s"
+          echo "Validações: ${{ steps.restore-test.outputs.validations_passed }}/${{ steps.restore-test.outputs.validations_total }}"
+          echo "Sucesso: ${{ steps.restore-test.outputs.success }}"
+          echo "=========================================="
+
+  # =========================================================================
+  # Job: Notificar Resultado
+  # =========================================================================
+  notify-result:
+    name: 📣 Notificar Resultado
+    runs-on: ubuntu-latest
+    needs: restore-test
+    if: always()
+    
+    steps:
+      - name: 📣 Notificar Slack
+        if: env.SLACK_WEBHOOK_URL != ''
+        run: |
+          if [ "${{ needs.restore-test.outputs.test_success }}" == "true" ]; then
+            EMOJI="✅"
+            COLOR="good"
+            STATUS="Sucesso"
+          else
+            EMOJI="❌"
+            COLOR="danger"
+            STATUS="Falha"
+          fi
+          
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{
+              \"attachments\": [{
+                \"color\": \"$COLOR\",
+                \"title\": \"$EMOJI Teste de Restauração Gorgen - $STATUS\",
+                \"fields\": [
+                  {\"title\": \"Data\", \"value\": \"$(date -u '+%Y-%m-%d %H:%M UTC')\", \"short\": true},
+                  {\"title\": \"Duração\", \"value\": \"${{ needs.restore-test.outputs.test_duration }}s\", \"short\": true},
+                  {\"title\": \"Validações\", \"value\": \"${{ needs.restore-test.outputs.validations_passed }}/${{ needs.restore-test.outputs.validations_total }}\", \"short\": true}
+                ],
+                \"footer\": \"GitHub Actions\",
+                \"ts\": $(date +%s)
+              }]
+            }" \
+            "$SLACK_WEBHOOK_URL" || true
+      
+      - name: 🚨 Criar issue em caso de falha
+        if: needs.restore-test.outputs.test_success != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Falha no Teste de Restauração - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## Detalhes da Falha
+            
+            - **Data/Hora:** ${new Date().toISOString()}
+            - **Validações Aprovadas:** ${{ needs.restore-test.outputs.validations_passed }}/${{ needs.restore-test.outputs.validations_total }}
+            
+            ## Ação Necessária
+            
+            ⚠️ **CRÍTICO**: O teste de restauração falhou. Isso significa que os backups podem não ser restauráveis.
+            
+            1. Verificar logs do workflow
+            2. Executar teste manual de restauração
+            3. Verificar integridade dos backups recentes
+            
+            ## Links
+            
+            - [Logs do Workflow](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['backup', 'critical', 'automated']
+            });
