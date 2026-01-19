@@ -1,7 +1,7 @@
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -12,6 +12,9 @@ export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
   const utils = trpc.useUtils();
+  
+  // Estado para controlar se está fazendo logout (para evitar flash da tela de login)
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
@@ -25,25 +28,21 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   const logout = useCallback(async () => {
+    // Marcar que está fazendo logout ANTES de qualquer outra ação
+    setIsLoggingOut(true);
+    
+    // Redirecionar IMEDIATAMENTE para a home page
+    // Isso evita o flash da tela de login
+    window.location.href = "/";
+    
+    // Fazer o logout em background (o redirecionamento já aconteceu)
     try {
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
-      if (
-        error instanceof TRPCClientError &&
-        error.data?.code === "UNAUTHORIZED"
-      ) {
-        // Mesmo com erro de não autorizado, redirecionar para home
-        window.location.href = "/";
-        return;
-      }
-      throw error;
-    } finally {
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
-      // Redirecionar para a home page após logout
-      window.location.href = "/";
+      // Ignorar erros - o usuário já foi redirecionado
+      console.log("Logout error (ignored):", error);
     }
-  }, [logoutMutation, utils]);
+  }, [logoutMutation]);
 
   const state = useMemo(() => {
     localStorage.setItem(
@@ -52,9 +51,11 @@ export function useAuth(options?: UseAuthOptions) {
     );
     return {
       user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
+      // Incluir isLoggingOut no loading para evitar flash
+      loading: meQuery.isLoading || logoutMutation.isPending || isLoggingOut,
       error: meQuery.error ?? logoutMutation.error ?? null,
       isAuthenticated: Boolean(meQuery.data),
+      isLoggingOut,
     };
   }, [
     meQuery.data,
@@ -62,11 +63,12 @@ export function useAuth(options?: UseAuthOptions) {
     meQuery.isLoading,
     logoutMutation.error,
     logoutMutation.isPending,
+    isLoggingOut,
   ]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
-    if (meQuery.isLoading || logoutMutation.isPending) return;
+    if (meQuery.isLoading || logoutMutation.isPending || isLoggingOut) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
     if (window.location.pathname === redirectPath) return;
@@ -78,6 +80,7 @@ export function useAuth(options?: UseAuthOptions) {
     logoutMutation.isPending,
     meQuery.isLoading,
     state.user,
+    isLoggingOut,
   ]);
 
   return {
