@@ -440,3 +440,103 @@ async function validarAcessoProntuario(
 
 *Documento preparado por Manus AI em 19 de Janeiro de 2026*  
 *Versão 1.0 - Aprovado*
+
+
+---
+
+## 13. Vantagem Competitiva B2B: Modelo de Tenants Existentes
+
+### 13.1 O Problema do Modelo Tradicional
+
+Sistemas tradicionais de gestão hospitalar como Tasy, MV e AGHUse operam em um modelo onde a instituição paga por **todos** os usuários sob seu tenant, independentemente de já existirem em outras plataformas ou não.
+
+| Aspecto | Modelo Tradicional |
+|---------|-------------------|
+| Médicos | Instituição paga por 100% |
+| Pacientes | Instituição paga por 100% |
+| Dados | Ficam presos no sistema da instituição |
+| Portabilidade | Inexistente |
+| Custo | Proporcional ao total de usuários |
+
+### 13.2 O Diferencial GORGEN
+
+No modelo GORGEN, a instituição **só paga pelos tenants que ainda não existem** na plataforma. Médicos e pacientes que já possuem conta GORGEN são automaticamente vinculados à instituição sem custo adicional de tenant.
+
+| Aspecto | Modelo GORGEN |
+|---------|---------------|
+| Médicos existentes | Instituição NÃO PAGA |
+| Pacientes existentes | Instituição NÃO PAGA |
+| Médicos novos | Instituição paga apenas estes |
+| Pacientes novos | Instituição paga apenas estes |
+| Dados | Pertencem ao paciente, acessíveis pela instituição |
+| Portabilidade | Total |
+| Custo | Proporcional apenas aos NOVOS usuários |
+
+### 13.3 Impacto Financeiro
+
+Considerando um hospital típico com 200 médicos e 50.000 pacientes, onde 60% já utilizam GORGEN:
+
+| Métrica | Tasy/MV | GORGEN | Economia |
+|---------|---------|--------|----------|
+| Médicos cobrados | 200 | 80 | 60% |
+| Pacientes cobrados | 50.000 | 20.000 | 60% |
+| Custo estimado/ano | R$ 600.000 | R$ 240.000 | **R$ 360.000** |
+
+### 13.4 Efeito de Rede
+
+Esta arquitetura cria um efeito de rede virtuoso:
+
+1. **Fase Inicial**: Primeiros clientes B2B pagam mais (poucos usuários existentes na plataforma)
+2. **Fase de Crescimento**: Clientes subsequentes pagam menos (muitos usuários já cadastrados)
+3. **Fase de Maturidade**: Novos clientes têm barreira de entrada mínima
+4. **Lock-in Positivo**: Quanto mais usuários na plataforma, maior o valor para todos
+
+### 13.5 Pitch de Vendas
+
+> "Diferente do Tasy ou MV, onde você paga por todos os usuários sob seu tenant, no GORGEN você só paga pelos tenants que ainda não existem. Se 60% dos seus médicos e pacientes já usam GORGEN, você economiza 60% no primeiro dia."
+
+### 13.6 Benefícios Adicionais para Instituições
+
+| Benefício | Descrição |
+|-----------|-----------|
+| **Conformidade LGPD** | Dados pertencem ao paciente, instituição é operadora |
+| **Continuidade do cuidado** | Histórico do paciente disponível desde o primeiro atendimento |
+| **Redução de exames** | Acesso a exames já realizados em outras instituições |
+| **Retenção de médicos** | Médico mantém seu tenant mesmo se sair da instituição |
+| **Atração de pacientes** | Pacientes preferem instituições que usam seu prontuário |
+
+---
+
+## 14. Compatibilidade com Diferentes Segmentos
+
+### 14.1 Segmentos Atendidos
+
+O modelo de tenants do GORGEN é compatível com diversos segmentos do mercado de saúde:
+
+| Segmento | Modelo de Contratação | Observações |
+|----------|----------------------|-------------|
+| **Consultório individual** | B2C (self-service) | Médico contrata diretamente |
+| **Clínica pequena** | B2B Starter | Até 10 médicos |
+| **Clínica média** | B2B Professional | 11-50 médicos |
+| **Hospital** | B2B Enterprise | 51-500 médicos |
+| **Rede hospitalar** | B2B Custom | 500+ médicos |
+| **Operadora de saúde** | B2B Custom | Modelo específico |
+
+### 14.2 Funcionalidades por Segmento
+
+| Funcionalidade | B2C | B2B Starter | B2B Professional | B2B Enterprise |
+|----------------|-----|-------------|------------------|----------------|
+| Prontuário eletrônico | ✅ | ✅ | ✅ | ✅ |
+| Agenda | ✅ | ✅ | ✅ | ✅ |
+| Faturamento | ✅ | ✅ | ✅ | ✅ |
+| Dashboard gerencial | ❌ | ✅ | ✅ | ✅ |
+| Relatórios consolidados | ❌ | Básico | Avançado | Customizado |
+| API de integração | ❌ | ❌ | ✅ | ✅ |
+| Suporte | Comunidade | Email | Prioritário | Dedicado |
+| SLA | Não | 99% | 99.5% | 99.9% |
+| Onboarding | Self-service | Remoto | Presencial | Dedicado |
+| Customizações | ❌ | ❌ | Limitadas | Ilimitadas |
+
+---
+
+*Seção adicionada em 19 de Janeiro de 2026*
