@@ -1103,6 +1103,14 @@ export const pacientes = mysqlTable("pacientes", {
 	responsavelEmail: varchar("responsavel_email", { length: 320 }),
 	tenantId: int("tenant_id").default(1),
 	codigoLegado: varchar("codigo_legado", { length: 64 }),
+	// Campos criptografados para PII
+	cpfEncrypted: text("cpf_encrypted"),
+	cpfHash: varchar("cpf_hash", { length: 100 }),
+	emailEncrypted: text("email_encrypted"),
+	emailHash: varchar("email_hash", { length: 100 }),
+	telefoneEncrypted: text("telefone_encrypted"),
+	responsavelTelefoneEncrypted: text("responsavel_telefone_encrypted"),
+	responsavelEmailEncrypted: text("responsavel_email_encrypted"),
 },
 (table) => [
 	index("id_paciente").on(table.idPaciente),
@@ -1513,7 +1521,14 @@ export const delegadosAgenda = mysqlTable("delegados_agenda", {
   // Usuário delegado (preenchido quando o delegado aceita o convite)
   delegadoUserId: int("delegado_user_id").references(() => users.id),
   
-  // Permissões
+  // Tipo de permissão (legado - para compatibilidade)
+  permissao: varchar("permissao", { length: 50 }).default("visualizar"),
+  
+  // Período de validade da delegação
+  dataInicio: timestamp("data_inicio", { mode: "string" }),
+  dataFim: timestamp("data_fim", { mode: "string" }),
+  
+  // Permissões granulares
   podeVisualizar: boolean("pode_visualizar").default(true),
   podeAgendar: boolean("pode_agendar").default(false),
   podeCancelar: boolean("pode_cancelar").default(false),
@@ -1533,3 +1548,122 @@ export const delegadosAgenda = mysqlTable("delegados_agenda", {
 
 export type DelegadoAgenda = typeof delegadosAgenda.$inferSelect;
 export type InsertDelegadoAgenda = typeof delegadosAgenda.$inferInsert;
+
+
+// Tipos inferidos para as tabelas principais
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+
+export type Paciente = typeof pacientes.$inferSelect;
+export type InsertPaciente = typeof pacientes.$inferInsert;
+
+export type Atendimento = typeof atendimentos.$inferSelect;
+export type InsertAtendimento = typeof atendimentos.$inferInsert;
+
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = typeof userProfiles.$inferInsert;
+
+export type UserSetting = typeof userSettings.$inferSelect;
+export type InsertUserSetting = typeof userSettings.$inferInsert;
+
+export type AuditLog = typeof auditLog.$inferSelect;
+export type InsertAuditLog = typeof auditLog.$inferInsert;
+
+export type ResumoClinico = typeof resumoClinico.$inferSelect;
+export type InsertResumoClinico = typeof resumoClinico.$inferInsert;
+
+export type ProblemaAtivo = typeof problemasAtivos.$inferSelect;
+export type InsertProblemaAtivo = typeof problemasAtivos.$inferInsert;
+
+export type Alergia = typeof alergias.$inferSelect;
+export type InsertAlergia = typeof alergias.$inferInsert;
+
+export type MedicamentoUso = typeof medicamentosUso.$inferSelect;
+export type InsertMedicamentoUso = typeof medicamentosUso.$inferInsert;
+
+export type Evolucao = typeof evolucoes.$inferSelect;
+export type InsertEvolucao = typeof evolucoes.$inferInsert;
+
+export type Internacao = typeof internacoes.$inferSelect;
+export type InsertInternacao = typeof internacoes.$inferInsert;
+
+export type Cirurgia = typeof cirurgias.$inferSelect;
+export type InsertCirurgia = typeof cirurgias.$inferInsert;
+
+export type ExameLaboratorial = typeof examesLaboratoriais.$inferSelect;
+export type InsertExameLaboratorial = typeof examesLaboratoriais.$inferInsert;
+
+export type ExameImagem = typeof examesImagem.$inferSelect;
+export type InsertExameImagem = typeof examesImagem.$inferInsert;
+
+export type Documento = typeof documentosMedicos.$inferSelect;
+export type InsertDocumento = typeof documentosMedicos.$inferInsert;
+
+export type Agendamento = typeof agendamentos.$inferSelect;
+export type InsertAgendamento = typeof agendamentos.$inferInsert;
+
+export type Tenant = typeof tenants.$inferSelect;
+export type InsertTenant = typeof tenants.$inferInsert;
+
+export type BackupHistory = typeof backupHistory.$inferSelect;
+export type InsertBackupHistory = typeof backupHistory.$inferInsert;
+
+export type BackupConfig = typeof backupConfig.$inferSelect;
+export type InsertBackupConfig = typeof backupConfig.$inferInsert;
+
+
+export type Endoscopia = typeof endoscopias.$inferSelect;
+export type InsertEndoscopia = typeof endoscopias.$inferInsert;
+
+export type Cardiologia = typeof cardiologia.$inferSelect;
+export type InsertCardiologia = typeof cardiologia.$inferInsert;
+
+export type Terapia = typeof terapias.$inferSelect;
+export type InsertTerapia = typeof terapias.$inferInsert;
+
+export type Obstetricia = typeof obstetricia.$inferSelect;
+export type InsertObstetricia = typeof obstetricia.$inferInsert;
+
+export type DocumentoMedico = typeof documentosMedicos.$inferSelect;
+export type InsertDocumentoMedico = typeof documentosMedicos.$inferInsert;
+
+export type Patologia = typeof patologias.$inferSelect;
+export type InsertPatologia = typeof patologias.$inferInsert;
+
+export type Profissional = typeof profissionais.$inferSelect;
+export type InsertProfissional = typeof profissionais.$inferInsert;
+
+export type HistoricoMedida = typeof historicoMedidas.$inferSelect;
+export type InsertHistoricoMedida = typeof historicoMedidas.$inferInsert;
+
+export type VinculoSecretariaMedico = typeof vinculoSecretariaMedico.$inferSelect;
+export type InsertVinculoSecretariaMedico = typeof vinculoSecretariaMedico.$inferInsert;
+
+export type HistoricoVinculo = typeof historicoVinculo.$inferSelect;
+export type InsertHistoricoVinculo = typeof historicoVinculo.$inferInsert;
+
+export type ExameFavorito = typeof examesFavoritos.$inferSelect;
+export type InsertExameFavorito = typeof examesFavoritos.$inferInsert;
+
+export type PacienteAutorizacao = typeof pacienteAutorizacoes.$inferSelect;
+export type InsertPacienteAutorizacao = typeof pacienteAutorizacoes.$inferInsert;
+
+export type CrossTenantAccessLog = typeof crossTenantAccessLogs.$inferSelect;
+export type InsertCrossTenantAccessLog = typeof crossTenantAccessLogs.$inferInsert;
+
+
+export type BloqueioHorario = typeof bloqueiosHorario.$inferSelect;
+export type InsertBloqueioHorario = typeof bloqueiosHorario.$inferInsert;
+
+export type HistoricoAgendamento = typeof historicoAgendamentos.$inferSelect;
+export type InsertHistoricoAgendamento = typeof historicoAgendamentos.$inferInsert;
+
+
+export type DocumentoExterno = typeof documentosExternos.$inferSelect;
+export type InsertDocumentoExterno = typeof documentosExternos.$inferInsert;
+
+export type ResultadoLaboratorial = typeof resultadosLaboratoriais.$inferSelect;
+export type InsertResultadoLaboratorial = typeof resultadosLaboratoriais.$inferInsert;
+
+export type ExamePadronizado = typeof examesPadronizados.$inferSelect;
+export type InsertExamePadronizado = typeof examesPadronizados.$inferInsert;

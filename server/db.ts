@@ -5,6 +5,27 @@ import { HashingService } from "./services/HashingService";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
+// ============================================================================
+// HELPERS DE CONVERSÃO DE TIPOS
+// ============================================================================
+
+/**
+ * Converte Date para string ISO para compatibilidade com schema mode: 'string'
+ */
+function toDateString(date: Date | string | null | undefined): string | null {
+  if (!date) return null;
+  if (typeof date === 'string') return date;
+  return date.toISOString();
+}
+
+/**
+ * Converte Date para string ISO (não-nulo)
+ */
+function toDateStringRequired(date: Date | string): string {
+  if (typeof date === 'string') return date;
+  return date.toISOString();
+}
+
 /**
  * Retorna a instância do banco de dados com connection pooling
  * @returns Instância do Drizzle ORM ou null se não disponível
@@ -105,7 +126,7 @@ function decryptPacientePII(tenantId: number, paciente: Paciente): Paciente {
   
   if (paciente.cpfEncrypted) {
     try {
-      result.cpf = encryption.decrypt(paciente.cpfEncrypted);
+      result.cpf = encryption.decrypt(paciente.cpfEncrypted).decrypted;
     } catch (e) {
       console.warn(`[Crypto] Falha ao descriptografar CPF do paciente ${paciente.id}`);
     }
@@ -113,7 +134,7 @@ function decryptPacientePII(tenantId: number, paciente: Paciente): Paciente {
   
   if (paciente.emailEncrypted) {
     try {
-      result.email = encryption.decrypt(paciente.emailEncrypted);
+      result.email = encryption.decrypt(paciente.emailEncrypted).decrypted;
     } catch (e) {
       console.warn(`[Crypto] Falha ao descriptografar email do paciente ${paciente.id}`);
     }
@@ -121,7 +142,7 @@ function decryptPacientePII(tenantId: number, paciente: Paciente): Paciente {
   
   if (paciente.telefoneEncrypted) {
     try {
-      result.telefone = encryption.decrypt(paciente.telefoneEncrypted);
+      result.telefone = encryption.decrypt(paciente.telefoneEncrypted).decrypted;
     } catch (e) {
       console.warn(`[Crypto] Falha ao descriptografar telefone do paciente ${paciente.id}`);
     }
@@ -129,7 +150,7 @@ function decryptPacientePII(tenantId: number, paciente: Paciente): Paciente {
   
   if (paciente.responsavelTelefoneEncrypted) {
     try {
-      result.responsavelTelefone = encryption.decrypt(paciente.responsavelTelefoneEncrypted);
+      result.responsavelTelefone = encryption.decrypt(paciente.responsavelTelefoneEncrypted).decrypted;
     } catch (e) {
       console.warn(`[Crypto] Falha ao descriptografar telefone do responsável do paciente ${paciente.id}`);
     }
@@ -137,7 +158,7 @@ function decryptPacientePII(tenantId: number, paciente: Paciente): Paciente {
   
   if (paciente.responsavelEmailEncrypted) {
     try {
-      result.responsavelEmail = encryption.decrypt(paciente.responsavelEmailEncrypted);
+      result.responsavelEmail = encryption.decrypt(paciente.responsavelEmailEncrypted).decrypted;
     } catch (e) {
       console.warn(`[Crypto] Falha ao descriptografar email do responsável do paciente ${paciente.id}`);
     }
@@ -208,11 +229,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     }
 
     if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
+      values.lastSignedIn = toDateString(new Date());
     }
 
     if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
+      updateSet.lastSignedIn = toDateString(new Date());
     }
 
     await db.insert(users).values(values).onDuplicateKeyUpdate({
@@ -1358,7 +1379,7 @@ export async function softDeletePaciente(tenantId: number, id: number, deletedBy
   if (!existing) return false;
 
   await db.update(pacientes).set({
-    deletedAt: new Date(),
+    deletedAt: toDateString(new Date()),
     deletedBy,
   } as any).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   
@@ -1392,7 +1413,7 @@ export async function softDeleteAtendimento(tenantId: number, id: number, delete
   if (!existing) return false;
 
   await db.update(atendimentos).set({
-    deletedAt: new Date(),
+    deletedAt: toDateString(new Date()),
     deletedBy,
   } as any).where(and(eq(atendimentos.tenantId, tenantId), eq(atendimentos.id, id)));
   
@@ -1610,7 +1631,7 @@ export async function listMedicamentosUso(pacienteId: number, apenasAtivos = tru
       .from(medicamentosUso)
       .where(and(
         eq(medicamentosUso.pacienteId, pacienteId),
-        eq(medicamentosUso.ativo, true)
+        eq(medicamentosUso.ativo, 1)
       ))
       .orderBy(desc(medicamentosUso.dataInicio));
   }
@@ -2075,7 +2096,7 @@ export async function registrarMedida(tenantId: number, data: {
           pesoAtual: data.peso ? String(data.peso) : existing.pesoAtual,
           altura: data.altura ? String(data.altura) : existing.altura,
           imc: imc ? String(imc) : existing.imc,
-          updatedAt: new Date(),
+          updatedAt: toDateString(new Date()),
         })
         .where(eq(resumoClinico.pacienteId, data.pacienteId));
       } else {
@@ -2250,7 +2271,7 @@ export async function verificarConflitosAgendamento(
   if (incluirBloqueios) {
     const conditionsBloqueios = [
       // Apenas bloqueios ativos (não cancelados)
-      eq(bloqueiosHorario.cancelado, false),
+      eq(bloqueiosHorario.cancelado, 0),
       // Lógica de sobreposição de intervalos
       lt(bloqueiosHorario.dataHoraInicio, dataHoraFim),
       gt(bloqueiosHorario.dataHoraFim, dataHoraInicio),
@@ -2418,7 +2439,7 @@ export async function cancelarAgendamento(id: number, motivo: string, canceladoP
   await db.update(agendamentos)
     .set({
       status: "Cancelado",
-      canceladoEm: new Date(),
+      canceladoEm: toDateString(new Date()),
       canceladoPor,
       motivoCancelamento: motivo,
     })
@@ -2483,8 +2504,8 @@ export async function reagendarAgendamento(
     tipoCompromisso: original.tipoCompromisso,
     pacienteId: original.pacienteId,
     pacienteNome: original.pacienteNome,
-    dataHoraInicio: novaDataInicio,
-    dataHoraFim: novaDataFim,
+    dataHoraInicio: toDateStringRequired(novaDataInicio),
+    dataHoraFim: toDateStringRequired(novaDataFim),
     local: original.local,
     status: "Agendado",
     titulo: original.titulo,
@@ -2531,9 +2552,9 @@ export async function moverAgendamento(
   // Atualizar data/hora do agendamento
   await db.update(agendamentos)
     .set({
-      dataHoraInicio: novaDataInicio,
-      dataHoraFim: novaDataFim,
-      updatedAt: new Date(),
+      dataHoraInicio: toDateStringRequired(novaDataInicio),
+      dataHoraFim: toDateStringRequired(novaDataFim),
+      updatedAt: toDateString(new Date()),
     })
     .where(eq(agendamentos.id, id));
   
@@ -2563,7 +2584,7 @@ export async function confirmarAgendamento(id: number, confirmadoPor: string, te
   await db.update(agendamentos)
     .set({
       status: "Confirmado",
-      confirmadoEm: new Date(),
+      confirmadoEm: toDateString(new Date()),
       confirmadoPor,
     })
     .where(eq(agendamentos.id, id));
@@ -2591,7 +2612,7 @@ export async function realizarAgendamento(id: number, realizadoPor: string, aten
   await db.update(agendamentos)
     .set({
       status: "Realizado",
-      realizadoEm: new Date(),
+      realizadoEm: toDateString(new Date()),
       realizadoPor,
       atendimentoId,
     })
@@ -2620,7 +2641,7 @@ export async function marcarFaltaAgendamento(id: number, marcadoPor: string, ten
   await db.update(agendamentos)
     .set({
       status: "Faltou",
-      marcadoFaltaEm: new Date(),
+      marcadoFaltaEm: toDateString(new Date()),
       marcadoFaltaPor: marcadoPor,
     })
     .where(eq(agendamentos.id, id));
@@ -2757,7 +2778,7 @@ export async function listBloqueios(filters?: {
     conditions.push(sql`${bloqueiosHorario.dataHoraInicio} <= ${filters.dataFim}`);
   }
   if (!filters?.incluirCancelados) {
-    conditions.push(eq(bloqueiosHorario.cancelado, false));
+    conditions.push(eq(bloqueiosHorario.cancelado, 0));
   }
   
   let query = db.select().from(bloqueiosHorario);
@@ -2782,8 +2803,8 @@ export async function cancelarBloqueio(id: number, motivo: string, canceladoPor:
   
   await db.update(bloqueiosHorario)
     .set({
-      cancelado: true,
-      canceladoEm: new Date(),
+      cancelado: 1,
+      canceladoEm: toDateString(new Date()),
       canceladoPor,
       motivoCancelamento: motivo,
     })
@@ -3011,7 +3032,7 @@ export async function criarVinculo(
     dataInicio,
     dataValidade,
     status: "ativo",
-    notificacaoEnviada: false,
+    notificacaoEnviada: 0,
   });
 
   const vinculoId = Number(result[0].insertId);
@@ -3140,15 +3161,14 @@ export async function renovarVinculo(vinculoId: number): Promise<void> {
   // Calcular nova data de validade (1 ano a partir de agora)
   const novaDataValidade = new Date();
   novaDataValidade.setFullYear(novaDataValidade.getFullYear() + 1);
-
   await db
     .update(vinculoSecretariaMedico)
     .set({
-      dataValidade: novaDataValidade,
+      dataValidade: toDateString(novaDataValidade),
       status: "ativo",
-      notificacaoEnviada: false,
+      notificacaoEnviada: 0,
     })
-    .where(eq(vinculoSecretariaMedico.id, vinculoId));
+    .where(eq(vinculoSecretariaMedico.id, vinculoId));;
 
   // Registrar no histórico usando tenantId do vínculo
   await db.insert(historicoVinculo).values({
@@ -3208,7 +3228,7 @@ export async function verificarVinculosExpirando(): Promise<any[]> {
     .where(
       and(
         eq(vinculoSecretariaMedico.status, "ativo"),
-        eq(vinculoSecretariaMedico.notificacaoEnviada, false),
+        eq(vinculoSecretariaMedico.notificacaoEnviada, 0),
         sql`${vinculoSecretariaMedico.dataValidade} <= ${dataLimite}`
       )!
     );
@@ -3219,7 +3239,7 @@ export async function verificarVinculosExpirando(): Promise<any[]> {
       .update(vinculoSecretariaMedico)
       .set({
         status: "pendente_renovacao",
-        notificacaoEnviada: true,
+        notificacaoEnviada: 1,
       })
       .where(eq(vinculoSecretariaMedico.id, vinculo.id));
   }
@@ -3677,7 +3697,7 @@ export async function listExamesFavoritos(userId: string): Promise<ExameFavorito
     .from(examesFavoritos)
     .where(and(
       eq(examesFavoritos.userId, userId),
-      eq(examesFavoritos.ativo, true)
+      eq(examesFavoritos.ativo, 1)
     ))
     .orderBy(examesFavoritos.ordem) as any;
 }
@@ -3699,7 +3719,7 @@ export async function addExameFavorito(tenantId: number, userId: string, nomeExa
   if (existing.length > 0) {
     // Reativar se estava inativo
     await db.update(examesFavoritos)
-      .set({ ativo: true })
+      .set({ ativo: 1 })
       .where(eq(examesFavoritos.id, existing[0].id));
     return existing[0] as ExameFavorito;
   }
@@ -3718,10 +3738,10 @@ export async function addExameFavorito(tenantId: number, userId: string, nomeExa
     nomeExame,
     categoria: categoria || "Geral",
     ordem,
-    ativo: true,
+    ativo: 1,
   });
   
-  return { id: result.insertId, tenantId, userId, nomeExame, categoria: categoria || "Geral", ordem, ativo: true, createdAt: new Date(), updatedAt: new Date() };
+  return { id: result.insertId, tenantId, userId, nomeExame, categoria: categoria || "Geral", ordem, ativo: 1, createdAt: toDateString(new Date()), updatedAt: toDateString(new Date()) };
 }
 
 export async function removeExameFavorito(userId: string, nomeExame: string): Promise<void> {
@@ -3729,7 +3749,7 @@ export async function removeExameFavorito(userId: string, nomeExame: string): Pr
   if (!db) throw new Error("Database not available");
   
   await db.update(examesFavoritos)
-    .set({ ativo: false })
+    .set({ ativo: 0 })
     .where(and(
       eq(examesFavoritos.userId, userId),
       eq(examesFavoritos.nomeExame, nomeExame)
@@ -4292,9 +4312,9 @@ export async function inviteUserToTenant(
     dataInicio: new Date(),
     dataValidade,
     status: "ativo",
-    notificacaoEnviada: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    notificacaoEnviada: 0,
+    createdAt: toDateString(new Date()),
+    updatedAt: toDateString(new Date()),
   });
   
   return result[0].insertId;
@@ -4751,7 +4771,7 @@ export async function atualizarAgendamentoGoogleUid(agendamentoId: number, googl
   await db.update(agendamentos)
     .set({ 
       googleUid,
-      updatedAt: new Date(),
+      updatedAt: toDateString(new Date()),
     })
     .where(and(...conditions));
   
@@ -4818,7 +4838,7 @@ export async function vincularAgendamentoPaciente(
     .set({ 
       pacienteId,
       pacienteNome: nomePaciente,
-      updatedAt: new Date(),
+      updatedAt: toDateString(new Date()),
     })
     .where(and(...conditions));
   
@@ -4953,7 +4973,7 @@ export async function listDelegadosAgenda(medicoUserId: number): Promise<Delegad
     .where(
       and(
         eq(delegadosAgenda.medicoUserId, medicoUserId),
-        eq(delegadosAgenda.ativo, true)
+        eq(delegadosAgenda.ativo, 1)
       )
     )
     .orderBy(desc(delegadosAgenda.createdAt));
@@ -4980,7 +5000,7 @@ export async function createDelegadoAgenda(data: {
       and(
         eq(delegadosAgenda.medicoUserId, data.medicoUserId),
         eq(delegadosAgenda.delegadoEmail, data.delegadoEmail),
-        eq(delegadosAgenda.ativo, true)
+        eq(delegadosAgenda.ativo, 1)
       )
     )
     .limit(1);
@@ -5012,7 +5032,7 @@ export async function createDelegadoAgenda(data: {
     permissao: data.permissao,
     dataFim: data.dataFim,
     criadoPor: data.criadoPor,
-    ativo: true,
+    ativo: 1,
   });
 
   // Retornar o delegado criado
@@ -5091,7 +5111,7 @@ export async function removeDelegadoAgenda(id: number, medicoUserId: number): Pr
   }
 
   await db.update(delegadosAgenda)
-    .set({ ativo: false })
+    .set({ ativo: 0 })
     .where(eq(delegadosAgenda.id, id));
 
   return true;
@@ -5127,7 +5147,7 @@ export async function getDelegadoPermissoes(email: string): Promise<Array<{
     .where(
       and(
         eq(delegadosAgenda.delegadoEmail, email),
-        eq(delegadosAgenda.ativo, true),
+        eq(delegadosAgenda.ativo, 1),
         or(
           isNull(delegadosAgenda.dataFim),
           gte(delegadosAgenda.dataFim, now)
@@ -5222,7 +5242,7 @@ export async function transferirAgendamento(
     .set({
       status: "Transferido" as any,
       transferidoParaId: novoAgendamentoId,
-      transferidoEm: new Date(),
+      transferidoEm: toDateString(new Date()),
       transferidoPor: transferidoPor,
     })
     .where(eq(agendamentos.id, idOriginal));
@@ -5287,33 +5307,33 @@ export async function atualizarStatusAgendamento(
   
   switch (novoStatus) {
     case "Confirmado":
-      camposExtras.confirmadoEm = new Date();
+      camposExtras.confirmadoEm = toDateString(new Date());
       camposExtras.confirmadoPor = atualizadoPor;
       tipoAlteracao = "Confirmação";
       break;
     case "Cancelado":
-      camposExtras.canceladoEm = new Date();
+      camposExtras.canceladoEm = toDateString(new Date());
       camposExtras.canceladoPor = atualizadoPor;
       camposExtras.motivoCancelamento = motivo;
       tipoAlteracao = "Cancelamento";
       break;
     case "Falta":
-      camposExtras.marcadoFaltaEm = new Date();
+      camposExtras.marcadoFaltaEm = toDateString(new Date());
       camposExtras.marcadoFaltaPor = atualizadoPor;
       tipoAlteracao = "Falta";
       break;
     case "Aguardando":
-      camposExtras.pacienteChegouEm = new Date();
+      camposExtras.pacienteChegouEm = toDateString(new Date());
       camposExtras.pacienteChegouRegistradoPor = atualizadoPor;
       tipoAlteracao = "Paciente Chegou";
       break;
     case "Em atendimento":
-      camposExtras.atendimentoIniciadoEm = new Date();
+      camposExtras.atendimentoIniciadoEm = toDateString(new Date());
       camposExtras.atendimentoIniciadoPor = atualizadoPor;
       tipoAlteracao = "Atendimento Iniciado";
       break;
     case "Encerrado":
-      camposExtras.encerradoEm = new Date();
+      camposExtras.encerradoEm = toDateString(new Date());
       camposExtras.encerradoPor = atualizadoPor;
       tipoAlteracao = "Encerramento";
       break;

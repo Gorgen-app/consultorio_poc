@@ -2863,3 +2863,47 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [ ] Executar migração real dos dados
 - [ ] Validar dados migrados
 - [ ] Remover campos originais (cpf, email, telefone) após validação
+
+
+---
+
+## 🔧 PLANO DE CORREÇÃO GRADUAL DE ERROS TYPESCRIPT (19/01/2026)
+
+**Total de erros:** 79 erros em 9 arquivos
+**Estratégia:** Corrigir ~15-20 erros por dia durante 5 dias úteis
+
+### Dia 1 (20/01/2026) - server/db.ts (Parte 1)
+- [ ] Corrigir erros de "string | null" vs "string | undefined" (~4 erros)
+- [ ] Corrigir erros de Date vs string (~2 erros)
+- [ ] Corrigir erros de boolean vs number restantes (~4 erros)
+- [ ] Meta: ~15 erros
+
+### Dia 2 (21/01/2026) - server/db.ts (Parte 2)
+- [ ] Corrigir erros de "No overload matches this call" (~6 erros)
+- [ ] Corrigir erros de propriedades inexistentes (~2 erros)
+- [ ] Corrigir erros de tipos de retorno (~3 erros)
+- [ ] Meta: ~15 erros
+
+### Dia 3 (22/01/2026) - server/db.ts (Parte 3) + server/backup.ts (Parte 1)
+- [ ] Finalizar erros restantes do db.ts (~18 erros)
+- [ ] Iniciar correções do backup.ts (erros de boolean vs number)
+- [ ] Meta: ~15 erros
+
+### Dia 4 (23/01/2026) - server/backup.ts (Parte 2) + routers.ts
+- [ ] Finalizar erros do backup.ts (~10 erros)
+- [ ] Corrigir erros do routers.ts (3 erros - backupEnabled boolean vs number)
+- [ ] Meta: ~15 erros
+
+### Dia 5 (24/01/2026) - Arquivos restantes + Validação
+- [ ] Corrigir BackupSettings.tsx (3 erros)
+- [ ] Corrigir sdk.ts (2 erros)
+- [ ] Corrigir arquivos com 1 erro cada (5 erros)
+- [ ] Executar `npx tsc --noEmit` e validar 0 erros
+- [ ] Meta: ~14 erros + validação final
+
+### Critérios de Sucesso
+- [ ] `npx tsc --noEmit` retorna 0 erros
+- [ ] Todos os 417+ testes passando
+- [ ] Publicação funciona sem problemas
+- [ ] Criptografia de campos PII funcionando
+

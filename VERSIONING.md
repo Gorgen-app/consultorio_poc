@@ -14,7 +14,7 @@
 
 ---
 
-## Versão Atual: 3.9.11
+## Versão Atual: 3.9.12
 
 ---
 
