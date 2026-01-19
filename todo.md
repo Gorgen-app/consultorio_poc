@@ -2974,3 +2974,4 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Criar pitch deck para investidores
 - [x] Criar landing page com login, signup, planos e apresentação
 - [ ] Implementar botão de logout funcional no cabeçalho do dashboard
+- [x] Redirecionamento automático: login → dashboard, logout → home page

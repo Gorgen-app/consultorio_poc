@@ -32,12 +32,16 @@ export function useAuth(options?: UseAuthOptions) {
         error instanceof TRPCClientError &&
         error.data?.code === "UNAUTHORIZED"
       ) {
+        // Mesmo com erro de não autorizado, redirecionar para home
+        window.location.href = "/";
         return;
       }
       throw error;
     } finally {
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
+      // Redirecionar para a home page após logout
+      window.location.href = "/";
     }
   }, [logoutMutation, utils]);
 
