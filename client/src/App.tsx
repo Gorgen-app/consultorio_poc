@@ -25,14 +25,17 @@ import Dashboard from "./pages/DashboardCustom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 // Páginas de autenticação
 import Login from "./pages/Login";
+import LandingPage from "./pages/LandingPage";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
 // Rotas de autenticação (públicas, sem DashboardLayout)
-function AuthRouter() {
+function PublicRouter() {
   return (
     <Switch>
+      <Route path="/" component={LandingPage} />
+      <Route path="/landing" component={LandingPage} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/forgot-password" component={ForgotPassword} />
@@ -45,11 +48,6 @@ function AuthRouter() {
 function ProtectedRouter() {
   return (
     <Switch>
-      <Route path="/">
-        <ProtectedRoute funcionalidade="dashboard">
-          <Dashboard />
-        </ProtectedRoute>
-      </Route>
       <Route path="/dashboard">
         <ProtectedRoute funcionalidade="dashboard">
           <Dashboard />
@@ -138,19 +136,20 @@ function ProtectedRouter() {
   );
 }
 
-// Rotas públicas de autenticação (sem sidebar)
-const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
+// Rotas públicas (sem sidebar)
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/landing"];
 
-function isAuthRoute(path: string): boolean {
-  return AUTH_ROUTES.some(route => path.startsWith(route));
+function isPublicRoute(path: string): boolean {
+  if (path === "/" || path === "/landing") return true;
+  return PUBLIC_ROUTES.some(route => route !== "/" && path.startsWith(route));
 }
 
 function AppContent() {
   const [location] = useLocation();
   
   // Se for rota de autenticação, renderiza sem DashboardLayout
-  if (isAuthRoute(location)) {
-    return <AuthRouter />;
+  if (isPublicRoute(location)) {
+    return <PublicRouter />;
   }
   
   // Rotas protegidas com DashboardLayout

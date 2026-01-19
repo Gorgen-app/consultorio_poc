@@ -39,7 +39,7 @@ export const RATE_LIMITS = {
   // Limite global por IP (proteção contra bots)
   GLOBAL_IP: {
     windowMs: 60 * 1000, // 1 minuto
-    max: 100, // 100 requisições por minuto
+    max: process.env.NODE_ENV === 'development' ? 1000 : 100, // 100 req/min em prod, 1000 em dev
     message: {
       error: "Muitas requisições. Aguarde um momento antes de tentar novamente.",
       retryAfter: 60,

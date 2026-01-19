@@ -2965,3 +2965,11 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 
 ### Domínio
 - [x] Documentar processo de conexão gorgen.com.br
+
+
+---
+
+## 🎯 PITCH DECK E LANDING PAGE - 19/01/2026
+
+- [x] Criar pitch deck para investidores
+- [x] Criar landing page com login, signup, planos e apresentação
