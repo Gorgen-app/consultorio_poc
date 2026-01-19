@@ -2942,3 +2942,26 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 
 ### Prontuário
 - [ ] Planejar próximas implementações do prontuário
+
+
+---
+
+## 🚀 SPRINT ATUAL - 19/01/2026
+
+### Precificação
+- [x] Criar proposta de precificação (pacientes, médicos, secretárias)
+- [x] Definir planos mensais e anuais
+- [x] Definir desconto anual para médicos
+
+### Login Local
+- [ ] Implementar sistema de login com usuário/senha
+- [ ] Criar página de login
+- [ ] Implementar hash de senhas (bcrypt)
+- [ ] Criar sessão segura
+
+### Usuários
+- [x] Criar usuário Karen Trindade (karen.trindade@andregorgen.com.br) - Secretária
+- [x] Vincular Karen ao Dr. André Gorgen
+
+### Domínio
+- [x] Documentar processo de conexão gorgen.com.br

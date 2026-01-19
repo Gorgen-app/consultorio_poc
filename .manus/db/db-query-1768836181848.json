@@ -1,0 +1,46 @@
+{
+  "query": "SELECT * FROM users ORDER BY id LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT * FROM users ORDER BY id LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "openId": "V7yv99nRvEDzjKeTqrSWBW",
+      "name": "Dr. André Gorgen",
+      "email": "contato@andregorgen.com.br",
+      "loginMethod": "google",
+      "role": "admin",
+      "createdAt": "2026-01-07 05:43:22",
+      "updatedAt": "2026-01-19 15:15:07",
+      "lastSignedIn": "2026-01-19 15:15:08",
+      "tenant_id": "1"
+    },
+    {
+      "id": "1530139",
+      "openId": "test-user-tenant-30002",
+      "name": "Dr. Teste Multi-tenant",
+      "email": "teste@clinica-teste.com.br",
+      "loginMethod": "NULL",
+      "role": "admin",
+      "createdAt": "2026-01-10 17:47:21",
+      "updatedAt": "2026-01-10 17:47:21",
+      "lastSignedIn": "2026-01-10 17:47:21",
+      "tenant_id": "30002"
+    },
+    {
+      "id": "4440018",
+      "openId": "H4rCn4hYHKWDGqYzfEesjJ",
+      "name": "Letícia Uzeika",
+      "email": "leticiauzeika@gmail.com",
+      "loginMethod": "google",
+      "role": "user",
+      "createdAt": "2026-01-17 16:45:55",
+      "updatedAt": "2026-01-17 17:14:35",
+      "lastSignedIn": "2026-01-17 17:14:36",
+      "tenant_id": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\tloginMethod\trole\tcreatedAt\tupdatedAt\tlastSignedIn\ttenant_id\n1\tV7yv99nRvEDzjKeTqrSWBW\tDr. André Gorgen\tcontato@andregorgen.com.br\tgoogle\tadmin\t2026-01-07 05:43:22\t2026-01-19 15:15:07\t2026-01-19 15:15:08\t1\n1530139\ttest-user-tenant-30002\tDr. Teste Multi-tenant\tteste@clinica-teste.com.br\tNULL\tadmin\t2026-01-10 17:47:21\t2026-01-10 17:47:21\t2026-01-10 17:47:21\t30002\n4440018\tH4rCn4hYHKWDGqYzfEesjJ\tLetícia Uzeika\tleticiauzeika@gmail.com\tgoogle\tuser\t2026-01-17 16:45:55\t2026-01-17 17:14:35\t2026-01-17 17:14:36\t1\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}
