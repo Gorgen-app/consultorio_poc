@@ -120,17 +120,19 @@ export default function DashboardLayout({
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
-  const { loading, user } = useAuth();
+  const { loading, user, isLoggingOut } = useAuth();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
-  if (loading) {
+  // Mostrar skeleton durante loading OU durante logout para evitar flash da tela Sign in
+  if (loading || isLoggingOut) {
     return <DashboardLayoutSkeleton />
   }
 
-  if (!user) {
+  // Só mostrar tela de Sign in se realmente não estiver autenticado E não estiver fazendo logout
+  if (!user && !isLoggingOut) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">

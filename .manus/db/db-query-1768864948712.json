@@ -1,0 +1,22 @@
+{
+  "query": "SELECT u.id, u.openId, u.name, u.email, up.id as profile_id, up.nome_completo, up.perfil_ativo, up.is_medico, up.crm, up.especialidade \nFROM users u \nLEFT JOIN user_profiles up ON u.id = up.user_id \nWHERE u.name LIKE '%leticia%' OR u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%' \n   OR up.nome_completo LIKE '%leticia%' OR up.nome_completo LIKE '%Leticia%' OR up.nome_completo LIKE '%Letícia%'\n   OR u.name LIKE '%uzeika%' OR u.name LIKE '%Uzeika%'\n   OR up.nome_completo LIKE '%uzeika%' OR up.nome_completo LIKE '%Uzeika%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT u.id, u.openId, u.name, u.email, up.id as profile_id, up.nome_completo, up.perfil_ativo, up.is_medico, up.crm, up.especialidade \nFROM users u \nLEFT JOIN user_profiles up ON u.id = up.user_id \nWHERE u.name LIKE '%leticia%' OR u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%' \n   OR up.nome_completo LIKE '%leticia%' OR up.nome_completo LIKE '%Leticia%' OR up.nome_completo LIKE '%Letícia%'\n   OR u.name LIKE '%uzeika%' OR u.name LIKE '%Uzeika%'\n   OR up.nome_completo LIKE '%uzeika%' OR up.nome_completo LIKE '%Uzeika%';",
+  "rows": [
+    {
+      "id": "4440018",
+      "openId": "H4rCn4hYHKWDGqYzfEesjJ",
+      "name": "Letícia Uzeika",
+      "email": "leticiauzeika@gmail.com",
+      "profile_id": "60001",
+      "nome_completo": "Letícia Uzeika",
+      "perfil_ativo": "paciente",
+      "is_medico": "0",
+      "crm": "NULL",
+      "especialidade": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\tprofile_id\tnome_completo\tperfil_ativo\tis_medico\tcrm\tespecialidade\n4440018\tH4rCn4hYHKWDGqYzfEesjJ\tLetícia Uzeika\tleticiauzeika@gmail.com\t60001\tLetícia Uzeika\tpaciente\t0\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}
