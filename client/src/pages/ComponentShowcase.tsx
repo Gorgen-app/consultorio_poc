@@ -270,7 +270,7 @@ export default function ComponentsShowcase() {
                       <p className="text-sm text-muted-foreground mb-1">
                         Primary
                       </p>
-                      <p className="text-primary text-lg font-medium">
+                      <p className="text-[#0056A4] text-lg font-medium">
                         Primary brand color text
                       </p>
                     </div>

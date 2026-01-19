@@ -518,7 +518,7 @@ export default function Atendimentos() {
                         <TableCell>{atd.tipoAtendimento || "-"}</TableCell>
                         <TableCell>
                           {atd.pacientes?.id ? (
-                            <Link href={`/prontuario/${atd.pacientes.id}`} className="text-primary hover:underline font-medium">
+                            <Link href={`/prontuario/${atd.pacientes.id}`} className="text-[#0056A4] hover:underline font-medium">
                               {atd.pacientes.nome || "-"}
                             </Link>
                           ) : (

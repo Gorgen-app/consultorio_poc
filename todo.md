@@ -2746,3 +2746,22 @@ Relatório completo: `/docs/RELATORIO_ANALISE_FALHAS_GORGEN_v3.5.2_a_v3.6.0.md`
 - Todas as ocorrências de text-blue-500/600/700/800/900 substituídas
 - Estilos inline color: '#6B8CBE' substituídos por '#0056A4'
 - Contraste de leitura significativamente melhorado
+
+
+---
+
+## 🎨 GORGEN 3.9.6 - Correção de Texto Azul Restante (18/01/2026)
+
+### Correção de Caracteres Azuis Não Atualizados
+- [x] Atualizar nomes de pacientes na lista de Atendimentos para #0056A4
+- [x] Verificar outras ocorrências de texto azul não atualizadas
+- [x] Aplicar correções em todos os arquivos
+
+### Arquivos Atualizados
+- Atendimentos.tsx: Link de nome de paciente
+- ComponentShowcase.tsx: Texto de exemplo
+- DashboardCustom.tsx: Cor de texto em badges de categoria
+- button.tsx: Variante link
+- empty.tsx: Hover de links
+- field.tsx: Hover de links
+- item.tsx: Hover de links

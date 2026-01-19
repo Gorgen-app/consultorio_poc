@@ -424,7 +424,7 @@ function MicroWidget({ label, value, unit, icon, categoria, onRemove, onChangeTa
           className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
           style={{ 
             backgroundColor: cat ? `${cat.cor}15` : '#6B8CBE15',
-            color: cat?.cor || '#6B8CBE'
+            color: cat?.cor || '#0056A4'
           }}
         >
           {icon}
