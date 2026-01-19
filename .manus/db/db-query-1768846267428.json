@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO user_profiles (user_id, nome_completo, email, perfil_ativo, is_admin_master, is_medico, is_secretaria, is_auditor, is_paciente, crm, especialidade, created_at, updated_at) \nSELECT id, 'Dr. André Gorgen', 'andre@gorgen.com.br', 'admin_master', 1, 1, 0, 0, 0, 'CRM-RS 12345', 'Clínica Médica', NOW(), NOW()\nFROM users WHERE email = 'andre@gorgen.com.br';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute INSERT INTO user_profiles (user_id, nome_completo, email, perfil_ativo, is_admin_master, is_medico, is_secretaria, is_auditor, is_paciente, crm, especialidade, created_at, updated_at) \nSELECT id, 'Dr. André Gorgen', 'andre@gorgen.com.br', 'admin_master', 1, 1, 0, 0, 0, 'CRM-RS 12345', 'Clínica Médica', NOW(), NOW()\nFROM users WHERE email = 'andre@gorgen.com.br';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 65
+}

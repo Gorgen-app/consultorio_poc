@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, user_id, nome_completo, email, perfil_ativo, is_admin_master, is_medico FROM user_profiles WHERE email = 'andre@gorgen.com.br';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, user_id, nome_completo, email, perfil_ativo, is_admin_master, is_medico FROM user_profiles WHERE email = 'andre@gorgen.com.br';",
+  "rows": [
+    {
+      "id": "120001",
+      "user_id": "5190001",
+      "nome_completo": "Dr. André Gorgen",
+      "email": "andre@gorgen.com.br",
+      "perfil_ativo": "admin_master",
+      "is_admin_master": "1",
+      "is_medico": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuser_id\tnome_completo\temail\tperfil_ativo\tis_admin_master\tis_medico\n120001\t5190001\tDr. André Gorgen\tandre@gorgen.com.br\tadmin_master\t1\t1\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

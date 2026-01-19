@@ -29,7 +29,7 @@ export default function Login() {
         setError("");
       } else if (data.success) {
         toast.success("Login realizado com sucesso!");
-        setLocation("/");
+        setLocation("/dashboard");
       }
     },
     onError: (error) => {
@@ -41,7 +41,7 @@ export default function Login() {
     onSuccess: (data) => {
       if (data.success) {
         toast.success("Login realizado com sucesso!");
-        setLocation("/");
+        setLocation("/dashboard");
       }
     },
     onError: (error) => {

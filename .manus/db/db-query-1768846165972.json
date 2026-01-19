@@ -1,0 +1,42 @@
+{
+  "query": "SELECT id, openId, name, email, loginMethod, role FROM users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, openId, name, email, loginMethod, role FROM users;",
+  "rows": [
+    {
+      "id": "1",
+      "openId": "V7yv99nRvEDzjKeTqrSWBW",
+      "name": "Dr. André Gorgen",
+      "email": "contato@andregorgen.com.br",
+      "loginMethod": "google",
+      "role": "admin"
+    },
+    {
+      "id": "1530139",
+      "openId": "test-user-tenant-30002",
+      "name": "Dr. Teste Multi-tenant",
+      "email": "teste@clinica-teste.com.br",
+      "loginMethod": "NULL",
+      "role": "admin"
+    },
+    {
+      "id": "4440018",
+      "openId": "H4rCn4hYHKWDGqYzfEesjJ",
+      "name": "Letícia Uzeika",
+      "email": "leticiauzeika@gmail.com",
+      "loginMethod": "google",
+      "role": "user"
+    },
+    {
+      "id": "5100004",
+      "openId": "local_b52f943f-e804-4494-9d6c-d20d3a703288",
+      "name": "Karen Trindade",
+      "email": "karen.trindade@andregorgen.com.br",
+      "loginMethod": "local",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\tloginMethod\trole\n1\tV7yv99nRvEDzjKeTqrSWBW\tDr. André Gorgen\tcontato@andregorgen.com.br\tgoogle\tadmin\n1530139\ttest-user-tenant-30002\tDr. Teste Multi-tenant\tteste@clinica-teste.com.br\tNULL\tadmin\n4440018\tH4rCn4hYHKWDGqYzfEesjJ\tLetícia Uzeika\tleticiauzeika@gmail.com\tgoogle\tuser\n5100004\tlocal_b52f943f-e804-4494-9d6c-d20d3a703288\tKaren Trindade\tkaren.trindade@andregorgen.com.br\tlocal\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

@@ -1,0 +1,21 @@
+{
+  "query": "SELECT * FROM user_credentials WHERE username = 'andre.gorgen';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT * FROM user_credentials WHERE username = 'andre.gorgen';",
+  "rows": [
+    {
+      "id": "1",
+      "user_id": "1",
+      "username": "andre.gorgen",
+      "password_hash": "$2b$12$nkRc/47emKSXGqguD7OPf.OP1LecqeL2iLjMP4ynJrwmqbzDsfpPO",
+      "password_changed_at": "2026-01-16 13:40:45",
+      "failed_login_attempts": "0",
+      "locked_until": "NULL",
+      "created_at": "2026-01-16 13:40:45",
+      "updated_at": "2026-01-16 13:40:45"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuser_id\tusername\tpassword_hash\tpassword_changed_at\tfailed_login_attempts\tlocked_until\tcreated_at\tupdated_at\n1\t1\tandre.gorgen\t$2b$12$nkRc/47emKSXGqguD7OPf.OP1LecqeL2iLjMP4ynJrwmqbzDsfpPO\t2026-01-16 13:40:45\t0\tNULL\t2026-01-16 13:40:45\t2026-01-16 13:40:45\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

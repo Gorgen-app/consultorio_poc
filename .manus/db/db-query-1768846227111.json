@@ -1,0 +1,37 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'user_credentials';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'user_credentials';",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "user_id"
+    },
+    {
+      "COLUMN_NAME": "username"
+    },
+    {
+      "COLUMN_NAME": "password_hash"
+    },
+    {
+      "COLUMN_NAME": "password_changed_at"
+    },
+    {
+      "COLUMN_NAME": "failed_login_attempts"
+    },
+    {
+      "COLUMN_NAME": "locked_until"
+    },
+    {
+      "COLUMN_NAME": "created_at"
+    },
+    {
+      "COLUMN_NAME": "updated_at"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\nuser_id\nusername\npassword_hash\npassword_changed_at\nfailed_login_attempts\nlocked_until\ncreated_at\nupdated_at\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

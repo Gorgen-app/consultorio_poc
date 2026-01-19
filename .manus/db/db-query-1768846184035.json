@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, name, email FROM users WHERE email = 'andre@gorgen.com.br';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, name, email FROM users WHERE email = 'andre@gorgen.com.br';",
+  "rows": [
+    {
+      "id": "5190001",
+      "name": "Dr. André Gorgen",
+      "email": "andre@gorgen.com.br"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\n5190001\tDr. André Gorgen\tandre@gorgen.com.br\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}
