@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, FileText, Copy } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, FileText, Copy, Download, FileSpreadsheet, FileDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link, useSearch, useLocation } from "wouter";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -105,6 +106,52 @@ export default function Atendimentos() {
   });
 
   const [, navigate] = useLocation();
+
+  // Estado e mutation para exportação
+  const [isExporting, setIsExporting] = useState(false);
+  
+  const exportMutation = trpc.atendimentos.export.useMutation({
+    onSuccess: (data: { filename: string; data: string; mimeType: string }) => {
+      // Converter base64 para blob e fazer download
+      const byteCharacters = atob(data.data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: data.mimeType });
+      
+      // Criar link de download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success(`Arquivo ${data.filename} exportado com sucesso!`);
+      setIsExporting(false);
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao exportar: ${error.message}`);
+      setIsExporting(false);
+    },
+  });
+
+  const handleExportar = (format: 'xlsx' | 'csv' | 'pdf') => {
+    setIsExporting(true);
+    exportMutation.mutate({
+      format,
+      tipo: filtroTipo || undefined,
+      convenio: filtroConvenio || undefined,
+      local: filtroLocal || undefined,
+      dataInicio: filtroDataDe ? new Date(filtroDataDe) : undefined,
+      dataFim: filtroDataAte ? new Date(filtroDataAte) : undefined,
+      pagamentoEfetivado: filtroPago === 'sim' ? true : filtroPago === 'nao' ? false : undefined,
+    });
+  };
 
   const handleEditar = (atendimento: any) => {
     setAtendimentoSelecionado(atendimento);
@@ -309,12 +356,47 @@ export default function Atendimentos() {
             <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded">Ctrl+D para duplicar selecionado</span>
           </p>
         </div>
-        <Link href="/atendimentos/novo">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Atendimento
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Dropdown de Exportação */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={isExporting}>
+                {isExporting ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Exportando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExportar('xlsx')}>
+                <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                Excel (.xlsx)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportar('csv')}>
+                <FileDown className="h-4 w-4 mr-2 text-blue-600" />
+                CSV (.csv)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportar('pdf')}>
+                <FileText className="h-4 w-4 mr-2 text-red-600" />
+                PDF (.pdf)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Link href="/atendimentos/novo">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Atendimento
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Card de Busca e Filtros */}

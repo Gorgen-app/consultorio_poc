@@ -914,6 +914,49 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         return await db.countAtendimentos(ctx.tenant.tenantId, input);
       }),
+
+    // Exportar atendimentos para Excel, CSV ou PDF
+    export: tenantProcedure
+      .input(
+        z.object({
+          format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx'),
+          pacienteId: z.number().optional(),
+          dataInicio: z.date().optional(),
+          dataFim: z.date().optional(),
+          tipo: z.string().optional(),
+          convenio: z.string().optional(),
+          local: z.string().optional(),
+          pagamentoEfetivado: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const { format, ...filters } = input;
+        const result = await exportModule.exportAtendimentos(ctx.tenant.tenantId, format, filters);
+        const filename = exportModule.generateFilename('atendimentos_gorgen', result.extension);
+        
+        // Registrar auditoria
+        await db.createAuditLog(
+          "EXPORT",
+          "atendimento",
+          0,
+          filename,
+          null,
+          { formato: format, filtros: filters, totalRegistros: 'exportado' },
+          {
+            userId: ctx.user?.id,
+            userName: ctx.user?.name || undefined,
+            userEmail: ctx.user?.email || undefined,
+            tenantId: ctx.tenant.tenantId,
+          }
+        );
+        
+        // Retornar como base64 para download no frontend
+        return {
+          filename,
+          data: result.buffer.toString('base64'),
+          mimeType: result.mimeType,
+        };
+      }),
   }),
 
   dashboard: router({

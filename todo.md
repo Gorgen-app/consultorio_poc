@@ -2981,3 +2981,4 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Implementar troca de senha obrigatória no primeiro login
 - [x] Implementar exportação para Excel dos dados de pacientes
 - [x] Implementar exportação de pacientes em CSV e PDF
+- [x] Implementar exportação multi-formato na página de atendimentos
