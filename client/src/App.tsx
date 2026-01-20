@@ -29,6 +29,7 @@ import LandingPage from "./pages/LandingPage";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ChangePassword from "./pages/ChangePassword";
 
 // Rotas de autenticação (públicas, sem DashboardLayout)
 function PublicRouter() {
@@ -40,6 +41,7 @@ function PublicRouter() {
       <Route path="/register" component={Register} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password/:token" component={ResetPassword} />
+      <Route path="/change-password" component={ChangePassword} />
     </Switch>
   );
 }
@@ -137,7 +139,7 @@ function ProtectedRouter() {
 }
 
 // Rotas públicas (sem sidebar)
-const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/landing"];
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/landing", "/change-password"];
 
 function isPublicRoute(path: string): boolean {
   if (path === "/" || path === "/landing") return true;

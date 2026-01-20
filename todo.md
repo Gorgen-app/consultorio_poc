@@ -2978,3 +2978,4 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Eliminar flash da tela de login durante logout
 - [x] Criar login para Dra. Letícia Uzeika
 - [x] Corrigir flash da tela Sign in durante logout (v2)
+- [x] Implementar troca de senha obrigatória no primeiro login

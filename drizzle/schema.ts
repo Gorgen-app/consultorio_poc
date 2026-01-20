@@ -1379,6 +1379,7 @@ export const userCredentials = mysqlTable("user_credentials", {
 	passwordChangedAt: timestamp("password_changed_at", { mode: 'string' }).default('CURRENT_TIMESTAMP'),
 	failedLoginAttempts: int("failed_login_attempts").default(0),
 	lockedUntil: timestamp("locked_until", { mode: 'string' }),
+	mustChangePassword: tinyint("must_change_password").default(1).notNull(),
 	createdAt: timestamp("created_at", { mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().onUpdateNow().notNull(),
 },

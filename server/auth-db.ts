@@ -93,7 +93,7 @@ export async function usernameExists(username: string): Promise<boolean> {
 export async function validatePassword(
   username: string,
   password: string
-): Promise<{ valid: boolean; userId?: number; locked?: boolean; attemptsRemaining?: number }> {
+): Promise<{ valid: boolean; userId?: number; locked?: boolean; attemptsRemaining?: number; mustChangePassword?: boolean }> {
   const db = await getDb();
   if (!db) return { valid: false };
   
@@ -143,7 +143,15 @@ export async function validatePassword(
       .where(eq(userCredentials.id, credential.id));
   }
   
-  return { valid: true, userId: credential.userId };
+  return { valid: true, userId: credential.userId, mustChangePassword: credential.mustChangePassword ?? false };
+}
+
+/**
+ * Verifica se o usuário precisa trocar a senha
+ */
+export async function checkMustChangePassword(userId: number): Promise<boolean> {
+  const credential = await findCredentialsByUserId(userId);
+  return credential?.mustChangePassword ?? false;
 }
 
 /**
@@ -162,6 +170,7 @@ export async function updatePassword(userId: number, newPassword: string): Promi
       passwordChangedAt: new Date(),
       failedLoginAttempts: 0,
       lockedUntil: null,
+      mustChangePassword: false, // Limpar flag de senha provisória
     })
     .where(eq(userCredentials.userId, userId));
   

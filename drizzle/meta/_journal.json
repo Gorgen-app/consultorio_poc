@@ -169,6 +169,13 @@
       "when": 1768826377596,
       "tag": "0023_lowly_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1768867616894,
+      "tag": "0024_breezy_mantis",
+      "breakpoints": true
     }
   ]
 }

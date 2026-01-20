@@ -28,8 +28,14 @@ export default function Login() {
         setUserId2FA(data.userId);
         setError("");
       } else if (data.success) {
-        toast.success("Login realizado com sucesso!");
-        setLocation("/dashboard");
+        // Verificar se precisa trocar a senha
+        if (data.mustChangePassword) {
+          toast.info("Por segurança, você precisa alterar sua senha provisória.");
+          setLocation("/change-password");
+        } else {
+          toast.success("Login realizado com sucesso!");
+          setLocation("/dashboard");
+        }
       }
     },
     onError: (error) => {

@@ -13,6 +13,7 @@ export const userCredentials = mysqlTable("user_credentials", {
   passwordChangedAt: timestamp("password_changed_at").defaultNow(),
   failedLoginAttempts: int("failed_login_attempts").default(0),
   lockedUntil: timestamp("locked_until"),
+  mustChangePassword: boolean("must_change_password").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({

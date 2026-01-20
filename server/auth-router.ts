@@ -249,6 +249,7 @@ export const authRouter = router({
       return {
         success: true,
         requires2FA: false,
+        mustChangePassword: validation.mustChangePassword ?? false,
         user: {
           id: user.id,
           name: user.name,

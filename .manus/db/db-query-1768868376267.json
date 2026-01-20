@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE user_profiles up\nJOIN user_credentials uc ON up.user_id = uc.user_id\nSET up.perfil_ativo = 'medico', up.is_medico = 1\nWHERE uc.username = 'leticia.uzeika';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute UPDATE user_profiles up\nJOIN user_credentials uc ON up.user_id = uc.user_id\nSET up.perfil_ativo = 'medico', up.is_medico = 1\nWHERE uc.username = 'leticia.uzeika';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 72
+}
