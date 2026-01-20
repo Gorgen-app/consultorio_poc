@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList, Loader2, AlertTriangle, Users, Download, FileSpreadsheet } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList, Loader2, AlertTriangle, Users, Download, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link, useLocation, useSearch } from "wouter";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -82,8 +83,8 @@ export default function Pacientes() {
 
   const utils = trpc.useUtils();
 
-  // Mutation para exportar Excel
-  const exportExcelMutation = trpc.pacientes.exportExcel.useMutation({
+  // Mutation para exportar (Excel, CSV ou PDF)
+  const exportMutation = trpc.pacientes.export.useMutation({
     onSuccess: (data) => {
       // Converter base64 para blob e fazer download
       const byteCharacters = atob(data.data);
@@ -113,9 +114,10 @@ export default function Pacientes() {
     },
   });
 
-  const handleExportExcel = () => {
+  const handleExport = (format: 'xlsx' | 'csv' | 'pdf') => {
     setIsExporting(true);
-    exportExcelMutation.mutate({
+    exportMutation.mutate({
+      format,
       busca: debouncedSearchTerm || undefined,
       convenio: filtroOperadora && filtroOperadora !== "todos" ? filtroOperadora : undefined,
       diagnostico: filtroDiagnostico || undefined,
@@ -534,20 +536,38 @@ export default function Pacientes() {
               </div>
               {totalPacientes > 0 && (
                 <div className="flex items-center gap-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportExcel}
-                    disabled={isExporting}
-                    className="gap-2"
-                  >
-                    {isExporting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <FileSpreadsheet className="h-4 w-4" />
-                    )}
-                    {isExporting ? "Exportando..." : "Exportar Excel"}
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isExporting}
+                        className="gap-2"
+                      >
+                        {isExporting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
+                        {isExporting ? "Exportando..." : "Exportar"}
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleExport('xlsx')} className="gap-2 cursor-pointer">
+                        <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                        Excel (.xlsx)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleExport('csv')} className="gap-2 cursor-pointer">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        CSV (.csv)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleExport('pdf')} className="gap-2 cursor-pointer">
+                        <FileText className="h-4 w-4 text-red-600" />
+                        PDF (.pdf)
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Itens por página:</span>
                   <Select value={String(itensPorPagina)} onValueChange={(v) => { setItensPorPagina(Number(v)); setPaginaAtual(1); }}>

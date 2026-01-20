@@ -10,7 +10,7 @@ import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
 import * as backup from "./backup";
 import { authRouter } from "./auth-router";
-import * as exportExcel from "./export-excel";
+import * as exportModule from "./export";
 
 // Schema de validação para Paciente
 const pacienteSchema = z.object({
@@ -667,21 +667,23 @@ export const appRouter = router({
         return result;
       }),
 
-    // Exportar pacientes para Excel
-    exportExcel: tenantProcedure
+    // Exportar pacientes para Excel, CSV ou PDF
+    export: tenantProcedure
       .input(
         z.object({
+          format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx'),
           busca: z.string().optional(),
           convenio: z.string().optional(),
           diagnostico: z.string().optional(),
           status: z.string().optional(),
           cidade: z.string().optional(),
           uf: z.string().optional(),
-        }).optional()
+        })
       )
       .mutation(async ({ input, ctx }) => {
-        const buffer = await exportExcel.exportPacientesToExcel(ctx.tenant.tenantId, input);
-        const filename = exportExcel.generateExcelFilename('pacientes_gorgen');
+        const { format, ...filters } = input;
+        const result = await exportModule.exportPacientes(ctx.tenant.tenantId, format, filters);
+        const filename = exportModule.generateFilename('pacientes_gorgen', result.extension);
         
         // Registrar auditoria
         await db.createAuditLog(
@@ -690,7 +692,7 @@ export const appRouter = router({
           0,
           filename,
           null,
-          { filtros: input, totalRegistros: 'exportado' },
+          { formato: format, filtros: filters, totalRegistros: 'exportado' },
           {
             userId: ctx.user?.id,
             userName: ctx.user?.name || undefined,
@@ -702,8 +704,8 @@ export const appRouter = router({
         // Retornar como base64 para download no frontend
         return {
           filename,
-          data: buffer.toString('base64'),
-          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          data: result.buffer.toString('base64'),
+          mimeType: result.mimeType,
         };
       }),
 

@@ -2980,3 +2980,4 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Corrigir flash da tela Sign in durante logout (v2)
 - [x] Implementar troca de senha obrigatória no primeiro login
 - [x] Implementar exportação para Excel dos dados de pacientes
+- [x] Implementar exportação de pacientes em CSV e PDF
