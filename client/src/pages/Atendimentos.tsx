@@ -134,7 +134,7 @@ export default function Atendimentos() {
       toast.success(`Arquivo ${data.filename} exportado com sucesso!`);
       setIsExporting(false);
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast.error(`Erro ao exportar: ${error.message}`);
       setIsExporting(false);
     },
