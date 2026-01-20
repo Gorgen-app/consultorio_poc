@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList, Loader2, AlertTriangle, Users } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList, Loader2, AlertTriangle, Users, Download, FileSpreadsheet } from "lucide-react";
 import { Link, useLocation, useSearch } from "wouter";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -77,7 +77,53 @@ export default function Pacientes() {
   // Estado para métricas carregadas via lazy loading
   const [metricasCarregadas, setMetricasCarregadas] = useState<Record<number, any>>({});
 
+  // Estado para exportação Excel
+  const [isExporting, setIsExporting] = useState(false);
+
   const utils = trpc.useUtils();
+
+  // Mutation para exportar Excel
+  const exportExcelMutation = trpc.pacientes.exportExcel.useMutation({
+    onSuccess: (data) => {
+      // Converter base64 para blob e fazer download
+      const byteCharacters = atob(data.data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: data.mimeType });
+      
+      // Criar link de download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = data.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Exportação concluída: ${data.filename}`);
+      setIsExporting(false);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao exportar: ${error.message}`);
+      setIsExporting(false);
+    },
+  });
+
+  const handleExportExcel = () => {
+    setIsExporting(true);
+    exportExcelMutation.mutate({
+      busca: debouncedSearchTerm || undefined,
+      convenio: filtroOperadora && filtroOperadora !== "todos" ? filtroOperadora : undefined,
+      diagnostico: filtroDiagnostico || undefined,
+      status: filtroStatus && filtroStatus !== "todos" ? filtroStatus : undefined,
+      cidade: filtroCidade || undefined,
+      uf: filtroUF || undefined,
+    });
+  };
 
   const deleteMutation = trpc.pacientes.delete.useMutation({
     onSuccess: () => {
@@ -487,7 +533,22 @@ export default function Pacientes() {
                 </CardDescription>
               </div>
               {totalPacientes > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportExcel}
+                    disabled={isExporting}
+                    className="gap-2"
+                  >
+                    {isExporting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileSpreadsheet className="h-4 w-4" />
+                    )}
+                    {isExporting ? "Exportando..." : "Exportar Excel"}
+                  </Button>
+                  <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Itens por página:</span>
                   <Select value={String(itensPorPagina)} onValueChange={(v) => { setItensPorPagina(Number(v)); setPaginaAtual(1); }}>
                     <SelectTrigger className="w-20">
@@ -500,6 +561,7 @@ export default function Pacientes() {
                       <SelectItem value="100">100</SelectItem>
                     </SelectContent>
                   </Select>
+                  </div>
                 </div>
               )}
             </div>

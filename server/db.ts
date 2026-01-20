@@ -1301,7 +1301,7 @@ export interface AuditContext {
  * Registra uma ação no log de auditoria
  */
 export async function createAuditLog(
-  action: "CREATE" | "UPDATE" | "DELETE" | "RESTORE",
+  action: "CREATE" | "UPDATE" | "DELETE" | "RESTORE" | "EXPORT",
   entityType: "paciente" | "atendimento" | "user",
   entityId: number,
   entityIdentifier: string | null,

@@ -10,6 +10,7 @@ import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
 import * as backup from "./backup";
 import { authRouter } from "./auth-router";
+import * as exportExcel from "./export-excel";
 
 // Schema de validação para Paciente
 const pacienteSchema = z.object({
@@ -664,6 +665,46 @@ export const appRouter = router({
         }
         
         return result;
+      }),
+
+    // Exportar pacientes para Excel
+    exportExcel: tenantProcedure
+      .input(
+        z.object({
+          busca: z.string().optional(),
+          convenio: z.string().optional(),
+          diagnostico: z.string().optional(),
+          status: z.string().optional(),
+          cidade: z.string().optional(),
+          uf: z.string().optional(),
+        }).optional()
+      )
+      .mutation(async ({ input, ctx }) => {
+        const buffer = await exportExcel.exportPacientesToExcel(ctx.tenant.tenantId, input);
+        const filename = exportExcel.generateExcelFilename('pacientes_gorgen');
+        
+        // Registrar auditoria
+        await db.createAuditLog(
+          "EXPORT",
+          "paciente",
+          0,
+          filename,
+          null,
+          { filtros: input, totalRegistros: 'exportado' },
+          {
+            userId: ctx.user?.id,
+            userName: ctx.user?.name || undefined,
+            userEmail: ctx.user?.email || undefined,
+            tenantId: ctx.tenant.tenantId,
+          }
+        );
+        
+        // Retornar como base64 para download no frontend
+        return {
+          filename,
+          data: buffer.toString('base64'),
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        };
       }),
 
     // Merge de pacientes duplicados (apenas admin_master)
