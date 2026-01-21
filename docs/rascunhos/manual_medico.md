@@ -12,10 +12,11 @@ O correto manuseio do sistema é imperativo para garantir a integridade dos dado
 
 ## **2. Acesso e Segurança da Conta**
 
-O acesso ao sistema é nominal, individual e intransferível, realizado mediante credenciais (usuário/senha) e, compulsoriamente, um segundo fator de autenticação (MFA).
+O acesso ao sistema é nominal, individual e intransferível, vinculado ao CPF do usuário e realizado mediante credenciais (usuário/senha) e, compulsoriamente, um segundo fator de autenticação (MFA).
 
 -   **Responsabilidade Legal:** O usuário médico é legalmente responsável por todas as ações executadas com suas credenciais. O compartilhamento de acesso é uma violação grave dos termos de uso e das normas de sigilo profissional.
 -   **Protocolo de Segurança:** É mandatório o bloqueio da sessão (lock screen) ao se ausentar do terminal de acesso. A política de senhas do sistema exige complexidade e trocas periódicas.
+-   **Senha de acesso:** No ato do cadastramento na plataforma, você receberá uma senha provisória. No primeiro acesso, será necessário trocar a senha provisório por uma escolhida por você. A senha de acesso ao sistema é pessoal e intransferível. Sob nenhuma hipotese será solicitado que você informe sua senha de acesso. Não passe suas credenciais de acesso para terceiros. Isso é uma violação grave dos termos de uso da plataforma, passível de exclusão da plataforma.
 
 ## **3. Dashboard Analítico: Visão Estratégica**
 
