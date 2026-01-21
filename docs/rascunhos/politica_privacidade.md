@@ -18,7 +18,7 @@ Para os fins desta política, os termos abaixo têm os seguintes significados:
 
 - **Dado Pessoal:** Qualquer informação relacionada a uma pessoa natural identificada ou identificável, como nome, CPF, data de nascimento, e-mail, etc.
 - **Dado Pessoal Sensível:** Dados sobre origem racial ou étnica, convicção religiosa, opinião política, filiação a sindicato, dado referente à saúde ou à vida sexual, dado genético ou biométrico. **No contexto do Gorgen, todos os dados clínicos e de saúde são tratados como dados sensíveis.**
-- **Titular:** Você, a pessoa natural a quem os dados pessoais se referem.
+- **Titular:** O usuário titular do CPF cadastrado na conta. É a pessoa natural a quem os dados pessoais se referem.
 - **Tratamento:** Qualquer operação realizada com dados pessoais, como coleta, armazenamento, utilização, compartilhamento e eliminação.
 - **Controlador:** A quem competem as decisões sobre o tratamento de dados. Para o Sistema Gorgen, o Controlador é o Dr. André Gorgen.
 - **Operador:** Quem realiza o tratamento de dados em nome do Controlador. A equipe autorizada do consultório (secretárias, assistentes) atua como operadora.
@@ -38,13 +38,13 @@ Coletamos os seus dados para finalidades específicas, legítimas e informadas, 
 
 ## **4. Compartilhamento de Dados**
 
-O sigilo médico é um pilar fundamental. Seus dados pessoais, especialmente os de saúde, **não são compartilhados, vendidos ou alugados a terceiros para fins de marketing ou qualquer outra finalidade que não esteja diretamente ligada à prestação dos seus cuidados de saúde**.
+O sigilo médico é um pilar fundamental. Seus dados pessoais, especialmente os de saúde, **não são compartilhados, vendidos ou alugados a terceiros para fins de marketing ou qualquer outra finalidade que não esteja diretamente ligada à prestação dos seus cuidados de saúde**. Apenas você e seu médico têm acesso ao conteúdo da sua conta. Funcionários administraticos e de TI, por exemplo, têm acesso apenas aos dados necessários para execução de suas atribuições e nunca acessam dados médicos.
 
 O compartilhamento poderá ocorrer, de forma estritamente necessária, nas seguintes hipóteses:
 
 - **Com Operadoras de Planos de Saúde:** Para faturamento e autorização de procedimentos, conforme as regras contratuais e regulatórias.
 - **Com Laboratórios e Outros Profissionais de Saúde:** Quando necessário para a continuidade do seu tratamento (ex: solicitação de exames ou parecer de outro especialista), sempre com o seu conhecimento e, quando aplicável, consentimento.
-- **Para Cumprimento de Obrigação Legal:** Em casos de requisição por autoridades judiciais ou administrativas competentes, nos limites da lei.
+- **Para Cumprimento de Obrigação Legal:** Em casos de requisição por autoridade judicial, por escrito, nos limites da lei.
 - **Com Prestadores de Serviços de Tecnologia:** Empresas que fornecem a infraestrutura para o Sistema Gorgen (servidores de nuvem, backup) atuam como Operadores e estão contratualmente obrigadas a seguir os mesmos padrões de segurança e confidencialidade que nós.
 
 ## **5. Segurança dos Seus Dados**
@@ -68,17 +68,21 @@ A LGPD garante a você uma série de direitos sobre os seus dados. Você pode so
 2.  **Acesso** aos seus dados.
 3.  **Correção** de dados incompletos, inexatos ou desatualizados.
 4.  **Anonimização, bloqueio ou eliminação** de dados desnecessários ou tratados em desconformidade com a lei.
-5.  **Portabilidade** dos seus dados a outro fornecedor de serviço, mediante requisição expressa.
+5.  **Portabilidade** dos seus dados a outro fornecedor de serviço, mediante requisição expressa por escrito.
 6.  **Informação** sobre as entidades com as quais compartilhamos seus dados.
-7.  **Revogação do consentimento**, quando o tratamento for baseado nele.
+7.  **Revogação do consentimento de acesso**, a qualquer tempo, o titular dos dados poderá revogar os privilégios de acesso aos dados, sem necessidade de justificativa ou qualquer formalidade. Basta acessar a aba "consentimentos" nas configuracoes do Gorgen e você encontrará a lista de quem é autorizado a operar seu prontuário. Ali você poderá autorizar acessos a outros médicos e revogar acessos também.
 
-Para exercer seus direitos, entre em contato conosco através dos canais informados no final desta política. Note que alguns direitos podem ser limitados por disposições legais ou regulatórias, como a impossibilidade de eliminação do prontuário médico antes do prazo legal.
+Caso tenha dúvidas, entre em contato conosco através dos canais informados no final desta política. Note que alguns direitos podem ser limitados por disposições legais ou regulatórias, como a impossibilidade de eliminação do prontuário médico antes do prazo legal.
 
 ## **8. Alterações a esta Política de Privacidade**
 
 Esta Política de Privacidade pode ser atualizada periodicamente para refletir melhorias em nossos serviços ou alterações na legislação. Recomendamos que você a revise regularmente. A data da última atualização estará sempre indicada no topo do documento.
 
-## **9. Contato e Encarregado de Dados (DPO)**
+## **9. Encerramento da conta:**
+
+Voce poderá a qualquer tempo encerrar sua conta no Gorgen. Para isso basta acessar a sessao de configuracoes da plataforma. IMPORTANTE: por motivo médico-legal, seus dados não serão completamente perdidos após a exclusao da conta. A plataforma, enquanto custodiante do seu prontuário médico, tem a obrigação de manter os dados pelo período de 20 anos após seu último atendimento médico. Mas fique tranquilo: se quiser escluir a conta, nós vamos tirar seus dados de todas as sessões ativas da plataforma e armazenaremos ele em nossos servidores sem que ninguém possa operá-los e usuários externos a nossa equipe não poderao mais buscar seus dados no Gorgen. Após 20 anos do último acesso, iremos destruir deus arquivos de forma definitiva. Mas não se preocupe, um pouco antes disso, vamos avisá-lo!
+
+## **10. Contato e Encarregado de Dados (DPO)**
 
 Para exercer seus direitos, ou para esclarecer qualquer dúvida sobre esta Política de Privacidade e o tratamento dos seus dados, entre em contato com o nosso Encarregado pela Proteção de Dados (DPO):
 
