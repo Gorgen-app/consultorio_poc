@@ -1,71 +1,66 @@
-_Rascunho Preliminar - Sujeito a Alterações_
-
 # **Termos e Condições de Uso – Sistema Gorgen**
 
-**Versão 1.0 | Última atualização: 20 de Janeiro de 2026**
+**Versão 2.0 | Última atualização: 20 de Janeiro de 2026**
 
 ---
 
 Bem-vindo ao **Sistema Gorgen**. Estes Termos e Condições de Uso ("Termos") regem o acesso e a utilização do software de gestão médica Gorgen ("Sistema"), disponibilizado e mantido pelo consultório do Dr. André Gorgen ("Prestador").
 
-**AO ACESSAR E UTILIZAR O SISTEMA, VOCÊ ("USUÁRIO") RECONHECE QUE LEU, COMPREENDEU E CONCORDA EM FICAR VINCULADO A ESTES TERMOS E À NOSSA POLÍTICA DE PRIVACIDADE, QUE É PARTE INTEGRANTE DESTE DOCUMENTO.**
+**AO ACESSAR E UTILIZAR O SISTEMA, VOCÊ ("USUÁRIO") RECONHECE QUE LEU, COMPREENDEU E CONCORDA EM FICAR VINCULADO A ESTES TERMOS, À NOSSA POLÍTICA DE PRIVACIDADE E A TODOS OS DEMAIS DOCUMENTOS LEGAIS AQUI REFERENCIADOS.**
 
 ## **1. Definições**
 
 - **Sistema:** Refere-se à plataforma de software Gorgen, incluindo todos os seus módulos, funcionalidades, interfaces e documentação associada.
-- **Usuário:** Refere-se a qualquer profissional (médico, secretária, assistente, administrador financeiro) autorizado pelo Prestador a acessar e utilizar o Sistema.
+- **Usuário:** Refere-se a qualquer indivíduo (paciente, médico, secretária, assistente, administrador financeiro) autorizado a acessar e utilizar o Sistema, cada um com seu perfil específico.
 - **Dados do Paciente:** Inclui todos os dados pessoais e dados pessoais sensíveis (informações de saúde) dos pacientes inseridos no Sistema.
 
-## **2. Objeto do Serviço**
+## **2. Perfis de Usuário, Privilégios e Responsabilidades**
 
-O Sistema Gorgen é uma plataforma integrada para gestão de consultório médico, projetada para otimizar o fluxo de trabalho, incluindo, mas não se limitando a:
+O acesso ao Sistema é estritamente segmentado por perfis, cada um com diferentes níveis de privilégios, atribuições e responsabilidades. Ao aceitar estes Termos, você reconhece e concorda com as limitações e deveres do seu perfil específico.
 
--   Gestão de cadastro de pacientes;
--   Agendamento de consultas e procedimentos;
--   Registro em Prontuário Médico Eletrônico (PME);
--   Gestão de faturamento e financeira;
--   Geração de relatórios e análises gerenciais.
+| Perfil | Privilégios e Atribuições Principais | Responsabilidades Cruciais |
+| :--- | :--- | :--- |
+| **Paciente** | Acesso ao seu próprio portal para visualizar agendamentos, documentos, e dados de saúde de forma simplificada. Pode designar um "Responsável" (Next of Kin). | Manter seus dados de acesso em sigilo. Comunicar ao consultório qualquer inconsistência em seus dados. |
+| **Médico** | Acesso completo aos prontuários dos pacientes sob seus cuidados, registro de evolução, prescrição, solicitação de exames e análise de dados clínicos. | Responsabilidade legal e ética sobre todos os registros. Sigilo profissional absoluto. Uso das credenciais é pessoal e intransferível. |
+| **Secretária** | Gestão de agendamentos, cadastro e atualização de dados demográficos de pacientes, faturamento e comunicação administrativa. **Não possui acesso a dados clínicos sensíveis.** | Confidencialidade dos dados administrativos. Renovação periódica da autorização de acesso junto ao médico responsável. |
+| **Administrador** | Acesso irrestrito a todas as funcionalidades, incluindo configurações do sistema, gestão de usuários e auditoria completa. **Único perfil com poder para autorizar exclusões lógicas de dados.** | Supervisão geral da plataforma, garantia da conformidade e gestão dos perfis de acesso. |
 
-## **3. Acesso e Uso da Conta**
+## **3. Violações e Sanções Administrativas**
 
-1.  **Autorização:** O acesso ao Sistema é restrito a Usuários previamente autorizados pelo Administrador (Dr. André Gorgen).
-2.  **Confidencialidade da Conta:** A sua conta de acesso é pessoal, individual e intransferível. Você é o único responsável por manter a confidencialidade de sua senha e por todas as atividades que ocorram sob sua conta.
-3.  **Responsabilidade do Usuário:** Você concorda em notificar imediatamente o Prestador sobre qualquer uso não autorizado de sua conta ou qualquer outra violação de segurança. O Prestador não será responsável por quaisquer perdas ou danos decorrentes do seu descumprimento desta obrigação.
-4.  **Uso Apropriado:** Você concorda em utilizar o Sistema exclusivamente para as finalidades a que se destina e em total conformidade com a legislação aplicável, as normas do Conselho Federal de Medicina (CFM) e os mais elevados padrões de ética profissional.
+O cumprimento destes Termos é mandatório. A violação de qualquer cláusula, especialmente as relativas à segurança e confidencialidade, sujeitará o Usuário a um processo administrativo interno, que pode resultar em uma hierarquia de sanções, aplicadas a critério exclusivo do Prestador.
+
+1.  **Advertência:** Notificação formal por escrito sobre a infração cometida.
+2.  **Restrição de Uso:** Limitação temporária do acesso a determinadas funcionalidades do Sistema.
+3.  **Suspensão de Uso:** Bloqueio temporário e completo da conta do Usuário.
+4.  **Exclusão da Conta:** Encerramento definitivo do acesso do Usuário à plataforma, sem prejuízo das medidas legais cabíveis.
+
+**O Usuário declara-se ciente de que o Prestador se reserva o direito de aplicar qualquer uma das sanções acima, ou mesmo excluir sumariamente um Usuário da plataforma, a qualquer tempo e sem necessidade de justificativa prévia, caso sua conduta seja considerada um risco à segurança, integridade ou reputação do Sistema, dos dados ou de seus pacientes.**
 
 ## **4. Regras de Utilização e Princípios Fundamentais**
 
-O uso do Sistema Gorgen está sujeito a princípios invioláveis que garantem a integridade, segurança e conformidade do ambiente.
-
--   **Princípio da Imutabilidade e Preservação Histórica:** Todo dado inserido no Sistema é considerado perpétuo. **Não é tecnicamente possível apagar ou descartar informações clínicas.** Qualquer correção necessária será registrada como uma "retificação", preservando-se o registro original. Esta é uma característica fundamental do Sistema para garantir a rastreabilidade e a integridade do histórico do paciente.
--   **Princípio do Sigilo e Confidencialidade Absoluta:** Todos os dados inseridos no Sistema, em especial os Dados do Paciente, são tratados com o mais alto grau de confidencialidade. O acesso não autorizado ou a divulgação indevida de informações constitui uma violação grave destes Termos e da legislação vigente.
--   **Princípio da Rastreabilidade Completa:** Todas as ações significativas realizadas no Sistema (criação, leitura, atualização e retificação de dados) são registradas em logs de auditoria detalhados, vinculando a ação ao Usuário, data e hora.
+-   **Princípio da Imutabilidade e Retificação:** Todo dado clínico inserido no Sistema é perpétuo. **Não se apaga informação.** Correções são feitas via "retificação", preservando o registro original. **Alterações de dados só serão realizadas mediante solicitação judicial.**
+-   **Princípio do Sigilo e Confidencialidade Absoluta:** A divulgação indevida de informações constitui uma violação grave destes Termos.
+-   **Princípio da Rastreabilidade Completa:** Todas as ações são registradas em logs de auditoria detalhados.
 
 ## **5. Propriedade Intelectual**
 
-Todo o conteúdo, software, design, logotipos, e demais elementos que compõem o Sistema Gorgen são de propriedade intelectual exclusiva do Prestador e/ou de seus licenciadores. Estes Termos não lhe concedem qualquer direito de propriedade sobre o Sistema, mas apenas uma licença limitada, não exclusiva, revogável e intransferível para usá-lo conforme o aqui disposto.
-
-É estritamente proibido copiar, modificar, distribuir, vender, alugar, fazer engenharia reversa ou tentar extrair o código-fonte do Sistema.
+Todo o conteúdo, software, design, logotipos, fluxos de trabalho, lógicas de programação, scripts e demais elementos que compõem o Sistema Gorgen são de propriedade intelectual exclusiva do Dr. André Gorgen. A utilização indevida, cópia, engenharia reversa ou qualquer forma de apropriação de qualquer parte do Sistema constitui violação das leis de propriedade intelectual e será tratada com o máximo rigor.
 
 ## **6. Privacidade e Proteção de Dados**
 
-A proteção dos dados pessoais é um compromisso central do Sistema Gorgen. A nossa **Política de Privacidade** detalha como coletamos, usamos, armazenamos e protegemos os dados pessoais e está incorporada a estes Termos por referência. É seu dever ler e compreender a Política de Privacidade.
+A nossa **Política de Privacidade** detalha como tratamos os dados pessoais e está incorporada a estes Termos. É seu dever ler, compreender e concordar com ela. A Política de Privacidade aborda temas essenciais como:
 
-## **7. Limitação de Responsabilidade**
+-   **Tratamento de Dados Após a Morte:** Conforme o Código de Ética Médica e a Recomendação CFM nº 3/2014, o sigilo sobre o prontuário permanece após a morte do titular. Os dados serão preservados por um período mínimo de 20 anos. O acesso ao prontuário por familiares ou pelo inventariante só será concedido mediante autorização judicial ou conforme a ordem de vocação hereditária, desde que não haja objeção expressa registrada em vida pelo titular.
+-   **Responsável (Next of Kin):** Pacientes podem designar um responsável legal para operar sua conta em seu melhor interesse em caso de incapacidade ou menoridade. Este responsável terá acesso a todas as funcionalidades, exceto a exclusão da conta.
 
-1.  **Uso como Ferramenta de Apoio:** O Sistema é uma ferramenta de apoio à prática médica. Ele não substitui o julgamento clínico, a expertise e a responsabilidade do profissional de saúde. As decisões de diagnóstico e tratamento são de responsabilidade exclusiva do profissional.
-2.  **Disponibilidade:** Envidaremos nossos melhores esforços para manter o Sistema disponível. No entanto, não nos responsabilizamos por interrupções ou indisponibilidades decorrentes de falhas na sua conexão com a internet, manutenções programadas (com aviso prévio) ou eventos de força maior.
-3.  **Isenção de Danos:** Em nenhuma hipótese o Prestador será responsável por danos indiretos, incidentais, especiais ou consequenciais, incluindo lucros cessantes, perda de dados ou danos à reputação, resultantes do uso ou da incapacidade de usar o Sistema, ou da conduta de terceiros.
+## **7. Contratos de Uso Específicos**
 
-## **8. Suspensão e Rescisão**
+Além destes Termos gerais, o uso do Sistema está condicionado à aceitação de um **Contrato de Uso** específico para o seu perfil (Paciente, Médico ou Secretária), que detalhará outras obrigações e condições. A aceitação destes contratos é obrigatória para a liberação do acesso.
 
-Reservamo-nos o direito de suspender ou encerrar o seu acesso ao Sistema, a nosso exclusivo critério e sem aviso prévio, caso você viole qualquer uma das disposições destes Termos, ou se sua atividade representar um risco à segurança, integridade ou disponibilidade do Sistema ou dos dados nele contidos.
+## **8. Limitação de Responsabilidade e Disposições Gerais**
 
-## **9. Disposições Gerais**
+(As seções de Limitação de Responsabilidade, Disponibilidade, Isenção de Danos, Alterações nos Termos, Legislação e Foro permanecem as mesmas da versão anterior, com a adição de que a violação destes termos pode levar às sanções descritas na seção 3.)
 
-1.  **Alterações nos Termos:** Podemos modificar estes Termos a qualquer momento. As alterações entrarão em vigor imediatamente após a publicação da versão atualizada no Sistema. A continuidade do uso do Sistema após as alterações constitui sua aceitação dos novos Termos.
-2.  **Legislação e Foro:** Estes Termos serão regidos e interpretados de acordo com as leis da República Federativa do Brasil. Fica eleito o Foro da Comarca de Porto Alegre/RS, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir quaisquer litígios ou controvérsias oriundas destes Termos.
-
-## **10. Contato**
+## **9. Contato**
 
 Em caso de dúvidas sobre estes Termos de Uso, entre em contato com o administrador do sistema.

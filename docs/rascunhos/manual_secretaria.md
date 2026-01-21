@@ -1,6 +1,6 @@
 # **Manual de Operações – Perfil Secretária | Sistema Gorgen**
 
-_Versão 1.0 | Janeiro 2026_
+_Versão 2.0 | Janeiro 2026_
 
 ---
 
@@ -10,14 +10,31 @@ Bem-vinda ao Sistema Gorgen! Este manual é o seu guia para utilizar a plataform
 
 Seu papel é fundamental para o bom funcionamento de tudo, e o Gorgen foi criado para ser seu melhor assistente, automatizando tarefas e centralizando as informações administrativas. Vamos aprender a usar suas principais ferramentas!
 
-## **2. Acesso e Responsabilidades**
+## **2. Acesso, Responsabilidades e Sanções**
 
 Seu acesso ao Gorgen é feito com um usuário e senha individuais. É muito importante que você entenda a responsabilidade que isso traz.
 
--   **Acesso Pessoal:** Suas credenciais são de uso exclusivo seu e não devem ser compartilhadas com ninguém. O uso de senha de médico para navegação na plataforma consite em infração com potencial de gerar transtornos para a secretaria e o médico. Use sempre as suas credenciais de acesso, elas protegem você e o médico para quem você trabalha de dores de cabeça no futuro.
--   **Segurança no Dia a Dia:** Sempre que precisar se afastar do seu computador, lembre-se de bloquear a tela. É um gesto simples que protege as informações de todos.
--   **Sigilo é a Regra de Ouro:** Você terá acesso a dados pessoais dos pacientes. A **Lei Geral de Proteção de Dados (LGPD)** exige que essas informações sejam tratadas com o máximo de confidencialidade. O acesso indevido ou o compartilhamento de qualquer dado é uma falta grave.
--   **Vinculação ao Perfil do Médico:** Você terá acesso à plataforma mediante autorização por parte do médico para o qual você trabalha. Não é permitida o acesso ao Gorgen por parte de secretárias não vinculadas diretamente a um médico. Essa autorização deverá ser renovada a cada 6 meses por parte do médico autorizador.
+### **2.1. Acesso Pessoal e Intransferível**
+Suas credenciais são de uso exclusivo seu e não devem ser compartilhadas com ninguém. O uso de senha de médico para navegação na plataforma constitui infração grave, com potencial de gerar transtornos para a secretária e o médico. Use sempre as suas credenciais de acesso, elas protegem você e o médico para quem você trabalha de dores de cabeça no futuro.
+
+### **2.2. Segurança no Dia a Dia**
+Sempre que precisar se afastar do seu computador, lembre-se de bloquear a tela (`Windows + L` ou `Ctrl + Command + Q` no Mac). É um gesto simples que protege as informações de todos.
+
+### **2.3. Sigilo é a Regra de Ouro**
+Você terá acesso a dados pessoais dos pacientes. A **Lei Geral de Proteção de Dados (LGPD)** exige que essas informações sejam tratadas com o máximo de confidencialidade. O acesso indevido ou o compartilhamento de qualquer dado é uma falta grave.
+
+### **2.4. Vinculação ao Perfil do Médico**
+Você terá acesso à plataforma mediante autorização por parte do médico para o qual você trabalha. Não é permitido o acesso ao Gorgen por parte de secretárias não vinculadas diretamente a um médico. **Essa autorização deverá ser renovada a cada 6 meses** por parte do médico autorizador.
+
+### **2.5. Sanções por Descumprimento**
+O descumprimento das regras de uso pode resultar em sanções administrativas:
+
+| Nível | Sanção | Descrição |
+| :--- | :--- | :--- |
+| 1 | **Advertência** | Notificação formal por escrito sobre a infração. |
+| 2 | **Restrição de Uso** | Limitação temporária do acesso a certas funcionalidades. |
+| 3 | **Suspensão de Uso** | Bloqueio temporário e completo da conta. |
+| 4 | **Exclusão da Conta** | Encerramento definitivo do acesso à plataforma. |
 
 ## **3. Painel de Controle: Seu Resumo do Dia**
 
@@ -45,18 +62,28 @@ Manter o cadastro dos pacientes atualizado é uma de suas tarefas mais important
 
 > **Atenção:** Seu perfil permite alterar apenas os dados cadastrais (não-clínicos). As informações médicas do prontuário são de acesso restrito ao corpo clínico.
 
+### **4.3. Termo de Consentimento**
+Ao cadastrar um novo paciente, é importante garantir que ele assine o **Termo de Consentimento para Uso da Plataforma**. O sistema indicará se o termo está pendente.
+
 ## **5. Agenda: Organizando o Tempo do Consultório**
 
 A gestão da agenda é ágil e visual, permitindo que você organize o dia a dia com facilidade.
 
--   **Visualização:** Alterne entre as visões de dia, semana ou mês para ter a melhor perspectiva.
--   **Agendar uma Consulta:** Clique em um horário livre, procure pelo paciente e preencha os detalhes (tipo de consulta, convênio). O sistema já puxa os dados do paciente automaticamente!
--   **Remarcar ou Cancelar:** Clique sobre um agendamento existente para movê-lo para outra data ou para cancelá-lo.
--   **Atualizar o Status:** Esta é uma função-chave! Sempre atualize o status do agendamento para:
-    -   `Confirmado`: Quando o paciente confirma que virá.
-    -   `Chegou`: Assim que o paciente chegar ao consultório.
-    -   `Cancelado`: Se o paciente desmarcar.
-    -   `Faltou (No-Show)`: Caso o paciente não compareça.
+### **5.1. Visualização da Agenda**
+Alterne entre as visões de **dia**, **semana** ou **mês** para ter a melhor perspectiva da disponibilidade.
+
+### **5.2. Agendar uma Consulta**
+Clique em um horário livre, procure pelo paciente e preencha os detalhes (tipo de consulta, convênio). O sistema já puxa os dados do paciente automaticamente!
+
+### **5.3. Remarcar ou Cancelar**
+Clique sobre um agendamento existente para movê-lo para outra data ou para cancelá-lo. O sistema registra o histórico de alterações.
+
+### **5.4. Atualizar o Status**
+Esta é uma função-chave! Sempre atualize o status do agendamento para:
+-   `Confirmado`: Quando o paciente confirma que virá.
+-   `Chegou`: Assim que o paciente chegar ao consultório.
+-   `Cancelado`: Se o paciente desmarcar.
+-   `Faltou (No-Show)`: Caso o paciente não compareça.
 
 > Manter os status atualizados é essencial para os relatórios financeiros e para sabermos os horários que ficaram disponíveis.
 
@@ -64,9 +91,14 @@ A gestão da agenda é ágil e visual, permitindo que você organize o dia a dia
 
 Seu perfil tem acesso a funções administrativas essenciais para fechar o ciclo do atendimento.
 
--   **Emissão de Recibos:** Após a finalização de uma consulta pelo médico, o sistema habilita a geração do recibo ou da nota fiscal para o paciente.
--   **Registro de Pagamentos:** Você pode registrar como o pagamento foi feito (cartão, dinheiro, pix) e dar baixa na fatura.
--   **Documentos Não-Clínicos:** É possível gerar declarações de comparecimento e outros documentos administrativos usando modelos pré-aprovados.
+### **6.1. Emissão de Recibos**
+Após a finalização de uma consulta pelo médico, o sistema habilita a geração do recibo ou da nota fiscal para o paciente.
+
+### **6.2. Registro de Pagamentos**
+Você pode registrar como o pagamento foi feito (cartão, dinheiro, pix) e dar baixa na fatura.
+
+### **6.3. Documentos Não-Clínicos**
+É possível gerar declarações de comparecimento e outros documentos administrativos usando modelos pré-aprovados.
 
 ## **7. Comunicação com o Paciente**
 
@@ -75,6 +107,17 @@ O Gorgen ajuda você a se comunicar com os pacientes de forma padronizada e prof
 -   **Lembretes Automáticos:** O sistema pode ser configurado para enviar lembretes de consulta por WhatsApp ou SMS automaticamente.
 -   **Modelos de Mensagem:** Utilize modelos prontos para enviar instruções pré-consulta, avisos ou outras comunicações importantes.
 
-## **8. Suporte**
+## **8. O que Você NÃO Pode Acessar**
+
+É importante saber os limites do seu perfil para evitar problemas:
+
+-   **Prontuário Médico:** Você não tem acesso aos registros clínicos (diagnósticos, prescrições, evolução).
+-   **Dados de Pacientes de Outros Médicos:** Seu acesso é restrito aos pacientes do médico ao qual você está vinculada.
+
+Qualquer tentativa de acessar informações fora do seu escopo é registrada nos logs de auditoria e pode resultar em sanções.
+
+## **9. Suporte**
 
 Se encontrar qualquer dificuldade ou tiver alguma dúvida sobre o sistema, não hesite em pedir ajuda. Entre em contato com o administrador do sistema pelo canal de suporte definido.
+
+-   **Canal de Suporte:** [Definir canal: e-mail, portal de tickets, etc.]
