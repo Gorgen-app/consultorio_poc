@@ -380,7 +380,7 @@ export const authRouter = router({
       const token = await authDb.createPasswordResetToken(user.id);
 
       // Construir URL de recuperação
-      const baseUrl = process.env.VITE_APP_URL || ctx.req?.headers?.origin || 'https://gorgen.manus.space';
+      const baseUrl = process.env.VITE_APP_URL || ctx.req?.headers?.origin || 'https://www.gorgen.com.br';
       const resetUrl = `${baseUrl}/reset-password?token=${token}`;
       
       // Enviar notificação ao proprietário do sistema com o link de recuperação

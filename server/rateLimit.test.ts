@@ -10,8 +10,10 @@ import { RATE_LIMITS } from "./_core/rateLimit";
 
 describe("Rate Limiting Configuration", () => {
   describe("RATE_LIMITS constants", () => {
-    it("should have global IP limit of 100 requests per minute", () => {
-      expect(RATE_LIMITS.GLOBAL_IP.max).toBe(100);
+    it("should have global IP limit configured correctly", () => {
+      // Em desenvolvimento é 1000, em produção é 100
+      const expectedMax = process.env.NODE_ENV === 'development' ? 1000 : 100;
+      expect(RATE_LIMITS.GLOBAL_IP.max).toBe(expectedMax);
       expect(RATE_LIMITS.GLOBAL_IP.windowMs).toBe(60 * 1000);
     });
 

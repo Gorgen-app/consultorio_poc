@@ -2982,3 +2982,4 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Implementar exportação para Excel dos dados de pacientes
 - [x] Implementar exportação de pacientes em CSV e PDF
 - [x] Implementar exportação multi-formato na página de atendimentos
+- [ ] Investigar e corrigir erro detectado no backup automático
