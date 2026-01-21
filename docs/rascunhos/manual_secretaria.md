@@ -14,9 +14,10 @@ Seu papel é fundamental para o bom funcionamento de tudo, e o Gorgen foi criado
 
 Seu acesso ao Gorgen é feito com um usuário e senha individuais. É muito importante que você entenda a responsabilidade que isso traz.
 
--   **Acesso Pessoal:** Suas credenciais são de uso exclusivo seu e não devem ser compartilhadas com ninguém.
+-   **Acesso Pessoal:** Suas credenciais são de uso exclusivo seu e não devem ser compartilhadas com ninguém. O uso de senha de médico para navegação na plataforma consite em infração com potencial de gerar transtornos para a secretaria e o médico. Use sempre as suas credenciais de acesso, elas protegem você e o médico para quem você trabalha de dores de cabeça no futuro.
 -   **Segurança no Dia a Dia:** Sempre que precisar se afastar do seu computador, lembre-se de bloquear a tela. É um gesto simples que protege as informações de todos.
 -   **Sigilo é a Regra de Ouro:** Você terá acesso a dados pessoais dos pacientes. A **Lei Geral de Proteção de Dados (LGPD)** exige que essas informações sejam tratadas com o máximo de confidencialidade. O acesso indevido ou o compartilhamento de qualquer dado é uma falta grave.
+-   **Vinculação ao Perfil do Médico:** Você terá acesso à plataforma mediante autorização por parte do médico para o qual você trabalha. Não é permitida o acesso ao Gorgen por parte de secretárias não vinculadas diretamente a um médico. Essa autorização deverá ser renovada a cada 6 meses por parte do médico autorizador.
 
 ## **3. Painel de Controle: Seu Resumo do Dia**
 
