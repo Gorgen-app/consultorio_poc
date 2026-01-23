@@ -3032,3 +3032,6 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Remover seção "criar conta grátis" da landing page
 - [x] Melhorar distribuição dos botões no header (apenas "Entrar")
 - [x] Adicionar link "Quem Somos" no header e seção placeholder
+
+- [x] Remover seção "Quem Somos" do final do site (manter apenas link no header)
+- [x] Inserir favicon do farol (ico, png 16x16, 32x32, apple-touch-icon 180x180)
