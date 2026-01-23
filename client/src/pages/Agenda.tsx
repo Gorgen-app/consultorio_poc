@@ -1197,53 +1197,53 @@ export default function Agenda() {
 
       {/* Modal Detalhes do Agendamento */}
       <Dialog open={modalDetalhesAberto} onOpenChange={setModalDetalhesAberto}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded ${CORES_TIPO[agendamentoSelecionado?.tipoCompromisso] || "bg-gray-500"}`}></div>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className={`w-2.5 h-2.5 rounded ${CORES_TIPO[agendamentoSelecionado?.tipoCompromisso] || "bg-gray-500"}`}></div>
               {agendamentoSelecionado?.tipoCompromisso}
             </DialogTitle>
           </DialogHeader>
           {agendamentoSelecionado && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-muted-foreground">ID</Label>
-                  <p className="font-medium">{agendamentoSelecionado.idAgendamento}</p>
+                  <Label className="text-muted-foreground text-xs">ID</Label>
+                  <p className="font-medium text-sm">{agendamentoSelecionado.idAgendamento}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Status</Label>
-                  <p className="font-medium">{agendamentoSelecionado.status}</p>
+                  <Label className="text-muted-foreground text-xs">Status</Label>
+                  <p className="font-medium text-sm">{agendamentoSelecionado.status}</p>
                 </div>
               </div>
 
               {agendamentoSelecionado.pacienteNome && (
                 <div>
-                  <Label className="text-muted-foreground">Paciente</Label>
-                  <p className="font-medium flex items-center gap-2">
-                    <User className="w-4 h-4" />
+                  <Label className="text-muted-foreground text-xs">Paciente</Label>
+                  <p className="font-medium text-sm flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5" />
                     {agendamentoSelecionado.pacienteNome}
                   </p>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-muted-foreground">Data/Hora</Label>
-                  <p className="font-medium flex items-center gap-2">
-                    <CalendarIcon className="w-4 h-4" />
+                  <Label className="text-muted-foreground text-xs">Data/Hora</Label>
+                  <p className="font-medium text-sm flex items-center gap-1.5">
+                    <CalendarIcon className="w-3.5 h-3.5" />
                     {new Date(agendamentoSelecionado.dataHoraInicio).toLocaleDateString("pt-BR")}
                   </p>
-                  <p className="text-sm flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
+                  <p className="text-xs flex items-center gap-1.5 mt-0.5">
+                    <Clock className="w-3.5 h-3.5" />
                     {formatarHora(agendamentoSelecionado.dataHoraInicio)} - {formatarHora(agendamentoSelecionado.dataHoraFim)}
                   </p>
                 </div>
                 {agendamentoSelecionado.local && (
                   <div>
-                    <Label className="text-muted-foreground">Local</Label>
-                    <p className="font-medium flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
+                    <Label className="text-muted-foreground text-xs">Local</Label>
+                    <p className="font-medium text-sm flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5" />
                       {agendamentoSelecionado.local}
                     </p>
                   </div>
@@ -1252,25 +1252,25 @@ export default function Agenda() {
 
               {agendamentoSelecionado.descricao && (
                 <div>
-                  <Label className="text-muted-foreground">Observações</Label>
-                  <p>{agendamentoSelecionado.descricao}</p>
+                  <Label className="text-muted-foreground text-xs">Observações</Label>
+                  <p className="text-sm">{agendamentoSelecionado.descricao}</p>
                 </div>
               )}
 
               {agendamentoSelecionado.reagendadoDe && (
-                <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
-                  <p className="text-sm text-yellow-800">
+                <div className="p-2 bg-yellow-50 rounded border border-yellow-200">
+                  <p className="text-xs text-yellow-800">
                     Este agendamento foi reagendado de outro compromisso anterior.
                   </p>
                 </div>
               )}
 
               {agendamentoSelecionado.status === "Cancelado" && (
-                <div className="p-3 bg-red-50 rounded border border-red-200">
-                  <p className="text-sm text-red-800">
+                <div className="p-2 bg-red-50 rounded border border-red-200">
+                  <p className="text-xs text-red-800">
                     <strong>Cancelado em:</strong> {new Date(agendamentoSelecionado.canceladoEm).toLocaleString("pt-BR")}
                   </p>
-                  <p className="text-sm text-red-800">
+                  <p className="text-xs text-red-800">
                     <strong>Motivo:</strong> {agendamentoSelecionado.motivoCancelamento}
                   </p>
                 </div>
@@ -1278,18 +1278,20 @@ export default function Agenda() {
 
               {/* Ações baseadas no status */}
               {agendamentoSelecionado.status === "Agendado" && (
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <div className="flex flex-wrap gap-1.5 pt-3 border-t">
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="h-7 px-2 text-xs"
                     onClick={() => confirmarAgendamento.mutate({ id: agendamentoSelecionado.id })}
                   >
-                    <Check className="w-4 h-4 mr-1" />
+                    <Check className="w-3.5 h-3.5 mr-1" />
                     Confirmar
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="h-7 px-2 text-xs"
                     onClick={() => {
                       setNovaData(new Date(agendamentoSelecionado.dataHoraInicio).toISOString().split("T")[0]);
                       setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
@@ -1297,42 +1299,44 @@ export default function Agenda() {
                       setModalReagendarAberto(true);
                     }}
                   >
-                    <RefreshCw className="w-4 h-4 mr-1" />
+                    <RefreshCw className="w-3.5 h-3.5 mr-1" />
                     Reagendar
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="text-red-600"
+                    className="h-7 px-2 text-xs text-red-600"
                     onClick={() => setModalCancelarAberto(true)}
                   >
-                    <X className="w-4 h-4 mr-1" />
+                    <X className="w-3.5 h-3.5 mr-1" />
                     Cancelar
                   </Button>
                 </div>
               )}
 
               {agendamentoSelecionado.status === "Confirmado" && (
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <div className="flex flex-wrap gap-1.5 pt-3 border-t">
                   <Button 
                     size="sm"
-                    className="bg-yellow-500 hover:bg-yellow-600"
+                    className="h-7 px-2 text-xs bg-yellow-500 hover:bg-yellow-600"
                     onClick={() => marcarAguardando.mutate({ id: agendamentoSelecionado.id })}
                   >
-                    <UserCheck className="w-4 h-4 mr-1" />
-                    Paciente Chegou
+                    <UserCheck className="w-3.5 h-3.5 mr-1" />
+                    Chegou
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="h-7 px-2 text-xs"
                     onClick={() => marcarFalta.mutate({ id: agendamentoSelecionado.id })}
                   >
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    Paciente Faltou
+                    <AlertCircle className="w-3.5 h-3.5 mr-1" />
+                    Faltou
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="h-7 px-2 text-xs"
                     onClick={() => {
                       setNovaData(new Date(agendamentoSelecionado.dataHoraInicio).toISOString().split("T")[0]);
                       setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
@@ -1340,26 +1344,26 @@ export default function Agenda() {
                       setModalReagendarAberto(true);
                     }}
                   >
-                    <RefreshCw className="w-4 h-4 mr-1" />
+                    <RefreshCw className="w-3.5 h-3.5 mr-1" />
                     Reagendar
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="text-red-600"
+                    className="h-7 px-2 text-xs text-red-600"
                     onClick={() => setModalCancelarAberto(true)}
                   >
-                    <X className="w-4 h-4 mr-1" />
+                    <X className="w-3.5 h-3.5 mr-1" />
                     Cancelar
                   </Button>
                 </div>
               )}
 
               {agendamentoSelecionado.status === "Aguardando" && (
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <div className="flex flex-wrap gap-1.5 pt-3 border-t">
                   <Button 
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700"
+                    className="h-7 px-2 text-xs bg-green-600 hover:bg-green-700"
                     onClick={() => {
                       // Iniciar atendimento e navegar para evolução no prontuário
                       iniciarAtendimento.mutate({ id: agendamentoSelecionado.id });
@@ -1371,34 +1375,35 @@ export default function Agenda() {
                       }
                     }}
                   >
-                    <FileText className="w-4 h-4 mr-1" />
-                    Registrar Atendimento
+                    <FileText className="w-3.5 h-3.5 mr-1" />
+                    Atender
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="h-7 px-2 text-xs"
                     onClick={() => marcarFalta.mutate({ id: agendamentoSelecionado.id })}
                   >
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    Paciente Faltou
+                    <AlertCircle className="w-3.5 h-3.5 mr-1" />
+                    Faltou
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="text-red-600"
+                    className="h-7 px-2 text-xs text-red-600"
                     onClick={() => setModalCancelarAberto(true)}
                   >
-                    <X className="w-4 h-4 mr-1" />
+                    <X className="w-3.5 h-3.5 mr-1" />
                     Cancelar
                   </Button>
                 </div>
               )}
 
               {agendamentoSelecionado.status === "Em atendimento" && (
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                <div className="flex flex-wrap gap-1.5 pt-3 border-t">
                   <Button 
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="h-7 px-2 text-xs bg-[#6B8CBE] hover:bg-[#5a7ba8]"
                     onClick={() => {
                       // Continuar evolução no prontuário
                       if (agendamentoSelecionado.pacienteId) {
@@ -1409,16 +1414,17 @@ export default function Agenda() {
                       }
                     }}
                   >
-                    <FileText className="w-4 h-4 mr-1" />
-                    Continuar Evolução
+                    <FileText className="w-3.5 h-3.5 mr-1" />
+                    Continuar
                   </Button>
                   <Button 
                     size="sm"
                     variant="outline"
+                    className="h-7 px-2 text-xs"
                     onClick={() => realizarAgendamento.mutate({ id: agendamentoSelecionado.id })}
                   >
-                    <Check className="w-4 h-4 mr-1" />
-                    Finalizar Atendimento
+                    <Check className="w-3.5 h-3.5 mr-1" />
+                    Finalizar
                   </Button>
                 </div>
               )}
