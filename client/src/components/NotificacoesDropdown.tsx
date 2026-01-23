@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, Users, FileText, DollarSign, ChevronRight, Clock, Stethoscope } from "lucide-react";
+import { Bell, Users, FileText, DollarSign, ChevronRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -52,13 +52,6 @@ export function NotificacoesDropdown() {
             },
           }
         );
-        
-        // Tocar som de notificação (se disponível)
-        try {
-          const audio = new Audio("/notification.mp3");
-          audio.volume = 0.3;
-          audio.play().catch(() => {}); // Ignorar erros se não puder tocar
-        } catch {}
       }
     }
     setUltimaContagem(notificacoes?.pacientesAguardando || 0);
