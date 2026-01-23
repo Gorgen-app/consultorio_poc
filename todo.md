@@ -3074,3 +3074,5 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Cards de ação estilo Itaú (Acessar, Criar Conta, Esqueci Senha)
 - [x] Formulário de login integrado no card principal
 - [x] Design responsivo (desktop split-screen, mobile full-screen)
+
+- [x] Melhorar interface mobile do login - design mais limpo e funcional

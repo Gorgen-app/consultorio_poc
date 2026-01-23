@@ -3,10 +3,9 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Eye, EyeOff, LogIn, AlertCircle, Loader2, Lock, HelpCircle, User } from "lucide-react";
+import { Eye, EyeOff, LogIn, AlertCircle, Loader2, Lock, ChevronRight } from "lucide-react";
 import { getLoginUrl } from "@/const";
 
 export default function Login() {
@@ -84,16 +83,16 @@ export default function Login() {
 
   const isLoading = loginMutation.isPending || verify2FAMutation.isPending;
 
-  // Tela de verificação 2FA - Estilo Itaú Mobile
+  // Tela de verificação 2FA
   if (requires2FA) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#001F3F] to-[#002B49] flex flex-col">
-        {/* Header Mobile */}
-        <header className="p-4 flex items-center justify-between">
+      <div className="min-h-screen bg-[#0A1628] flex flex-col">
+        {/* Header */}
+        <header className="p-4 flex items-center">
           <Button 
             variant="ghost" 
             size="sm"
-            className="text-white/80 hover:text-white hover:bg-white/10"
+            className="text-white/70 hover:text-white hover:bg-white/10 -ml-2"
             onClick={() => {
               setRequires2FA(false);
               setUserId2FA(null);
@@ -103,31 +102,22 @@ export default function Login() {
           >
             ← Voltar
           </Button>
-          <div className="flex items-center gap-2">
-            <img 
-              src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
-              alt="Gorgen" 
-              className="w-8 h-8 object-contain"
-            />
-            <span className="text-white font-semibold">GORGEN</span>
-          </div>
-          <div className="w-16" /> {/* Spacer */}
         </header>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
-          <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm">
-            <Lock className="w-10 h-10 text-white" />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12">
+          <div className="w-16 h-16 bg-[#0056A4] rounded-2xl flex items-center justify-center mb-6">
+            <Lock className="w-8 h-8 text-white" />
           </div>
           
-          <h1 className="text-2xl font-bold text-white mb-2 text-center">Verificação em Duas Etapas</h1>
-          <p className="text-white/60 text-center mb-8 max-w-xs">
-            Digite o código do seu aplicativo autenticador
+          <h1 className="text-xl font-semibold text-white mb-2">Verificação 2FA</h1>
+          <p className="text-white/50 text-sm text-center mb-8">
+            Digite o código do autenticador
           </p>
 
-          <form onSubmit={handleVerify2FA} className="w-full max-w-sm space-y-6">
+          <form onSubmit={handleVerify2FA} className="w-full max-w-xs space-y-4">
             {error && (
-              <Alert variant="destructive" className="bg-red-500/20 border-red-500/50 text-white">
+              <Alert variant="destructive" className="bg-red-500/10 border-red-500/30 text-red-400">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
@@ -141,20 +131,16 @@ export default function Login() {
               placeholder="000000"
               value={token2FA}
               onChange={(e) => setToken2FA(e.target.value.replace(/\D/g, ""))}
-              className="h-16 text-center text-3xl tracking-[0.5em] font-mono bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-white/50 focus:ring-white/30"
+              className="h-14 text-center text-2xl tracking-[0.4em] font-mono bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-[#0056A4] focus:ring-[#0056A4]/30 rounded-xl"
               autoFocus
             />
 
             <Button
               type="submit"
-              className="w-full h-14 bg-white text-[#002B49] hover:bg-white/90 font-semibold text-lg rounded-xl"
+              className="w-full h-12 bg-[#0056A4] hover:bg-[#004080] text-white font-medium rounded-xl"
               disabled={isLoading || token2FA.length !== 6}
             >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                "Verificar"
-              )}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verificar"}
             </Button>
           </form>
         </div>
@@ -162,41 +148,40 @@ export default function Login() {
     );
   }
 
-  // Tela de login principal - Estilo Itaú Mobile
+  // Layout principal
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#001F3F] to-[#002B49] flex flex-col">
+    <div className="min-h-screen bg-[#0A1628]">
       {/* Desktop: Layout split-screen */}
       <div className="hidden lg:flex min-h-screen">
         {/* Painel esquerdo - Branding */}
-        <div className="w-1/2 bg-gradient-to-br from-[#0056A4] to-[#002B49] relative overflow-hidden flex items-center justify-center">
+        <div className="w-1/2 bg-gradient-to-br from-[#0056A4] to-[#0A1628] relative overflow-hidden flex items-center justify-center">
           <div className="relative z-10 flex flex-col items-center p-12">
-            <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center mb-8 backdrop-blur-sm">
+            <div className="w-40 h-40 bg-white/10 rounded-full flex items-center justify-center mb-8">
               <img 
                 src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
                 alt="Gorgen Logo" 
-                className="w-36 h-36 object-contain"
+                className="w-28 h-28 object-contain"
               />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-4 tracking-wide">GORGEN</h1>
-            <p className="text-xl text-white/80 text-center max-w-md">
+            <h1 className="text-4xl font-bold text-white mb-3 tracking-wide">GORGEN</h1>
+            <p className="text-lg text-white/70 text-center max-w-sm">
               Gestão em Saúde com Arquitetura de Rede Social
             </p>
-            <p className="text-lg text-white/60 text-center mt-4 max-w-sm">
+            <p className="text-white/50 text-center mt-3">
               Paciente no centro do cuidado
             </p>
           </div>
-          <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-[#002B49]/50 to-transparent" />
-          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/5 rounded-full" />
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full" />
+          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-white/5 rounded-full" />
+          <div className="absolute -top-32 -right-32 w-80 h-80 bg-white/5 rounded-full" />
         </div>
 
         {/* Painel direito - Formulário Desktop */}
-        <div className="w-1/2 flex items-center justify-center p-8 bg-[#F5F7FA]">
+        <div className="w-1/2 flex items-center justify-center p-8 bg-[#F8FAFC]">
           <div className="w-full max-w-md">
-            <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="bg-white rounded-2xl shadow-lg p-8">
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-[#002B49]">Bem-vindo de volta</h2>
-                <p className="text-gray-500 mt-2">Entre na sua conta para continuar</p>
+                <h2 className="text-2xl font-bold text-[#0A1628]">Bem-vindo</h2>
+                <p className="text-gray-500 mt-2">Entre na sua conta</p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-5">
@@ -207,10 +192,9 @@ export default function Login() {
                   </Alert>
                 )}
                 
-                <div className="space-y-2">
-                  <Label htmlFor="username-desktop" className="text-[#002B49] font-medium">Nome de Usuário</Label>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-[#0A1628]">Usuário</label>
                   <Input
-                    id="username-desktop"
                     type="text"
                     placeholder="seu.usuario"
                     value={username}
@@ -220,21 +204,19 @@ export default function Login() {
                   />
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password-desktop" className="text-[#002B49] font-medium">Senha</Label>
-                    <Button
+                    <label className="text-sm font-medium text-[#0A1628]">Senha</label>
+                    <button
                       type="button"
-                      variant="link"
-                      className="px-0 font-normal text-sm text-[#0056A4] hover:text-[#004080]"
+                      className="text-sm text-[#0056A4] hover:underline"
                       onClick={() => setLocation("/forgot-password")}
                     >
-                      Esqueci minha senha
-                    </Button>
+                      Esqueceu?
+                    </button>
                   </div>
                   <div className="relative">
                     <Input
-                      id="password-desktop"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
@@ -242,19 +224,13 @@ export default function Login() {
                       autoComplete="current-password"
                       className="h-12 border-gray-200 focus:border-[#0056A4] focus:ring-[#0056A4] pr-12"
                     />
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5 text-gray-400" />
-                      ) : (
-                        <Eye className="h-5 w-5 text-gray-400" />
-                      )}
-                    </Button>
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
                   </div>
                 </div>
 
@@ -276,164 +252,134 @@ export default function Login() {
                   )}
                 </Button>
 
-                <div className="text-center pt-4">
-                  <span className="text-gray-500 text-sm">Não tem uma conta? </span>
-                  <Button
+                <p className="text-center text-sm text-gray-500">
+                  Não tem conta?{" "}
+                  <button
                     type="button"
-                    variant="link"
-                    className="px-1 text-sm text-[#0056A4] hover:text-[#004080]"
+                    className="text-[#0056A4] hover:underline font-medium"
                     onClick={() => setLocation("/register")}
                   >
                     Criar conta
-                  </Button>
-                </div>
+                  </button>
+                </p>
               </form>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile: Estilo Itaú */}
+      {/* Mobile: Design limpo e funcional */}
       <div className="lg:hidden flex flex-col min-h-screen">
-        {/* Header Mobile */}
+        {/* Header compacto */}
         <header className="p-4 flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="text-white/80 hover:text-white hover:bg-white/10"
+          <button 
             onClick={() => setLocation("/")}
+            className="text-white/60 text-sm hover:text-white"
           >
             ← Início
-          </Button>
+          </button>
           <div className="flex items-center gap-2">
             <img 
               src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
               alt="Gorgen" 
-              className="w-8 h-8 object-contain"
+              className="w-6 h-6 object-contain"
             />
-            <span className="text-white font-semibold">GORGEN</span>
+            <span className="text-white font-semibold text-sm">GORGEN</span>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="text-white/80 hover:text-white hover:bg-white/10"
-            onClick={() => setLocation("/forgot-password")}
-          >
-            <HelpCircle className="h-5 w-5" />
-          </Button>
+          <div className="w-12" />
         </header>
 
-        {/* User Greeting (se tiver username salvo) */}
-        <div className="px-6 pt-4 pb-2">
-          <p className="text-white/60 text-sm">Olá,</p>
-          <p className="text-white text-xl font-semibold">Bem-vindo ao Gorgen</p>
-        </div>
+        {/* Conteúdo principal */}
+        <div className="flex-1 flex flex-col px-6 pt-8 pb-6">
+          {/* Logo e título */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-20 h-20 bg-[#0056A4] rounded-2xl flex items-center justify-center mb-4">
+              <img 
+                src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+                alt="Gorgen" 
+                className="w-14 h-14 object-contain"
+              />
+            </div>
+            <h1 className="text-white text-xl font-semibold">Entrar</h1>
+            <p className="text-white/50 text-sm mt-1">Acesse sua conta</p>
+          </div>
 
-        {/* Cards Grid - Estilo Itaú */}
-        <div className="flex-1 px-4 pt-4 pb-6 space-y-4">
-          {/* Card Principal - Acessar */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                <Lock className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-white/80 text-lg">Acessar</span>
+          {/* Formulário */}
+          <form onSubmit={handleLogin} className="space-y-4 flex-1">
+            {error && (
+              <Alert variant="destructive" className="bg-red-500/10 border-red-500/30 text-red-400">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-white/70 text-sm">Usuário</label>
+              <Input
+                type="text"
+                placeholder="seu.usuario"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#0056A4] focus:ring-[#0056A4]/30 rounded-xl"
+              />
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-4">
-              {error && (
-                <Alert variant="destructive" className="bg-red-500/20 border-red-500/50 text-white">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="username-mobile" className="text-white/80 text-sm">Usuário</Label>
+            <div className="space-y-1.5">
+              <label className="text-white/70 text-sm">Senha</label>
+              <div className="relative">
                 <Input
-                  id="username-mobile"
-                  type="text"
-                  placeholder="seu.usuario"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  className="h-14 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/50 focus:ring-white/30 rounded-xl"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#0056A4] focus:ring-[#0056A4]/30 rounded-xl pr-12"
                 />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password-mobile" className="text-white/80 text-sm">Senha</Label>
-                <div className="relative">
-                  <Input
-                    id="password-mobile"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    className="h-14 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/50 focus:ring-white/30 rounded-xl pr-12"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-4 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-white/60" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-white/60" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-14 bg-white text-[#002B49] hover:bg-white/90 font-semibold text-lg rounded-xl mt-2"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  "Entrar"
-                )}
-              </Button>
-            </form>
-          </div>
-
-          {/* Cards Secundários - Grid 2x2 */}
-          <div className="grid grid-cols-2 gap-4">
-            <button 
-              onClick={() => setLocation("/register")}
-              className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10 text-left hover:bg-white/15 transition-colors"
+            <Button
+              type="submit"
+              className="w-full h-12 bg-[#0056A4] hover:bg-[#004080] text-white font-medium rounded-xl mt-2"
+              disabled={isLoading}
             >
-              <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center mb-3">
-                <User className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-white text-sm font-medium">Criar Conta</span>
-            </button>
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Entrar"}
+            </Button>
 
-            <button 
+            <button
+              type="button"
+              className="w-full text-center text-white/50 text-sm hover:text-white/70 py-2"
               onClick={() => setLocation("/forgot-password")}
-              className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10 text-left hover:bg-white/15 transition-colors"
             >
-              <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center mb-3">
-                <HelpCircle className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-white text-sm font-medium">Esqueci Senha</span>
+              Esqueci minha senha
             </button>
-          </div>
+          </form>
 
-          {/* Footer Info */}
-          <div className="pt-4 text-center">
-            <p className="text-white/40 text-xs">
-              Protegido por criptografia AES-256
-            </p>
-            <p className="text-white/30 text-xs mt-1">
-              LGPD Compliant
-            </p>
+          {/* Links inferiores */}
+          <div className="mt-auto pt-6 space-y-3">
+            <button
+              type="button"
+              onClick={() => setLocation("/register")}
+              className="w-full flex items-center justify-between p-4 bg-white/5 rounded-xl text-white hover:bg-white/10 transition-colors"
+            >
+              <span className="text-sm">Criar nova conta</span>
+              <ChevronRight className="h-4 w-4 text-white/50" />
+            </button>
+
+            {/* Footer */}
+            <div className="text-center pt-4">
+              <p className="text-white/30 text-xs">
+                Protegido por criptografia AES-256
+              </p>
+            </div>
           </div>
         </div>
       </div>
