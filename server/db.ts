@@ -825,6 +825,97 @@ export async function mergePacientesDuplicados(
   };
 }
 
+// ===== NOTIFICAÇÕES - PACIENTES AGUARDANDO =====
+
+export async function contarPacientesAguardando(tenantId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    // Contar agendamentos com status "Aguardando" para hoje
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
+
+    const result = await db.execute(sql`
+      SELECT COUNT(*) as total
+      FROM agendamentos
+      WHERE tenant_id = ${tenantId}
+        AND status = 'Aguardando'
+        AND data_hora_inicio >= ${hoje}
+        AND data_hora_inicio < ${amanha}
+    `);
+    
+    const rows = result[0] as unknown as Array<{ total: number }>;
+    return rows[0]?.total || 0;
+  } catch (error) {
+    console.error('Erro ao contar pacientes aguardando:', error);
+    return 0;
+  }
+}
+
+export async function listarPacientesAguardando(tenantId: number): Promise<Array<{
+  id: number;
+  idAgendamento: string;
+  pacienteId: number | null;
+  pacienteNome: string | null;
+  dataHoraInicio: Date;
+  tipoCompromisso: string;
+  local: string | null;
+  horaChegada: Date | null;
+}>> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    // Buscar agendamentos com status "Aguardando" para hoje
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
+
+    const result = await db.execute(sql`
+      SELECT 
+        a.id,
+        a.id_agendamento as idAgendamento,
+        a.paciente_id as pacienteId,
+        COALESCE(p.nome, a.paciente_nome) as pacienteNome,
+        a.data_hora_inicio as dataHoraInicio,
+        a.tipo_compromisso as tipoCompromisso,
+        a.local,
+        a.updated_at as horaChegada
+      FROM agendamentos a
+      LEFT JOIN pacientes p ON a.paciente_id = p.id
+      WHERE a.tenant_id = ${tenantId}
+        AND a.status = 'Aguardando'
+        AND a.data_hora_inicio >= ${hoje}
+        AND a.data_hora_inicio < ${amanha}
+      ORDER BY a.updated_at ASC
+    `);
+    
+    const rows = result[0] as unknown as Array<{
+      id: number;
+      idAgendamento: string;
+      pacienteId: number | null;
+      pacienteNome: string | null;
+      dataHoraInicio: Date;
+      tipoCompromisso: string;
+      local: string | null;
+      horaChegada: Date | null;
+    }>;
+    
+    return rows || [];
+  } catch (error) {
+    console.error('Erro ao listar pacientes aguardando:', error);
+    return [];
+  }
+}
+
 export async function contarPacientesDuplicados(tenantId: number): Promise<number> {
   const db = await getDb();
   if (!db) {

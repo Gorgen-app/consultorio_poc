@@ -367,12 +367,22 @@ export const appRouter = router({
         // Contar pagamentos pendentes (placeholder)
         const pagamentosPendentes = 0;
         
+        // Contar pacientes aguardando atendimento (status "Aguardando")
+        const pacientesAguardando = await db.contarPacientesAguardando(ctx.tenant.tenantId);
+        
         return {
           duplicados,
           pendenciasDocumentacao,
           pagamentosPendentes,
-          total: duplicados + pendenciasDocumentacao + pagamentosPendentes,
+          pacientesAguardando,
+          total: duplicados + pendenciasDocumentacao + pagamentosPendentes + pacientesAguardando,
         };
+      }),
+    
+    // Listar pacientes aguardando atendimento com detalhes
+    listarPacientesAguardando: tenantProcedure
+      .query(async ({ ctx }) => {
+        return await db.listarPacientesAguardando(ctx.tenant.tenantId);
       }),
   }),
 
@@ -1066,6 +1076,7 @@ export const appRouter = router({
         .input(z.object({
           pacienteId: z.number(),
           atendimentoId: z.number().optional().nullable(),
+          agendamentoId: z.number().optional().nullable(), // Vínculo com agendamento da agenda
           dataEvolucao: z.date(),
           tipo: z.enum(["Consulta", "Retorno", "Urgência", "Teleconsulta", "Parecer"]).default("Consulta"),
           subjetivo: z.string().optional().nullable(),

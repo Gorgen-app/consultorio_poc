@@ -430,6 +430,7 @@ export const evolucoes = mysqlTable("evolucoes", {
   tenantId: int("tenant_id").notNull().references(() => tenants.id),
   pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
   atendimentoId: int("atendimento_id").references(() => atendimentos.id),
+  agendamentoId: int("agendamento_id").references(() => agendamentos.id), // Vínculo com agendamento da agenda
   
   dataEvolucao: timestamp("data_evolucao").notNull(),
   tipo: mysqlEnum("tipo", ["Consulta", "Retorno", "Urgência", "Teleconsulta", "Parecer"]).default("Consulta"),
