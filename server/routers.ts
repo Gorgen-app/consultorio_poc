@@ -1108,6 +1108,23 @@ export const appRouter = router({
           const { id, ...data } = input;
           return await db.updateEvolucao(id, data as any);
         }),
+      
+      // Textos Padrão para Evoluções (SOAP)
+      getTextosPadrao: tenantProcedure
+        .query(async ({ ctx }) => {
+          return await db.getTextosPadraoEvolucao(ctx.user.id, ctx.tenant.tenantId);
+        }),
+      
+      saveTextosPadrao: tenantProcedure
+        .input(z.object({
+          subjetivoPadrao: z.string().optional().nullable(),
+          objetivoPadrao: z.string().optional().nullable(),
+          avaliacaoPadrao: z.string().optional().nullable(),
+          planoPadrao: z.string().optional().nullable(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          return await db.saveTextosPadraoEvolucao(ctx.user.id, ctx.tenant.tenantId, input);
+        }),
     }),
 
     // Internações
