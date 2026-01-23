@@ -1,7 +1,7 @@
 /**
  * Configuração do Algoritmo de Extração de Exames Laboratoriais
- * Versão: 1.1.0
- * Última atualização: 2026-01-23
+ * Versão: 1.2.0
+ * Última atualização: 2026-01-23 (Sessão 2)
  * 
  * Este arquivo contém as configurações e aprendizados do algoritmo de extração
  * de dados de exames laboratoriais de PDFs.
@@ -40,6 +40,8 @@ export const EXAM_SYNONYMS: Record<string, string[]> = {
   "BILIRRUBINA DIRETA": ["BD", "BILIRRUBINA CONJUGADA", "BILIRRUBINA DIRETA"],
   "BILIRRUBINA INDIRETA": ["BI", "BILIRRUBINA NÃO CONJUGADA", "BILIRRUBINA INDIRETA"],
   "ALBUMINA": ["ALB", "ALBUMINA"],
+  "AMILASE": ["AMILASE", "AMILASE SÉRICA"],
+  "LIPASE": ["LIPASE", "LIPASE SÉRICA"],
   
   // Função Renal
   "UREIA": ["URÉIA", "BUN", "UREIA"],
@@ -143,6 +145,12 @@ export const DEFAULT_REFERENCE_VALUES: Record<string, { min?: number; max?: numb
   "COLESTEROL HDL": { min: 40, unit: "mg/dL", text: ">40 mg/dL" },
   "TRIGLICÉRIDES": { max: 150, unit: "mg/dL", text: "<150 mg/dL" },
   "PCR": { max: 10, unit: "mg/L", text: "<10 mg/L" },
+  "AMILASE": { min: 30, max: 110, unit: "U/L", text: "30 a 110 U/L" },
+  "LIPASE": { min: 23, max: 300, unit: "U/L", text: "23 a 300 U/L" },
+  "VITAMINA D": { min: 20, max: 60, unit: "ng/mL", text: "20 a 60 ng/mL" },
+  "TSH": { min: 0.51, max: 4.30, unit: "µUI/mL", text: "0,51 a 4,30 µUI/mL" },
+  "CORTISOL": { min: 4.8, max: 19.5, unit: "µg/dL", text: "4,8 a 19,5 µg/dL" },
+  "PTH": { min: 17.3, max: 74.1, unit: "pg/mL", text: "17,3 a 74,1 pg/mL" },
 };
 
 /**
@@ -156,6 +164,9 @@ export const KNOWN_LABORATORIES = [
   "Weinmann",
   "Fleury",
   "DASA",
+  "UNILAB",
+  "UNIRAD",
+  "Unimed Porto Alegre",
   "Solução Laboratório",
   "Raio Som",
 ];
@@ -174,7 +185,7 @@ export const DATE_PATTERNS = [
  * Prompt otimizado para extração de exames laboratoriais
  * Baseado em aprendizados de treinamento com PDFs reais
  */
-export const OPTIMIZED_EXTRACTION_PROMPT = `Você é um especialista em extração de dados de exames laboratoriais brasileiros.
+export const OPTIMIZED_EXTRACTION_PROMPT = \`Você é um especialista em extração de dados de exames laboratoriais brasileiros.
 Analise o documento e extraia TODOS os resultados de exames laboratoriais.
 
 REGRAS CRÍTICAS DE EXTRAÇÃO:
@@ -228,7 +239,7 @@ Retorne um JSON válido com a estrutura:
   "data_principal": "YYYY-MM-DD",
   "paciente_nome": "string ou null",
   "total_paginas_analisadas": number
-}`;
+}\`;
 
 /**
  * Função para normalizar nome de exame usando sinônimos
@@ -287,9 +298,9 @@ export function parseBrazilianDate(dateStr: string): string | null {
     const month = match1[2];
     let year = match1[3];
     if (year.length === 2) {
-      year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
+      year = parseInt(year) > 50 ? \`19\${year}\` : \`20\${year}\`;
     }
-    return `${year}-${month}-${day}`;
+    return \`\${year}-\${month}-\${day}\`;
   }
   
   // YYYY-MM-DD (já está no formato correto)
