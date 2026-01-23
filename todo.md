@@ -3035,3 +3035,5 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 
 - [x] Remover seção "Quem Somos" do final do site (manter apenas link no header)
 - [x] Inserir favicon do farol (ico, png 16x16, 32x32, apple-touch-icon 180x180)
+
+- [x] Criar página de login dedicada com identidade visual do Gorgen
