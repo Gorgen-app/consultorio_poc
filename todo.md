@@ -3076,3 +3076,6 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Design responsivo (desktop split-screen, mobile full-screen)
 
 - [x] Melhorar interface mobile do login - design mais limpo e funcional
+
+- [x] Aplicar design minimalista ao Register mobile
+- [x] Aplicar design minimalista ao Forgot Password mobile
