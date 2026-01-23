@@ -1494,3 +1494,27 @@ export const backupConfig = mysqlTable("backup_config", {
 
 export type BackupConfig = typeof backupConfig.$inferSelect;
 export type InsertBackupConfig = typeof backupConfig.$inferInsert;
+
+
+/**
+ * Textos Padrão para Evoluções (SOAP)
+ * Permite que cada usuário defina textos padrão personalizados para os campos SOAP
+ */
+export const textosPadraoEvolucao = mysqlTable("textos_padrao_evolucao", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
+  
+  // Textos padrão para cada campo SOAP
+  subjetivoPadrao: text("subjetivo_padrao"),
+  objetivoPadrao: text("objetivo_padrao"),
+  avaliacaoPadrao: text("avaliacao_padrao"),
+  planoPadrao: text("plano_padrao"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TextoPadraoEvolucao = typeof textosPadraoEvolucao.$inferSelect;
+export type InsertTextoPadraoEvolucao = typeof textosPadraoEvolucao.$inferInsert;

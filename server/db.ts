@@ -1358,7 +1358,8 @@ import {
   cardiologia, InsertCardiologia, Cardiologia,
   terapias, InsertTerapia, Terapia,
   obstetricia, InsertObstetricia, Obstetricia,
-  documentosMedicos, InsertDocumentoMedico, DocumentoMedico
+  documentosMedicos, InsertDocumentoMedico, DocumentoMedico,
+  textosPadraoEvolucao, InsertTextoPadraoEvolucao, TextoPadraoEvolucao
 } from "../drizzle/schema";
 
 // ===== RESUMO CLÍNICO =====
@@ -1558,6 +1559,80 @@ export async function updateEvolucao(id: number, data: Partial<InsertEvolucao>):
   }
   
   await db.update(evolucoes).set(data).where(eq(evolucoes.id, id));
+}
+
+// ===== TEXTOS PADRÃO PARA EVOLUÇÕES =====
+
+export async function getTextosPadraoEvolucao(userId: number, tenantId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db
+    .select()
+    .from(textosPadraoEvolucao)
+    .where(
+      and(
+        eq(textosPadraoEvolucao.userId, userId),
+        eq(textosPadraoEvolucao.tenantId, tenantId)
+      )
+    )
+    .limit(1);
+  
+  // Retornar textos padrão sugeridos se não houver configuração do usuário
+  if (!result[0]) {
+    return {
+      id: null,
+      subjetivoPadrao: "Paciente refere:\n\nHistória da doença atual:\n",
+      objetivoPadrao: "Exame físico:\n- Estado geral: \n- Sinais vitais: \n- Abdome: \n",
+      avaliacaoPadrao: "Hipóteses diagnósticas:\n1. \n\nCID-10: ",
+      planoPadrao: "Conduta:\n1. \n\nExames solicitados:\n\nRetorno: ",
+    };
+  }
+  
+  return result[0];
+}
+
+export async function saveTextosPadraoEvolucao(
+  userId: number, 
+  tenantId: number, 
+  data: {
+    subjetivoPadrao?: string | null;
+    objetivoPadrao?: string | null;
+    avaliacaoPadrao?: string | null;
+    planoPadrao?: string | null;
+  }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se já existe configuração
+  const existing = await db
+    .select()
+    .from(textosPadraoEvolucao)
+    .where(
+      and(
+        eq(textosPadraoEvolucao.userId, userId),
+        eq(textosPadraoEvolucao.tenantId, tenantId)
+      )
+    )
+    .limit(1);
+  
+  if (existing[0]) {
+    // Atualizar existente
+    await db
+      .update(textosPadraoEvolucao)
+      .set(data)
+      .where(eq(textosPadraoEvolucao.id, existing[0].id));
+    return { ...existing[0], ...data };
+  } else {
+    // Criar novo
+    const [result] = await db.insert(textosPadraoEvolucao).values({
+      userId,
+      tenantId,
+      ...data,
+    });
+    return { id: result.insertId, userId, tenantId, ...data };
+  }
 }
 
 // ===== INTERNAÇÕES =====

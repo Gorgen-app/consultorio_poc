@@ -3041,3 +3041,5 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Criar página de registro com design split-screen
 - [x] Adicionar animação de loading (skeleton/spinner) - GorgenLoadingScreen.tsx
 - [x] Criar página "Esqueci minha senha" com mesmo estilo visual
+
+- [x] Criar página de reset de senha /reset-password/:token com design split-screen

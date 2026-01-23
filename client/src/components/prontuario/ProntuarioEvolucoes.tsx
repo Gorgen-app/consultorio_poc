@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2 } from "lucide-react";
+import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2, FileOutput, Pill, FileCheck, Scissors, ClipboardList, File } from "lucide-react";
 import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props {
@@ -51,6 +52,9 @@ export default function ProntuarioEvolucoes({
     peso: "",
     altura: "",
   });
+
+  // Buscar textos padrão do usuário
+  const { data: textosPadrao } = trpc.prontuario.evolucoes.getTextosPadrao.useQuery();
   
   // Efeito para abrir automaticamente o formulário quando solicitado via parâmetros
   useEffect(() => {
@@ -124,6 +128,51 @@ export default function ProntuarioEvolucoes({
     setNovaEvolucao(false);
     setAgendamentoId(null);
   };
+
+  // Função para inserir texto padrão em um campo
+  const inserirTextoPadrao = (campo: "subjetivo" | "objetivo" | "avaliacao" | "plano") => {
+    if (!textosPadrao) {
+      toast.error("Textos padrão não configurados. Acesse Configurações > Textos Padrão.");
+      return;
+    }
+
+    const mapeamento = {
+      subjetivo: textosPadrao.subjetivoPadrao,
+      objetivo: textosPadrao.objetivoPadrao,
+      avaliacao: textosPadrao.avaliacaoPadrao,
+      plano: textosPadrao.planoPadrao,
+    };
+
+    const textoPadrao = mapeamento[campo];
+    if (textoPadrao) {
+      // Se já houver conteúdo, adiciona no final com uma linha em branco
+      const valorAtual = form[campo];
+      const novoValor = valorAtual 
+        ? valorAtual + "\n\n" + textoPadrao 
+        : textoPadrao;
+      setForm({ ...form, [campo]: novoValor });
+      toast.success("Texto padrão inserido!");
+    } else {
+      toast.info("Nenhum texto padrão definido para este campo.");
+    }
+  };
+
+  // Função para emitir documento
+  const handleEmitirDocumento = (tipo: string) => {
+    // Por enquanto, apenas mostra um toast - a implementação completa virá depois
+    toast.info(`Emitir ${tipo} - Funcionalidade em desenvolvimento`);
+    // TODO: Abrir modal de emissão de documento do tipo selecionado
+  };
+
+  // Tipos de documentos disponíveis
+  const tiposDocumento = [
+    { id: "receita", label: "Receita Médica", icon: Pill },
+    { id: "atestado", label: "Atestado Médico", icon: FileCheck },
+    { id: "solicitacao_exames", label: "Solicitação de Exames", icon: ClipboardList },
+    { id: "cirurgia", label: "Solicitação de Cirurgia", icon: Scissors },
+    { id: "procedimentos", label: "Solicitação de Procedimentos", icon: FileOutput },
+    { id: "geral", label: "Documento Geral", icon: File },
+  ];
   
   return (
     <div className="space-y-6">
@@ -195,11 +244,24 @@ export default function ProntuarioEvolucoes({
                   </div>
                 </div>
                 
+                {/* Campo Subjetivo com botão Inserir Padrão */}
                 <div>
-                  <Label className="flex items-center gap-2">
-                    <span className="bg-blue-100 text-[#0056A4] px-2 py-0.5 rounded text-xs font-bold">S</span>
-                    Subjetivo (Queixa / História)
-                  </Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="flex items-center gap-2">
+                      <span className="bg-blue-100 text-[#0056A4] px-2 py-0.5 rounded text-xs font-bold">S</span>
+                      Subjetivo (Queixa / História)
+                    </Label>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs h-7 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                      onClick={() => inserirTextoPadrao("subjetivo")}
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      Inserir Padrão
+                    </Button>
+                  </div>
                   <Textarea
                     rows={4}
                     value={form.subjetivo}
@@ -208,11 +270,24 @@ export default function ProntuarioEvolucoes({
                   />
                 </div>
                 
+                {/* Campo Objetivo com botão Inserir Padrão */}
                 <div>
-                  <Label className="flex items-center gap-2">
-                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
-                    Objetivo (Exame Físico)
-                  </Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="flex items-center gap-2">
+                      <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
+                      Objetivo (Exame Físico)
+                    </Label>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50"
+                      onClick={() => inserirTextoPadrao("objetivo")}
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      Inserir Padrão
+                    </Button>
+                  </div>
                   <Textarea
                     rows={4}
                     value={form.objetivo}
@@ -221,11 +296,24 @@ export default function ProntuarioEvolucoes({
                   />
                 </div>
                 
+                {/* Campo Avaliação com botão Inserir Padrão */}
                 <div>
-                  <Label className="flex items-center gap-2">
-                    <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-bold">A</span>
-                    Avaliação (Diagnóstico)
-                  </Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="flex items-center gap-2">
+                      <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-bold">A</span>
+                      Avaliação (Diagnóstico)
+                    </Label>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs h-7 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
+                      onClick={() => inserirTextoPadrao("avaliacao")}
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      Inserir Padrão
+                    </Button>
+                  </div>
                   <Textarea
                     rows={3}
                     value={form.avaliacao}
@@ -234,17 +322,57 @@ export default function ProntuarioEvolucoes({
                   />
                 </div>
                 
+                {/* Campo Plano com botão Inserir Padrão */}
                 <div>
-                  <Label className="flex items-center gap-2">
-                    <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold">P</span>
-                    Plano (Conduta)
-                  </Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="flex items-center gap-2">
+                      <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold">P</span>
+                      Plano (Conduta)
+                    </Label>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs h-7 text-purple-600 hover:text-purple-800 hover:bg-purple-50"
+                      onClick={() => inserirTextoPadrao("plano")}
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      Inserir Padrão
+                    </Button>
+                  </div>
                   <Textarea
                     rows={4}
                     value={form.plano}
                     onChange={(e) => setForm({ ...form, plano: e.target.value })}
                     placeholder="Prescrições, exames solicitados, encaminhamentos, orientações..."
                   />
+                </div>
+
+                {/* Dropdown Emitir Documento */}
+                <div className="pt-4 border-t border-dashed">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        <span className="flex items-center gap-2">
+                          <FileOutput className="h-4 w-4" />
+                          Emitir Documento
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-full min-w-[300px]">
+                      {tiposDocumento.map((doc) => (
+                        <DropdownMenuItem 
+                          key={doc.id}
+                          onClick={() => handleEmitirDocumento(doc.label)}
+                          className="cursor-pointer"
+                        >
+                          <doc.icon className="h-4 w-4 mr-2" />
+                          {doc.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </TabsContent>
               
@@ -366,9 +494,8 @@ export default function ProntuarioEvolucoes({
               </CardHeader>
               
               {expandido === ev.id && (
-                <CardContent className="border-t bg-gray-50/50">
-                  <div className="space-y-4 pt-4">
-                    {/* SOAP */}
+                <CardContent className="border-t bg-gray-50">
+                  <div className="space-y-4 py-4">
                     {ev.subjetivo && (
                       <div>
                         <Label className="flex items-center gap-2 mb-1">
