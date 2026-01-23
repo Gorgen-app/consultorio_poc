@@ -83,36 +83,17 @@ export default function Pacientes() {
 
   const utils = trpc.useUtils();
 
-  // Mutation para exportar (Excel, CSV ou PDF)
-  const exportMutation = trpc.pacientes.export.useMutation({
-    onSuccess: (data) => {
-      // Converter base64 para blob e fazer download
-      const byteCharacters = atob(data.data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: data.mimeType });
-      
-      // Criar link de download
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = data.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast.success(`Exportação concluída: ${data.filename}`);
+  // TODO: Implementar procedure de exportação no backend
+  // Mutation para exportar (Excel, CSV ou PDF) - TEMPORARIAMENTE DESABILITADO
+  const exportMutation = {
+    mutate: (_params: any) => {
+      toast.error("Funcionalidade de exportação em desenvolvimento");
       setIsExporting(false);
     },
-    onError: (error) => {
-      toast.error(`Erro ao exportar: ${error.message}`);
-      setIsExporting(false);
-    },
-  });
+    isPending: false,
+  };
+  
+  
 
   const handleExport = (format: 'xlsx' | 'csv' | 'pdf') => {
     setIsExporting(true);

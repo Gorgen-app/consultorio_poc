@@ -8,6 +8,7 @@ import { invokeLLM } from "./_core/llm";
 import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
 import * as backup from "./backup";
+import { authRouter } from "./auth-router";
 
 // Schema de validação para Paciente
 const pacienteSchema = z.object({
@@ -386,16 +387,7 @@ export const appRouter = router({
       }),
   }),
 
-  auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
-    }),
-  }),
+  auth: authRouter,
 
   pacientes: router({
     getNextId: tenantProcedure

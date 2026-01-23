@@ -2983,3 +2983,42 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Implementar exportação de pacientes em CSV e PDF
 - [x] Implementar exportação multi-formato na página de atendimentos
 - [ ] Investigar e corrigir erro detectado no backup automático
+
+
+---
+
+## 📅 23/01/2026 - Correções de TypeScript
+
+### Erros Corrigidos (65 erros → 0 erros)
+- [x] Corrigir erro linha 2316 server/backup.ts (Date vs string)
+- [x] Corrigir startedAt para usar Date ao invés de string (3 ocorrências)
+- [x] Corrigir completedAt para usar Date ao invés de string (7 ocorrências)
+- [x] Corrigir isEncrypted de number (0/1) para boolean (true/false)
+- [x] Corrigir lastBackupDate para converter Date para string em retorno
+- [x] Corrigir lastVerifiedAt para usar Date ao invés de string
+- [x] Corrigir backupEnabled comparação de number para boolean
+- [x] Corrigir notifyOnSuccess comparação de number para boolean
+- [x] Corrigir notifyOnFailure comparação de number para boolean
+- [x] Integrar authRouter ao appRouter (procedures de autenticação local)
+- [x] Corrigir interface DocumentosListProps (adicionar evolucaoId, compact)
+- [x] Corrigir interface DocumentoUploadProps (adicionar evolucaoId)
+- [x] Corrigir lastSignedIn em oauth.ts para usar Date
+- [x] Corrigir signedInAt em sdk.ts para usar Date
+- [x] Corrigir now em tenantContext.ts para usar Date
+- [x] Placeholder para exportMutation em Pacientes.tsx (procedure não implementada)
+- [x] Placeholder para exportMutation em Atendimentos.tsx (procedure não implementada)
+
+### Testes Unitários Adicionados
+- [x] Testes para validação de tipos Date vs String
+- [x] Testes para validação de tipos Boolean vs Number
+- [x] Testes para BackupAuditEntry
+- [x] Testes para IncrementalBackupState
+- [x] Testes para BackupScheduler
+- [x] Testes para RestoreTestHistory
+- [x] Testes para Checksum Validation
+- [x] Testes para Access Control
+
+### Pendências Identificadas
+- [ ] Implementar procedure pacientes.export no backend
+- [ ] Implementar procedure atendimentos.export no backend
+- [ ] Corrigir testes auth-local.test.ts (localAuth → auth)

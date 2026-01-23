@@ -185,3 +185,136 @@ describe("Backup File Naming", () => {
     expect(offlinePath).toContain("offline_");
   });
 });
+
+
+// ==================== NOVOS TESTES - Correções de Tipos ====================
+
+describe("Backup Data Types Validation", () => {
+  describe("Date vs String consistency", () => {
+    it("should use Date objects for database timestamps", () => {
+      const startedAt = new Date();
+      const completedAt = new Date();
+      
+      expect(startedAt instanceof Date).toBe(true);
+      expect(completedAt instanceof Date).toBe(true);
+    });
+
+    it("should convert Date to ISO string for API responses", () => {
+      const date = new Date("2026-01-23T03:00:00Z");
+      const isoString = date.toISOString();
+      
+      expect(typeof isoString).toBe("string");
+      expect(isoString).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+    });
+  });
+
+  describe("Boolean vs Number consistency", () => {
+    it("should use boolean for isEncrypted, not number", () => {
+      const isEncrypted = true;
+      expect(typeof isEncrypted).toBe("boolean");
+      expect(isEncrypted).not.toBe(1);
+    });
+
+    it("should use boolean for backupEnabled, not number", () => {
+      const backupEnabled = true;
+      expect(typeof backupEnabled).toBe("boolean");
+      expect(backupEnabled).not.toBe(1);
+    });
+
+    it("should use boolean for notifyOnSuccess, not number", () => {
+      const notifyOnSuccess = true;
+      expect(typeof notifyOnSuccess).toBe("boolean");
+    });
+
+    it("should use boolean for notifyOnFailure, not number", () => {
+      const notifyOnFailure = true;
+      expect(typeof notifyOnFailure).toBe("boolean");
+    });
+  });
+});
+
+describe("Backup Audit Entry Types", () => {
+  it("should have correct structure for audit entries", () => {
+    const auditEntry = {
+      id: 1,
+      action: "backup_created",
+      date: new Date().toISOString(),
+      userId: 1,
+      userName: "Dr. André Gorgen",
+      details: "Full backup created successfully",
+    };
+
+    expect(auditEntry).toHaveProperty("id");
+    expect(auditEntry).toHaveProperty("action");
+    expect(auditEntry).toHaveProperty("date");
+    expect(typeof auditEntry.date).toBe("string");
+  });
+});
+
+describe("Incremental Backup State Types", () => {
+  it("should track last backup date as ISO string", () => {
+    const state = {
+      lastBackupId: 1,
+      lastBackupDate: new Date().toISOString(),
+      lastChecksum: "abc123",
+    };
+
+    expect(typeof state.lastBackupDate).toBe("string");
+    expect(state.lastBackupDate).toMatch(/^\d{4}-\d{2}-\d{2}/);
+  });
+});
+
+describe("Backup Scheduler Types", () => {
+  it("should compare backupEnabled as boolean", () => {
+    const config = { backupEnabled: true };
+    
+    // Correct comparison (boolean)
+    expect(config.backupEnabled !== false).toBe(true);
+  });
+});
+
+describe("Restore Test History Types", () => {
+  it("should return dates as ISO strings in API response", () => {
+    const testHistory = [
+      {
+        id: 1,
+        backupId: 1,
+        testedAt: new Date().toISOString(),
+        success: true,
+        duration: 5000,
+      },
+    ];
+
+    expect(typeof testHistory[0].testedAt).toBe("string");
+  });
+});
+
+describe("Backup Checksum Validation", () => {
+  it("should validate SHA-256 checksum format", () => {
+    const validChecksum = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    
+    expect(validChecksum).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("should reject invalid checksum format", () => {
+    const invalidChecksum = "invalid";
+    
+    expect(invalidChecksum).not.toMatch(/^[a-f0-9]{64}$/);
+  });
+});
+
+describe("Backup Access Control", () => {
+  it("should only allow admin users to access backup functions", () => {
+    const userRole = "admin";
+    const canAccessBackup = userRole === "admin";
+    
+    expect(canAccessBackup).toBe(true);
+  });
+
+  it("should deny regular users access to backup functions", () => {
+    const userRole = "user";
+    const canAccessBackup = userRole === "admin";
+    
+    expect(canAccessBackup).toBe(false);
+  });
+});

@@ -119,7 +119,7 @@ async function getActiveTenantsWithBackup(): Promise<number[]> {
       const config = await getBackupConfig(tenant.id);
       // Se não há configuração ou backup está habilitado (padrão = true)
       // backupEnabled é armazenado como TINYINT (0/1) no MySQL
-      if (!config || config.backupEnabled !== 0) {
+      if (!config || config.backupEnabled !== false) {
         tenantIds.push(tenant.id);
       }
     }
