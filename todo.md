@@ -3081,3 +3081,5 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Aplicar design minimalista ao Forgot Password mobile
 
 - [x] Implementar design de mosaico mobile estilo Itaú na landing page (MobileLandingMosaic.tsx)
+
+- [x] Favicon: adicionar círculo branco de fundo para garantir contraste >7 (21:1)
