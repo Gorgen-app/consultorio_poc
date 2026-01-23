@@ -3045,3 +3045,7 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Criar página de reset de senha /reset-password/:token com design split-screen
 
 - [x] Implementar indicador de força de senha com feedback em tempo real (PasswordStrengthIndicator.tsx)
+
+- [x] Favicon: adicionar círculo preto atrás do farol com contraste 21:1 (máximo)
+- [x] Confirmação visual de senha (check/x) no campo confirmar senha (PasswordConfirmIndicator)
+- [x] Validação de token no backend antes de exibir formulário de reset (validateResetToken)

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Eye, EyeOff, KeyRound, AlertCircle, Loader2, CheckCircle2, Shield, Lock } from "lucide-react";
-import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { PasswordStrengthIndicator, PasswordConfirmIndicator } from "@/components/PasswordStrengthIndicator";
 
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
@@ -22,6 +22,12 @@ export default function ResetPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Validar token antes de exibir formulário
+  const { data: tokenValidation, isLoading: isValidatingToken } = trpc.auth.validateResetToken.useQuery(
+    { token },
+    { enabled: !!token, retry: false }
+  );
 
   const resetPasswordMutation = trpc.auth.resetPassword.useMutation({
     onSuccess: () => {
@@ -137,8 +143,27 @@ export default function ResetPassword() {
     );
   }
 
-  // Verificar se tem token - Tela de erro
-  if (!token) {
+  // Tela de loading enquanto valida token
+  if (isValidatingToken) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
+        <div className="flex flex-col items-center">
+          <div className="w-24 h-24 bg-[#0056A4] rounded-full flex items-center justify-center mb-6 animate-pulse">
+            <img 
+              src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+              alt="Gorgen Logo" 
+              className="w-16 h-16 object-contain"
+            />
+          </div>
+          <Loader2 className="h-8 w-8 text-[#0056A4] animate-spin mb-4" />
+          <p className="text-gray-500 text-sm">Validando link de recuperação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar se tem token ou se token é inválido - Tela de erro
+  if (!token || (tokenValidation && !tokenValidation.valid)) {
     return (
       <div className="min-h-screen flex">
         {/* Painel esquerdo - Branding */}
@@ -334,6 +359,7 @@ export default function ResetPassword() {
                     )}
                   </Button>
                 </div>
+                <PasswordConfirmIndicator password={formData.newPassword} confirmPassword={formData.confirmPassword} />
               </div>
 
               <Button

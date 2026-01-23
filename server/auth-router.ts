@@ -489,6 +489,19 @@ ${resetUrl}
     }),
 
   /**
+   * Validar token de reset de senha (verificar se ainda é válido)
+   */
+  validateResetToken: publicProcedure
+    .input(z.object({ token: z.string().min(1, "Token é obrigatório") }))
+    .query(async ({ input }) => {
+      const validation = await authDb.validatePasswordResetToken(input.token);
+      return {
+        valid: validation.valid,
+        // Não retornar userId por segurança
+      };
+    }),
+
+  /**
    * Alterar senha (usuário logado)
    */
   changePassword: protectedProcedure

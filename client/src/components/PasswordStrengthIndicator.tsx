@@ -110,3 +110,33 @@ export function PasswordStrengthIndicator({
 export function PasswordStrengthBar({ password }: { password: string }) {
   return <PasswordStrengthIndicator password={password} showRequirements={false} />;
 }
+
+// Componente de confirmação de senha
+interface PasswordConfirmIndicatorProps {
+  password: string;
+  confirmPassword: string;
+}
+
+export function PasswordConfirmIndicator({ password, confirmPassword }: PasswordConfirmIndicatorProps) {
+  if (!confirmPassword) return null;
+
+  const matches = password === confirmPassword;
+
+  return (
+    <div className={`flex items-center gap-2 mt-2 text-xs font-medium transition-colors duration-200 ${
+      matches ? "text-green-600" : "text-red-600"
+    }`}>
+      {matches ? (
+        <>
+          <Check className="h-4 w-4" />
+          <span>Senhas coincidem</span>
+        </>
+      ) : (
+        <>
+          <X className="h-4 w-4" />
+          <span>Senhas não coincidem</span>
+        </>
+      )}
+    </div>
+  );
+}

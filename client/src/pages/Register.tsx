@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Eye, EyeOff, UserPlus, AlertCircle, Loader2, CheckCircle2, Shield, Lock } from "lucide-react";
-import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { PasswordStrengthIndicator, PasswordConfirmIndicator } from "@/components/PasswordStrengthIndicator";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -325,6 +325,7 @@ export default function Register() {
                     )}
                   </Button>
                 </div>
+                <PasswordConfirmIndicator password={formData.password} confirmPassword={formData.confirmPassword} />
               </div>
 
               <Button
