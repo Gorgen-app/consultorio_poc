@@ -3043,3 +3043,5 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Criar página "Esqueci minha senha" com mesmo estilo visual
 
 - [x] Criar página de reset de senha /reset-password/:token com design split-screen
+
+- [x] Implementar indicador de força de senha com feedback em tempo real (PasswordStrengthIndicator.tsx)

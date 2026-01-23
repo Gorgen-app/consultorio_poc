@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Eye, EyeOff, KeyRound, AlertCircle, Loader2, CheckCircle2, Shield, Lock } from "lucide-react";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
@@ -303,9 +304,7 @@ export default function ResetPassword() {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-gray-400">
-                  Mínimo 8 caracteres, com maiúscula, minúscula e número
-                </p>
+                <PasswordStrengthIndicator password={formData.newPassword} />
               </div>
 
               <div className="space-y-2">
