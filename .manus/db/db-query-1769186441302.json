@@ -1,0 +1,26 @@
+{
+  "query": "SELECT uc.id, uc.username, uc.password_changed_at, uc.must_change_password, u.name, u.email FROM user_credentials uc JOIN users u ON uc.user_id = u.id WHERE uc.username IN ('karen.trindade', 'leticia.uzeika');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT uc.id, uc.username, uc.password_changed_at, uc.must_change_password, u.name, u.email FROM user_credentials uc JOIN users u ON uc.user_id = u.id WHERE uc.username IN ('karen.trindade', 'leticia.uzeika');",
+  "rows": [
+    {
+      "id": "90001",
+      "username": "leticia.uzeika",
+      "password_changed_at": "2026-01-23 16:19:33",
+      "must_change_password": "1",
+      "name": "Letícia Uzeika",
+      "email": "leticiauzeika@gmail.com"
+    },
+    {
+      "id": "30001",
+      "username": "karen.trindade",
+      "password_changed_at": "2026-01-23 16:19:27",
+      "must_change_password": "1",
+      "name": "Karen Trindade",
+      "email": "karen.trindade@andregorgen.com.br"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tusername\tpassword_changed_at\tmust_change_password\tname\temail\n90001\tleticia.uzeika\t2026-01-23 16:19:33\t1\tLetícia Uzeika\tleticiauzeika@gmail.com\n30001\tkaren.trindade\t2026-01-23 16:19:27\t1\tKaren Trindade\tkaren.trindade@andregorgen.com.br\n",
+  "stderr": "",
+  "execution_time_ms": 131
+}

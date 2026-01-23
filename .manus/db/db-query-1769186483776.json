@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO auth_logs (user_id, action, status, ip_address, details, created_at) SELECT uc.user_id, 'password_reset_admin', 'success', 'admin_console', '{\"method\":\"administrative_reset\",\"reason\":\"user_request\",\"notified_via\":\"email\",\"email_id\":\"19bebba188dc5851\"}', NOW() FROM user_credentials uc WHERE uc.username = 'leticia.uzeika';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute INSERT INTO auth_logs (user_id, action, status, ip_address, details, created_at) SELECT uc.user_id, 'password_reset_admin', 'success', 'admin_console', '{\"method\":\"administrative_reset\",\"reason\":\"user_request\",\"notified_via\":\"email\",\"email_id\":\"19bebba188dc5851\"}', NOW() FROM user_credentials uc WHERE uc.username = 'leticia.uzeika';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 72
+}

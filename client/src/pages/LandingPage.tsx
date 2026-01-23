@@ -37,17 +37,15 @@ export default function LandingPage() {
                 <span className="ml-2 text-sm text-gray-500 hidden sm:block">Gestão em Saúde</span>
               </div>
               
-              {/* Navigation Links - Centered */}
-              <nav className="hidden md:flex items-center space-x-8">
-                <a href="#funcionalidades" className="text-gray-600 hover:text-[#0056A4] transition-colors">Funcionalidades</a>
-                <a href="#sobre" className="text-gray-600 hover:text-[#0056A4] transition-colors">Sobre</a>
-                <a href="#quem-somos" className="text-gray-600 hover:text-[#0056A4] transition-colors">Quem Somos</a>
-              </nav>
-              
-              {/* Auth Button */}
-              <div className="flex items-center">
+              {/* Navigation Links + Auth Button - Distributed */}
+              <div className="hidden md:flex items-center gap-8">
+                <nav className="flex items-center gap-8">
+                  <a href="#funcionalidades" className="text-gray-600 hover:text-[#002B49] transition-colors font-medium">Funcionalidades</a>
+                  <a href="#sobre" className="text-gray-600 hover:text-[#002B49] transition-colors font-medium">Sobre</a>
+                  <a href="#quem-somos" className="text-gray-600 hover:text-[#002B49] transition-colors font-medium">Quem Somos</a>
+                </nav>
                 <Link href="/login">
-                  <Button className="bg-[#0056A4] hover:bg-[#004080] text-white px-6">
+                  <Button className="bg-[#002B49] hover:bg-[#001A2E] text-white px-6">
                     Entrar
                   </Button>
                 </Link>
@@ -94,7 +92,7 @@ export default function LandingPage() {
               <div className="relative">
                 <div className="bg-gradient-to-br from-[#6B8CBE]/20 to-[#0056A4]/10 rounded-2xl p-8 aspect-square flex items-center justify-center">
                   <div className="text-center">
-                    <div className="w-64 h-64 mx-auto mb-6 bg-[#0056A4] rounded-full flex items-center justify-center shadow-xl">
+                    <div className="w-64 h-64 mx-auto mb-6 bg-[#002B49] rounded-full flex items-center justify-center shadow-xl">
                       <img 
                         src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
                         alt="Gorgen Logo" 

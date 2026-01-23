@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE user_credentials SET password_hash = '$2b$10$FIsFHvxqiNT765m4ME0rUupUzhuBtuLorer7G0xyAjNSurHDj2gZu', must_change_password = 1, password_changed_at = NOW() WHERE username = 'leticia.uzeika';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute UPDATE user_credentials SET password_hash = '$2b$10$FIsFHvxqiNT765m4ME0rUupUzhuBtuLorer7G0xyAjNSurHDj2gZu', must_change_password = 1, password_changed_at = NOW() WHERE username = 'leticia.uzeika';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 78
+}

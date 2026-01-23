@@ -1,0 +1,223 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "agendamentos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "alergias"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "atendimentos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "audit_log"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "auth_logs"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "backup_config"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "backup_history"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "bloqueios_horario"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "calendar_acl"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "calendars"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "cardiologia"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "cirurgias"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "consultation_status_log"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "consultations"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "cross_tenant_access_logs"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "dashboard_configs"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "documentos_externos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "documentos_medicos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "endoscopias"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "events"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "evolucoes"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "exames_favoritos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "exames_imagem"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "exames_laboratoriais"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "exames_padronizados"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "google_calendar_config"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "google_calendar_sync"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "historico_agendamentos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "historico_medidas"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "historico_solicitacao_cirurgica"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "historico_vinculo"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "internacoes"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medicamentos_uso"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_bancario"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_cadastro_pessoal"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_conflito_interesses"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_conselho"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_credenciamento"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_documentacao"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_documentos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_endereco"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_especializacoes"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_formacoes"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_historico_profissional"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_links"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_pos_graduacao"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_recomendacoes"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_vacinas"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "medico_vinculos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "obstetricia"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "paciente_autorizacoes"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "pacientes"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "password_reset_tokens"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "patologias"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "problemas_ativos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "profissionais"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "resultados_laboratoriais"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "resumo_clinico"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "solicitacoes_cirurgicas"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "tenants"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "terapias"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "two_factor_auth"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "user_credentials"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "user_passwords"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "user_profile_photos"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "user_profiles"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "user_sessions"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "user_settings"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "users"
+    },
+    {
+      "Tables_in_TyeFpW5ykZHTuZXuk6iMG7": "vinculo_secretaria_medico"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_TyeFpW5ykZHTuZXuk6iMG7\n__drizzle_migrations\nagendamentos\nalergias\natendimentos\naudit_log\nauth_logs\nbackup_config\nbackup_history\nbloqueios_horario\ncalendar_acl\ncalendars\ncardiologia\ncirurgias\nconsultation_status_log\nconsultations\ncross_tenant_access_logs\ndashboard_configs\ndocumentos_externos\ndocumentos_medicos\nendoscopias\nevents\nevolucoes\nexames_favoritos\nexames_imagem\nexames_laboratoriais\nexames_padronizados\ngoogle_calendar_config\ngoogle_calendar_sync\nhistorico_agendamentos\nhistorico_medidas\nhistorico_solicitacao_cirurgica\nhistorico_vinculo\ninternacoes\nmedicamentos_uso\nmedico_bancario\nmedico_cadastro_pessoal\nmedico_conflito_interesses\nmedico_conselho\nmedico_credenciamento\nmedico_documentacao\nmedico_documentos\nmedico_endereco\nmedico_especializacoes\nmedico_formacoes\nmedico_historico_profissional\nmedico_links\nmedico_pos_graduacao\nmedico_recomendacoes\nmedico_vacinas\nmedico_vinculos\nobstetricia\npaciente_autorizacoes\npacientes\npassword_reset_tokens\npatologias\nproblemas_ativos\nprofissionais\nresultados_laboratoriais\nresumo_clinico\nsolicitacoes_cirurgicas\ntenants\nterapias\ntwo_factor_auth\nuser_credentials\nuser_passwords\nuser_profile_photos\nuser_profiles\nuser_sessions\nuser_settings\nusers\nvinculo_secretaria_medico\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}
