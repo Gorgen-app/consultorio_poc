@@ -3022,3 +3022,5 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [ ] Implementar procedure pacientes.export no backend
 - [ ] Implementar procedure atendimentos.export no backend
 - [ ] Corrigir testes auth-local.test.ts (localAuth → auth)
+
+- [x] Substituir logo do estetoscópio pelo logo oficial do farol na landing page (header, hero, card médico)
