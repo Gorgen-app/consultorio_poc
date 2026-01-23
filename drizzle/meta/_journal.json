@@ -176,6 +176,13 @@
       "when": 1768867616894,
       "tag": "0024_breezy_mantis",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1769152102765,
+      "tag": "0025_fat_shotgun",
+      "breakpoints": true
     }
   ]
 }
