@@ -8,6 +8,8 @@ import * as authDb from "./auth-db";
 import * as speakeasy from "speakeasy";
 import * as QRCode from "qrcode";
 import { notifyOwner } from "./_core/notification";
+import { isRateLimited, recordFailedAttempt, clearRateLimit } from "./rate-limiter";
+import { sendPasswordResetEmail } from "./email-service";
 
 // Schemas de validação
 const usernameSchema = z
@@ -148,6 +150,18 @@ export const authRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      // Verificar rate limiting por IP
+      const clientIp = ctx.req?.ip || ctx.req?.headers["x-forwarded-for"] || "unknown";
+      const ipIdentifier = Array.isArray(clientIp) ? clientIp[0] : clientIp;
+      
+      const rateLimitCheck = isRateLimited("login", ipIdentifier);
+      if (rateLimitCheck.blocked) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: rateLimitCheck.message,
+        });
+      }
+
       // Validar credenciais
       const validation = await authDb.validatePassword(
         input.username,
@@ -182,12 +196,16 @@ export const authRouter = router({
             attemptsRemaining: validation.attemptsRemaining,
           }
         );
+        // Registrar tentativa falha no rate limiter
+        const rateLimitResult = recordFailedAttempt("login", ipIdentifier);
+        
         throw new TRPCError({
           code: "UNAUTHORIZED",
-          message:
-            validation.attemptsRemaining !== undefined
+          message: rateLimitResult.blocked
+            ? rateLimitResult.message
+            : validation.attemptsRemaining !== undefined
               ? `Credenciais inválidas. ${validation.attemptsRemaining} tentativas restantes.`
-              : "Credenciais inválidas",
+              : `Credenciais inválidas. ${rateLimitResult.message}`,
         });
       }
 
@@ -236,6 +254,9 @@ export const authRouter = router({
         ...cookieOptions,
         maxAge: ONE_YEAR_MS,
       });
+
+      // Limpar rate limiting após sucesso
+      clearRateLimit("login", ipIdentifier);
 
       // Registrar log
       await authDb.logAuthEvent(
@@ -355,6 +376,21 @@ export const authRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      // Verificar rate limiting por IP
+      const clientIp = ctx.req?.ip || ctx.req?.headers["x-forwarded-for"] || "unknown";
+      const ipIdentifier = Array.isArray(clientIp) ? clientIp[0] : clientIp;
+      
+      const rateLimitCheck = isRateLimited("passwordReset", ipIdentifier);
+      if (rateLimitCheck.blocked) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: rateLimitCheck.message,
+        });
+      }
+
+      // Registrar tentativa (sempre, para prevenir enumeração de emails)
+      recordFailedAttempt("passwordReset", ipIdentifier);
+
       const user = await authDb.findUserByEmail(input.email);
 
       // Sempre retornar sucesso para não revelar se o email existe
@@ -383,11 +419,47 @@ export const authRouter = router({
       const baseUrl = process.env.VITE_APP_URL || ctx.req?.headers?.origin || 'https://www.gorgen.com.br';
       const resetUrl = `${baseUrl}/reset-password?token=${token}`;
       
-      // Enviar notificação ao proprietário do sistema com o link de recuperação
+      // Enviar e-mail de recuperação de senha ao usuário
       try {
-        await notifyOwner({
-          title: `🔐 Solicitação de Recuperação de Senha - ${user.name || input.email}`,
-          content: `
+        const emailResult = await sendPasswordResetEmail(
+          input.email,
+          user.name || 'Usuário',
+          resetUrl
+        );
+        
+        if (emailResult.success) {
+          console.log(`[Password Reset] E-mail enviado com sucesso para ${input.email}`);
+        } else {
+          console.error(`[Password Reset] Falha ao enviar e-mail: ${emailResult.error}`);
+          // Fallback: notificar o owner
+          await notifyOwner({
+            title: `🔐 Solicitação de Recuperação de Senha - ${user.name || input.email}`,
+            content: `
+**Solicitação de Recuperação de Senha**
+
+Um usuário solicitou a recuperação de senha (e-mail não enviado - fallback):
+
+- **Usuário:** ${user.name || 'Não informado'}
+- **E-mail:** ${input.email}
+- **Data/Hora:** ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+
+**Link de Recuperação:**
+${resetUrl}
+
+*Este link expira em 1 hora.*
+
+---
+*Notificação automática do sistema GORGEN*
+            `.trim()
+          });
+        }
+      } catch (emailError) {
+        console.error(`[Password Reset] Erro ao enviar e-mail:`, emailError);
+        // Fallback: notificar o owner
+        try {
+          await notifyOwner({
+            title: `🔐 Solicitação de Recuperação de Senha - ${user.name || input.email}`,
+            content: `
 **Solicitação de Recuperação de Senha**
 
 Um usuário solicitou a recuperação de senha:
@@ -403,12 +475,11 @@ ${resetUrl}
 
 ---
 *Notificação automática do sistema GORGEN*
-          `.trim()
-        });
-        console.log(`[Password Reset] Notificação enviada para ${input.email}`);
-      } catch (notifyError) {
-        console.error(`[Password Reset] Erro ao enviar notificação:`, notifyError);
-        // Continua mesmo se a notificação falhar
+            `.trim()
+          });
+        } catch (notifyError) {
+          console.error(`[Password Reset] Erro ao enviar notificação:`, notifyError);
+        }
       }
 
       await authDb.logAuthEvent(

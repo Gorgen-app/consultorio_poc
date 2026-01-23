@@ -30,6 +30,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ChangePassword from "./pages/ChangePassword";
+import QuemSomos from "./pages/QuemSomos";
 
 // Rotas de autenticação (públicas, sem DashboardLayout)
 function PublicRouter() {
@@ -42,6 +43,7 @@ function PublicRouter() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password/:token" component={ResetPassword} />
       <Route path="/change-password" component={ChangePassword} />
+      <Route path="/quem-somos" component={QuemSomos} />
     </Switch>
   );
 }

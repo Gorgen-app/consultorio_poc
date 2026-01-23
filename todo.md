@@ -3049,3 +3049,28 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Favicon: adicionar círculo preto atrás do farol com contraste 21:1 (máximo)
 - [x] Confirmação visual de senha (check/x) no campo confirmar senha (PasswordConfirmIndicator)
 - [x] Validação de token no backend antes de exibir formulário de reset (validateResetToken)
+
+
+## 📅 23/01/2026 - Novas Funcionalidades
+
+- [ ] Implementar rate limiting para login e recuperação de senha (prevenir força bruta)
+- [ ] Implementar envio de e-mail de recuperação de senha
+- [ ] Redesenhar interface mobile inspirada no Itaú (cards grandes, fundo azul escuro, foco no login)
+- [ ] Criar página "Quem Somos" (baixa prioridade)
+
+
+---
+
+## 📅 23/01/2026 - Segurança e UX Mobile
+
+### Segurança
+- [x] Implementar rate limiting para login e recuperação de senha (prevenir força bruta)
+- [x] Implementar envio de e-mail de recuperação de senha (email-service.ts)
+- [x] Criar serviço de email com templates HTML profissionais
+
+### Interface Mobile
+- [x] Redesenhar interface mobile inspirada no Itaú (cards grandes, fundo azul escuro, foco no login)
+- [x] Header mobile com logo e navegação
+- [x] Cards de ação estilo Itaú (Acessar, Criar Conta, Esqueci Senha)
+- [x] Formulário de login integrado no card principal
+- [x] Design responsivo (desktop split-screen, mobile full-screen)
