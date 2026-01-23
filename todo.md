@@ -3024,3 +3024,11 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [ ] Corrigir testes auth-local.test.ts (localAuth → auth)
 
 - [x] Substituir logo do estetoscópio pelo logo oficial do farol na landing page (header, hero, card médico)
+
+- [x] Aumentar logo do farol em 100% no hero (de 128px para 256px)
+- [x] Adicionar círculo azul atrás do logo (#0056A4)
+- [x] Ajustar cor das linhas do farol para contraste 7:1 (usando logo branco)
+- [x] Remover seção de preços da landing page
+- [x] Remover seção "criar conta grátis" da landing page
+- [x] Melhorar distribuição dos botões no header (apenas "Entrar")
+- [x] Adicionar link "Quem Somos" no header e seção placeholder

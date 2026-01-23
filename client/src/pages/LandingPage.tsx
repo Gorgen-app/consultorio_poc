@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { 
   Shield, 
@@ -8,10 +8,7 @@ import {
   Calendar, 
   TrendingUp, 
   Lock,
-  CheckCircle,
-  ArrowRight,
-  Heart,
-  Building2
+  ArrowRight
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -32,23 +29,18 @@ export default function LandingPage() {
               <span className="ml-2 text-sm text-gray-500 hidden sm:block">Gestão em Saúde</span>
             </div>
             
-            {/* Navigation Links */}
+            {/* Navigation Links - Centered */}
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#funcionalidades" className="text-gray-600 hover:text-[#0056A4] transition-colors">Funcionalidades</a>
-              <a href="#planos" className="text-gray-600 hover:text-[#0056A4] transition-colors">Planos</a>
               <a href="#sobre" className="text-gray-600 hover:text-[#0056A4] transition-colors">Sobre</a>
+              <a href="#quem-somos" className="text-gray-600 hover:text-[#0056A4] transition-colors">Quem Somos</a>
             </nav>
             
-            {/* Auth Buttons */}
-            <div className="flex items-center space-x-4">
+            {/* Auth Button */}
+            <div className="flex items-center">
               <Link href="/login">
-                <Button variant="ghost" className="text-[#002B49] hover:text-[#0056A4]">
+                <Button className="bg-[#0056A4] hover:bg-[#004080] text-white px-6">
                   Entrar
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button className="bg-[#0056A4] hover:bg-[#004080] text-white">
-                  Criar Conta
                 </Button>
               </Link>
             </div>
@@ -69,15 +61,10 @@ export default function LandingPage() {
                 O prontuário eletrônico centrado no paciente. Você é dono dos seus dados de saúde e decide quem pode acessá-los.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/register">
-                  <Button size="lg" className="bg-[#0056A4] hover:bg-[#004080] text-white px-8">
-                    Começar Agora
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
                 <a href="#funcionalidades">
-                  <Button size="lg" variant="outline" className="border-[#0056A4] text-[#0056A4] hover:bg-[#0056A4] hover:text-white px-8">
+                  <Button size="lg" className="bg-[#0056A4] hover:bg-[#004080] text-white px-8">
                     Saiba Mais
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </a>
               </div>
@@ -95,15 +82,15 @@ export default function LandingPage() {
               </div>
             </div>
             
-            {/* Hero Image/Illustration */}
+            {/* Hero Image/Illustration - Logo 100% maior com círculo azul */}
             <div className="relative">
               <div className="bg-gradient-to-br from-[#6B8CBE]/20 to-[#0056A4]/10 rounded-2xl p-8 aspect-square flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+                  <div className="w-64 h-64 mx-auto mb-6 bg-[#0056A4] rounded-full flex items-center justify-center shadow-xl">
                     <img 
-                      src="/assets/logo/gorgen_logo_master_2048_transparent.png" 
+                      src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
                       alt="Gorgen Logo" 
-                      className="w-full h-full object-contain"
+                      className="w-48 h-48 object-contain"
                     />
                   </div>
                   <p className="text-lg font-medium text-[#002B49]">Seu prontuário, sua propriedade</p>
@@ -202,151 +189,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="planos" className="py-20 px-4 sm:px-6 lg:px-8 bg-[#F5F7FA]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-[#002B49] mb-4">Planos e Preços</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Escolha o plano ideal para você. Pacientes, médicos ou clínicas.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Paciente Plan */}
-            <Card className="border-2 border-gray-200 bg-white">
-              <CardHeader className="text-center pb-2">
-                <div className="w-16 h-16 mx-auto mb-4 bg-[#6B8CBE]/10 rounded-full flex items-center justify-center">
-                  <Heart className="h-8 w-8 text-[#6B8CBE]" />
-                </div>
-                <CardTitle className="text-xl text-[#002B49]">Paciente</CardTitle>
-                <CardDescription>Para quem quer organizar sua saúde</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center">
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-[#002B49]">R$ 9,90</span>
-                  <span className="text-gray-500">/mês</span>
-                </div>
-                <ul className="space-y-3 text-left mb-8">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Prontuário pessoal unificado</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Upload de exames</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Histórico de consultas</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Gestão de autorizações</span>
-                  </li>
-                </ul>
-                <Link href="/register?plan=paciente">
-                  <Button className="w-full bg-[#6B8CBE] hover:bg-[#5A7DB0] text-white">
-                    Começar
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-            
-            {/* Médico Plan */}
-            <Card className="border-2 border-[#0056A4] bg-white relative">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-[#0056A4] text-white text-sm font-medium px-4 py-1 rounded-full">
-                  Mais Popular
-                </span>
-              </div>
-              <CardHeader className="text-center pb-2 pt-8">
-                <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <img 
-                    src="/assets/logo/gorgen_logo_master_2048_transparent.png" 
-                    alt="Gorgen Logo" 
-                    className="w-12 h-12 object-contain"
-                  />
-                </div>
-                <CardTitle className="text-xl text-[#002B49]">Médico</CardTitle>
-                <CardDescription>Para profissionais de saúde</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center">
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-[#002B49]">R$ 197</span>
-                  <span className="text-gray-500">/mês</span>
-                </div>
-                <ul className="space-y-3 text-left mb-8">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Prontuário eletrônico completo</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Agenda e faturamento</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Até 2 secretárias inclusas</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Suporte prioritário</span>
-                  </li>
-                </ul>
-                <Link href="/register?plan=medico">
-                  <Button className="w-full bg-[#0056A4] hover:bg-[#004080] text-white">
-                    Começar
-                  </Button>
-                </Link>
-                <p className="text-sm text-gray-500 mt-3">25% de desconto no plano anual</p>
-              </CardContent>
-            </Card>
-            
-            {/* Clínica Plan */}
-            <Card className="border-2 border-gray-200 bg-white">
-              <CardHeader className="text-center pb-2">
-                <div className="w-16 h-16 mx-auto mb-4 bg-[#002B49]/10 rounded-full flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-[#002B49]" />
-                </div>
-                <CardTitle className="text-xl text-[#002B49]">Clínica</CardTitle>
-                <CardDescription>Para clínicas e hospitais</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center">
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-[#002B49]">Sob Consulta</span>
-                </div>
-                <ul className="space-y-3 text-left mb-8">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Economia de tenants existentes</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Dashboard gerencial</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">API de integração</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-600">Onboarding dedicado</span>
-                  </li>
-                </ul>
-                <a href="mailto:contato@gorgen.com.br?subject=Interesse no Plano Clínica">
-                  <Button variant="outline" className="w-full border-[#002B49] text-[#002B49] hover:bg-[#002B49] hover:text-white">
-                    Fale Conosco
-                  </Button>
-                </a>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* About Section */}
-      <section id="sobre" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section id="sobre" className="py-20 px-4 sm:px-6 lg:px-8 bg-[#F5F7FA]">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-[#002B49] mb-6">Sobre o GORGEN</h2>
           <p className="text-xl text-gray-600 mb-8 leading-relaxed">
@@ -372,21 +216,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#002B49]">
+      {/* Quem Somos Section - Placeholder */}
+      <section id="quem-somos" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">
-            Pronto para transformar sua gestão de saúde?
-          </h2>
-          <p className="text-xl text-gray-300 mb-8">
-            Junte-se a milhares de pacientes e médicos que já confiam no GORGEN.
+          <h2 className="text-3xl font-bold text-[#002B49] mb-6">Quem Somos</h2>
+          <p className="text-xl text-gray-400 italic">
+            Em breve...
           </p>
-          <Link href="/register">
-            <Button size="lg" className="bg-[#0056A4] hover:bg-[#004080] text-white px-12">
-              Criar Conta Grátis
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
         </div>
       </section>
 
@@ -395,7 +231,14 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <span className="text-xl font-bold text-white tracking-wide">GORGEN</span>
+              <div className="flex items-center gap-2 mb-2">
+                <img 
+                  src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+                  alt="Gorgen Logo" 
+                  className="h-8 w-8 object-contain"
+                />
+                <span className="text-xl font-bold text-white tracking-wide">GORGEN</span>
+              </div>
               <p className="text-gray-400 mt-2 text-sm">
                 Gestão em Saúde com Arquitetura de Rede Social
               </p>
@@ -404,8 +247,8 @@ export default function LandingPage() {
               <h4 className="text-white font-medium mb-4">Produto</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li><a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a></li>
-                <li><a href="#planos" className="hover:text-white transition-colors">Planos</a></li>
                 <li><a href="#sobre" className="hover:text-white transition-colors">Sobre</a></li>
+                <li><a href="#quem-somos" className="hover:text-white transition-colors">Quem Somos</a></li>
               </ul>
             </div>
             <div>
