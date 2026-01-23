@@ -183,6 +183,13 @@
       "when": 1769152102765,
       "tag": "0025_fat_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1769152759417,
+      "tag": "0026_clammy_shiver_man",
+      "breakpoints": true
     }
   ]
 }

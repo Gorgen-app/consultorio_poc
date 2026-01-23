@@ -1,0 +1,2 @@
+ALTER TABLE `evolucoes` ADD `agendamento_id` int;--> statement-breakpoint
+ALTER TABLE `evolucoes` ADD CONSTRAINT `evolucoes_agendamento_id_agendamentos_id_fk` FOREIGN KEY (`agendamento_id`) REFERENCES `agendamentos`(`id`) ON DELETE no action ON UPDATE no action;

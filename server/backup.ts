@@ -2313,5 +2313,10 @@ export async function getRestoreTestHistory(
     .orderBy(desc(backupHistory.createdAt))
     .limit(limit);
   
-  return backups;
+  return backups.map(b => ({
+    backupId: b.backupId,
+    backupDate: b.backupDate.toISOString(),
+    lastTestedAt: b.lastTestedAt?.toISOString() ?? null,
+    verificationStatus: b.verificationStatus ?? null,
+  }));
 }
