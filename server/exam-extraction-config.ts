@@ -311,3 +311,33 @@ export function parseBrazilianDate(dateStr: string): string | null {
   
   return null;
 }
+
+/**
+ * Novos exames identificados na Sessão 3 (2026-01-23)
+ */
+export const SESSION3_NEW_EXAMS = [
+  "ELASTASE PANCREÁTICA",
+  "CERULOPLASMINA", 
+  "COBRE",
+  "OSMOLALIDADE SORO",
+  "OSMOLALIDADE URINA",
+  "ACTH",
+  "PEPTÍDEO C",
+  "INSULINA",
+  "ANTI-TRANSGLUTAMINASE IgG",
+  "ALFA-1 GLOBULINAS",
+  "ALFA-2 GLOBULINAS",
+  "BETA-1 GLOBULINAS",
+  "BETA-2 GLOBULINAS",
+  "GAMA GLOBULINAS",
+];
+
+/**
+ * Métricas de performance do algoritmo
+ * Atualizado após cada sessão de treinamento
+ */
+export const PERFORMANCE_METRICS = {
+  sessao1: { pdfs: 3, paginas: 41, exames: 44, tempoMin: 15, paginasPorMin: 2.7 },
+  sessao2: { pdfs: 3, paginas: 34, exames: 47, tempoMin: 10, paginasPorMin: 3.4 },
+  sessao3: { pdfs: 13, paginas: 170, exames: 284, tempoMin: 25, paginasPorMin: 6.8 },
+};
