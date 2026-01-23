@@ -200,10 +200,10 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-[#002B49] mb-6">Sobre o GORGEN</h2>
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-              O GORGEN nasceu da experiência real de um médico que atendeu milhares de pacientes e entendeu que o prontuário deveria pertencer ao paciente, não ao consultório.
+              Somos uma plataforma de gestão em saúde com foco no paciente, no qual médicos são parte do ecossistema que desenvolve toda a jornada assistencial — da consulta ao faturamento, do intra- ao extra-hospitalar.
             </p>
             <p className="text-lg text-gray-500 mb-8">
-              Combinamos gestão em saúde com arquitetura de rede social: você conecta com seus médicos, compartilha seus dados de forma segura e mantém o controle total sobre quem pode acessar suas informações.
+              Ouvimos as dores de pacientes e de médicos diante de um sistema de saúde burocrático, fragmentado e distorcido e desenhamos uma solução inteligente que simplifica a gestão e devolve tempo e energia dos médicos para o que realmente importa: o cuidado às pessoas.
             </p>
             <div className="flex justify-center gap-8 text-center">
               <div>

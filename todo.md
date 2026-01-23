@@ -3086,3 +3086,5 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 
 - [x] Mudar cor do botão "Entrar" e círculo do logo para azul escuro (#002B49)
 - [x] Melhorar distribuição dos links no cabeçalho (links + botão agrupados)
+
+- [x] Atualizar texto "Sobre o GORGEN" na landing page com novo conteúdo institucional
