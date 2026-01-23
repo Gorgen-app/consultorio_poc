@@ -1276,156 +1276,233 @@ export default function Agenda() {
                 </div>
               )}
 
-              {/* Ações baseadas no status */}
-              {agendamentoSelecionado.status === "Agendado" && (
-                <div className="flex flex-wrap gap-1.5 pt-3 border-t">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => confirmarAgendamento.mutate({ id: agendamentoSelecionado.id })}
-                  >
-                    <Check className="w-3.5 h-3.5 mr-1" />
-                    Confirmar
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => {
-                      setNovaData(new Date(agendamentoSelecionado.dataHoraInicio).toISOString().split("T")[0]);
-                      setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
-                      setNovaHoraFim(formatarHora(agendamentoSelecionado.dataHoraFim));
-                      setModalReagendarAberto(true);
-                    }}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                    Reagendar
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 px-2 text-xs text-red-600"
-                    onClick={() => setModalCancelarAberto(true)}
-                  >
-                    <X className="w-3.5 h-3.5 mr-1" />
-                    Cancelar
-                  </Button>
+              {/* Fluxo de Status - Todos os botões visíveis com estados ativos/inativos */}
+              {!["Cancelado", "Reagendado", "Faltou", "Realizado"].includes(agendamentoSelecionado.status) && (
+                <div className="pt-3 border-t space-y-3">
+                  {/* Barra de progresso visual do fluxo */}
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-2">
+                    <div className={`flex flex-col items-center ${["Agendado", "Confirmado", "Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "text-green-600 font-medium" : ""}`}>
+                      <div className={`w-2 h-2 rounded-full mb-0.5 ${["Agendado", "Confirmado", "Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "bg-green-500" : "bg-gray-300"}`} />
+                      Agendado
+                    </div>
+                    <div className="flex-1 h-0.5 mx-1 bg-gray-200">
+                      <div className={`h-full transition-all ${["Confirmado", "Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "bg-green-500 w-full" : "w-0"}`} />
+                    </div>
+                    <div className={`flex flex-col items-center ${["Confirmado", "Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "text-green-600 font-medium" : ""}`}>
+                      <div className={`w-2 h-2 rounded-full mb-0.5 ${["Confirmado", "Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "bg-green-500" : "bg-gray-300"}`} />
+                      Confirmado
+                    </div>
+                    <div className="flex-1 h-0.5 mx-1 bg-gray-200">
+                      <div className={`h-full transition-all ${["Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "bg-green-500 w-full" : "w-0"}`} />
+                    </div>
+                    <div className={`flex flex-col items-center ${["Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "text-yellow-600 font-medium" : ""}`}>
+                      <div className={`w-2 h-2 rounded-full mb-0.5 ${["Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "bg-yellow-500" : "bg-gray-300"}`} />
+                      Chegou
+                    </div>
+                    <div className="flex-1 h-0.5 mx-1 bg-gray-200">
+                      <div className={`h-full transition-all ${["Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "bg-green-500 w-full" : "w-0"}`} />
+                    </div>
+                    <div className={`flex flex-col items-center ${["Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "text-blue-600 font-medium" : ""}`}>
+                      <div className={`w-2 h-2 rounded-full mb-0.5 ${["Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) ? "bg-blue-500" : "bg-gray-300"}`} />
+                      Atendendo
+                    </div>
+                    <div className="flex-1 h-0.5 mx-1 bg-gray-200">
+                      <div className={`h-full transition-all ${agendamentoSelecionado.status === "Realizado" ? "bg-green-500 w-full" : "w-0"}`} />
+                    </div>
+                    <div className={`flex flex-col items-center ${agendamentoSelecionado.status === "Realizado" ? "text-green-600 font-medium" : ""}`}>
+                      <div className={`w-2 h-2 rounded-full mb-0.5 ${agendamentoSelecionado.status === "Realizado" ? "bg-green-500" : "bg-gray-300"}`} />
+                      Finalizado
+                    </div>
+                  </div>
+
+                  {/* Botões de ação do fluxo principal */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {/* Botão Confirmar */}
+                    <Button 
+                      variant={agendamentoSelecionado.status === "Agendado" ? "default" : "outline"}
+                      size="sm"
+                      className={`h-7 px-2 text-xs transition-all ${
+                        agendamentoSelecionado.status === "Agendado" 
+                          ? "bg-blue-500 hover:bg-blue-600 text-white" 
+                          : ["Confirmado", "Aguardando", "Em atendimento"].includes(agendamentoSelecionado.status)
+                            ? "bg-green-100 text-green-700 border-green-300 cursor-default"
+                            : "opacity-40 cursor-not-allowed"
+                      }`}
+                      disabled={agendamentoSelecionado.status !== "Agendado"}
+                      onClick={() => {
+                        confirmarAgendamento.mutate({ id: agendamentoSelecionado.id }, {
+                          onSuccess: () => {
+                            // Atualizar o estado local imediatamente
+                            setAgendamentoSelecionado((prev: any) => prev ? { ...prev, status: "Confirmado" } : null);
+                          }
+                        });
+                      }}
+                    >
+                      <Check className="w-3.5 h-3.5 mr-1" />
+                      {["Confirmado", "Aguardando", "Em atendimento"].includes(agendamentoSelecionado.status) ? "Confirmado ✓" : "Confirmar"}
+                    </Button>
+
+                    {/* Botão Chegou */}
+                    <Button 
+                      variant={agendamentoSelecionado.status === "Confirmado" ? "default" : "outline"}
+                      size="sm"
+                      className={`h-7 px-2 text-xs transition-all ${
+                        agendamentoSelecionado.status === "Confirmado" 
+                          ? "bg-yellow-500 hover:bg-yellow-600 text-white" 
+                          : ["Aguardando", "Em atendimento"].includes(agendamentoSelecionado.status)
+                            ? "bg-yellow-100 text-yellow-700 border-yellow-300 cursor-default"
+                            : "opacity-40 cursor-not-allowed"
+                      }`}
+                      disabled={agendamentoSelecionado.status !== "Confirmado"}
+                      onClick={() => {
+                        marcarAguardando.mutate({ id: agendamentoSelecionado.id }, {
+                          onSuccess: () => {
+                            setAgendamentoSelecionado((prev: any) => prev ? { ...prev, status: "Aguardando" } : null);
+                          }
+                        });
+                      }}
+                    >
+                      <UserCheck className="w-3.5 h-3.5 mr-1" />
+                      {["Aguardando", "Em atendimento"].includes(agendamentoSelecionado.status) ? "Chegou ✓" : "Chegou"}
+                    </Button>
+
+                    {/* Botão Atender */}
+                    <Button 
+                      variant={agendamentoSelecionado.status === "Aguardando" ? "default" : "outline"}
+                      size="sm"
+                      className={`h-7 px-2 text-xs transition-all ${
+                        agendamentoSelecionado.status === "Aguardando" 
+                          ? "bg-green-600 hover:bg-green-700 text-white" 
+                          : agendamentoSelecionado.status === "Em atendimento"
+                            ? "bg-green-100 text-green-700 border-green-300 cursor-default"
+                            : "opacity-40 cursor-not-allowed"
+                      }`}
+                      disabled={agendamentoSelecionado.status !== "Aguardando"}
+                      onClick={() => {
+                        iniciarAtendimento.mutate({ id: agendamentoSelecionado.id }, {
+                          onSuccess: () => {
+                            setAgendamentoSelecionado((prev: any) => prev ? { ...prev, status: "Em atendimento" } : null);
+                            if (agendamentoSelecionado.pacienteId) {
+                              setModalDetalhesAberto(false);
+                              setLocation(`/prontuario/${agendamentoSelecionado.pacienteId}?secao=evolucoes&novaEvolucao=true&agendamentoId=${agendamentoSelecionado.id}`);
+                            } else {
+                              toast.error("Paciente não vinculado ao agendamento");
+                            }
+                          }
+                        });
+                      }}
+                    >
+                      <FileText className="w-3.5 h-3.5 mr-1" />
+                      {agendamentoSelecionado.status === "Em atendimento" ? "Em atendimento ✓" : "Atender"}
+                    </Button>
+
+                    {/* Botão Finalizar */}
+                    <Button 
+                      variant={agendamentoSelecionado.status === "Em atendimento" ? "default" : "outline"}
+                      size="sm"
+                      className={`h-7 px-2 text-xs transition-all ${
+                        agendamentoSelecionado.status === "Em atendimento" 
+                          ? "bg-[#6B8CBE] hover:bg-[#5a7ba8] text-white" 
+                          : "opacity-40 cursor-not-allowed"
+                      }`}
+                      disabled={agendamentoSelecionado.status !== "Em atendimento"}
+                      onClick={() => {
+                        realizarAgendamento.mutate({ id: agendamentoSelecionado.id }, {
+                          onSuccess: () => {
+                            setAgendamentoSelecionado((prev: any) => prev ? { ...prev, status: "Realizado" } : null);
+                          }
+                        });
+                      }}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                      Finalizar
+                    </Button>
+                  </div>
+
+                  {/* Botões secundários (Reagendar, Faltou, Cancelar) */}
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-dashed">
+                    {/* Botão Continuar Evolução (apenas quando em atendimento) */}
+                    {agendamentoSelecionado.status === "Em atendimento" && agendamentoSelecionado.pacienteId && (
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-blue-600 border-blue-300 hover:bg-blue-50"
+                        onClick={() => {
+                          setModalDetalhesAberto(false);
+                          setLocation(`/prontuario/${agendamentoSelecionado.pacienteId}?secao=evolucoes`);
+                        }}
+                      >
+                        <FileText className="w-3.5 h-3.5 mr-1" />
+                        Continuar Evolução
+                      </Button>
+                    )}
+
+                    {/* Botão Reagendar */}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      disabled={["Aguardando", "Em atendimento"].includes(agendamentoSelecionado.status)}
+                      onClick={() => {
+                        setNovaData(new Date(agendamentoSelecionado.dataHoraInicio).toISOString().split("T")[0]);
+                        setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
+                        setNovaHoraFim(formatarHora(agendamentoSelecionado.dataHoraFim));
+                        setModalReagendarAberto(true);
+                      }}
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                      Reagendar
+                    </Button>
+
+                    {/* Botão Faltou */}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      disabled={!["Confirmado", "Aguardando"].includes(agendamentoSelecionado.status)}
+                      onClick={() => {
+                        marcarFalta.mutate({ id: agendamentoSelecionado.id }, {
+                          onSuccess: () => {
+                            setAgendamentoSelecionado((prev: any) => prev ? { ...prev, status: "Faltou" } : null);
+                          }
+                        });
+                      }}
+                    >
+                      <AlertCircle className="w-3.5 h-3.5 mr-1" />
+                      Faltou
+                    </Button>
+
+                    {/* Botão Cancelar */}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-7 px-2 text-xs text-red-600"
+                      disabled={["Em atendimento"].includes(agendamentoSelecionado.status)}
+                      onClick={() => setModalCancelarAberto(true)}
+                    >
+                      <X className="w-3.5 h-3.5 mr-1" />
+                      Cancelar
+                    </Button>
+                  </div>
                 </div>
               )}
 
-              {agendamentoSelecionado.status === "Confirmado" && (
-                <div className="flex flex-wrap gap-1.5 pt-3 border-t">
-                  <Button 
-                    size="sm"
-                    className="h-7 px-2 text-xs bg-yellow-500 hover:bg-yellow-600"
-                    onClick={() => marcarAguardando.mutate({ id: agendamentoSelecionado.id })}
-                  >
-                    <UserCheck className="w-3.5 h-3.5 mr-1" />
-                    Chegou
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => marcarFalta.mutate({ id: agendamentoSelecionado.id })}
-                  >
-                    <AlertCircle className="w-3.5 h-3.5 mr-1" />
-                    Faltou
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => {
-                      setNovaData(new Date(agendamentoSelecionado.dataHoraInicio).toISOString().split("T")[0]);
-                      setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
-                      setNovaHoraFim(formatarHora(agendamentoSelecionado.dataHoraFim));
-                      setModalReagendarAberto(true);
-                    }}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                    Reagendar
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 px-2 text-xs text-red-600"
-                    onClick={() => setModalCancelarAberto(true)}
-                  >
-                    <X className="w-3.5 h-3.5 mr-1" />
-                    Cancelar
-                  </Button>
+              {/* Status finais - apenas informação */}
+              {agendamentoSelecionado.status === "Realizado" && (
+                <div className="pt-3 border-t">
+                  <div className="p-2 bg-green-50 rounded border border-green-200 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <p className="text-xs text-green-800 font-medium">Atendimento finalizado com sucesso</p>
+                  </div>
                 </div>
               )}
 
-              {agendamentoSelecionado.status === "Aguardando" && (
-                <div className="flex flex-wrap gap-1.5 pt-3 border-t">
-                  <Button 
-                    size="sm"
-                    className="h-7 px-2 text-xs bg-green-600 hover:bg-green-700"
-                    onClick={() => {
-                      // Iniciar atendimento e navegar para evolução no prontuário
-                      iniciarAtendimento.mutate({ id: agendamentoSelecionado.id });
-                      if (agendamentoSelecionado.pacienteId) {
-                        setModalDetalhesAberto(false);
-                        setLocation(`/prontuario/${agendamentoSelecionado.pacienteId}?secao=evolucoes&novaEvolucao=true&agendamentoId=${agendamentoSelecionado.id}`);
-                      } else {
-                        toast.error("Paciente não vinculado ao agendamento");
-                      }
-                    }}
-                  >
-                    <FileText className="w-3.5 h-3.5 mr-1" />
-                    Atender
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => marcarFalta.mutate({ id: agendamentoSelecionado.id })}
-                  >
-                    <AlertCircle className="w-3.5 h-3.5 mr-1" />
-                    Faltou
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-7 px-2 text-xs text-red-600"
-                    onClick={() => setModalCancelarAberto(true)}
-                  >
-                    <X className="w-3.5 h-3.5 mr-1" />
-                    Cancelar
-                  </Button>
-                </div>
-              )}
-
-              {agendamentoSelecionado.status === "Em atendimento" && (
-                <div className="flex flex-wrap gap-1.5 pt-3 border-t">
-                  <Button 
-                    size="sm"
-                    className="h-7 px-2 text-xs bg-[#6B8CBE] hover:bg-[#5a7ba8]"
-                    onClick={() => {
-                      // Continuar evolução no prontuário
-                      if (agendamentoSelecionado.pacienteId) {
-                        setModalDetalhesAberto(false);
-                        setLocation(`/prontuario/${agendamentoSelecionado.pacienteId}?secao=evolucoes`);
-                      } else {
-                        toast.error("Paciente não vinculado ao agendamento");
-                      }
-                    }}
-                  >
-                    <FileText className="w-3.5 h-3.5 mr-1" />
-                    Continuar
-                  </Button>
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => realizarAgendamento.mutate({ id: agendamentoSelecionado.id })}
-                  >
-                    <Check className="w-3.5 h-3.5 mr-1" />
-                    Finalizar
-                  </Button>
+              {agendamentoSelecionado.status === "Faltou" && (
+                <div className="pt-3 border-t">
+                  <div className="p-2 bg-orange-50 rounded border border-orange-200 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-orange-600" />
+                    <p className="text-xs text-orange-800 font-medium">Paciente não compareceu</p>
+                  </div>
                 </div>
               )}
             </div>
