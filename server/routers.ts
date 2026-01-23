@@ -2,15 +2,12 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, tenantProcedure, router } from "./_core/trpc";
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
 import * as backup from "./backup";
-import { authRouter } from "./auth-router";
-import * as exportModule from "./export";
 
 // Schema de validação para Paciente
 const pacienteSchema = z.object({
@@ -81,12 +78,6 @@ const atendimentoSchema = z.object({
 
 export const appRouter = router({
   system: systemRouter,
-  
-  // Router de autenticação local (login/registro com senha)
-  localAuth: authRouter,
-  
-  // Alias para compatibilidade com frontend (trpc.auth.*)
-  auth: authRouter,
   
   // Router de métricas de performance (apenas admin)
   performance: router({
@@ -385,7 +376,16 @@ export const appRouter = router({
       }),
   }),
 
-  // auth: authRouter já definido acima como alias
+  auth: router({
+    me: publicProcedure.query(opts => opts.ctx.user),
+    logout: publicProcedure.mutation(({ ctx }) => {
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return {
+        success: true,
+      } as const;
+    }),
+  }),
 
   pacientes: router({
     getNextId: tenantProcedure
@@ -538,13 +538,13 @@ export const appRouter = router({
       }),
 
     // Busca rápida de pacientes para autocomplete (otimizada)
-    searchRapido: tenantProcedure
+    searchRapido: protectedProcedure
       .input(z.object({
         termo: z.string(),
         limit: z.number().optional().default(20),
       }))
-      .query(async ({ input, ctx }) => {
-        return await db.searchPacientesRapido(ctx.tenant.tenantId, input.termo, input.limit);
+      .query(async ({ input }) => {
+        return await db.searchPacientesRapido(input.termo, input.limit);
       }),
 
     // Buscar pacientes ativos com 360+ dias sem atendimento (para notificação)
@@ -665,48 +665,6 @@ export const appRouter = router({
         }
         
         return result;
-      }),
-
-    // Exportar pacientes para Excel, CSV ou PDF
-    export: tenantProcedure
-      .input(
-        z.object({
-          format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx'),
-          busca: z.string().optional(),
-          convenio: z.string().optional(),
-          diagnostico: z.string().optional(),
-          status: z.string().optional(),
-          cidade: z.string().optional(),
-          uf: z.string().optional(),
-        })
-      )
-      .mutation(async ({ input, ctx }) => {
-        const { format, ...filters } = input;
-        const result = await exportModule.exportPacientes(ctx.tenant.tenantId, format, filters);
-        const filename = exportModule.generateFilename('pacientes_gorgen', result.extension);
-        
-        // Registrar auditoria
-        await db.createAuditLog(
-          "EXPORT",
-          "paciente",
-          0,
-          filename,
-          null,
-          { formato: format, filtros: filters, totalRegistros: 'exportado' },
-          {
-            userId: ctx.user?.id,
-            userName: ctx.user?.name || undefined,
-            userEmail: ctx.user?.email || undefined,
-            tenantId: ctx.tenant.tenantId,
-          }
-        );
-        
-        // Retornar como base64 para download no frontend
-        return {
-          filename,
-          data: result.buffer.toString('base64'),
-          mimeType: result.mimeType,
-        };
       }),
 
     // Merge de pacientes duplicados (apenas admin_master)
@@ -913,49 +871,6 @@ export const appRouter = router({
       )
       .query(async ({ input, ctx }) => {
         return await db.countAtendimentos(ctx.tenant.tenantId, input);
-      }),
-
-    // Exportar atendimentos para Excel, CSV ou PDF
-    export: tenantProcedure
-      .input(
-        z.object({
-          format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx'),
-          pacienteId: z.number().optional(),
-          dataInicio: z.date().optional(),
-          dataFim: z.date().optional(),
-          tipo: z.string().optional(),
-          convenio: z.string().optional(),
-          local: z.string().optional(),
-          pagamentoEfetivado: z.boolean().optional(),
-        })
-      )
-      .mutation(async ({ input, ctx }) => {
-        const { format, ...filters } = input;
-        const result = await exportModule.exportAtendimentos(ctx.tenant.tenantId, format, filters);
-        const filename = exportModule.generateFilename('atendimentos_gorgen', result.extension);
-        
-        // Registrar auditoria
-        await db.createAuditLog(
-          "EXPORT",
-          "atendimento",
-          0,
-          filename,
-          null,
-          { formato: format, filtros: filters, totalRegistros: 'exportado' },
-          {
-            userId: ctx.user?.id,
-            userName: ctx.user?.name || undefined,
-            userEmail: ctx.user?.email || undefined,
-            tenantId: ctx.tenant.tenantId,
-          }
-        );
-        
-        // Retornar como base64 para download no frontend
-        return {
-          filename,
-          data: result.buffer.toString('base64'),
-          mimeType: result.mimeType,
-        };
       }),
   }),
 
@@ -1570,12 +1485,12 @@ export const appRouter = router({
 
   // ===== AGENDA =====
   agenda: router({
-    getNextId: tenantProcedure
-      .query(async ({ ctx }) => {
-        return await db.getNextAgendamentoId(ctx.tenant.tenantId);
+    getNextId: protectedProcedure
+      .query(async () => {
+        return await db.getNextAgendamentoId();
       }),
 
-    create: tenantProcedure
+    create: protectedProcedure
       .input(z.object({
         idAgendamento: z.string(),
         tipoCompromisso: z.enum(["Consulta", "Cirurgia", "Visita internado", "Procedimento em consultório", "Exame", "Reunião", "Bloqueio"]),
@@ -1594,75 +1509,18 @@ export const appRouter = router({
           cpf: z.string().optional(),
           convenio: z.string().optional(),
         }).optional(),
-        // Flag para forçar agendamento mesmo com conflito
-        forcarConflito: z.boolean().optional().default(false),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { dataHoraInicio, dataHoraFim, forcarConflito } = input;
-        
-        // VALIDAÇÃO 1: Hora de fim deve ser posterior à hora de início
-        if (dataHoraFim <= dataHoraInicio) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "A hora de término deve ser posterior à hora de início.",
-          });
-        }
-        
-        // VALIDAÇÃO 2: Não permitir agendamento no passado (Erro 4)
-        const agora = new Date();
-        // Permitir uma margem de 5 minutos para evitar problemas de sincronização
-        const margemMinutos = 5;
-        const limitePassado = new Date(agora.getTime() - margemMinutos * 60 * 1000);
-        if (dataHoraInicio < limitePassado) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Não é possível criar agendamentos em datas/horários passados.",
-          });
-        }
-        
-        // VALIDAÇÃO 3: Duração mínima de 5 minutos (Erro 13)
-        const duracaoMinutos = (dataHoraFim.getTime() - dataHoraInicio.getTime()) / (1000 * 60);
-        const duracaoMinima = 5; // minutos
-        if (duracaoMinutos < duracaoMinima) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `A duração mínima do agendamento é de ${duracaoMinima} minutos.`,
-          });
-        }
-        
-        // VALIDAÇÃO 4: Verificar conflitos de horário (se não forçado)
-        if (!forcarConflito) {
-          const conflitos = await db.verificarConflitosAgendamento(
-            dataHoraInicio,
-            dataHoraFim
-          );
-          
-          if (conflitos && conflitos.length > 0) {
-            const detalhes = conflitos.map((c: any) => {
-              const hora = new Date(c.dataHoraInicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-              if (c.tipo === 'bloqueio') {
-                return `[BLOQUEIO] ${c.titulo || c.tipoCompromisso} às ${hora}`;
-              }
-              return `${c.pacienteNome || c.tipoCompromisso} às ${hora}`;
-            }).join(", ");
-            
-            throw new TRPCError({
-              code: "CONFLICT",
-              message: `Conflito de horário detectado com: ${detalhes}. Use a opção "forçar" para agendar mesmo assim.`,
-            });
-          }
-        }
-        
         let pacienteId = input.pacienteId;
         let pacienteNome = input.pacienteNome;
         
         // Se não tem pacienteId mas tem novoPaciente, criar automaticamente
         if (!pacienteId && input.novoPaciente && input.tipoCompromisso !== "Reunião") {
           // Gerar próximo ID de paciente
-          const nextId = await db.getNextPacienteId(ctx.tenant.tenantId);
+          const nextId = await db.getNextPacienteId(1); // tenantId padrão
           
           // Criar paciente com dados mínimos
-          const novoPaciente = await db.createPaciente(ctx.tenant.tenantId, {
+          const novoPaciente = await db.createPaciente(1, {
             idPaciente: nextId,
             nome: input.novoPaciente.nome,
             telefone: input.novoPaciente.telefone || null,
@@ -1687,21 +1545,20 @@ export const appRouter = router({
               userId: ctx.user?.id,
               userName: ctx.user?.name || undefined,
               userEmail: ctx.user?.email || undefined,
-              tenantId: ctx.tenant.tenantId,
+              tenantId: 1,
             }
           );
         }
         
         return await db.createAgendamento({
           ...input,
-          tenantId: ctx.tenant.tenantId,
           pacienteId,
           pacienteNome,
           criadoPor: ctx.user?.name || "Sistema",
         } as any);
       }),
 
-    list: tenantProcedure
+    list: protectedProcedure
       .input(z.object({
         dataInicio: z.date().optional(),
         dataFim: z.date().optional(),
@@ -1710,17 +1567,17 @@ export const appRouter = router({
         status: z.string().optional(),
         incluirCancelados: z.boolean().optional().default(true),
       }))
-      .query(async ({ input, ctx }) => {
-        return await db.listAgendamentos({ ...input, tenantId: ctx.tenant.tenantId });
+      .query(async ({ input }) => {
+        return await db.listAgendamentos(input);
       }),
 
-    getById: tenantProcedure
+    getById: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ input, ctx }) => {
-        return await db.getAgendamentoById(input.id, ctx.tenant.tenantId);
+      .query(async ({ input }) => {
+        return await db.getAgendamentoById(input.id);
       }),
 
-    cancelar: tenantProcedure
+    cancelar: protectedProcedure
       .input(z.object({
         id: z.number(),
         motivo: z.string(),
@@ -1729,75 +1586,37 @@ export const appRouter = router({
         return await db.cancelarAgendamento(
           input.id,
           input.motivo,
-          ctx.user?.name || "Sistema",
-          ctx.tenant.tenantId
+          ctx.user?.name || "Sistema"
         );
       }),
 
-    reagendar: tenantProcedure
+    reagendar: protectedProcedure
       .input(z.object({
         idOriginal: z.number(),
         novaDataInicio: z.date(),
         novaDataFim: z.date(),
         motivo: z.string().optional(),
-        forcarConflito: z.boolean().optional().default(false),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { novaDataInicio, novaDataFim, forcarConflito, idOriginal } = input;
-        
-        // VALIDAÇÃO 1: Hora de fim deve ser posterior à hora de início
-        if (novaDataFim <= novaDataInicio) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "A hora de término deve ser posterior à hora de início.",
-          });
-        }
-        
-        // VALIDAÇÃO 2: Verificar conflitos de horário (excluindo o agendamento original)
-        if (!forcarConflito) {
-          const conflitos = await db.verificarConflitosAgendamento(
-            novaDataInicio,
-            novaDataFim,
-            idOriginal // Excluir o próprio agendamento da verificação
-          );
-          
-          if (conflitos && conflitos.length > 0) {
-            const detalhes = conflitos.map((c: any) => {
-              const hora = new Date(c.dataHoraInicio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-              if (c.tipo === 'bloqueio') {
-                return `[BLOQUEIO] ${c.titulo || c.tipoCompromisso} às ${hora}`;
-              }
-              return `${c.pacienteNome || c.tipoCompromisso} às ${hora}`;
-            }).join(", ");
-            
-            throw new TRPCError({
-              code: "CONFLICT",
-              message: `Conflito de horário detectado com: ${detalhes}. Use a opção "forçar" para reagendar mesmo assim.`,
-            });
-          }
-        }
-        
         return await db.reagendarAgendamento(
           input.idOriginal,
           input.novaDataInicio,
           input.novaDataFim,
           ctx.user?.name || "Sistema",
-          input.motivo,
-          ctx.tenant.tenantId
+          input.motivo
         );
       }),
 
-    confirmar: tenantProcedure
+    confirmar: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         return await db.confirmarAgendamento(
           input.id,
-          ctx.user?.name || "Sistema",
-          ctx.tenant.tenantId
+          ctx.user?.name || "Sistema"
         );
       }),
 
-    realizar: tenantProcedure
+    realizar: protectedProcedure
       .input(z.object({
         id: z.number(),
         atendimentoId: z.number().optional(),
@@ -1806,29 +1625,47 @@ export const appRouter = router({
         return await db.realizarAgendamento(
           input.id,
           ctx.user?.name || "Sistema",
-          input.atendimentoId,
-          ctx.tenant.tenantId
+          input.atendimentoId
         );
       }),
 
-    marcarFalta: tenantProcedure
+    marcarFalta: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         return await db.marcarFaltaAgendamento(
           input.id,
-          ctx.user?.name || "Sistema",
-          ctx.tenant.tenantId
+          ctx.user?.name || "Sistema"
         );
       }),
 
-    historico: tenantProcedure
+    // Marcar paciente como "Aguardando" (chegou na recepção)
+    marcarAguardando: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.marcarAguardandoAgendamento(
+          input.id,
+          ctx.user?.name || "Sistema"
+        );
+      }),
+
+    // Iniciar atendimento (mudar para "Em atendimento")
+    iniciarAtendimento: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.iniciarAtendimentoAgendamento(
+          input.id,
+          ctx.user?.name || "Sistema"
+        );
+      }),
+
+    historico: protectedProcedure
       .input(z.object({ agendamentoId: z.number() }))
-      .query(async ({ input, ctx }) => {
-        return await db.getHistoricoAgendamento(input.agendamentoId, ctx.tenant.tenantId);
+      .query(async ({ input }) => {
+        return await db.getHistoricoAgendamento(input.agendamentoId);
       }),
 
     // Importar eventos do Google Calendar (ICS)
-    importarICS: tenantProcedure
+    importarICS: protectedProcedure
       .input(z.object({
         eventos: z.array(z.object({
           uid: z.string(),
@@ -1894,12 +1731,12 @@ export const appRouter = router({
       }),
 
     // Sincronizar com Google Calendar - Exportar evento para Google
-    exportarParaGoogle: tenantProcedure
+    exportarParaGoogle: protectedProcedure
       .input(z.object({
         agendamentoId: z.number(),
       }))
-      .mutation(async ({ input, ctx }) => {
-        const agendamento = await db.getAgendamentoById(input.agendamentoId, ctx.tenant.tenantId);
+      .mutation(async ({ input }) => {
+        const agendamento = await db.getAgendamentoById(input.agendamentoId);
         if (!agendamento) {
           throw new Error('Agendamento não encontrado');
         }
@@ -1922,27 +1759,27 @@ export const appRouter = router({
       }),
 
     // Atualizar google_uid após criar evento no Google
-    atualizarGoogleUid: tenantProcedure
+    atualizarGoogleUid: protectedProcedure
       .input(z.object({
         agendamentoId: z.number(),
         googleUid: z.string(),
       }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.atualizarAgendamentoGoogleUid(input.agendamentoId, input.googleUid, ctx.tenant.tenantId);
+      .mutation(async ({ input }) => {
+        return await db.atualizarAgendamentoGoogleUid(input.agendamentoId, input.googleUid);
       }),
 
     // Listar agendamentos não sincronizados com Google
-    listNaoSincronizados: tenantProcedure
+    listNaoSincronizados: protectedProcedure
       .input(z.object({
         dataInicio: z.date().optional(),
         dataFim: z.date().optional(),
       }))
-      .query(async ({ input, ctx }) => {
-        return await db.listAgendamentosNaoSincronizados({ ...input, tenantId: ctx.tenant.tenantId });
+      .query(async ({ input }) => {
+        return await db.listAgendamentosNaoSincronizados(input);
       }),
 
     // Vincular agendamento a paciente
-    vincularPaciente: tenantProcedure
+    vincularPaciente: protectedProcedure
       .input(z.object({
         agendamentoId: z.number(),
         pacienteId: z.number(),
@@ -1951,242 +1788,25 @@ export const appRouter = router({
         return await db.vincularAgendamentoPaciente(
           input.agendamentoId,
           input.pacienteId,
-          ctx.user?.name || 'Sistema',
-          ctx.tenant.tenantId
+          ctx.user?.name || 'Sistema'
         );
       }),
 
     // Listar agendamentos pendentes de vinculação
-    listPendentesVinculacao: tenantProcedure
-      .query(async ({ ctx }) => {
-        return await db.listAgendamentosPendentesVinculacao(ctx.tenant.tenantId);
-      }),
-
-    // ===== AGENDA V6 - NOVAS ROTAS =====
-    
-    // Transferir agendamento para nova data (cria novo e marca original como Transferido)
-    transferir: tenantProcedure
-      .input(z.object({
-        idOriginal: z.number(),
-        novaDataInicio: z.date(),
-        novaDataFim: z.date(),
-        motivo: z.string().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.transferirAgendamento(
-          input.idOriginal,
-          input.novaDataInicio,
-          input.novaDataFim,
-          ctx.user?.name || "Sistema",
-          input.motivo,
-          ctx.tenant.tenantId
-        );
-      }),
-
-    // Atualizar status com validação de transições
-    atualizarStatus: tenantProcedure
-      .input(z.object({
-        id: z.number(),
-        novoStatus: z.enum(["Agendado", "Confirmado", "Aguardando", "Em atendimento", "Encerrado", "Cancelado", "Falta", "Transferido"]),
-        motivo: z.string().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.atualizarStatusAgendamento(
-          input.id,
-          input.novoStatus,
-          ctx.user?.name || "Sistema",
-          input.motivo,
-          ctx.tenant.tenantId
-        );
-      }),
-
-    // Obter histórico completo de alterações do agendamento
-    getHistorico: tenantProcedure
-      .input(z.object({ agendamentoId: z.number() }))
-      .query(async ({ input, ctx }) => {
-        return await db.getHistoricoAgendamento(input.agendamentoId, ctx.tenant.tenantId);
-      }),
-
-    // Reativar agendamento cancelado
-    reativar: tenantProcedure
-      .input(z.object({
-        id: z.number(),
-        manterDataOriginal: z.boolean().default(true),
-        novaDataInicio: z.date().optional(),
-        novaDataFim: z.date().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.reativarAgendamento(
-          input.id,
-          ctx.user?.name || "Sistema",
-          input.manterDataOriginal,
-          input.novaDataInicio,
-          input.novaDataFim,
-          ctx.tenant.tenantId
-        );
-      }),
-
-    // Marcar paciente como chegou (Aguardando)
-    pacienteChegou: tenantProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.marcarPacienteChegou(
-          input.id,
-          ctx.user?.name || "Sistema",
-          ctx.tenant.tenantId
-        );
-      }),
-
-    // Iniciar atendimento
-    iniciarAtendimento: tenantProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.iniciarAtendimento(
-          input.id,
-          ctx.user?.name || "Sistema",
-          ctx.tenant.tenantId
-        );
-      }),
-
-    // Encerrar atendimento
-    encerrarAtendimento: tenantProcedure
-      .input(z.object({ 
-        id: z.number(),
-        atendimentoId: z.number().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.encerrarAtendimento(
-          input.id,
-          ctx.user?.name || "Sistema",
-          input.atendimentoId,
-          ctx.tenant.tenantId
-        );
-      }),
-
-    // ===== AGENDA V8 - DRAG AND DROP =====
-    
-    // Mover agendamento via drag-and-drop (atualiza in-place sem criar novo registro)
-    mover: tenantProcedure
-      .input(z.object({
-        id: z.number(),
-        novaDataInicio: z.date(),
-        novaDataFim: z.date(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.moverAgendamento(
-          input.id,
-          input.novaDataInicio,
-          input.novaDataFim,
-          ctx.user?.name || "Sistema",
-          ctx.tenant.tenantId
-        );
-       }),
-
-    // ===== ALIASES EM PORTUGUÊS =====
-    
-    // Alias para 'list' em português
-    listar: tenantProcedure
-      .input(z.object({
-        dataInicio: z.date().optional(),
-        dataFim: z.date().optional(),
-        pacienteId: z.number().optional(),
-        tipo: z.string().optional(),
-        status: z.string().optional(),
-        incluirCancelados: z.boolean().optional().default(true),
-      }).optional())
-      .query(async ({ input, ctx }) => {
-        return await db.listAgendamentos({ ...(input || {}), tenantId: ctx.tenant.tenantId });
-      }),
-
-    // Alias para 'create' em português
-    criar: tenantProcedure
-      .input(z.object({
-        tipoCompromisso: z.enum(["Consulta", "Cirurgia", "Visita internado", "Procedimento em consultório", "Exame", "Reunião", "Bloqueio"]),
-        titulo: z.string().optional().nullable(),
-        dataHoraInicio: z.string(),
-        dataHoraFim: z.string().optional().nullable(),
-        local: z.string().optional().nullable(),
-        status: z.string().optional().default("Agendado"),
-        pacienteId: z.number().optional().nullable(),
-        pacienteNome: z.string().optional().nullable(),
-        descricao: z.string().optional().nullable(),
-        convenio: z.string().optional().nullable(),
-        // Dados para criação automática de paciente
-        novoPaciente: z.object({
-          nome: z.string(),
-          telefone: z.string().optional(),
-          email: z.string().optional(),
-          cpf: z.string().optional(),
-          convenio: z.string().optional(),
-        }).optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const idAgendamento = await db.getNextAgendamentoId(ctx.tenant.tenantId);
-        
-        let pacienteId = input.pacienteId;
-        let pacienteNome = input.pacienteNome;
-        
-        // Se não tem pacienteId mas tem novoPaciente, criar automaticamente
-        if (!pacienteId && input.novoPaciente && input.tipoCompromisso !== "Reunião") {
-          // Gerar próximo ID de paciente
-          const nextId = await db.getNextPacienteId(ctx.tenant.tenantId);
-          
-          // Criar paciente com dados mínimos
-          const novoPaciente = await db.createPaciente(ctx.tenant.tenantId, {
-            idPaciente: nextId,
-            nome: input.novoPaciente.nome,
-            telefone: input.novoPaciente.telefone || null,
-            email: input.novoPaciente.email || null,
-            cpf: input.novoPaciente.cpf || null,
-            operadora1: input.novoPaciente.convenio || input.convenio || null,
-            dataInclusao: new Date().toISOString().split('T')[0],
-          } as any);
-          
-          pacienteId = novoPaciente.id;
-          pacienteNome = input.novoPaciente.nome;
-          
-          // Registrar auditoria da criação automática
-          await db.createAuditLog(
-            "CREATE",
-            "paciente",
-            novoPaciente.id,
-            nextId,
-            null,
-            { ...input.novoPaciente, origem: "agendamento_automatico" },
-            {
-              userId: ctx.user?.id,
-              userName: ctx.user?.name || undefined,
-              userEmail: ctx.user?.email || undefined,
-              tenantId: ctx.tenant.tenantId,
-            }
-          );
-        }
-        
-        return await db.createAgendamento({
-          idAgendamento,
-          tenantId: ctx.tenant.tenantId,
-          tipoCompromisso: input.tipoCompromisso,
-          titulo: input.titulo,
-          dataHoraInicio: new Date(input.dataHoraInicio),
-          dataHoraFim: input.dataHoraFim ? new Date(input.dataHoraFim) : new Date(new Date(input.dataHoraInicio).getTime() + 30 * 60000),
-          local: input.local,
-          status: input.status as any,
-          pacienteId,
-          pacienteNome,
-          descricao: input.descricao,
-          criadoPor: ctx.user?.name || "Sistema",
-        } as any);
+    listPendentesVinculacao: protectedProcedure
+      .query(async () => {
+        return await db.listAgendamentosPendentesVinculacao();
       }),
   }),
 
   // ===== BLOQUEIOS DE HORÁRIO =====
   bloqueios: router({
-    getNextId: tenantProcedure
-      .query(async ({ ctx }) => {
-        return await db.getNextBloqueioId(ctx.tenant.tenantId);
+    getNextId: protectedProcedure
+      .query(async () => {
+        return await db.getNextBloqueioId();
       }),
 
-    create: tenantProcedure
+    create: protectedProcedure
       .input(z.object({
         idBloqueio: z.string(),
         dataHoraInicio: z.date(),
@@ -2200,22 +1820,21 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         return await db.createBloqueio({
           ...input,
-          tenantId: ctx.tenant.tenantId,
           criadoPor: ctx.user?.name || "Sistema",
         } as any);
       }),
 
-    list: tenantProcedure
+    list: protectedProcedure
       .input(z.object({
         dataInicio: z.date().optional(),
         dataFim: z.date().optional(),
         incluirCancelados: z.boolean().optional().default(false),
       }))
-      .query(async ({ input, ctx }) => {
-        return await db.listBloqueios({ ...input, tenantId: ctx.tenant.tenantId });
+      .query(async ({ input }) => {
+        return await db.listBloqueios(input);
       }),
 
-    cancelar: tenantProcedure
+    cancelar: protectedProcedure
       .input(z.object({
         id: z.number(),
         motivo: z.string(),
@@ -2224,8 +1843,7 @@ export const appRouter = router({
         return await db.cancelarBloqueio(
           input.id,
           input.motivo,
-          ctx.user?.name || "Sistema",
-          ctx.tenant.tenantId
+          ctx.user?.name || "Sistema"
         );
       }),
   }),
@@ -2310,21 +1928,11 @@ export const appRouter = router({
           throw new Error("Acesso negado: apenas administradores podem gerenciar perfis");
         }
         
-        // Converter boolean para number (TINYINT) para compatibilidade com MySQL
-        // Remover campos que não existem no schema (isFinanceiro, isVisualizador)
-        const { isFinanceiro, isVisualizador, ...validInput } = input;
-        const profileInput = {
-          ...validInput,
-          isAdminMaster: validInput.isAdminMaster !== undefined ? (validInput.isAdminMaster ? 1 : 0) : undefined,
-          isMedico: validInput.isMedico !== undefined ? (validInput.isMedico ? 1 : 0) : undefined,
-          isSecretaria: validInput.isSecretaria !== undefined ? (validInput.isSecretaria ? 1 : 0) : undefined,
-        };
-        
         const existing = await db.getUserProfile(input.userId);
         if (existing) {
-          return await db.updateUserProfile(input.userId, profileInput);
+          return await db.updateUserProfile(input.userId, input);
         } else {
-          const { userId, ...profileData } = profileInput;
+          const { userId, ...profileData } = input;
           return await db.createUserProfile({
             userId,
             ...profileData,
@@ -3739,15 +3347,7 @@ Retorne um JSON válido com a estrutura:
         offlineBackupEnabled: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Converter boolean para number (TINYINT) para compatibilidade com MySQL
-        const configData = {
-          ...input,
-          backupEnabled: input.backupEnabled !== undefined ? (input.backupEnabled ? 1 : 0) : undefined,
-          notifyOnSuccess: input.notifyOnSuccess !== undefined ? (input.notifyOnSuccess ? 1 : 0) : undefined,
-          notifyOnFailure: input.notifyOnFailure !== undefined ? (input.notifyOnFailure ? 1 : 0) : undefined,
-          offlineBackupEnabled: input.offlineBackupEnabled !== undefined ? (input.offlineBackupEnabled ? 1 : 0) : undefined,
-        };
-        await backup.upsertBackupConfig(ctx.tenant.tenantId, configData);
+        await backup.upsertBackupConfig(ctx.tenant.tenantId, input);
         return { success: true };
       }),
 
@@ -3892,70 +3492,6 @@ Retorne um JSON válido com a estrutura:
           ctx.tenant.tenantId,
           input?.limit || 10
         );
-      }),
-  }),
-
-  // ===== DELEGADOS DA AGENDA =====
-  delegadosAgenda: router({
-    // Listar delegados do médico logado
-    list: protectedProcedure
-      .query(async ({ ctx }) => {
-        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
-        return await db.listDelegadosAgenda(ctx.user.id);
-      }),
-
-    // Adicionar delegado
-    create: protectedProcedure
-      .input(z.object({
-        email: z.string().email(),
-        nome: z.string().optional(),
-        permissao: z.enum(["visualizar", "editar"]).default("visualizar"),
-        dataFim: z.date().optional().nullable(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
-        return await db.createDelegadoAgenda({
-          medicoUserId: ctx.user.id,
-          delegadoEmail: input.email,
-          delegadoNome: input.nome || null,
-          permissao: input.permissao,
-          dataFim: input.dataFim || null,
-          criadoPor: ctx.user.name || ctx.user.email || "Sistema",
-        });
-      }),
-
-    // Atualizar permissão do delegado
-    update: protectedProcedure
-      .input(z.object({
-        id: z.number(),
-        permissao: z.enum(["visualizar", "editar"]).optional(),
-        dataFim: z.date().optional().nullable(),
-        ativo: z.boolean().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
-        return await db.updateDelegadoAgenda(input.id, ctx.user.id, {
-          permissao: input.permissao,
-          dataFim: input.dataFim,
-          ativo: input.ativo,
-        });
-      }),
-
-    // Remover delegado (soft delete - desativar)
-    remove: protectedProcedure
-      .input(z.object({
-        id: z.number(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
-        return await db.removeDelegadoAgenda(input.id, ctx.user.id);
-      }),
-
-    // Verificar se o usuário logado tem permissão de delegado para algum médico
-    minhasPermissoes: protectedProcedure
-      .query(async ({ ctx }) => {
-        if (!ctx.user?.email) return [];
-        return await db.getDelegadoPermissoes(ctx.user.email);
       }),
   }),
 });

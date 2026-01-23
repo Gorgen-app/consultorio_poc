@@ -1,53 +1,7 @@
-import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, lt, inArray, notInArray, ne, isNull, isNotNull, not } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne, isNull, isNotNull } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
-import { EncryptionService } from "./services/EncryptionService";
-import { HashingService } from "./services/HashingService";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs } from "../drizzle/schema";
 import { ENV } from './_core/env';
-
-// ============================================================================
-// HELPERS DE CONVERSÃO DE TIPOS
-// ============================================================================
-
-/**
- * Converte boolean para number (0/1) para compatibilidade com MySQL TINYINT
- */
-function toBooleanInt(value: boolean | null | undefined): number | null {
-  if (value === null || value === undefined) return null;
-  return value ? 1 : 0;
-}
-
-/**
- * Converte number (0/1) para boolean para leitura do MySQL TINYINT
- */
-function fromBooleanInt(value: number | null | undefined): boolean {
-  return value === 1;
-}
-
-/**
- * Converte number | null para boolean | null
- */
-function fromBooleanIntNullable(value: number | null | undefined): boolean | null {
-  if (value === null || value === undefined) return null;
-  return value === 1;
-}
-
-/**
- * Converte Date para string ISO para compatibilidade com schema mode: 'string'
- */
-function toDateString(date: Date | string | null | undefined): string | undefined {
-  if (!date) return undefined;
-  if (typeof date === 'string') return date;
-  return date.toISOString();
-}
-
-/**
- * Converte Date para string ISO (não-nulo)
- */
-function toDateStringRequired(date: Date | string): string {
-  if (typeof date === 'string') return date;
-  return date.toISOString();
-}
 
 /**
  * Retorna a instância do banco de dados com connection pooling
@@ -55,158 +9,6 @@ function toDateStringRequired(date: Date | string): string {
  */
 export async function getDb() {
   return await getPooledDb();
-}
-
-// ============================================================================
-// CRIPTOGRAFIA DE CAMPOS PII
-// ============================================================================
-
-// Chave mestra de criptografia (deve ser configurada via env)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_MASTER_KEY || 'gorgen-dev-key-change-in-production-32ch';
-const HASH_SECRET = process.env.HASH_SECRET_KEY || 'gorgen-hash-secret-change-in-production';
-
-// Instâncias dos serviços de criptografia (singleton por tenant)
-const encryptionServices = new Map<number, EncryptionService>();
-const hashingServices = new Map<number, HashingService>();
-
-function getEncryptionService(tenantId: number): EncryptionService {
-  if (!encryptionServices.has(tenantId)) {
-    encryptionServices.set(tenantId, new EncryptionService({
-      masterKey: ENCRYPTION_KEY,
-      tenantId: tenantId,
-      useFixedSalt: true
-    }));
-  }
-  return encryptionServices.get(tenantId)!;
-}
-
-function getHashingService(tenantId: number): HashingService {
-  if (!hashingServices.has(tenantId)) {
-    hashingServices.set(tenantId, new HashingService({
-      secretKey: HASH_SECRET,
-      tenantId: tenantId
-    }));
-  }
-  return hashingServices.get(tenantId)!;
-}
-
-/**
- * Criptografa campos PII de um paciente antes de salvar no banco
- */
-function encryptPacientePII(tenantId: number, data: Partial<InsertPaciente>): Partial<InsertPaciente> {
-  const encryption = getEncryptionService(tenantId);
-  const hashing = getHashingService(tenantId);
-  const result = { ...data };
-  
-  // CPF: criptografar e gerar hash para busca
-  if (data.cpf) {
-    const cpfNormalizado = data.cpf.replace(/\D/g, ''); // Remove pontuação
-    const encResult = encryption.encrypt(data.cpf);
-    result.cpfEncrypted = encResult.encrypted;
-    const hashResult = hashing.hash(cpfNormalizado);
-    result.cpfHash = hashResult.hash;
-  }
-  
-  // Email: criptografar e gerar hash para busca
-  if (data.email) {
-    const encResult = encryption.encrypt(data.email);
-    result.emailEncrypted = encResult.encrypted;
-    const hashResult = hashing.hash(data.email.toLowerCase());
-    result.emailHash = hashResult.hash;
-  }
-  
-  // Telefone: apenas criptografar (sem hash, busca por telefone não é comum)
-  if (data.telefone) {
-    const encResult = encryption.encrypt(data.telefone);
-    result.telefoneEncrypted = encResult.encrypted;
-  }
-  
-  // Responsável telefone
-  if (data.responsavelTelefone) {
-    const encResult = encryption.encrypt(data.responsavelTelefone);
-    result.responsavelTelefoneEncrypted = encResult.encrypted;
-  }
-  
-  // Responsável email
-  if (data.responsavelEmail) {
-    const encResult = encryption.encrypt(data.responsavelEmail);
-    result.responsavelEmailEncrypted = encResult.encrypted;
-  }
-  
-  return result;
-}
-
-/**
- * Descriptografa campos PII de um paciente após ler do banco
- * Retorna os valores descriptografados nos campos originais
- */
-function decryptPacientePII(tenantId: number, paciente: Paciente): Paciente {
-  const encryption = getEncryptionService(tenantId);
-  const result = { ...paciente };
-  
-  // Se temos dados criptografados, descriptografar para os campos originais
-  // Isso mantém compatibilidade com código existente que usa os campos originais
-  
-  if (paciente.cpfEncrypted) {
-    try {
-      result.cpf = encryption.decrypt(paciente.cpfEncrypted).decrypted;
-    } catch (e) {
-      console.warn(`[Crypto] Falha ao descriptografar CPF do paciente ${paciente.id}`);
-    }
-  }
-  
-  if (paciente.emailEncrypted) {
-    try {
-      result.email = encryption.decrypt(paciente.emailEncrypted).decrypted;
-    } catch (e) {
-      console.warn(`[Crypto] Falha ao descriptografar email do paciente ${paciente.id}`);
-    }
-  }
-  
-  if (paciente.telefoneEncrypted) {
-    try {
-      result.telefone = encryption.decrypt(paciente.telefoneEncrypted).decrypted;
-    } catch (e) {
-      console.warn(`[Crypto] Falha ao descriptografar telefone do paciente ${paciente.id}`);
-    }
-  }
-  
-  if (paciente.responsavelTelefoneEncrypted) {
-    try {
-      result.responsavelTelefone = encryption.decrypt(paciente.responsavelTelefoneEncrypted).decrypted;
-    } catch (e) {
-      console.warn(`[Crypto] Falha ao descriptografar telefone do responsável do paciente ${paciente.id}`);
-    }
-  }
-  
-  if (paciente.responsavelEmailEncrypted) {
-    try {
-      result.responsavelEmail = encryption.decrypt(paciente.responsavelEmailEncrypted).decrypted;
-    } catch (e) {
-      console.warn(`[Crypto] Falha ao descriptografar email do responsável do paciente ${paciente.id}`);
-    }
-  }
-  
-  return result;
-}
-
-/**
- * Gera hash de CPF para busca exata
- */
-export function hashCpfForSearch(tenantId: number, cpf: string): string {
-  const hashing = getHashingService(tenantId);
-  const cpfNormalizado = cpf.replace(/\D/g, '');
-  const result = hashing.hash(cpfNormalizado);
-  return result.hash;
-}
-
-/**
- * Gera hash de email para busca exata
- */
-export function hashEmailForSearch(tenantId: number, email: string): string {
-  const hashing = getHashingService(tenantId);
-  const result = hashing.hash(email.toLowerCase());
-  return result.hash;
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -252,11 +54,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     }
 
     if (!values.lastSignedIn) {
-      values.lastSignedIn = toDateString(new Date());
+      values.lastSignedIn = new Date();
     }
 
     if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = toDateString(new Date());
+      updateSet.lastSignedIn = new Date();
     }
 
     await db.insert(users).values(values).onDuplicateKeyUpdate({
@@ -286,18 +88,13 @@ export async function createPaciente(tenantId: number, data: Omit<InsertPaciente
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Criptografar campos PII antes de salvar
-  const encryptedData = encryptPacientePII(tenantId, data);
-  
   // Garantir que o tenantId seja definido
-  const dataWithTenant = { ...encryptedData, tenantId };
-  const result = await db.insert(pacientes).values(dataWithTenant as InsertPaciente);
+  const dataWithTenant = { ...data, tenantId };
+  const result = await db.insert(pacientes).values(dataWithTenant);
   const insertedId = Number(result[0].insertId);
   
   const inserted = await db.select().from(pacientes).where(eq(pacientes.id, insertedId)).limit(1);
-  
-  // Descriptografar antes de retornar
-  return decryptPacientePII(tenantId, inserted[0]!);
+  return inserted[0]!;
 }
 
 export async function getPacienteById(tenantId: number, id: number): Promise<Paciente | undefined> {
@@ -307,9 +104,7 @@ export async function getPacienteById(tenantId: number, id: number): Promise<Pac
   const result = await db.select().from(pacientes)
     .where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)))
     .limit(1);
-  
-  // Descriptografar antes de retornar
-  return result[0] ? decryptPacientePII(tenantId, result[0]) : undefined;
+  return result[0];
 }
 
 export async function getPacienteByIdPaciente(tenantId: number, idPaciente: string): Promise<Paciente | undefined> {
@@ -319,9 +114,7 @@ export async function getPacienteByIdPaciente(tenantId: number, idPaciente: stri
   const result = await db.select().from(pacientes)
     .where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.idPaciente, idPaciente)))
     .limit(1);
-  
-  // Descriptografar antes de retornar
-  return result[0] ? decryptPacientePII(tenantId, result[0]) : undefined;
+  return result[0];
 }
 
 // Tipo para filtros de pacientes com paginação server-side
@@ -338,28 +131,6 @@ export interface PacienteFilters {
   offset?: number;
 }
 
-/**
- * Normaliza texto para busca: remove acentos e converte para minúsculas
- * Usado para garantir busca case-insensitive e accent-insensitive
- */
-function normalizeSearchTerm(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, ''); // Remove diacríticos (acentos)
-}
-
-/**
- * Escapa caracteres especiais do SQL LIKE para evitar injeção
- */
-function escapeLikePattern(text: string): string {
-  return text
-    .replace(/\\/g, '\\\\')
-    .replace(/%/g, '\\%')
-    .replace(/_/g, '\\_');
-}
-
 // Função auxiliar para construir condições de filtro
 function buildPacienteConditions(tenantId: number, filters?: PacienteFilters) {
   const conditions = [
@@ -367,74 +138,37 @@ function buildPacienteConditions(tenantId: number, filters?: PacienteFilters) {
     sql`${pacientes.deletedAt} IS NULL`
   ];
   
-  // Busca global (nome, CPF ou ID) - Case-insensitive e accent-insensitive
+  // Busca global (nome, CPF ou ID)
   if (filters?.busca) {
-    const termoOriginal = filters.busca.trim();
-    const termoNormalizado = normalizeSearchTerm(termoOriginal);
-    const termoEscapado = escapeLikePattern(termoNormalizado);
-    
-    // Extrair apenas números para busca de CPF
-    const termoNumerico = termoOriginal.replace(/\D/g, '');
-    
-    // Construir condições de busca
-    const searchConditions = [
-      // Busca por nome: case-insensitive usando LOWER() e removendo acentos com função SQL
-      // MySQL: LOWER() já é accent-insensitive com collation utf8mb4_unicode_ci
-      // Para garantir, usamos comparação com termo normalizado
-      sql`LOWER(${pacientes.nome}) LIKE LOWER(${`%${termoEscapado}%`})`,
-      // Busca por ID do paciente
-      sql`LOWER(${pacientes.idPaciente}) LIKE LOWER(${`%${termoEscapado}%`})`
-    ];
-    
-    // Busca por CPF: usar hash se for CPF completo (11 dígitos), senão busca parcial no campo original
-    if (termoNumerico.length === 11) {
-      // CPF completo: buscar pelo hash (mais seguro e eficiente)
-      const cpfHash = hashCpfForSearch(tenantId, termoNumerico);
-      searchConditions.push(eq(pacientes.cpfHash, cpfHash));
-    } else if (termoNumerico.length > 0) {
-      // CPF parcial: buscar no campo original (para dados ainda não migrados)
-      // NOTA: Após migração completa, esta busca parcial não funcionará mais
-      searchConditions.push(
-        sql`REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', '') LIKE ${`%${termoNumerico}%`}`
-      );
-    }
-    
-    conditions.push(or(...searchConditions)!);
-  }
-  
-  // Filtros específicos - também case-insensitive
-  if (filters?.nome) {
-    const nomeEscapado = escapeLikePattern(normalizeSearchTerm(filters.nome));
-    conditions.push(sql`LOWER(${pacientes.nome}) LIKE LOWER(${`%${nomeEscapado}%`})`);
-  }
-  if (filters?.cpf) {
-    const cpfNumerico = filters.cpf.replace(/\D/g, '');
-    // Busca por CPF: usar hash se for CPF completo (11 dígitos)
-    if (cpfNumerico.length === 11) {
-      const cpfHash = hashCpfForSearch(tenantId, cpfNumerico);
-      conditions.push(eq(pacientes.cpfHash, cpfHash));
-    } else if (cpfNumerico.length > 0) {
-      // CPF parcial: buscar no campo original (para dados ainda não migrados)
-      conditions.push(
-        sql`REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', '') LIKE ${`%${cpfNumerico}%`}`
-      );
-    }
-  }
-  if (filters?.convenio) {
-    const convenioEscapado = escapeLikePattern(normalizeSearchTerm(filters.convenio));
+    const termo = filters.busca.trim();
     conditions.push(
       or(
-        sql`LOWER(${pacientes.operadora1}) LIKE LOWER(${`%${convenioEscapado}%`})`,
-        sql`LOWER(${pacientes.operadora2}) LIKE LOWER(${`%${convenioEscapado}%`})`
+        like(pacientes.nome, `%${termo}%`),
+        like(pacientes.cpf, `%${termo}%`),
+        like(pacientes.idPaciente, `%${termo}%`)
+      )!
+    );
+  }
+  
+  if (filters?.nome) {
+    conditions.push(like(pacientes.nome, `%${filters.nome}%`));
+  }
+  if (filters?.cpf) {
+    conditions.push(like(pacientes.cpf, `%${filters.cpf}%`));
+  }
+  if (filters?.convenio) {
+    conditions.push(
+      or(
+        like(pacientes.operadora1, `%${filters.convenio}%`),
+        like(pacientes.operadora2, `%${filters.convenio}%`)
       )!
     );
   }
   if (filters?.diagnostico) {
-    const diagEscapado = escapeLikePattern(normalizeSearchTerm(filters.diagnostico));
     conditions.push(
       or(
-        sql`LOWER(${pacientes.grupoDiagnostico}) LIKE LOWER(${`%${diagEscapado}%`})`,
-        sql`LOWER(${pacientes.diagnosticoEspecifico}) LIKE LOWER(${`%${diagEscapado}%`})`
+        like(pacientes.grupoDiagnostico, `%${filters.diagnostico}%`),
+        like(pacientes.diagnosticoEspecifico, `%${filters.diagnostico}%`)
       )!
     );
   }
@@ -442,12 +176,10 @@ function buildPacienteConditions(tenantId: number, filters?: PacienteFilters) {
     conditions.push(eq(pacientes.statusCaso, filters.status));
   }
   if (filters?.cidade) {
-    const cidadeEscapada = escapeLikePattern(normalizeSearchTerm(filters.cidade));
-    conditions.push(sql`LOWER(${pacientes.cidade}) LIKE LOWER(${`%${cidadeEscapada}%`})`);
+    conditions.push(like(pacientes.cidade, `%${filters.cidade}%`));
   }
   if (filters?.uf) {
-    // UF é sempre maiúsculo, normalizar para comparação
-    conditions.push(sql`UPPER(${pacientes.uf}) = UPPER(${filters.uf.trim()})`);
+    conditions.push(eq(pacientes.uf, filters.uf));
   }
   
   return conditions;
@@ -488,12 +220,9 @@ export async function listPacientes(tenantId: number, filters?: PacienteFilters)
 
   const result = await query;
   
-  // Descriptografar campos PII de cada paciente
-  const decryptedResult = result.map((p: Paciente) => decryptPacientePII(tenantId, p));
-  
   // Adicionar idade calculada a cada paciente
   const { adicionarIdadeAosPacientes } = await import('./idade-helper');
-  return adicionarIdadeAosPacientes(decryptedResult);
+  return adicionarIdadeAosPacientes(result);
 }
 
 // ===== CACHE DE MÉTRICAS =====
@@ -785,10 +514,7 @@ export async function updatePaciente(tenantId: number, id: number, data: Partial
   const existing = await getPacienteById(tenantId, id);
   if (!existing) return undefined;
 
-  // Criptografar campos PII antes de atualizar
-  const encryptedData = encryptPacientePII(tenantId, data);
-
-  await db.update(pacientes).set(encryptedData).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
+  await db.update(pacientes).set(data).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   return getPacienteById(tenantId, id);
 }
 
@@ -1301,7 +1027,7 @@ export interface AuditContext {
  * Registra uma ação no log de auditoria
  */
 export async function createAuditLog(
-  action: "CREATE" | "UPDATE" | "DELETE" | "RESTORE" | "EXPORT",
+  action: "CREATE" | "UPDATE" | "DELETE" | "RESTORE",
   entityType: "paciente" | "atendimento" | "user",
   entityId: number,
   entityIdentifier: string | null,
@@ -1402,7 +1128,7 @@ export async function softDeletePaciente(tenantId: number, id: number, deletedBy
   if (!existing) return false;
 
   await db.update(pacientes).set({
-    deletedAt: toDateString(new Date()),
+    deletedAt: new Date(),
     deletedBy,
   } as any).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   
@@ -1436,7 +1162,7 @@ export async function softDeleteAtendimento(tenantId: number, id: number, delete
   if (!existing) return false;
 
   await db.update(atendimentos).set({
-    deletedAt: toDateString(new Date()),
+    deletedAt: new Date(),
     deletedBy,
   } as any).where(and(eq(atendimentos.tenantId, tenantId), eq(atendimentos.id, id)));
   
@@ -1654,7 +1380,7 @@ export async function listMedicamentosUso(pacienteId: number, apenasAtivos = tru
       .from(medicamentosUso)
       .where(and(
         eq(medicamentosUso.pacienteId, pacienteId),
-        eq(medicamentosUso.ativo, 1)
+        eq(medicamentosUso.ativo, true)
       ))
       .orderBy(desc(medicamentosUso.dataInicio));
   }
@@ -2094,7 +1820,7 @@ export async function registrarMedida(tenantId: number, data: {
   const result = await db.insert(historicoMedidas).values({
     tenantId,
     pacienteId: data.pacienteId,
-    dataMedicao: new Date().toISOString(),
+    dataMedicao: new Date(),
     peso: data.peso ? String(data.peso) : null,
     altura: data.altura ? String(data.altura) : null,
     imc: imc ? String(imc) : null,
@@ -2119,7 +1845,7 @@ export async function registrarMedida(tenantId: number, data: {
           pesoAtual: data.peso ? String(data.peso) : existing.pesoAtual,
           altura: data.altura ? String(data.altura) : existing.altura,
           imc: imc ? String(imc) : existing.imc,
-          updatedAt: toDateString(new Date()),
+          updatedAt: new Date(),
         })
         .where(eq(resumoClinico.pacienteId, data.pacienteId));
       } else {
@@ -2165,7 +1891,6 @@ export async function getEvolucaoIMC(pacienteId: number, meses = 12) {
   if (!db) return [];
   const dataInicio = new Date();
   dataInicio.setMonth(dataInicio.getMonth() - meses);
-  const dataInicioStr = dataInicio.toISOString();
   
   return await db.select({
     data: historicoMedidas.dataMedicao,
@@ -2177,7 +1902,7 @@ export async function getEvolucaoIMC(pacienteId: number, meses = 12) {
     .where(
       and(
         eq(historicoMedidas.pacienteId, pacienteId),
-        gte(historicoMedidas.dataMedicao, dataInicioStr)
+        gte(historicoMedidas.dataMedicao, dataInicio)
       )
     )
     .orderBy(asc(historicoMedidas.dataMedicao));
@@ -2189,22 +1914,16 @@ export async function getEvolucaoIMC(pacienteId: number, meses = 12) {
 import { agendamentos, bloqueiosHorario, historicoAgendamentos, InsertAgendamento, InsertBloqueioHorario, InsertHistoricoAgendamento } from "../drizzle/schema";
 
 // Gerar próximo ID de agendamento (formato: AG-YYYY-NNNNN)
-export async function getNextAgendamentoId(tenantId?: number): Promise<string> {
+export async function getNextAgendamentoId(): Promise<string> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   const ano = new Date().getFullYear();
   const prefix = `AG-${ano}-`;
   
-  // Se tenantId fornecido, filtra por tenant; caso contrário, busca globalmente
-  const conditions = [like(agendamentos.idAgendamento, `${prefix}%`)];
-  if (tenantId) {
-    conditions.push(eq(agendamentos.tenantId, tenantId));
-  }
-  
   const result = await db.select({ idAgendamento: agendamentos.idAgendamento })
     .from(agendamentos)
-    .where(and(...conditions))
+    .where(like(agendamentos.idAgendamento, `${prefix}%`))
     .orderBy(desc(agendamentos.idAgendamento))
     .limit(1);
   
@@ -2220,22 +1939,16 @@ export async function getNextAgendamentoId(tenantId?: number): Promise<string> {
 }
 
 // Gerar próximo ID de bloqueio (formato: BL-YYYY-NNNNN)
-export async function getNextBloqueioId(tenantId?: number): Promise<string> {
+export async function getNextBloqueioId(): Promise<string> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   const ano = new Date().getFullYear();
   const prefix = `BL-${ano}-`;
   
-  // Se tenantId fornecido, filtra por tenant; caso contrário, busca globalmente
-  const conditions = [like(bloqueiosHorario.idBloqueio, `${prefix}%`)];
-  if (tenantId) {
-    conditions.push(eq(bloqueiosHorario.tenantId, tenantId));
-  }
-  
   const result = await db.select({ idBloqueio: bloqueiosHorario.idBloqueio })
     .from(bloqueiosHorario)
-    .where(and(...conditions))
+    .where(like(bloqueiosHorario.idBloqueio, `${prefix}%`))
     .orderBy(desc(bloqueiosHorario.idBloqueio))
     .limit(1);
   
@@ -2248,78 +1961,6 @@ export async function getNextBloqueioId(tenantId?: number): Promise<string> {
   }
   
   return `${prefix}${String(nextNum).padStart(5, '0')}`;
-}
-
-// Verificar conflitos de horário com agendamentos existentes e bloqueios
-export async function verificarConflitosAgendamento(
-  dataHoraInicio: Date | string,
-  dataHoraFim: Date | string,
-  agendamentoIdExcluir?: number,
-  incluirBloqueios: boolean = true
-) {
-  const db = await getDb();
-  if (!db) return [];
-  
-  // Converter para string se necessário
-  const dataHoraInicioStr = typeof dataHoraInicio === 'string' ? dataHoraInicio : dataHoraInicio.toISOString();
-  const dataHoraFimStr = typeof dataHoraFim === 'string' ? dataHoraFim : dataHoraFim.toISOString();
-  
-  // Status que não ocupam tempo na agenda (usando valores do enum)
-  const statusIgnorados: ("Cancelado" | "Reagendado" | "Faltou")[] = ["Cancelado", "Reagendado", "Faltou"];
-  
-  // Buscar agendamentos que se sobrepõem ao intervalo
-  // Dois intervalos [A, B] e [C, D] se sobrepõem se: A < D AND B > C
-  const conditionsAgendamentos = [
-    // Ignorar status que não ocupam tempo
-    notInArray(agendamentos.status, statusIgnorados),
-    // Lógica de sobreposição de intervalos
-    lt(agendamentos.dataHoraInicio, dataHoraFimStr),
-    gt(agendamentos.dataHoraFim, dataHoraInicioStr),
-  ];
-  
-  // Excluir o próprio agendamento (para edição/reagendamento)
-  if (agendamentoIdExcluir) {
-    conditionsAgendamentos.push(not(eq(agendamentos.id, agendamentoIdExcluir)));
-  }
-  
-  const conflitosAgendamentos = await db.select({
-    id: agendamentos.id,
-    tipo: sql<string>`'agendamento'`.as('tipo'),
-    tipoCompromisso: agendamentos.tipoCompromisso,
-    pacienteNome: agendamentos.pacienteNome,
-    titulo: agendamentos.titulo,
-    dataHoraInicio: agendamentos.dataHoraInicio,
-    dataHoraFim: agendamentos.dataHoraFim,
-  })
-    .from(agendamentos)
-    .where(and(...conditionsAgendamentos));
-  
-  // Verificar bloqueios de horário (se habilitado)
-  let conflitosBloqueios: any[] = [];
-  if (incluirBloqueios) {
-    const conditionsBloqueios = [
-      // Apenas bloqueios ativos (não cancelados)
-      eq(bloqueiosHorario.cancelado, 0),
-      // Lógica de sobreposição de intervalos
-      lt(bloqueiosHorario.dataHoraInicio, dataHoraFimStr),
-      gt(bloqueiosHorario.dataHoraFim, dataHoraInicioStr),
-    ];
-    
-    conflitosBloqueios = await db.select({
-      id: bloqueiosHorario.id,
-      tipo: sql<string>`'bloqueio'`.as('tipo'),
-      tipoCompromisso: bloqueiosHorario.tipoBloqueio,
-      pacienteNome: sql<string>`NULL`.as('pacienteNome'),
-      titulo: bloqueiosHorario.titulo,
-      dataHoraInicio: bloqueiosHorario.dataHoraInicio,
-      dataHoraFim: bloqueiosHorario.dataHoraFim,
-    })
-      .from(bloqueiosHorario)
-      .where(and(...conditionsBloqueios));
-  }
-  
-  // Combinar resultados
-  return [...conflitosAgendamentos, ...conflitosBloqueios];
 }
 
 // Criar agendamento
@@ -2344,18 +1985,13 @@ export async function createAgendamento(data: InsertAgendamento) {
 }
 
 // Buscar agendamento por ID
-export async function getAgendamentoById(id: number, tenantId?: number) {
+export async function getAgendamentoById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
   
-  const conditions = [eq(agendamentos.id, id)];
-  if (tenantId) {
-    conditions.push(eq(agendamentos.tenantId, tenantId));
-  }
-  
   const result = await db.select()
     .from(agendamentos)
-    .where(and(...conditions))
+    .where(eq(agendamentos.id, id))
     .limit(1);
   
   return result[0];
@@ -2363,30 +1999,24 @@ export async function getAgendamentoById(id: number, tenantId?: number) {
 
 // Listar agendamentos por período
 export async function listAgendamentos(filters?: {
-  dataInicio?: Date | string;
-  dataFim?: Date | string;
+  dataInicio?: Date;
+  dataFim?: Date;
   pacienteId?: number;
   tipo?: string;
   status?: string;
   incluirCancelados?: boolean;
-  tenantId?: number;
-  // Paginação (Erro 9)
-  limite?: number;
-  offset?: number;
 }) {
   const db = await getDb();
   if (!db) return [];
   
   // Construir condições SQL para filtrar no banco (muito mais rápido)
-  const conditions = [eq(agendamentos.tenantId, filters?.tenantId || 1)];
+  const conditions = [eq(agendamentos.tenantId, 1)];
   
   if (filters?.dataInicio) {
-    const dataInicioStr = typeof filters.dataInicio === 'string' ? filters.dataInicio : filters.dataInicio.toISOString();
-    conditions.push(gte(agendamentos.dataHoraInicio, dataInicioStr));
+    conditions.push(gte(agendamentos.dataHoraInicio, filters.dataInicio));
   }
   if (filters?.dataFim) {
-    const dataFimStr = typeof filters.dataFim === 'string' ? filters.dataFim : filters.dataFim.toISOString();
-    conditions.push(lte(agendamentos.dataHoraInicio, dataFimStr));
+    conditions.push(lte(agendamentos.dataHoraInicio, filters.dataFim));
   }
   if (filters?.pacienteId) {
     conditions.push(eq(agendamentos.pacienteId, filters.pacienteId));
@@ -2398,33 +2028,8 @@ export async function listAgendamentos(filters?: {
     conditions.push(eq(agendamentos.status, filters.status as any));
   }
   
-  // Calcular limite dinâmico baseado no período (Erro 9)
-  // Para visualizações de dia/semana: sem limite (ou limite alto)
-  // Para visualizações de mês/ano: limite para performance
-  let limiteFinal = filters?.limite;
-  if (!limiteFinal && filters?.dataInicio && filters?.dataFim) {
-    const dataInicioDate = typeof filters.dataInicio === 'string' ? new Date(filters.dataInicio) : filters.dataInicio;
-    const dataFimDate = typeof filters.dataFim === 'string' ? new Date(filters.dataFim) : filters.dataFim;
-    const diasDiferenca = Math.ceil(
-      (dataFimDate.getTime() - dataInicioDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    // Dia: até 1 dia -> sem limite
-    // Semana: até 7 dias -> sem limite
-    // Mês: até 31 dias -> limite de 1000
-    // Ano: mais de 31 dias -> limite de 2000
-    if (diasDiferenca <= 7) {
-      limiteFinal = 10000; // Praticamente sem limite para dia/semana
-    } else if (diasDiferenca <= 31) {
-      limiteFinal = 1000; // Limite razoável para mês
-    } else {
-      limiteFinal = 2000; // Limite para visualizações longas
-    }
-  } else if (!limiteFinal) {
-    limiteFinal = 500; // Fallback padrão
-  }
-  
   // Query otimizada com filtros SQL e limite de campos
-  let query = db.select({
+  const result = await db.select({
     id: agendamentos.id,
     idAgendamento: agendamentos.idAgendamento,
     tipoCompromisso: agendamentos.tipoCompromisso,
@@ -2443,35 +2048,25 @@ export async function listAgendamentos(filters?: {
     .from(agendamentos)
     .where(and(...conditions))
     .orderBy(asc(agendamentos.dataHoraInicio))
-    .limit(limiteFinal);
+    .limit(500); // Limitar para performance
   
-  // Aplicar offset se fornecido (para paginação)
-  if (filters?.offset) {
-    query = query.offset(filters.offset) as any;
-  }
-  
-  return await query;
+  return result;
 }
 
 // Cancelar agendamento (não apaga, apenas marca como cancelado)
-export async function cancelarAgendamento(id: number, motivo: string, canceladoPor: string, tenantId?: number) {
+export async function cancelarAgendamento(id: number, motivo: string, canceladoPor: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar dados anteriores
-  const anterior = await getAgendamentoById(id, tenantId);
+  const anterior = await getAgendamentoById(id);
   if (!anterior) throw new Error("Agendamento não encontrado");
-  
-  // Verificar se pertence ao tenant correto
-  if (tenantId && anterior.tenantId !== tenantId) {
-    throw new Error("Acesso negado: agendamento pertence a outro tenant");
-  }
   
   // Atualizar status
   await db.update(agendamentos)
     .set({
       status: "Cancelado",
-      canceladoEm: toDateString(new Date()),
+      canceladoEm: new Date(),
       canceladoPor,
       motivoCancelamento: motivo,
     })
@@ -2496,20 +2091,14 @@ export async function reagendarAgendamento(
   novaDataInicio: Date,
   novaDataFim: Date,
   reagendadoPor: string,
-  motivo?: string,
-  tenantId?: number
+  motivo?: string
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento original
-  const original = await getAgendamentoById(idOriginal, tenantId);
+  const original = await getAgendamentoById(idOriginal);
   if (!original) throw new Error("Agendamento original não encontrado");
-  
-  // Verificar se pertence ao tenant correto
-  if (tenantId && original.tenantId !== tenantId) {
-    throw new Error("Acesso negado: agendamento pertence a outro tenant");
-  }
   
   // Marcar original como reagendado
   await db.update(agendamentos)
@@ -2536,8 +2125,8 @@ export async function reagendarAgendamento(
     tipoCompromisso: original.tipoCompromisso,
     pacienteId: original.pacienteId,
     pacienteNome: original.pacienteNome,
-    dataHoraInicio: toDateStringRequired(novaDataInicio),
-    dataHoraFim: toDateStringRequired(novaDataFim),
+    dataHoraInicio: novaDataInicio,
+    dataHoraFim: novaDataFim,
     local: original.local,
     status: "Agendado",
     titulo: original.titulo,
@@ -2549,74 +2138,19 @@ export async function reagendarAgendamento(
   return createAgendamento(novoAgendamento);
 }
 
-// Mover agendamento via drag-and-drop (atualiza in-place sem criar novo registro)
-export async function moverAgendamento(
-  id: number,
-  novaDataInicio: Date,
-  novaDataFim: Date,
-  movidoPor: string,
-  tenantId?: number
-) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Buscar agendamento original
-  const original = await getAgendamentoById(id, tenantId);
-  if (!original) throw new Error("Agendamento não encontrado");
-  
-  // Não permitir mover agendamentos finalizados
-  if (["Cancelado", "Transferido", "Encerrado", "Falta"].includes(original.status)) {
-    throw new Error(`Não é possível mover agendamento com status ${original.status}`);
-  }
-  
-  // Formatar datas para log
-  const formatarDataHora = (data: Date | string): string => {
-    const d = typeof data === 'string' ? new Date(data) : data;
-    return d.toLocaleString('pt-BR', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-  
-  // Atualizar data/hora do agendamento
-  await db.update(agendamentos)
-    .set({
-      dataHoraInicio: toDateStringRequired(novaDataInicio),
-      dataHoraFim: toDateStringRequired(novaDataFim),
-      updatedAt: toDateString(new Date()),
-    })
-    .where(eq(agendamentos.id, id));
-  
-  // Registrar no histórico
-  await db.insert(historicoAgendamentos).values({
-    tenantId: original.tenantId,
-    agendamentoId: id,
-    tipoAlteracao: "Edição",
-    descricaoAlteracao: `Movido por ${movidoPor} de ${formatarDataHora(original.dataHoraInicio)} para ${formatarDataHora(novaDataInicio)}`,
-    valoresAnteriores: { dataHoraInicio: original.dataHoraInicio, dataHoraFim: original.dataHoraFim } as any,
-    valoresNovos: { dataHoraInicio: novaDataInicio, dataHoraFim: novaDataFim } as any,
-    realizadoPor: movidoPor,
-  });
-  
-  return await getAgendamentoById(id);
-}
-
 // Confirmar agendamento
-export async function confirmarAgendamento(id: number, confirmadoPor: string, tenantId?: number) {
+export async function confirmarAgendamento(id: number, confirmadoPor: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento para obter tenantId
-  const agendamento = await getAgendamentoById(id, tenantId);
+  const agendamento = await getAgendamentoById(id);
   if (!agendamento) throw new Error("Agendamento não encontrado");
   
   await db.update(agendamentos)
     .set({
       status: "Confirmado",
-      confirmadoEm: toDateString(new Date()),
+      confirmadoEm: new Date(),
       confirmadoPor,
     })
     .where(eq(agendamentos.id, id));
@@ -2633,18 +2167,18 @@ export async function confirmarAgendamento(id: number, confirmadoPor: string, te
 }
 
 // Marcar como realizado
-export async function realizarAgendamento(id: number, realizadoPor: string, atendimentoId?: number, tenantId?: number) {
+export async function realizarAgendamento(id: number, realizadoPor: string, atendimentoId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento para obter tenantId
-  const agendamento = await getAgendamentoById(id, tenantId);
+  const agendamento = await getAgendamentoById(id);
   if (!agendamento) throw new Error("Agendamento não encontrado");
   
   await db.update(agendamentos)
     .set({
       status: "Realizado",
-      realizadoEm: toDateString(new Date()),
+      realizadoEm: new Date(),
       realizadoPor,
       atendimentoId,
     })
@@ -2662,18 +2196,18 @@ export async function realizarAgendamento(id: number, realizadoPor: string, aten
 }
 
 // Marcar falta
-export async function marcarFaltaAgendamento(id: number, marcadoPor: string, tenantId?: number) {
+export async function marcarFaltaAgendamento(id: number, marcadoPor: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Buscar agendamento para obter tenantId
-  const agendamento = await getAgendamentoById(id, tenantId);
+  const agendamento = await getAgendamentoById(id);
   if (!agendamento) throw new Error("Agendamento não encontrado");
   
   await db.update(agendamentos)
     .set({
       status: "Faltou",
-      marcadoFaltaEm: toDateString(new Date()),
+      marcadoFaltaEm: new Date(),
       marcadoFaltaPor: marcadoPor,
     })
     .where(eq(agendamentos.id, id));
@@ -2684,6 +2218,58 @@ export async function marcarFaltaAgendamento(id: number, marcadoPor: string, ten
     tipoAlteracao: "Falta",
     descricaoAlteracao: `Falta registrada por ${marcadoPor}`,
     realizadoPor: marcadoPor,
+  });
+  
+  return getAgendamentoById(id);
+}
+
+// Marcar paciente como "Aguardando" (chegou na recepção)
+export async function marcarAguardandoAgendamento(id: number, marcadoPor: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar agendamento para obter tenantId
+  const agendamento = await getAgendamentoById(id);
+  if (!agendamento) throw new Error("Agendamento não encontrado");
+  
+  await db.update(agendamentos)
+    .set({
+      status: "Aguardando",
+    })
+    .where(eq(agendamentos.id, id));
+  
+  await db.insert(historicoAgendamentos).values({
+    tenantId: agendamento.tenantId,
+    agendamentoId: id,
+    tipoAlteracao: "Edição",
+    descricaoAlteracao: `Paciente chegou - marcado como Aguardando por ${marcadoPor}`,
+    realizadoPor: marcadoPor,
+  });
+  
+  return getAgendamentoById(id);
+}
+
+// Iniciar atendimento (mudar para "Em atendimento")
+export async function iniciarAtendimentoAgendamento(id: number, iniciadoPor: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar agendamento para obter tenantId
+  const agendamento = await getAgendamentoById(id);
+  if (!agendamento) throw new Error("Agendamento não encontrado");
+  
+  await db.update(agendamentos)
+    .set({
+      status: "Em atendimento",
+    })
+    .where(eq(agendamentos.id, id));
+  
+  await db.insert(historicoAgendamentos).values({
+    tenantId: agendamento.tenantId,
+    agendamentoId: id,
+    tipoAlteracao: "Edição",
+    descricaoAlteracao: `Atendimento iniciado por ${iniciadoPor}`,
+    realizadoPor: iniciadoPor,
   });
   
   return getAgendamentoById(id);
@@ -2708,8 +2294,8 @@ export async function createAgendamentoImportado(data: {
   googleUid: string;
   tipoCompromisso: string;
   pacienteNome?: string | null;
-  dataHoraInicio: Date | string;
-  dataHoraFim: Date | string;
+  dataHoraInicio: Date;
+  dataHoraFim: Date;
   local?: string | null;
   titulo?: string | null;
   descricao?: string | null;
@@ -2724,10 +2310,6 @@ export async function createAgendamentoImportado(data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Converter datas para string se necessário
-  const dataHoraInicioStr = typeof data.dataHoraInicio === 'string' ? data.dataHoraInicio : data.dataHoraInicio.toISOString();
-  const dataHoraFimStr = typeof data.dataHoraFim === 'string' ? data.dataHoraFim : data.dataHoraFim.toISOString();
-  
   // Obter tenantId padrão
   const tenantResult = await db.select().from(tenants).limit(1);
   const tenantId = tenantResult[0]?.id || 1;
@@ -2738,8 +2320,8 @@ export async function createAgendamentoImportado(data: {
     googleUid: data.googleUid,
     tipoCompromisso: data.tipoCompromisso as any,
     pacienteNome: data.pacienteNome,
-    dataHoraInicio: dataHoraInicioStr,
-    dataHoraFim: dataHoraFimStr,
+    dataHoraInicio: data.dataHoraInicio,
+    dataHoraFim: data.dataHoraFim,
     local: data.local,
     titulo: data.titulo,
     descricao: data.descricao,
@@ -2795,17 +2377,11 @@ export async function listBloqueios(filters?: {
   dataInicio?: Date;
   dataFim?: Date;
   incluirCancelados?: boolean;
-  tenantId?: number;
 }) {
   const db = await getDb();
   if (!db) return [];
   
   const conditions = [];
-  
-  // Filtrar por tenant
-  if (filters?.tenantId) {
-    conditions.push(eq(bloqueiosHorario.tenantId, filters.tenantId));
-  }
   
   if (filters?.dataInicio) {
     conditions.push(sql`${bloqueiosHorario.dataHoraInicio} >= ${filters.dataInicio}`);
@@ -2814,7 +2390,7 @@ export async function listBloqueios(filters?: {
     conditions.push(sql`${bloqueiosHorario.dataHoraInicio} <= ${filters.dataFim}`);
   }
   if (!filters?.incluirCancelados) {
-    conditions.push(eq(bloqueiosHorario.cancelado, 0));
+    conditions.push(eq(bloqueiosHorario.cancelado, false));
   }
   
   let query = db.select().from(bloqueiosHorario);
@@ -2828,40 +2404,30 @@ export async function listBloqueios(filters?: {
   return await query;
 }
 
-export async function cancelarBloqueio(id: number, motivo: string, canceladoPor: string, tenantId?: number) {
+export async function cancelarBloqueio(id: number, motivo: string, canceladoPor: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const conditions = [eq(bloqueiosHorario.id, id)];
-  if (tenantId) {
-    conditions.push(eq(bloqueiosHorario.tenantId, tenantId));
-  }
-  
   await db.update(bloqueiosHorario)
     .set({
-      cancelado: 1,
-      canceladoEm: toDateString(new Date()),
+      cancelado: true,
+      canceladoEm: new Date(),
       canceladoPor,
       motivoCancelamento: motivo,
     })
-    .where(and(...conditions));
+    .where(eq(bloqueiosHorario.id, id));
   
   return getBloqueioById(id);
 }
 
 // Buscar histórico de um agendamento
-export async function getHistoricoAgendamento(agendamentoId: number, tenantId?: number) {
+export async function getHistoricoAgendamento(agendamentoId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  const conditions = [eq(historicoAgendamentos.agendamentoId, agendamentoId)];
-  if (tenantId) {
-    conditions.push(eq(historicoAgendamentos.tenantId, tenantId));
-  }
-  
   return await db.select()
     .from(historicoAgendamentos)
-    .where(and(...conditions))
+    .where(eq(historicoAgendamentos.agendamentoId, agendamentoId))
     .orderBy(desc(historicoAgendamentos.createdAt));
 }
 
@@ -3020,7 +2586,7 @@ export async function ensureUserProfile(userId: number, userData: { name?: strin
       nomeCompleto: userData.name || null,
       email: userData.email || null,
       perfilAtivo: "paciente",
-      isPaciente: 1,
+      isPaciente: true,
     });
   }
   
@@ -3065,10 +2631,10 @@ export async function criarVinculo(
     tenantId,
     secretariaUserId,
     medicoUserId,
-    dataInicio: dataInicio.toISOString(),
-    dataValidade: dataValidade.toISOString(),
+    dataInicio,
+    dataValidade,
     status: "ativo",
-    notificacaoEnviada: 0,
+    notificacaoEnviada: false,
   });
 
   const vinculoId = Number(result[0].insertId);
@@ -3197,14 +2763,15 @@ export async function renovarVinculo(vinculoId: number): Promise<void> {
   // Calcular nova data de validade (1 ano a partir de agora)
   const novaDataValidade = new Date();
   novaDataValidade.setFullYear(novaDataValidade.getFullYear() + 1);
+
   await db
     .update(vinculoSecretariaMedico)
     .set({
-      dataValidade: toDateString(novaDataValidade),
+      dataValidade: novaDataValidade,
       status: "ativo",
-      notificacaoEnviada: 0,
+      notificacaoEnviada: false,
     })
-    .where(eq(vinculoSecretariaMedico.id, vinculoId));;
+    .where(eq(vinculoSecretariaMedico.id, vinculoId));
 
   // Registrar no histórico usando tenantId do vínculo
   await db.insert(historicoVinculo).values({
@@ -3264,7 +2831,7 @@ export async function verificarVinculosExpirando(): Promise<any[]> {
     .where(
       and(
         eq(vinculoSecretariaMedico.status, "ativo"),
-        eq(vinculoSecretariaMedico.notificacaoEnviada, 0),
+        eq(vinculoSecretariaMedico.notificacaoEnviada, false),
         sql`${vinculoSecretariaMedico.dataValidade} <= ${dataLimite}`
       )!
     );
@@ -3275,7 +2842,7 @@ export async function verificarVinculosExpirando(): Promise<any[]> {
       .update(vinculoSecretariaMedico)
       .set({
         status: "pendente_renovacao",
-        notificacaoEnviada: 1,
+        notificacaoEnviada: true,
       })
       .where(eq(vinculoSecretariaMedico.id, vinculo.id));
   }
@@ -3346,7 +2913,7 @@ export async function listDocumentosExternos(pacienteId: number, categoria?: str
       .from(documentosExternos)
       .where(and(
         eq(documentosExternos.pacienteId, pacienteId),
-        eq(documentosExternos.categoriaDocumento, categoria as any)
+        eq(documentosExternos.categoria, categoria as any)
       ))
       .orderBy(desc(documentosExternos.dataDocumento));
   }
@@ -3474,9 +3041,9 @@ export async function getFluxogramaLaboratorial(pacienteId: number): Promise<{
   
   for (const r of todos) {
     const exame = r.nomeExameOriginal;
-    // dataColeta é sempre string no modo 'string' do schema
-    const dataStr = typeof r.dataColeta === 'object' && r.dataColeta !== null && 'toISOString' in r.dataColeta
-      ? (r.dataColeta as Date).toISOString().split('T')[0] 
+    // dataColeta pode ser Date ou string dependendo do driver
+    const dataStr = r.dataColeta instanceof Date 
+      ? r.dataColeta.toISOString().split('T')[0] 
       : String(r.dataColeta);
     
     examesSet.add(exame);
@@ -3485,7 +3052,7 @@ export async function getFluxogramaLaboratorial(pacienteId: number): Promise<{
     if (!resultados[exame]) resultados[exame] = {};
     resultados[exame][dataStr] = {
       valor: r.resultado,
-      foraRef: fromBooleanInt(r.foraReferencia),
+      foraRef: r.foraReferencia || false,
       tipo: r.tipoAlteracao || 'Normal'
     };
   }
@@ -3508,13 +3075,13 @@ export async function createResultadoLaboratorial(data: InsertResultadoLaborator
     const max = data.valorReferenciaMax ? Number(data.valorReferenciaMax) : null;
     
     if (min !== null && valor < min) {
-      data.foraReferencia = 1;
+      data.foraReferencia = true;
       data.tipoAlteracao = 'Diminuído';
     } else if (max !== null && valor > max) {
-      data.foraReferencia = 1;
+      data.foraReferencia = true;
       data.tipoAlteracao = 'Aumentado';
     } else {
-      data.foraReferencia = 0;
+      data.foraReferencia = false;
       data.tipoAlteracao = 'Normal';
     }
   }
@@ -3719,9 +3286,9 @@ export interface ExameFavorito {
   nomeExame: string;
   categoria: string | null;
   ordem: number | null;
-  ativo: number | null;
-  createdAt: string | null;
-  updatedAt: string | null;
+  ativo: boolean | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export async function listExamesFavoritos(userId: string): Promise<ExameFavorito[]> {
@@ -3733,7 +3300,7 @@ export async function listExamesFavoritos(userId: string): Promise<ExameFavorito
     .from(examesFavoritos)
     .where(and(
       eq(examesFavoritos.userId, userId),
-      eq(examesFavoritos.ativo, 1)
+      eq(examesFavoritos.ativo, true)
     ))
     .orderBy(examesFavoritos.ordem) as any;
 }
@@ -3755,7 +3322,7 @@ export async function addExameFavorito(tenantId: number, userId: string, nomeExa
   if (existing.length > 0) {
     // Reativar se estava inativo
     await db.update(examesFavoritos)
-      .set({ ativo: 1 })
+      .set({ ativo: true })
       .where(eq(examesFavoritos.id, existing[0].id));
     return existing[0] as ExameFavorito;
   }
@@ -3774,10 +3341,10 @@ export async function addExameFavorito(tenantId: number, userId: string, nomeExa
     nomeExame,
     categoria: categoria || "Geral",
     ordem,
-    ativo: 1,
+    ativo: true,
   });
   
-  return { id: result.insertId, tenantId, userId, nomeExame, categoria: categoria || "Geral", ordem, ativo: 1, createdAt: toDateString(new Date()) ?? null, updatedAt: toDateString(new Date()) ?? null };
+  return { id: result.insertId, tenantId, userId, nomeExame, categoria: categoria || "Geral", ordem, ativo: true, createdAt: new Date(), updatedAt: new Date() };
 }
 
 export async function removeExameFavorito(userId: string, nomeExame: string): Promise<void> {
@@ -3785,7 +3352,7 @@ export async function removeExameFavorito(userId: string, nomeExame: string): Pr
   if (!db) throw new Error("Database not available");
   
   await db.update(examesFavoritos)
-    .set({ ativo: 0 })
+    .set({ ativo: false })
     .where(and(
       eq(examesFavoritos.userId, userId),
       eq(examesFavoritos.nomeExame, nomeExame)
@@ -3932,10 +3499,10 @@ export async function createCrossTenantAutorizacao(data: {
     tipoAutorizacao: data.tipoAutorizacao || "leitura",
     escopoAutorizacao: data.escopoAutorizacao || "completo",
     motivo: data.motivo || null,
-    dataFim: data.dataFim ? data.dataFim.toISOString() : null,
+    dataFim: data.dataFim || null,
     status: "pendente",
-    consentimentoLgpd: data.consentimentoLGPD ? 1 : 0,
-    dataConsentimento: data.consentimentoLGPD ? new Date().toISOString() : null,
+    consentimentoLGPD: data.consentimentoLGPD || false,
+    dataConsentimento: data.consentimentoLGPD ? new Date() : null,
     ipConsentimento: data.ipConsentimento || null,
   });
   
@@ -4062,8 +3629,8 @@ export async function approveCrossTenantAutorizacao(id: number, consentimentoLGP
   await db.update(pacienteAutorizacoes)
     .set({ 
       status: "ativa",
-      consentimentoLgpd: consentimentoLGPD ? 1 : 0,
-      dataConsentimento: new Date().toISOString(),
+      consentimentoLGPD,
+      dataConsentimento: new Date(),
       ipConsentimento: ipConsentimento || null,
     })
     .where(eq(pacienteAutorizacoes.id, id));
@@ -4151,7 +3718,7 @@ export async function getUserTenants(userId: number) {
   
   if (userResult.length === 0) return [];
   
-  const primaryTenantId = userResult[0].tenantId ?? 1;
+  const primaryTenantId = userResult[0].tenantId;
   
   // Buscar tenants através de vínculos ativos
   // Nota: secretariaUserId é varchar, então convertemos userId para string
@@ -4167,7 +3734,7 @@ export async function getUserTenants(userId: number) {
   
   // Combinar IDs únicos
   const tenantIds = new Set<number>([primaryTenantId]);
-  vinculosResult.forEach(v => { if (v.tenantId) tenantIds.add(v.tenantId); });
+  vinculosResult.forEach(v => tenantIds.add(v.tenantId));
   
   // Buscar informações completas dos tenants
   const tenantsResult = await db.select().from(tenants)
@@ -4249,7 +3816,7 @@ export async function getUserActiveTenant(userId: number) {
   
   if (userResult.length === 0) return null;
   
-  return getTenantById(userResult[0].tenantId ?? 1);
+  return getTenantById(userResult[0].tenantId);
 }
 
 
@@ -4345,10 +3912,12 @@ export async function inviteUserToTenant(
     tenantId,
     medicoUserId,
     secretariaUserId,
-    dataInicio: new Date().toISOString(),
-    dataValidade: dataValidade.toISOString(),
+    dataInicio: new Date(),
+    dataValidade,
     status: "ativo",
-    notificacaoEnviada: 0,
+    notificacaoEnviada: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   });
   
   return result[0].insertId;
@@ -4518,8 +4087,7 @@ export async function listCrossTenantAccessLogs(filters: {
     conditions.push(eq(crossTenantAccessLogs.autorizacaoId, filters.autorizacaoId));
   }
   if (filters.dataInicio) {
-    const dataInicioStr = typeof filters.dataInicio === 'string' ? filters.dataInicio : filters.dataInicio.toISOString();
-    conditions.push(gte(crossTenantAccessLogs.createdAt, dataInicioStr));
+    conditions.push(gte(crossTenantAccessLogs.createdAt, filters.dataInicio));
   }
   
   let query = db.select({
@@ -4687,8 +4255,8 @@ export async function getAutorizacoesExpirando(diasAntecedencia: number = 7) {
     .where(
       and(
         eq(pacienteAutorizacoes.status, 'ativa'),
-        lte(pacienteAutorizacoes.dataFim, dataLimite.toISOString()),
-        gt(pacienteAutorizacoes.dataFim, new Date().toISOString())
+        lte(pacienteAutorizacoes.dataFim, dataLimite),
+        gt(pacienteAutorizacoes.dataFim, new Date())
       )
     );
   
@@ -4703,17 +4271,16 @@ export async function atualizarAutorizacoesExpiradas() {
   if (!db) return { atualizadas: 0 };
   
   const agora = new Date();
-  const agoraStr = agora.toISOString();
   
   const result = await db.update(pacienteAutorizacoes)
     .set({ 
       status: 'expirada',
-      updatedAt: agoraStr,
+      updatedAt: agora,
     })
     .where(
       and(
         eq(pacienteAutorizacoes.status, 'ativa'),
-        lte(pacienteAutorizacoes.dataFim, agoraStr)
+        lte(pacienteAutorizacoes.dataFim, agora)
       )
     );
   
@@ -4795,21 +4362,16 @@ export async function getCrossTenantStats(tenantId: number) {
 /**
  * Atualiza o google_uid de um agendamento após criar evento no Google
  */
-export async function atualizarAgendamentoGoogleUid(agendamentoId: number, googleUid: string, tenantId?: number) {
+export async function atualizarAgendamentoGoogleUid(agendamentoId: number, googleUid: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  const conditions = [eq(agendamentos.id, agendamentoId)];
-  if (tenantId) {
-    conditions.push(eq(agendamentos.tenantId, tenantId));
-  }
   
   await db.update(agendamentos)
     .set({ 
       googleUid,
-      updatedAt: toDateString(new Date()),
+      updatedAt: new Date(),
     })
-    .where(and(...conditions));
+    .where(eq(agendamentos.id, agendamentoId));
   
   return { success: true };
 }
@@ -4818,26 +4380,23 @@ export async function atualizarAgendamentoGoogleUid(agendamentoId: number, googl
  * Lista agendamentos não sincronizados com Google Calendar
  */
 export async function listAgendamentosNaoSincronizados(filters?: {
-  dataInicio?: Date | string;
-  dataFim?: Date | string;
-  tenantId?: number;
+  dataInicio?: Date;
+  dataFim?: Date;
 }) {
   const db = await getDb();
   if (!db) return [];
   
   const conditions = [
-    eq(agendamentos.tenantId, filters?.tenantId || 1),
+    eq(agendamentos.tenantId, 1),
     isNull(agendamentos.googleUid),
     ne(agendamentos.status, 'Cancelado'),
   ];
   
   if (filters?.dataInicio) {
-    const dataInicioStr = typeof filters.dataInicio === 'string' ? filters.dataInicio : filters.dataInicio.toISOString();
-    conditions.push(gte(agendamentos.dataHoraInicio, dataInicioStr));
+    conditions.push(gte(agendamentos.dataHoraInicio, filters.dataInicio));
   }
   if (filters?.dataFim) {
-    const dataFimStr = typeof filters.dataFim === 'string' ? filters.dataFim : filters.dataFim.toISOString();
-    conditions.push(lte(agendamentos.dataHoraInicio, dataFimStr));
+    conditions.push(lte(agendamentos.dataHoraInicio, filters.dataFim));
   }
   
   return await db.select()
@@ -4853,8 +4412,7 @@ export async function listAgendamentosNaoSincronizados(filters?: {
 export async function vincularAgendamentoPaciente(
   agendamentoId: number,
   pacienteId: number,
-  vinculadoPor: string,
-  tenantId?: number
+  vinculadoPor: string
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -4867,22 +4425,17 @@ export async function vincularAgendamentoPaciente(
   
   const nomePaciente = paciente[0]?.nome || null;
   
-  const conditions = [eq(agendamentos.id, agendamentoId)];
-  if (tenantId) {
-    conditions.push(eq(agendamentos.tenantId, tenantId));
-  }
-  
   await db.update(agendamentos)
     .set({ 
       pacienteId,
       pacienteNome: nomePaciente,
-      updatedAt: toDateString(new Date()),
+      updatedAt: new Date(),
     })
-    .where(and(...conditions));
+    .where(eq(agendamentos.id, agendamentoId));
   
   // Registrar no histórico
   await db.insert(historicoAgendamentos).values({
-    tenantId: tenantId || 1,
+    tenantId: 1,
     agendamentoId,
     tipoAlteracao: 'Edição',
     descricaoAlteracao: `Paciente vinculado: ID ${pacienteId} - ${nomePaciente}`,
@@ -4895,7 +4448,7 @@ export async function vincularAgendamentoPaciente(
 /**
  * Lista agendamentos pendentes de vinculação (com nome mas sem paciente_id)
  */
-export async function listAgendamentosPendentesVinculacao(tenantId?: number) {
+export async function listAgendamentosPendentesVinculacao() {
   const db = await getDb();
   if (!db) return [];
   
@@ -4911,7 +4464,7 @@ export async function listAgendamentosPendentesVinculacao(tenantId?: number) {
     .from(agendamentos)
     .where(
       and(
-        eq(agendamentos.tenantId, tenantId || 1),
+        eq(agendamentos.tenantId, 1),
         isNull(agendamentos.pacienteId),
         isNotNull(agendamentos.pacienteNome),
         ne(agendamentos.pacienteNome, '')
@@ -4927,24 +4480,46 @@ export async function listAgendamentosPendentesVinculacao(tenantId?: number) {
 /**
  * Busca rápida de pacientes para autocomplete
  * Retorna apenas campos essenciais para performance
- * 
- * @param tenantId - ID do tenant para isolamento multi-tenant
- * @param termo - Termo de busca (mínimo 2 caracteres)
- * @param limit - Limite de resultados (padrão: 20)
  */
-export async function searchPacientesRapido(tenantId: number, termo: string, limit: number = 20) {
+export async function searchPacientesRapido(termo: string, limit: number = 20) {
   const db = await getDb();
   if (!db) return [];
   
   if (!termo || termo.length < 2) return [];
   
-  // Normalizar termo de busca: lowercase e sem acentos
-  const termoNormalizado = normalizeSearchTerm(termo);
-  const termoEscapado = escapeLikePattern(termoNormalizado);
+  const termoLower = termo.toLowerCase().trim();
   const termoNumerico = termo.replace(/\D/g, '');
   
-  // Campos selecionados para autocomplete (mínimo necessário)
-  const selectFields = {
+  // Buscar por ID se for número
+  if (termoNumerico && termoNumerico.length > 0) {
+    const byId = await db.select({
+      id: pacientes.id,
+      idPaciente: pacientes.idPaciente,
+      nome: pacientes.nome,
+      cpf: pacientes.cpf,
+      dataNascimento: pacientes.dataNascimento,
+      telefone: pacientes.telefone,
+      convenio: pacientes.operadora1,
+      email: pacientes.email,
+    })
+      .from(pacientes)
+      .where(
+        and(
+          eq(pacientes.tenantId, 1),
+          or(
+            eq(pacientes.id, parseInt(termoNumerico)),
+            like(pacientes.idPaciente, `%${termoNumerico}%`),
+            like(pacientes.cpf, `%${termoNumerico}%`)
+          )
+        )
+      )
+      .limit(limit);
+    
+    if (byId.length > 0) return byId;
+  }
+  
+  // Buscar por nome
+  const byNome = await db.select({
     id: pacientes.id,
     idPaciente: pacientes.idPaciente,
     nome: pacientes.nome,
@@ -4953,516 +4528,16 @@ export async function searchPacientesRapido(tenantId: number, termo: string, lim
     telefone: pacientes.telefone,
     convenio: pacientes.operadora1,
     email: pacientes.email,
-  };
-  
-  // Condições base: tenant + não deletado
-  const baseConditions = [
-    eq(pacientes.tenantId, tenantId),
-    sql`${pacientes.deletedAt} IS NULL`
-  ];
-  
-  // Buscar por ID ou CPF se for numérico
-  if (termoNumerico && termoNumerico.length > 0) {
-    const byIdOrCpf = await db.select(selectFields)
-      .from(pacientes)
-      .where(
-        and(
-          ...baseConditions,
-          or(
-            eq(pacientes.id, parseInt(termoNumerico) || 0),
-            sql`${pacientes.idPaciente} LIKE ${`%${termoNumerico}%`}`,
-            sql`REPLACE(REPLACE(${pacientes.cpf}, '.', ''), '-', '') LIKE ${`%${termoNumerico}%`}`
-          )
-        )
-      )
-      .limit(limit);
-    
-    if (byIdOrCpf.length > 0) return byIdOrCpf;
-  }
-  
-  // Buscar por nome - case-insensitive
-  const byNome = await db.select(selectFields)
+  })
     .from(pacientes)
     .where(
       and(
-        ...baseConditions,
-        sql`LOWER(${pacientes.nome}) LIKE LOWER(${`%${termoEscapado}%`})`
+        eq(pacientes.tenantId, 1),
+        like(sql`LOWER(${pacientes.nome})`, `%${termoLower}%`)
       )
     )
     .orderBy(pacientes.nome)
     .limit(limit);
   
   return byNome;
-}
-
-
-// ===== DELEGADOS DA AGENDA =====
-import { delegadosAgenda, InsertDelegadoAgenda, DelegadoAgenda } from "../drizzle/schema";
-
-/**
- * Listar delegados de um médico
- */
-export async function listDelegadosAgenda(medicoUserId: number): Promise<DelegadoAgenda[]> {
-  const db = await getDb();
-  if (!db) return [];
-
-  return await db.select()
-    .from(delegadosAgenda)
-    .where(
-      and(
-        eq(delegadosAgenda.medicoUserId, medicoUserId),
-        eq(delegadosAgenda.ativo, true)
-      )
-    )
-    .orderBy(desc(delegadosAgenda.createdAt));
-}
-
-/**
- * Criar delegado da agenda
- */
-export async function createDelegadoAgenda(data: {
-  medicoUserId: number;
-  delegadoEmail: string;
-  delegadoNome: string | null;
-  permissao: "visualizar" | "editar";
-  dataFim: Date | null;
-  criadoPor: string;
-}): Promise<DelegadoAgenda | null> {
-  const db = await getDb();
-  if (!db) return null;
-
-  // Verificar se já existe um delegado ativo com esse email para esse médico
-  const existente = await db.select()
-    .from(delegadosAgenda)
-    .where(
-      and(
-        eq(delegadosAgenda.medicoUserId, data.medicoUserId),
-        eq(delegadosAgenda.delegadoEmail, data.delegadoEmail),
-        eq(delegadosAgenda.ativo, true)
-      )
-    )
-    .limit(1);
-
-  if (existente.length > 0) {
-    throw new Error("Este e-mail já está cadastrado como delegado");
-  }
-
-  // Obter tenantId do médico
-  const medico = await db.select({ tenantId: users.tenantId })
-    .from(users)
-    .where(eq(users.id, data.medicoUserId))
-    .limit(1);
-
-  const tenantId = medico[0]?.tenantId || 1;
-
-  // Verificar se o delegado já é um usuário do sistema
-  const delegadoUser = await db.select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, data.delegadoEmail))
-    .limit(1);
-
-  const result = await db.insert(delegadosAgenda).values({
-    tenantId,
-    medicoUserId: data.medicoUserId,
-    delegadoUserId: delegadoUser[0]?.id || null,
-    delegadoEmail: data.delegadoEmail,
-    permissao: data.permissao,
-    dataFim: data.dataFim ? data.dataFim.toISOString() : null,
-    ativo: true,
-  });
-
-  // Retornar o delegado criado
-  // Nota: MySQL retorna insertId no resultado do insert
-  const insertId = (result as any).insertId || (result as any)[0]?.insertId;
-  const created = await db.select()
-    .from(delegadosAgenda)
-    .where(eq(delegadosAgenda.id, Number(insertId)))
-    .limit(1);
-
-  return created[0] || null;
-}
-
-/**
- * Atualizar delegado da agenda
- */
-export async function updateDelegadoAgenda(
-  id: number,
-  medicoUserId: number,
-  data: {
-    permissao?: "visualizar" | "editar";
-    dataFim?: Date | null;
-    ativo?: boolean;
-  }
-): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-
-  // Verificar se o delegado pertence ao médico
-  const delegado = await db.select()
-    .from(delegadosAgenda)
-    .where(
-      and(
-        eq(delegadosAgenda.id, id),
-        eq(delegadosAgenda.medicoUserId, medicoUserId)
-      )
-    )
-    .limit(1);
-
-  if (delegado.length === 0) {
-    throw new Error("Delegado não encontrado ou não pertence a este médico");
-  }
-
-  const updateData: Partial<InsertDelegadoAgenda> = {};
-  if (data.permissao !== undefined) updateData.permissao = data.permissao;
-  if (data.dataFim !== undefined) updateData.dataFim = data.dataFim ? data.dataFim.toISOString() : null;
-  if (data.ativo !== undefined) updateData.ativo = data.ativo;
-
-  await db.update(delegadosAgenda)
-    .set(updateData)
-    .where(eq(delegadosAgenda.id, id));
-
-  return true;
-}
-
-/**
- * Remover delegado da agenda (soft delete)
- */
-export async function removeDelegadoAgenda(id: number, medicoUserId: number): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-
-  // Verificar se o delegado pertence ao médico
-  const delegado = await db.select()
-    .from(delegadosAgenda)
-    .where(
-      and(
-        eq(delegadosAgenda.id, id),
-        eq(delegadosAgenda.medicoUserId, medicoUserId)
-      )
-    )
-    .limit(1);
-
-  if (delegado.length === 0) {
-    throw new Error("Delegado não encontrado ou não pertence a este médico");
-  }
-
-  await db.update(delegadosAgenda)
-    .set({ ativo: false })
-    .where(eq(delegadosAgenda.id, id));
-
-  return true;
-}
-
-/**
- * Obter permissões de delegado para um email
- * Retorna lista de médicos para os quais o usuário tem permissão
- */
-export async function getDelegadoPermissoes(email: string): Promise<Array<{
-  medicoUserId: number;
-  medicoNome: string | null;
-  medicoEmail: string | null;
-  permissao: "visualizar" | "editar";
-  dataInicio: string | null;
-  dataFim: string | null;
-}>> {
-  const db = await getDb();
-  if (!db) return [];
-
-  const nowStr = new Date().toISOString();
-
-  const delegacoes = await db.select({
-    medicoUserId: delegadosAgenda.medicoUserId,
-    permissao: delegadosAgenda.permissao,
-    dataInicio: delegadosAgenda.dataInicio,
-    dataFim: delegadosAgenda.dataFim,
-    medicoNome: users.name,
-    medicoEmail: users.email,
-  })
-    .from(delegadosAgenda)
-    .innerJoin(users, eq(users.id, delegadosAgenda.medicoUserId))
-    .where(
-      and(
-        eq(delegadosAgenda.delegadoEmail, email),
-        eq(delegadosAgenda.ativo, true),
-        or(
-          isNull(delegadosAgenda.dataFim),
-          gte(delegadosAgenda.dataFim, nowStr)
-        )
-      )
-    );
-
-  return delegacoes.map(d => ({
-    medicoUserId: d.medicoUserId,
-    medicoNome: d.medicoNome,
-    medicoEmail: d.medicoEmail,
-    permissao: (d.permissao as "visualizar" | "editar") || "visualizar",
-    dataInicio: d.dataInicio,
-    dataFim: d.dataFim,
-  }));
-}
-
-
-// ===== AGENDA V6 - NOVAS FUNÇÕES =====
-
-// Mapa de transições válidas de status
-const transicoesValidas: Record<string, string[]> = {
-  "Agendado": ["Confirmado", "Cancelado", "Falta", "Transferido"],
-  "Confirmado": ["Aguardando", "Cancelado", "Falta", "Transferido"],
-  "Aguardando": ["Em atendimento", "Cancelado", "Falta"],
-  "Em atendimento": ["Encerrado"],
-  "Encerrado": [], // Estado final
-  "Cancelado": ["Agendado"], // Pode ser reativado
-  "Falta": ["Agendado", "Transferido"], // Pode ser reativado ou transferido
-  "Transferido": [], // Estado final
-  // Status legados
-  "Realizado": [],
-  "Reagendado": [],
-  "Faltou": ["Agendado", "Transferido"],
-};
-
-// Transferir agendamento para nova data
-export async function transferirAgendamento(
-  idOriginal: number,
-  novaDataInicio: Date,
-  novaDataFim: Date,
-  transferidoPor: string,
-  motivo?: string,
-  tenantId?: number
-) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Buscar agendamento original
-  const original = await getAgendamentoById(idOriginal, tenantId);
-  if (!original) throw new Error("Agendamento não encontrado");
-  
-  // Verificar se pertence ao tenant correto
-  if (tenantId && original.tenantId !== tenantId) {
-    throw new Error("Acesso negado: agendamento pertence a outro tenant");
-  }
-  
-  // Verificar se pode ser transferido
-  const statusAtual = original.status;
-  if (!transicoesValidas[statusAtual]?.includes("Transferido")) {
-    throw new Error(`Não é possível transferir um agendamento com status "${statusAtual}"`);
-  }
-  
-  // Gerar novo ID
-  const novoId = await getNextAgendamentoId();
-  
-  // Criar novo agendamento com os mesmos dados
-  const novoAgendamento = await db.insert(agendamentos).values({
-    idAgendamento: novoId,
-    tipoCompromisso: original.tipoCompromisso as any,
-    pacienteId: original.pacienteId,
-    pacienteNome: original.pacienteNome,
-    dataHoraInicio: novaDataInicio.toISOString(),
-    dataHoraFim: novaDataFim.toISOString(),
-    local: original.local,
-    titulo: original.titulo,
-    descricao: original.descricao,
-    status: "Agendado" as any,
-    convenio: original.convenio,
-    cpfPaciente: original.cpfPaciente,
-    telefonePaciente: original.telefonePaciente,
-    emailPaciente: original.emailPaciente,
-    reagendadoDe: idOriginal,
-    criadoPor: transferidoPor,
-  });
-  
-  const novoAgendamentoId = Number(novoAgendamento[0].insertId);
-  
-  // Marcar original como transferido
-  await db.update(agendamentos)
-    .set({
-      status: "Transferido" as any,
-      transferidoParaId: novoAgendamentoId,
-      transferidoEm: toDateString(new Date()),
-      transferidoPor: transferidoPor,
-    })
-    .where(eq(agendamentos.id, idOriginal));
-  
-  // Registrar histórico do original
-  await db.insert(historicoAgendamentos).values({
-    tenantId: original.tenantId,
-    agendamentoId: idOriginal,
-    tipoAlteracao: "Transferência" as any,
-    descricaoAlteracao: `Transferido para ${novoId} por ${transferidoPor}${motivo ? `. Motivo: ${motivo}` : ''}`,
-    valoresAnteriores: { status: statusAtual, dataHoraInicio: original.dataHoraInicio, dataHoraFim: original.dataHoraFim } as any,
-    valoresNovos: { status: "Transferido", transferidoParaId: novoAgendamentoId } as any,
-    realizadoPor: transferidoPor,
-  });
-  
-  // Registrar histórico do novo
-  await db.insert(historicoAgendamentos).values({
-    tenantId: original.tenantId,
-    agendamentoId: novoAgendamentoId,
-    tipoAlteracao: "Criação" as any,
-    descricaoAlteracao: `Criado por transferência de ${original.idAgendamento}`,
-    valoresNovos: { dataHoraInicio: novaDataInicio, dataHoraFim: novaDataFim, reagendadoDe: idOriginal } as any,
-    realizadoPor: transferidoPor,
-  });
-  
-  return {
-    original: await getAgendamentoById(idOriginal),
-    novo: await getAgendamentoById(novoAgendamentoId),
-  };
-}
-
-// Atualizar status com validação de transições
-export async function atualizarStatusAgendamento(
-  id: number,
-  novoStatus: string,
-  atualizadoPor: string,
-  motivo?: string,
-  tenantId?: number
-) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Buscar agendamento
-  const agendamento = await getAgendamentoById(id, tenantId);
-  if (!agendamento) throw new Error("Agendamento não encontrado");
-  
-  // Verificar se pertence ao tenant correto
-  if (tenantId && agendamento.tenantId !== tenantId) {
-    throw new Error("Acesso negado: agendamento pertence a outro tenant");
-  }
-  
-  const statusAtual = agendamento.status;
-  
-  // Verificar se a transição é válida
-  if (!transicoesValidas[statusAtual]?.includes(novoStatus)) {
-    throw new Error(`Transição de "${statusAtual}" para "${novoStatus}" não é permitida`);
-  }
-  
-  // Preparar campos adicionais baseado no novo status
-  const camposExtras: Record<string, any> = {};
-  let tipoAlteracao = "Edição";
-  
-  switch (novoStatus) {
-    case "Confirmado":
-      camposExtras.confirmadoEm = toDateString(new Date());
-      camposExtras.confirmadoPor = atualizadoPor;
-      tipoAlteracao = "Confirmação";
-      break;
-    case "Cancelado":
-      camposExtras.canceladoEm = toDateString(new Date());
-      camposExtras.canceladoPor = atualizadoPor;
-      camposExtras.motivoCancelamento = motivo;
-      tipoAlteracao = "Cancelamento";
-      break;
-    case "Falta":
-      camposExtras.marcadoFaltaEm = toDateString(new Date());
-      camposExtras.marcadoFaltaPor = atualizadoPor;
-      tipoAlteracao = "Falta";
-      break;
-    case "Aguardando":
-      camposExtras.pacienteChegouEm = toDateString(new Date());
-      camposExtras.pacienteChegouRegistradoPor = atualizadoPor;
-      tipoAlteracao = "Paciente Chegou";
-      break;
-    case "Em atendimento":
-      camposExtras.atendimentoIniciadoEm = toDateString(new Date());
-      camposExtras.atendimentoIniciadoPor = atualizadoPor;
-      tipoAlteracao = "Atendimento Iniciado";
-      break;
-    case "Encerrado":
-      camposExtras.encerradoEm = toDateString(new Date());
-      camposExtras.encerradoPor = atualizadoPor;
-      tipoAlteracao = "Encerramento";
-      break;
-    case "Agendado":
-      // Reativação - limpar campos de cancelamento/falta
-      camposExtras.canceladoEm = null;
-      camposExtras.canceladoPor = null;
-      camposExtras.motivoCancelamento = null;
-      camposExtras.marcadoFaltaEm = null;
-      camposExtras.marcadoFaltaPor = null;
-      tipoAlteracao = "Reativação";
-      break;
-  }
-  
-  // Atualizar status
-  await db.update(agendamentos)
-    .set({
-      status: novoStatus as any,
-      ...camposExtras,
-    })
-    .where(eq(agendamentos.id, id));
-  
-  // Registrar histórico
-  await db.insert(historicoAgendamentos).values({
-    tenantId: agendamento.tenantId,
-    agendamentoId: id,
-    tipoAlteracao: tipoAlteracao as any,
-    descricaoAlteracao: `Status alterado de "${statusAtual}" para "${novoStatus}" por ${atualizadoPor}${motivo ? `. Motivo: ${motivo}` : ''}`,
-    valoresAnteriores: { status: statusAtual } as any,
-    valoresNovos: { status: novoStatus, ...camposExtras } as any,
-    realizadoPor: atualizadoPor,
-  });
-  
-  return getAgendamentoById(id);
-}
-
-// Reativar agendamento cancelado ou com falta
-export async function reativarAgendamento(
-  id: number,
-  reativadoPor: string,
-  manterDataOriginal: boolean = true,
-  novaDataInicio?: Date,
-  novaDataFim?: Date,
-  tenantId?: number
-) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const agendamento = await getAgendamentoById(id, tenantId);
-  if (!agendamento) throw new Error("Agendamento não encontrado");
-  
-  const statusAtual = agendamento.status;
-  
-  // Verificar se pode ser reativado
-  if (!["Cancelado", "Falta", "Faltou"].includes(statusAtual)) {
-    throw new Error(`Não é possível reativar um agendamento com status "${statusAtual}"`);
-  }
-  
-  if (manterDataOriginal) {
-    // Reativar na mesma data
-    return atualizarStatusAgendamento(id, "Agendado", reativadoPor, "Reativação na mesma data");
-  } else {
-    // Transferir para nova data
-    if (!novaDataInicio || !novaDataFim) {
-      throw new Error("Nova data de início e fim são obrigatórias para transferência");
-    }
-    return transferirAgendamento(id, novaDataInicio, novaDataFim, reativadoPor, "Reativação com nova data");
-  }
-}
-
-// Marcar paciente como chegou (status Aguardando)
-export async function marcarPacienteChegou(id: number, registradoPor: string, tenantId?: number) {
-  return atualizarStatusAgendamento(id, "Aguardando", registradoPor, undefined, tenantId);
-}
-
-// Iniciar atendimento
-export async function iniciarAtendimento(id: number, iniciadoPor: string, tenantId?: number) {
-  return atualizarStatusAgendamento(id, "Em atendimento", iniciadoPor, undefined, tenantId);
-}
-
-// Encerrar atendimento
-export async function encerrarAtendimento(id: number, encerradoPor: string, atendimentoId?: number, tenantId?: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Atualizar status
-  const resultado = await atualizarStatusAgendamento(id, "Encerrado", encerradoPor, undefined, tenantId);
-  
-  // Se tiver atendimentoId, vincular
-  if (atendimentoId) {
-    await db.update(agendamentos)
-      .set({ atendimentoId })
-      .where(eq(agendamentos.id, id));
-  }
-  
-  return resultado;
 }
