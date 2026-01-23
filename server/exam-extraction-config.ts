@@ -185,7 +185,7 @@ export const DATE_PATTERNS = [
  * Prompt otimizado para extração de exames laboratoriais
  * Baseado em aprendizados de treinamento com PDFs reais
  */
-export const OPTIMIZED_EXTRACTION_PROMPT = \`Você é um especialista em extração de dados de exames laboratoriais brasileiros.
+export const OPTIMIZED_EXTRACTION_PROMPT = `Você é um especialista em extração de dados de exames laboratoriais brasileiros.
 Analise o documento e extraia TODOS os resultados de exames laboratoriais.
 
 REGRAS CRÍTICAS DE EXTRAÇÃO:
@@ -239,7 +239,7 @@ Retorne um JSON válido com a estrutura:
   "data_principal": "YYYY-MM-DD",
   "paciente_nome": "string ou null",
   "total_paginas_analisadas": number
-}\`;
+}`;
 
 /**
  * Função para normalizar nome de exame usando sinônimos
@@ -298,9 +298,9 @@ export function parseBrazilianDate(dateStr: string): string | null {
     const month = match1[2];
     let year = match1[3];
     if (year.length === 2) {
-      year = parseInt(year) > 50 ? \`19\${year}\` : \`20\${year}\`;
+      year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
     }
-    return \`\${year}-\${month}-\${day}\`;
+    return `${year}-${month}-${day}`;
   }
   
   // YYYY-MM-DD (já está no formato correto)
