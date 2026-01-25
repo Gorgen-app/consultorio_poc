@@ -21,6 +21,7 @@ import RelatorioDuplicados from "./pages/RelatorioDuplicados";
 import Relatorios from "./pages/Relatorios";
 import Performance from "./pages/Performance";
 import BackupSettings from "./pages/BackupSettings";
+import ExamExtraction from "./pages/ExamExtraction";
 import Dashboard from "./pages/DashboardCustom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 // Páginas de autenticação
@@ -130,6 +131,11 @@ function ProtectedRouter() {
       <Route path="/configuracoes/backup">
         <ProtectedRoute funcionalidade="configuracoes.backup">
           <BackupSettings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/exames/extracao">
+        <ProtectedRoute funcionalidade="prontuario">
+          <ExamExtraction />
         </ProtectedRoute>
       </Route>
       <Route path="/config-simples">

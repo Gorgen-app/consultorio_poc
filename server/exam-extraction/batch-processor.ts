@@ -466,7 +466,7 @@ export class BatchProcessor {
     
     // Extrair datas do cabeçalho
     const dateMatches = text.match(/\d{2}\/\d{2}\/\d{2,4}/g);
-    const uniqueDates = [...new Set(dateMatches || [])];
+    const uniqueDates: string[] = Array.from(new Set(dateMatches || []));
     
     // Para cada linha com valores, extrair exame e resultados por data
     const lines = text.split('\n');

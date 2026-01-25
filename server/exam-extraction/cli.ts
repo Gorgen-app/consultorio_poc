@@ -230,12 +230,12 @@ ${config.paciente ? `Filtro de paciente: ${config.paciente}` : ''}
     // Exportar índice de pacientes
     const caminhoIndice = path.join(config.output, 'indice_pacientes.json');
     const indice: Record<string, any> = {};
-    for (const [nome, info] of extrator.getIndicePacientes()) {
+    extrator.getIndicePacientes().forEach((info, nome) => {
       indice[nome] = {
         ...info,
         ultima_atualizacao: info.ultima_atualizacao.toISOString()
       };
-    }
+    });
     fs.writeFileSync(caminhoIndice, JSON.stringify(indice, null, 2));
     logger.info(`Índice de pacientes exportado: ${caminhoIndice}`);
 

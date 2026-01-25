@@ -144,19 +144,22 @@ export function exportarTabelaPivotada(
 
   let csv = '';
 
-  for (const [nomePaciente, examesPaciente] of porPaciente) {
+  porPaciente.forEach((examesPaciente, nomePaciente) => {
     // Obter datas únicas ordenadas
-    const datas = [...new Set(examesPaciente.map(e => e.data_coleta))]
-      .sort((a, b) => {
-        const [diaA, mesA, anoA] = a.split('/').map(Number);
-        const [diaB, mesB, anoB] = b.split('/').map(Number);
-        const dataA = new Date(anoA < 100 ? 2000 + anoA : anoA, mesA - 1, diaA);
-        const dataB = new Date(anoB < 100 ? 2000 + anoB : anoB, mesB - 1, diaB);
-        return dataA.getTime() - dataB.getTime();
-      });
+    const datasSet = new Set<string>();
+    examesPaciente.forEach((e: ExameExtraido) => datasSet.add(e.data_coleta));
+    const datas: string[] = Array.from(datasSet).sort((a: string, b: string) => {
+      const [diaA, mesA, anoA] = a.split('/').map(Number);
+      const [diaB, mesB, anoB] = b.split('/').map(Number);
+      const dataA = new Date(anoA < 100 ? 2000 + anoA : anoA, mesA - 1, diaA);
+      const dataB = new Date(anoB < 100 ? 2000 + anoB : anoB, mesB - 1, diaB);
+      return dataA.getTime() - dataB.getTime();
+    });
     
     // Obter exames únicos ordenados
-    const nomesExames = [...new Set(examesPaciente.map(e => e.nome_exame))].sort();
+    const nomesSet = new Set<string>();
+    examesPaciente.forEach((e: ExameExtraido) => nomesSet.add(e.nome_exame));
+    const nomesExames: string[] = Array.from(nomesSet).sort();
 
     // Cabeçalho
     csv += `# PACIENTE: ${nomePaciente}\n`;
@@ -164,8 +167,8 @@ export function exportarTabelaPivotada(
 
     // Linhas de exames
     for (const nomeExame of nomesExames) {
-      const valores = datas.map(data => {
-        const exame = examesPaciente.find(e => e.nome_exame === nomeExame && e.data_coleta === data);
+      const valores = datas.map((data: string) => {
+        const exame = examesPaciente.find((e: ExameExtraido) => e.nome_exame === nomeExame && e.data_coleta === data);
         if (exame) {
           return exame.alterado ? `${exame.resultado}*` : exame.resultado;
         }
@@ -175,7 +178,7 @@ export function exportarTabelaPivotada(
     }
 
     csv += '\n';
-  }
+  });
 
   fs.writeFileSync(caminho, csv, 'utf-8');
 }
@@ -221,12 +224,12 @@ export function carregarIndicePacientes(caminho: string): Map<string, IndicePaci
 export function salvarIndicePacientes(indice: Map<string, IndicePaciente>, caminho: string): void {
   const dados: Record<string, any> = {};
   
-  for (const [nome, info] of indice) {
+  indice.forEach((info, nome) => {
     dados[nome] = {
       ...info,
       ultima_atualizacao: info.ultima_atualizacao.toISOString()
     };
-  }
+  });
 
   fs.writeFileSync(caminho, JSON.stringify(dados, null, 2), 'utf-8');
 }

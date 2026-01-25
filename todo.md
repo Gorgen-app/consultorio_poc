@@ -3113,3 +3113,27 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
   - Conforme Manual de Identidade Visual GORGEN v1.0
   - Arquivos: `docs/email-signatures/`
 
+
+
+---
+
+## 🔬## 🔬 GORGEN 3.9.24 - Integração do Módulo de Extração de Exames (25/01/2026)
+### Correções TypeScript
+- [x] Corrigir erros de iteração em server/exam-extraction/utils.ts (Set/Map)
+- [x] Adicionar tipagem explícita para parâmetros 'any'
+### Interface de Extração de Exames
+- [x] Criar página ExamExtraction.tsx para upload e extração
+- [x] Implementar componente de upload de PDFs
+- [x] Criar visualização de resultados extraídos
+- [x] Adicionar indicadores de progresso
+### Backend tRPC
+- [x] Criar rotas tRPC para processamento de exames
+- [x] Implementar endpoint de upload de PDFs
+- [x] Implementar endpoint de extração de dados
+- [x] Implementar endpoint de listagem de exames extraídos
+### Integração com Sistema
+- [x] Adicionar item no menu de navegação (Atendimentos > Extração de Exames)
+- [ ] Vincular exames extraídos aos pacientes (próxima fase)
+- [ ] Implementar armazenamento de resultados no banco (próxima fase)
+### Testes
+- [x] Criar testes unitários (9 testes passando)

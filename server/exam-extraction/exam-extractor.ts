@@ -1099,7 +1099,7 @@ export class ExtratorExames {
 
     // Extrair todas as datas do documento
     const datasMatch = texto.match(/\d{2}\/\d{2}\/\d{2,4}/g);
-    const datas = [...new Set(datasMatch || [])];
+    const datas: string[] = Array.from(new Set(datasMatch || []));
 
     if (datas.length < 2) {
       // Não é laudo evolutivo, processar como laboratorial normal
@@ -1296,9 +1296,9 @@ export class ExtratorExames {
     }
 
     // Atualizar índice de pacientes
-    for (const exame of unicos.values()) {
+    Array.from(unicos.values()).forEach((exame: ExameExtraido) => {
       this.atualizarIndicePaciente(exame);
-    }
+    });
 
     return Array.from(unicos.values());
   }
@@ -1356,12 +1356,16 @@ export class ExtratorExames {
 
     let csv = '';
 
-    for (const [nomePaciente, examesPaciente] of porPaciente) {
+    porPaciente.forEach((examesPaciente, nomePaciente) => {
       // Obter datas únicas ordenadas
-      const datas = [...new Set(examesPaciente.map(e => e.data_coleta))].sort();
+      const datasSet = new Set<string>();
+      examesPaciente.forEach((e: ExameExtraido) => datasSet.add(e.data_coleta));
+      const datas: string[] = Array.from(datasSet).sort();
       
       // Obter exames únicos
-      const nomesExames = [...new Set(examesPaciente.map(e => e.nome_exame))].sort();
+      const nomesSet = new Set<string>();
+      examesPaciente.forEach((e: ExameExtraido) => nomesSet.add(e.nome_exame));
+      const nomesExames: string[] = Array.from(nomesSet).sort();
 
       // Cabeçalho
       csv += `\n# PACIENTE: ${nomePaciente}\n`;
@@ -1369,8 +1373,8 @@ export class ExtratorExames {
 
       // Linhas de exames
       for (const nomeExame of nomesExames) {
-        const valores = datas.map(data => {
-          const exame = examesPaciente.find(e => e.nome_exame === nomeExame && e.data_coleta === data);
+        const valores = datas.map((data: string) => {
+          const exame = examesPaciente.find((e: ExameExtraido) => e.nome_exame === nomeExame && e.data_coleta === data);
           if (exame) {
             return exame.alterado ? `${exame.resultado}*` : exame.resultado;
           }
@@ -1378,7 +1382,7 @@ export class ExtratorExames {
         });
         csv += `${nomeExame},${valores.join(',')}\n`;
       }
-    }
+    });
 
     return csv;
   }
@@ -1428,9 +1432,9 @@ Velocidade: ${resultado.estatisticas.exames_por_minuto.toFixed(1)} exames/minuto
 
     relatorio += `\nEXAMES POR PACIENTE\n`;
     relatorio += '-'.repeat(40) + '\n';
-    for (const [paciente, count] of porPaciente) {
+    porPaciente.forEach((count, paciente) => {
       relatorio += `- ${paciente}: ${count} exames\n`;
-    }
+    });
 
     // Exames alterados
     const alterados = resultado.exames.filter(e => e.alterado);
