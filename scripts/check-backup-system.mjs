@@ -54,11 +54,13 @@ async function checkEnvironmentVariables() {
     logCheck("fail", "JWT_SECRET não está configurada");
   }
   
-  // AWS/S3
-  if (process.env.AWS_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY_ID) {
-    logCheck("pass", "Credenciais AWS/S3 estão configuradas");
+  // Storage (Manus Proxy ou AWS/S3 direto)
+  if (process.env.BUILT_IN_FORGE_API_URL && process.env.BUILT_IN_FORGE_API_KEY) {
+    logCheck("pass", "Manus Storage Proxy configurado (BUILT_IN_FORGE_API_URL)");
+  } else if (process.env.AWS_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY_ID) {
+    logCheck("pass", "Credenciais AWS/S3 diretas estão configuradas");
   } else {
-    logCheck("warn", "Credenciais AWS/S3 não encontradas - backup para S3 pode falhar");
+    logCheck("warn", "Nenhum storage configurado - backup para S3 pode falhar");
   }
   
   // Scheduler

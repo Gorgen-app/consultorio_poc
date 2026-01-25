@@ -1,0 +1,138 @@
+{
+  "query": "\nDESCRIBE backup_config;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute \nDESCRIBE backup_config;\n",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "tenant_id",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "backup_enabled",
+      "Type": "tinyint(1)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "daily_backup_time",
+      "Type": "varchar(5)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "03:00",
+      "Extra": ""
+    },
+    {
+      "Field": "weekly_backup_day",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "monthly_backup_day",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "daily_retention_days",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "30",
+      "Extra": ""
+    },
+    {
+      "Field": "weekly_retention_weeks",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "12",
+      "Extra": ""
+    },
+    {
+      "Field": "monthly_retention_months",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "12",
+      "Extra": ""
+    },
+    {
+      "Field": "notify_on_success",
+      "Type": "tinyint(1)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "notify_on_failure",
+      "Type": "tinyint(1)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "notification_email",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "offline_backup_enabled",
+      "Type": "tinyint(1)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "offline_backup_reminder_day",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "created_at",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updated_at",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint(11)\tNO\tPRI\tNULL\tauto_increment\ntenant_id\tint(11)\tNO\tUNI\tNULL\t\nbackup_enabled\ttinyint(1)\tYES\t\t1\t\ndaily_backup_time\tvarchar(5)\tYES\t\t03:00\t\nweekly_backup_day\tint(11)\tYES\t\t0\t\nmonthly_backup_day\tint(11)\tYES\t\t1\t\ndaily_retention_days\tint(11)\tYES\t\t30\t\nweekly_retention_weeks\tint(11)\tYES\t\t12\t\nmonthly_retention_months\tint(11)\tYES\t\t12\t\nnotify_on_success\ttinyint(1)\tYES\t\t0\t\nnotify_on_failure\ttinyint(1)\tYES\t\t1\t\nnotification_email\tvarchar(255)\tYES\t\tNULL\t\noffline_backup_enabled\ttinyint(1)\tYES\t\t1\t\noffline_backup_reminder_day\tint(11)\tYES\t\t1\t\ncreated_at\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdated_at\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\n",
+  "stderr": "",
+  "execution_time_ms": 352
+}

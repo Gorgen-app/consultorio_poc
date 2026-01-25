@@ -3137,3 +3137,24 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [ ] Implementar armazenamento de resultados no banco (próxima fase)
 ### Testes
 - [x] Criar testes unitários (9 testes passando)
+
+
+---
+
+## 🔧 GORGEN 3.9.25 - Configuração AWS/S3 e GitHub Actions (25/01/2026)
+
+### Configuração AWS/S3
+- [x] Verificar código existente de integração S3 (usa Manus Storage Proxy)
+- [x] Atualizar script de verificação para reconhecer Manus Proxy
+- [x] Storage já configurado via BUILT_IN_FORGE_API_URL
+
+### Configuração GitHub Actions
+- [x] Verificar workflows existentes (backup-daily.yml, etc.)
+- [x] Documentar secrets necessários (CONFIGURACAO_GITHUB_ACTIONS.md)
+- [x] Criar script de configuração automatizada (setup-github-secrets.sh)
+- [ ] Configurar secrets no repositório (requer execução local pelo usuário)
+
+### Validação Final
+- [x] Executar verificação do sistema (18/19 checks passando)
+- [x] Storage operacional (Manus Proxy)
+- [ ] GitHub Actions aguardando configuração de secrets pelo usuário

@@ -1,0 +1,28 @@
+{
+  "query": "\nSELECT * FROM backup_config LIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute \nSELECT * FROM backup_config LIMIT 5;\n",
+  "rows": [
+    {
+      "id": "1",
+      "tenant_id": "1",
+      "backup_enabled": "1",
+      "daily_backup_time": "03:00",
+      "weekly_backup_day": "0",
+      "monthly_backup_day": "1",
+      "daily_retention_days": "30",
+      "weekly_retention_weeks": "12",
+      "monthly_retention_months": "12",
+      "notify_on_success": "1",
+      "notify_on_failure": "1",
+      "notification_email": "contato@andregorgen.com.br",
+      "offline_backup_enabled": "1",
+      "offline_backup_reminder_day": "1",
+      "created_at": "2026-01-15 14:10:49",
+      "updated_at": "2026-01-15 14:11:13"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttenant_id\tbackup_enabled\tdaily_backup_time\tweekly_backup_day\tmonthly_backup_day\tdaily_retention_days\tweekly_retention_weeks\tmonthly_retention_months\tnotify_on_success\tnotify_on_failure\tnotification_email\toffline_backup_enabled\toffline_backup_reminder_day\tcreated_at\tupdated_at\n1\t1\t1\t03:00\t0\t1\t30\t12\t12\t1\t1\tcontato@andregorgen.com.br\t1\t1\t2026-01-15 14:10:49\t2026-01-15 14:11:13\n",
+  "stderr": "",
+  "execution_time_ms": 356
+}
