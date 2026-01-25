@@ -3020,7 +3020,7 @@ export async function verificarVinculosExpirando(): Promise<any[]> {
  * Atualiza especialidades do médico
  */
 export async function atualizarEspecialidadesMedico(
-  userId: string,
+  userId: number,
   especialidadePrincipal: string | null,
   especialidadeSecundaria: string | null,
   areaAtuacao: string | null
@@ -3028,19 +3028,20 @@ export async function atualizarEspecialidadesMedico(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  await db.execute(sql`
-    UPDATE user_profiles 
-    SET especialidade_principal = ${especialidadePrincipal},
-        especialidade_secundaria = ${especialidadeSecundaria},
-        area_atuacao = ${areaAtuacao}
-    WHERE user_id = ${userId}
-  `);
+  await db
+    .update(userProfiles)
+    .set({
+      especialidadePrincipal,
+      especialidadeSecundaria,
+      areaAtuacao,
+    })
+    .where(eq(userProfiles.userId, userId));
 }
 
 /**
  * Busca especialidades do médico
  */
-export async function getEspecialidadesMedico(userId: string): Promise<{
+export async function getEspecialidadesMedico(userId: number): Promise<{
   especialidadePrincipal: string | null;
   especialidadeSecundaria: string | null;
   areaAtuacao: string | null;
@@ -3048,19 +3049,22 @@ export async function getEspecialidadesMedico(userId: string): Promise<{
   const db = await getDb();
   if (!db) return null;
 
-  const result = await db.execute(sql`
-    SELECT especialidade_principal, especialidade_secundaria, area_atuacao
-    FROM user_profiles
-    WHERE user_id = ${userId}
-  `);
+  const result = await db
+    .select({
+      especialidadePrincipal: userProfiles.especialidadePrincipal,
+      especialidadeSecundaria: userProfiles.especialidadeSecundaria,
+      areaAtuacao: userProfiles.areaAtuacao,
+    })
+    .from(userProfiles)
+    .where(eq(userProfiles.userId, userId))
+    .limit(1);
 
-  const rows = (result as unknown as any[][])[0];
-  if (rows.length === 0) return null;
+  if (result.length === 0) return null;
 
   return {
-    especialidadePrincipal: rows[0].especialidade_principal,
-    especialidadeSecundaria: rows[0].especialidade_secundaria,
-    areaAtuacao: rows[0].area_atuacao,
+    especialidadePrincipal: result[0].especialidadePrincipal,
+    especialidadeSecundaria: result[0].especialidadeSecundaria,
+    areaAtuacao: result[0].areaAtuacao,
   };
 }
 

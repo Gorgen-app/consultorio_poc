@@ -1,0 +1,33 @@
+{
+  "query": "SELECT up.*, u.name, u.email as user_email FROM user_profiles up JOIN users u ON up.user_id = u.id WHERE up.is_admin_master = 1 OR up.is_medico = 1 LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT up.*, u.name, u.email as user_email FROM user_profiles up JOIN users u ON up.user_id = u.id WHERE up.is_admin_master = 1 OR up.is_medico = 1 LIMIT 1;",
+  "rows": [
+    {
+      "id": "1",
+      "user_id": "1",
+      "cpf": "005.717.430-05",
+      "nome_completo": "André Gorgen",
+      "email": "contato@andregorgen.com.br",
+      "perfil_ativo": "medico",
+      "is_admin_master": "1",
+      "is_medico": "1",
+      "is_secretaria": "1",
+      "is_auditor": "1",
+      "is_paciente": "1",
+      "crm": "CRM/RS 12345",
+      "especialidade": "Cirurgia Geral",
+      "created_at": "2026-01-08 15:10:14",
+      "updated_at": "2026-01-25 05:08:05",
+      "especialidade_principal": "NULL",
+      "especialidade_secundaria": "NULL",
+      "area_atuacao": "NULL",
+      "tenant_id": "1",
+      "name": "Dr. André Gorgen",
+      "user_email": "contato@andregorgen.com.br"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuser_id\tcpf\tnome_completo\temail\tperfil_ativo\tis_admin_master\tis_medico\tis_secretaria\tis_auditor\tis_paciente\tcrm\tespecialidade\tcreated_at\tupdated_at\tespecialidade_principal\tespecialidade_secundaria\tarea_atuacao\ttenant_id\tname\tuser_email\n1\t1\t005.717.430-05\tAndré Gorgen\tcontato@andregorgen.com.br\tmedico\t1\t1\t1\t1\t1\tCRM/RS 12345\tCirurgia Geral\t2026-01-08 15:10:14\t2026-01-25 05:08:05\tNULL\tNULL\tNULL\t1\tDr. André Gorgen\tcontato@andregorgen.com.br\n",
+  "stderr": "",
+  "execution_time_ms": 83
+}

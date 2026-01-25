@@ -2044,7 +2044,7 @@ export const appRouter = router({
         areaAtuacao: z.string().nullable(),
       }))
       .mutation(async ({ input, ctx }) => {
-        if (!ctx.user?.openId) throw new Error("Usuário não autenticado");
+        if (!ctx.user?.id) throw new Error("Usuário não autenticado");
         
         const profile = await db.getUserProfile(ctx.user.id);
         if (!profile?.isMedico) {
@@ -2052,7 +2052,7 @@ export const appRouter = router({
         }
 
         await db.atualizarEspecialidadesMedico(
-          ctx.user.openId,
+          ctx.user.id,
           input.especialidadePrincipal,
           input.especialidadeSecundaria,
           input.areaAtuacao
@@ -2062,8 +2062,8 @@ export const appRouter = router({
 
     // Obter especialidades do médico
     getEspecialidades: protectedProcedure.query(async ({ ctx }) => {
-      if (!ctx.user?.openId) return null;
-      return await db.getEspecialidadesMedico(ctx.user.openId);
+      if (!ctx.user?.id) return null;
+      return await db.getEspecialidadesMedico(ctx.user.id);
     }),
 
     // Listar médicos disponíveis para vínculo (para secretárias)

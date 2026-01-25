@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assinatura de Email - GORGEN</title>
+  <!--
+    ╔═══════════════════════════════════════════════════════════════════════════╗
+    ║                    ASSINATURA DE EMAIL - GORGEN                           ║
+    ║                                                                           ║
+    ║  Versão: 1.0                                                              ║
+    ║  Data: 25 de Janeiro de 2026                                              ║
+    ║  Conforme Manual de Identidade Visual GORGEN v1.0                         ║
+    ║                                                                           ║
+    ║  INSTRUÇÕES DE USO:                                                       ║
+    ║  1. Substitua os campos marcados com {{CAMPO}} pelos dados reais          ║
+    ║  2. Hospede as imagens em um servidor público ou use base64               ║
+    ║  3. Copie o código HTML e cole nas configurações de assinatura            ║
+    ║                                                                           ║
+    ║  CAMPOS PERSONALIZÁVEIS:                                                  ║
+    ║  - {{NOME_COMPLETO}} - Nome do profissional                               ║
+    ║  - {{TITULO}} - Título/Especialidade (ex: Médico, Cardiologista)          ║
+    ║  - {{CRM}} - Número do CRM com UF                                         ║
+    ║  - {{EMAIL}} - Email profissional                                         ║
+    ║  - {{TELEFONE}} - Telefone de contato                                     ║
+    ║  - {{ENDERECO}} - Endereço do consultório (opcional)                      ║
+    ║  - {{LOGO_URL}} - URL da imagem do logo                                   ║
+    ║                                                                           ║
+    ╚═══════════════════════════════════════════════════════════════════════════╝
+  -->
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+<!-- ASSINATURA PRINCIPAL - VERSÃO DARK (Fundo Escuro) -->
+<table cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; border-collapse: collapse;">
+  <tr>
+    <td style="padding: 0;">
+      
+      <!-- Container Principal -->
+      <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse;">
+        
+        <!-- Linha Separadora Superior -->
+        <tr>
+          <td colspan="2" style="padding: 0 0 16px 0;">
+            <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+              <tr>
+                <td style="border-top: 2px solid #6B8CBE; width: 60px;"></td>
+                <td style="border-top: 1px solid #E8EDF5;"></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        
+        <!-- Conteúdo Principal -->
+        <tr>
+          <!-- Logo -->
+          <td style="vertical-align: top; padding-right: 20px; width: 80px;">
+            <a href="https://www.gorgen.com.br" target="_blank" style="text-decoration: none;">
+              <img 
+                src="{{LOGO_URL}}" 
+                alt="GORGEN" 
+                width="70" 
+                height="70" 
+                style="display: block; border-radius: 50%; border: 2px solid #6B8CBE;"
+              />
+            </a>
+          </td>
+          
+          <!-- Informações -->
+          <td style="vertical-align: top;">
+            <!-- Nome -->
+            <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #1E2D45; line-height: 1.3;">
+              {{NOME_COMPLETO}}
+            </p>
+            
+            <!-- Título/Especialidade -->
+            <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: 500; color: #6B8CBE; line-height: 1.4;">
+              {{TITULO}}
+            </p>
+            
+            <!-- CRM -->
+            <p style="margin: 0 0 12px 0; font-size: 12px; color: #5A7DB0; line-height: 1.4;">
+              {{CRM}}
+            </p>
+            
+            <!-- Contatos -->
+            <table cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+              <!-- Email -->
+              <tr>
+                <td style="padding: 2px 8px 2px 0; vertical-align: middle;">
+                  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM2QjhDQkUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB3aWR0aD0iMjAiIGhlaWdodD0iMTYiIHg9IjIiIHk9IjQiIHJ4PSIyIi8+PHBhdGggZD0ibTIyIDcgLTguOTcgNS43YTEuOTQgMS45NCAwIDAgMS0yLjA2IDBMMiA3Ii8+PC9zdmc+" width="14" height="14" alt="Email" style="display: block;" />
+                </td>
+                <td style="padding: 2px 0; vertical-align: middle;">
+                  <a href="mailto:{{EMAIL}}" style="font-size: 13px; color: #3B5580; text-decoration: none; line-height: 1.4;">
+                    {{EMAIL}}
+                  </a>
+                </td>
+              </tr>
+              
+              <!-- Telefone -->
+              <tr>
+                <td style="padding: 2px 8px 2px 0; vertical-align: middle;">
+                  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM2QjhDQkUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjIgMTYuOTJ2M2EyIDIgMCAwIDEtMi4xOCAyIDE5Ljc5IDE5Ljc5IDAgMCAxLTguNjMtMy4wNyAxOS41IDE5LjUgMCAwIDEtNi02IDE5Ljc5IDE5Ljc5IDAgMCAxLTMuMDctOC42N0EyIDIgMCAwIDEgNC4xMSAyaDNhMiAyIDAgMCAxIDIgMS43MiAxMi44NCAxMi44NCAwIDAgMCAuNyAyLjgxIDIgMiAwIDAgMS0uNDUgMi4xMUw4LjA5IDkuOTFhMTYgMTYgMCAwIDAgNiA2bDEuMjctMS4yN2EyIDIgMCAwIDEgMi4xMS0uNDUgMTIuODQgMTIuODQgMCAwIDAgMi44MS43QTIgMiAwIDAgMSAyMiAxNi45MnoiLz48L3N2Zz4=" width="14" height="14" alt="Telefone" style="display: block;" />
+                </td>
+                <td style="padding: 2px 0; vertical-align: middle;">
+                  <a href="tel:{{TELEFONE_LIMPO}}" style="font-size: 13px; color: #3B5580; text-decoration: none; line-height: 1.4;">
+                    {{TELEFONE}}
+                  </a>
+                </td>
+              </tr>
+              
+              <!-- Website -->
+              <tr>
+                <td style="padding: 2px 8px 2px 0; vertical-align: middle;">
+                  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM2QjhDQkUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjxwYXRoIGQ9Ik0xMiAyYTE0LjUgMTQuNSAwIDAgMCAwIDIwIDE0LjUgMTQuNSAwIDAgMCAwLTIwIi8+PHBhdGggZD0iTTIgMTJoMjAiLz48L3N2Zz4=" width="14" height="14" alt="Website" style="display: block;" />
+                </td>
+                <td style="padding: 2px 0; vertical-align: middle;">
+                  <a href="https://www.gorgen.com.br" target="_blank" style="font-size: 13px; color: #6B8CBE; text-decoration: none; font-weight: 500; line-height: 1.4;">
+                    www.gorgen.com.br
+                  </a>
+                </td>
+              </tr>
+            </table>
+            
+            <!-- Endereço (opcional) -->
+            <p style="margin: 10px 0 0 0; font-size: 11px; color: #8BA3C9; line-height: 1.5;">
+              {{ENDERECO}}
+            </p>
+          </td>
+        </tr>
+        
+        <!-- Linha Separadora Inferior -->
+        <tr>
+          <td colspan="2" style="padding: 16px 0 0 0;">
+            <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+              <tr>
+                <td style="border-top: 1px solid #E8EDF5;"></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        
+        <!-- Badges de Segurança -->
+        <tr>
+          <td colspan="2" style="padding: 12px 0 0 0;">
+            <table cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+              <tr>
+                <!-- LGPD Badge -->
+                <td style="padding-right: 16px;">
+                  <table cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+                    <tr>
+                      <td style="padding-right: 4px; vertical-align: middle;">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxMEI5ODEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAgMTNjMCA1LTMuNSA3LjUtNy42NiA4Ljk1YTEgMSAwIDAgMS0uNjctLjAxQzcuNSAyMC41IDQgMTggNCAxM1Y2YTEgMSAwIDAgMSAxLTFjMiAwIDQuNS0xLjIgNi4yNC0yLjcyYTEuMTcgMS4xNyAwIDAgMSAxLjUyIDBDMTQuNTEgMy44MSAxNyA1IDE5IDVhMSAxIDAgMCAxIDEgMXoiLz48L3N2Zz4=" width="12" height="12" alt="LGPD" style="display: block;" />
+                      </td>
+                      <td style="vertical-align: middle;">
+                        <span style="font-size: 10px; color: #10B981; font-weight: 500;">LGPD Compliant</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                
+                <!-- Criptografia Badge -->
+                <td>
+                  <table cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+                    <tr>
+                      <td style="padding-right: 4px; vertical-align: middle;">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM2QjhDQkUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB3aWR0aD0iMTgiIHk9IjExIiByeD0iMiIgcnk9IjIiIGhlaWdodD0iMTEiLz48cGF0aCBkPSJNNyAxMVY3YTUgNSAwIDAgMSAxMCAwdjQiLz48L3N2Zz4=" width="12" height="12" alt="Criptografia" style="display: block;" />
+                      </td>
+                      <td style="vertical-align: middle;">
+                        <span style="font-size: 10px; color: #6B8CBE; font-weight: 500;">AES-256</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        
+        <!-- Disclaimer -->
+        <tr>
+          <td colspan="2" style="padding: 12px 0 0 0;">
+            <p style="margin: 0; font-size: 9px; color: #A8BEDA; line-height: 1.5; max-width: 450px;">
+              Esta mensagem pode conter informações confidenciais e/ou protegidas por sigilo médico. 
+              Se você não é o destinatário pretendido, por favor notifique o remetente e apague esta mensagem.
+            </p>
+          </td>
+        </tr>
+        
+      </table>
+      
+    </td>
+  </tr>
+</table>
+
+<br><br>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- VERSÃO COMPACTA (Para respostas rápidas) -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<table cellpadding="0" cellspacing="0" border="0" style="max-width: 400px; border-collapse: collapse;">
+  <tr>
+    <td style="padding: 0;">
+      <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="border-left: 3px solid #6B8CBE; padding-left: 12px;">
+            <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: 600; color: #1E2D45;">
+              {{NOME_COMPLETO}}
+            </p>
+            <p style="margin: 0 0 4px 0; font-size: 12px; color: #6B8CBE;">
+              {{TITULO}} | {{CRM}}
+            </p>
+            <p style="margin: 0; font-size: 11px; color: #5A7DB0;">
+              {{TELEFONE}} | 
+              <a href="https://www.gorgen.com.br" target="_blank" style="color: #6B8CBE; text-decoration: none;">gorgen.com.br</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<br><br>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- VERSÃO COM QR CODE -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
+<table cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; border-collapse: collapse;">
+  <tr>
+    <td style="padding: 0;">
+      <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td colspan="3" style="padding: 0 0 12px 0;">
+            <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+              <tr>
+                <td style="border-top: 2px solid #6B8CBE; width: 60px;"></td>
+                <td style="border-top: 1px solid #E8EDF5;"></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <!-- Logo -->
+          <td style="vertical-align: top; padding-right: 16px; width: 70px;">
+            <a href="https://www.gorgen.com.br" target="_blank" style="text-decoration: none;">
+              <img 
+                src="{{LOGO_URL}}" 
+                alt="GORGEN" 
+                width="60" 
+                height="60" 
+                style="display: block; border-radius: 50%; border: 2px solid #6B8CBE;"
+              />
+            </a>
+          </td>
+          
+          <!-- Informações -->
+          <td style="vertical-align: top; padding-right: 20px;">
+            <p style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: #1E2D45;">
+              {{NOME_COMPLETO}}
+            </p>
+            <p style="margin: 0 0 2px 0; font-size: 13px; color: #6B8CBE;">
+              {{TITULO}}
+            </p>
+            <p style="margin: 0 0 8px 0; font-size: 11px; color: #5A7DB0;">
+              {{CRM}}
+            </p>
+            <p style="margin: 0 0 2px 0; font-size: 12px; color: #3B5580;">
+              {{EMAIL}}
+            </p>
+            <p style="margin: 0; font-size: 12px; color: #3B5580;">
+              {{TELEFONE}}
+            </p>
+          </td>
+          
+          <!-- QR Code -->
+          <td style="vertical-align: top; width: 80px; text-align: right;">
+            <img 
+              src="{{QR_CODE_URL}}" 
+              alt="QR Code - GORGEN" 
+              width="70" 
+              height="70" 
+              style="display: block; border: 1px solid #E8EDF5; border-radius: 4px;"
+            />
+            <p style="margin: 4px 0 0 0; font-size: 8px; color: #A8BEDA; text-align: center;">
+              Escaneie para acessar
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

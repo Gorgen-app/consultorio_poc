@@ -3088,3 +3088,28 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Melhorar distribuição dos links no cabeçalho (links + botão agrupados)
 
 - [x] Atualizar texto "Sobre o GORGEN" na landing page com novo conteúdo institucional
+
+
+---
+
+## 🔧 GORGEN 3.9.23 - Correções e Assinatura de Email (25/01/2026)
+
+### Bugs Corrigidos
+- [x] **Corrigir erro ao inserir especialidade nas configurações**
+  - Problema: Funções usavam `openId` (string) em vez de `userId` (number)
+  - Solução: Corrigido `atualizarEspecialidadesMedico` e `getEspecialidadesMedico` para usar `userId` numérico
+  - Arquivos: `server/db.ts`, `server/routers.ts`
+
+- [x] **Corrigir erro na página de Atendimentos**
+  - Problema: Import do `trpc` estava faltando no arquivo
+  - Solução: Adicionado `import { trpc } from "@/lib/trpc";`
+  - Arquivo: `client/src/pages/Atendimentos.tsx`
+
+### Novas Funcionalidades
+- [x] **Template de assinatura de email HTML responsivo**
+  - Versão principal completa com logo, badges de segurança e disclaimer
+  - Versão compacta para respostas rápidas
+  - Versão com QR code
+  - Conforme Manual de Identidade Visual GORGEN v1.0
+  - Arquivos: `docs/email-signatures/`
+

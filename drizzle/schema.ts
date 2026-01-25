@@ -1035,6 +1035,9 @@ export const userProfiles = mysqlTable("user_profiles", {
   // Dados específicos do médico
   crm: varchar("crm", { length: 20 }),
   especialidade: varchar("especialidade", { length: 100 }),
+  especialidadePrincipal: varchar("especialidade_principal", { length: 150 }),
+  especialidadeSecundaria: varchar("especialidade_secundaria", { length: 150 }),
+  areaAtuacao: varchar("area_atuacao", { length: 150 }),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),

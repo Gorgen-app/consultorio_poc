@@ -1,0 +1,40 @@
+{
+  "query": "SELECT user_id, especialidade_principal, especialidade_secundaria, area_atuacao FROM user_profiles LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT user_id, especialidade_principal, especialidade_secundaria, area_atuacao FROM user_profiles LIMIT 5;",
+  "rows": [
+    {
+      "user_id": "1",
+      "especialidade_principal": "NULL",
+      "especialidade_secundaria": "NULL",
+      "area_atuacao": "NULL"
+    },
+    {
+      "user_id": "1530139",
+      "especialidade_principal": "NULL",
+      "especialidade_secundaria": "NULL",
+      "area_atuacao": "NULL"
+    },
+    {
+      "user_id": "4440018",
+      "especialidade_principal": "NULL",
+      "especialidade_secundaria": "NULL",
+      "area_atuacao": "NULL"
+    },
+    {
+      "user_id": "5100004",
+      "especialidade_principal": "NULL",
+      "especialidade_secundaria": "NULL",
+      "area_atuacao": "NULL"
+    },
+    {
+      "user_id": "5190001",
+      "especialidade_principal": "NULL",
+      "especialidade_secundaria": "NULL",
+      "area_atuacao": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "user_id\tespecialidade_principal\tespecialidade_secundaria\tarea_atuacao\n1\tNULL\tNULL\tNULL\n1530139\tNULL\tNULL\tNULL\n4440018\tNULL\tNULL\tNULL\n5100004\tNULL\tNULL\tNULL\n5190001\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}
