@@ -97,7 +97,7 @@ function createAuthContext(): { ctx: TrpcContext; setCookies: CookieCall[]; clea
   return { ctx, setCookies, clearedCookies };
 }
 
-describe("auth.localAuth - Sistema de Autenticação Local", () => {
+describe("auth.auth - Sistema de Autenticação Local", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -108,7 +108,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.register({
+        caller.auth.register({
           username: "testuser",
           email: "test@example.com",
           password: "Password123",
@@ -124,7 +124,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.register({
+        caller.auth.register({
           username: "existinguser",
           email: "test@example.com",
           password: "Password123",
@@ -151,7 +151,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.register({
+        caller.auth.register({
           username: "newuser",
           email: "existing@example.com",
           password: "Password123",
@@ -172,7 +172,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const { ctx } = createPublicContext();
       const caller = appRouter.createCaller(ctx);
 
-      const result = await caller.localAuth.register({
+      const result = await caller.auth.register({
         username: "newuser",
         email: "new@example.com",
         password: "Password123",
@@ -204,7 +204,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.login({
+        caller.auth.login({
           username: "wronguser",
           password: "wrongpassword",
         })
@@ -222,7 +222,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.login({
+        caller.auth.login({
           username: "lockeduser",
           password: "anypassword",
         })
@@ -246,7 +246,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const { ctx } = createPublicContext();
       const caller = appRouter.createCaller(ctx);
 
-      const result = await caller.localAuth.login({
+      const result = await caller.auth.login({
         username: "user2fa",
         password: "Password123",
       });
@@ -280,7 +280,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const { ctx, setCookies } = createPublicContext();
       const caller = appRouter.createCaller(ctx);
 
-      const result = await caller.localAuth.login({
+      const result = await caller.auth.login({
         username: "testuser",
         password: "Password123",
       });
@@ -300,7 +300,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const { ctx } = createPublicContext();
       const caller = appRouter.createCaller(ctx);
 
-      const result = await caller.localAuth.requestPasswordReset({
+      const result = await caller.auth.requestPasswordReset({
         email: "nonexistent@example.com",
       });
 
@@ -316,7 +316,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const { ctx } = createAuthContext();
       const caller = appRouter.createCaller(ctx);
 
-      const result = await caller.localAuth.hasLocalCredentials();
+      const result = await caller.auth.hasLocalCredentials();
 
       expect(result.hasCredentials).toBe(false);
       expect(result.username).toBeUndefined();
@@ -337,7 +337,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const { ctx } = createAuthContext();
       const caller = appRouter.createCaller(ctx);
 
-      const result = await caller.localAuth.hasLocalCredentials();
+      const result = await caller.auth.hasLocalCredentials();
 
       expect(result.hasCredentials).toBe(true);
       expect(result.username).toBe("testuser");
@@ -362,7 +362,7 @@ describe("auth.localAuth - Sistema de Autenticação Local", () => {
       const { ctx } = createAuthContext();
       const caller = appRouter.createCaller(ctx);
 
-      const result = await caller.localAuth.getActiveSessions();
+      const result = await caller.auth.getActiveSessions();
 
       expect(result).toHaveLength(1);
       expect(result[0].ipAddress).toBe("127.0.0.1");
@@ -377,7 +377,7 @@ describe("Validação de Schemas", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.register({
+        caller.auth.register({
           username: "ab",
           email: "test@example.com",
           password: "Password123",
@@ -391,7 +391,7 @@ describe("Validação de Schemas", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.register({
+        caller.auth.register({
           username: "user@name",
           email: "test@example.com",
           password: "Password123",
@@ -407,7 +407,7 @@ describe("Validação de Schemas", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.register({
+        caller.auth.register({
           username: "testuser",
           email: "test@example.com",
           password: "Pass1",
@@ -421,7 +421,7 @@ describe("Validação de Schemas", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.register({
+        caller.auth.register({
           username: "testuser",
           email: "test@example.com",
           password: "password123",
@@ -435,7 +435,7 @@ describe("Validação de Schemas", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.register({
+        caller.auth.register({
           username: "testuser",
           email: "test@example.com",
           password: "PasswordABC",
@@ -451,7 +451,7 @@ describe("Validação de Schemas", () => {
       const caller = appRouter.createCaller(ctx);
 
       await expect(
-        caller.localAuth.register({
+        caller.auth.register({
           username: "testuser",
           email: "invalid-email",
           password: "Password123",

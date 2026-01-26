@@ -2078,7 +2078,8 @@ export async function runRestoreTest(
     
     // 7. Validação de schema
     const currentTables = await listTables(db);
-    const backupTables = backupData.tables?.map((t: any) => t.tableName) || [];
+    // backupData.tables é um objeto { tableName: { count, records } }, não um array
+    const backupTables = backupData.tables ? Object.keys(backupData.tables) : [];
     
     const missingTables = currentTables.filter(t => !backupTables.includes(t));
     const extraTables = backupTables.filter((t: string) => !currentTables.includes(t));
@@ -2098,21 +2099,24 @@ export async function runRestoreTest(
     let tablesChecked = 0;
     let recordsVerified = 0;
     
-    for (const tableData of (backupData.tables || [])) {
+    // backupData.tables é um objeto { tableName: { count, records } }
+    const tablesObject = backupData.tables || {};
+    for (const [tableName, tableData] of Object.entries(tablesObject)) {
       tablesChecked++;
+      const data = tableData as { count: number; records: any[] };
       
       // Verificar se cada registro tem campos obrigatórios
-      for (const record of tableData.records) {
+      for (const record of (data.records || [])) {
         recordsVerified++;
         
         // Verificar campos básicos
-        if (tableData.tableName === "pacientes") {
+        if (tableName === "pacientes") {
           if (!record.nome) {
             dataErrors.push(`Paciente ID ${record.id}: campo 'nome' ausente`);
           }
         }
         
-        if (tableData.tableName === "atendimentos") {
+        if (tableName === "atendimentos") {
           if (!record.paciente_id) {
             dataErrors.push(`Atendimento ID ${record.id}: campo 'paciente_id' ausente`);
           }

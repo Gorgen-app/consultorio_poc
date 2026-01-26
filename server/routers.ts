@@ -3540,6 +3540,9 @@ Retorne um JSON válido com a estrutura:
   }),
 
   // Router de Extração de Exames
+  // ⚠️ MÓDULO DESABILITADO - Em manutenção desde 26/01/2026
+  // Motivo: 14 testes falhando, funcionalidade instável
+  // Responsável: Equipe de Desenvolvimento GORGEN
   exames: router({
     // Processar PDFs e extrair exames
     processarPDFs: tenantProcedure
@@ -3547,7 +3550,15 @@ Retorne um JSON válido com a estrutura:
         arquivos: z.array(z.string()), // Nomes dos arquivos para processar
       }))
       .mutation(async ({ ctx, input }) => {
-        // Import dinâmico do módulo de extração
+        // ⚠️ MÓDULO DESABILITADO TEMPORARIAMENTE
+        throw new Error(
+          'O módulo de extração de exames está temporariamente desabilitado para manutenção. ' +
+          'Previsão de retorno: a definir. ' +
+          'Em caso de urgência, entre em contato com o suporte.'
+        );
+        
+        // Código original comentado - módulo desabilitado
+        /*
         const { BatchProcessor } = await import('./exam-extraction/batch-processor');
         const { lerPDF } = await import('./exam-extraction/utils');
         
@@ -3565,11 +3576,8 @@ Retorne um JSON válido com a estrutura:
         const erros: { arquivo: string; erro: string }[] = [];
         let arquivosProcessados = 0;
 
-        // Simular processamento (na implementação real, os arquivos viriam via upload)
-        // Por enquanto, retornar dados de exemplo para demonstrar a interface
         for (const arquivo of input.arquivos) {
           try {
-            // Verificar se é um arquivo de exame ou receita
             const isReceita = arquivo.toLowerCase().includes('receita') || 
                              arquivo.toLowerCase().includes('prescri');
             
@@ -3578,8 +3586,6 @@ Retorne um JSON válido com a estrutura:
               continue;
             }
 
-            // Simular extração de exames
-            // Na implementação real, usaria o BatchProcessor com o conteúdo do PDF
             const examesSimulados = [
               {
                 paciente: 'Paciente Exemplo',
@@ -3624,9 +3630,11 @@ Retorne um JSON válido com a estrutura:
           ignorados,
           erros,
         };
+        */
       }),
 
     // Salvar exames extraídos no banco de dados
+    // ⚠️ DESABILITADO
     salvarExtraidosNoBanco: tenantProcedure
       .input(z.object({
         exames: z.array(z.object({
@@ -3642,17 +3650,11 @@ Retorne um JSON válido com a estrutura:
         })),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Por enquanto, apenas simular o salvamento
-        // Na implementação real, salvaria no banco de dados
-        console.log(`[GORGEN] Salvando ${input.exames.length} exames para tenant ${ctx.tenant.tenantId}`);
-        
-        return {
-          salvos: input.exames.length,
-          mensagem: `${input.exames.length} exames salvos com sucesso`,
-        };
+        throw new Error('Módulo de extração de exames desabilitado para manutenção.');
       }),
 
     // Listar exames extraídos salvos
+    // ⚠️ DESABILITADO
     listarExtraidos: tenantProcedure
       .input(z.object({
         pacienteId: z.number().optional(),
@@ -3661,12 +3663,7 @@ Retorne um JSON válido com a estrutura:
         limite: z.number().default(100),
       }).optional())
       .query(async ({ ctx, input }) => {
-        // Por enquanto, retornar array vazio
-        // Na implementação real, buscaria do banco de dados
-        return {
-          exames: [],
-          total: 0,
-        };
+        throw new Error('Módulo de extração de exames desabilitado para manutenção.');
       }),
   }),
 });
