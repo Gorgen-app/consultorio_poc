@@ -112,8 +112,8 @@ export default function ExamExtraction() {
 
   // Mutation para salvar exames no banco
   const salvarMutation = trpc.exames.salvarExtraidosNoBanco.useMutation({
-    onSuccess: (data: { salvos: number; mensagem: string }) => {
-      toast.success(`${data.salvos} exames salvos com sucesso!`);
+    onSuccess: (data: { success: boolean; message: string; exames_salvos: number }) => {
+      toast.success(`${data.exames_salvos} exames salvos com sucesso!`);
       setExamesSelecionados([]);
     },
     onError: (error: { message: string }) => {

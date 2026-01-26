@@ -1,7 +1,9 @@
 /**
  * Componentes de Loading do GORGEN
- * Utiliza o GIF animado do farol com feixe de luz girando
+ * Utiliza animação SVG do farol com feixe de luz girando no plano horizontal
  */
+
+import { GorgenLighthouseLoader, GorgenFullPageLoader, GorgenInlineLoader as LighthouseInlineLoader } from './GorgenLighthouseLoader';
 
 interface GorgenLoadingScreenProps {
   message?: string;
@@ -11,15 +13,8 @@ export function GorgenLoadingScreen({ message = "Carregando..." }: GorgenLoading
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
       <div className="flex flex-col items-center">
-        {/* GIF animado do farol */}
-        <img 
-          src="/assets/loader/gorgen-loader-large.gif" 
-          alt="Carregando..." 
-          className="w-48 h-48 mb-4"
-        />
-        
-        {/* Mensagem */}
-        <p className="text-gray-500 text-sm">{message}</p>
+        {/* Animação SVG do farol */}
+        <GorgenLighthouseLoader size="xl" text={message} />
       </div>
     </div>
   );
@@ -33,11 +28,7 @@ export function GorgenLoadingSkeleton() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#0056A4] to-[#002B49]" />
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
           <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center mb-8 backdrop-blur-sm">
-            <img 
-              src="/assets/loader/gorgen-loader-large.gif" 
-              alt="Carregando..." 
-              className="w-36 h-36 object-contain"
-            />
+            <GorgenLighthouseLoader size="lg" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4 tracking-wide">GORGEN</h1>
           <p className="text-xl text-white/80 text-center max-w-md">
@@ -80,25 +71,13 @@ export function GorgenLoadingSkeleton() {
 }
 
 export function GorgenInlineLoader({ size = "default" }: { size?: "small" | "default" | "large" }) {
-  const sizeClasses = {
-    small: { width: 16, height: 16 },
-    default: { width: 24, height: 24 },
-    large: { width: 32, height: 32 },
+  const sizeMap = {
+    small: 'sm' as const,
+    default: 'sm' as const,
+    large: 'md' as const,
   };
 
-  const { width, height } = sizeClasses[size];
-
-  return (
-    <div className="flex items-center justify-center gap-2">
-      <img 
-        src="/assets/loader/gorgen-loader-small.gif" 
-        alt="Carregando..." 
-        width={width}
-        height={height}
-        className="object-contain"
-      />
-    </div>
-  );
+  return <LighthouseInlineLoader className={size === 'small' ? 'scale-75' : ''} />;
 }
 
 export function GorgenCardSkeleton() {
@@ -151,13 +130,28 @@ export function GorgenTableSkeleton({ rows = 5 }: { rows?: number }) {
  */
 export function GorgenButtonLoader() {
   return (
-    <img 
-      src="/assets/loader/gorgen-loader-small.gif" 
-      alt="Carregando..." 
-      width={20}
-      height={20}
-      className="inline-block"
-    />
+    <div className="inline-flex items-center justify-center w-5 h-5">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 200 200"
+        xmlns="http://www.w3.org/2000/svg"
+        className="animate-spin"
+      >
+        <circle
+          cx="100"
+          cy="100"
+          r="80"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="16"
+          strokeLinecap="round"
+          strokeDasharray="400"
+          strokeDashoffset="300"
+          opacity="0.8"
+        />
+      </svg>
+    </div>
   );
 }
 
@@ -167,15 +161,10 @@ export function GorgenButtonLoader() {
 export function GorgenCenteredLoader({ message }: { message?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-12">
-      <img 
-        src="/assets/loader/gorgen-loader.gif" 
-        alt="Carregando..." 
-        width={120}
-        height={120}
-      />
-      {message && (
-        <p className="text-gray-500 text-sm mt-4">{message}</p>
-      )}
+      <GorgenLighthouseLoader size="lg" text={message} />
     </div>
   );
 }
+
+// Re-exportar o loader de página inteira
+export { GorgenFullPageLoader };

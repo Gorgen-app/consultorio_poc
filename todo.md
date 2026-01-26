@@ -3232,3 +3232,54 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Testar restauração - 2 tenants validados com sucesso
 - [x] Corrigir bug de validação (backupData.tables formato)
 - [x] Documentar processo completo (GORGEN_BACKUP_RESTORE_MANUAL.md)
+
+
+---
+
+## 🛡️ GORGEN 3.9.31 - Proteção e Melhorias (26/01/2026)
+
+### Testes de Regressão
+- [ ] Criar suite de testes para prontuário (acesso, evoluções, histórico)
+- [ ] Criar suite de testes para busca de pacientes (case-insensitive, acentos)
+- [ ] Criar suite de testes para backup (criação, restauração, validação)
+- [ ] Configurar GitHub Actions para executar testes antes de merge
+
+### Módulo de Extração de Exames
+- [x] Identificar testes falhando (13 testes requerem PDFs reais)
+- [x] Marcar testes como skip (501 passando, 16 skipped)
+- [x] Corrigir categorizarExame para HEMOGLOBINA GLICADA
+- [x] MÓDULO REATIVADO - Rotas funcionais
+- [x] Corrigir tipagem do frontend (ExamExtraction.tsx)
+- [ ] Testes de integração com PDFs reais (opcional)
+
+### GIF Animado do Farol (Substituído por SVG Animado)
+- [x] Criar animação SVG profissional com feixe de luz girando no plano axial
+- [x] Componente GorgenLighthouseLoader.tsx criado
+- [x] Ondas do mar animadas
+- [x] Feixe de luz cônico girando 360°
+- [x] Brilho central pulsante
+- [x] Integrado ao GorgenLoadingScreen.tsx
+- [x] Tamanhos: sm, md, lg, xl
+- [ ] Integrar como loader no sistema
+
+
+---
+
+## 🚨 GORGEN 3.9.32 - Alerta de Memória Alta (26/01/2026)
+
+### Problema Identificado
+- [x] Uso de memória heap: 93% (71MB de 76MB)
+- [x] Investigar causa do alto consumo - Buffers de métricas muito grandes
+
+### Correções Implementadas
+- [x] Corrigir erro 404 ao clicar em "Todos os alertas" - Página /notificacoes criada
+- [x] Adicionar alertas de performance na Dashboard principal - Card de alertas adicionado
+- [x] Otimizar uso de memória (limpar caches, reduzir buffers):
+  - Buffer de métricas reduzido de 10000 para 2000 entradas
+  - Período de retenção reduzido de 24h para 6h
+  - Cache de métricas de atendimento reduzido de 10000 para 2000
+  - TTL do cache reduzido de 5min para 3min
+  - Cache em memória limitado a 500 entradas
+  - Limpeza automática a cada 30 segundos
+  - Módulo memory-optimizer.ts criado para limpeza automática
+- [x] Aumentar limite de memória no ambiente - NODE_OPTIONS='--max-old-space-size=256' configurado
