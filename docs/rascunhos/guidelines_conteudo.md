@@ -53,7 +53,7 @@ As comunicações com pacientes, mesmo que administrativas, refletem o profissio
 - **Assédio e Ameaças:** Conteúdo que assedie, ameace, intimide ou ataque qualquer indivíduo.
 - **Informações Falsas (Desinformação):** Inserir deliberadamente informações falsas no prontuário ou em qualquer outro registro.
 - **Violação de Propriedade Intelectual:** Carregar documentos, imagens ou materiais para os quais você não possui os direitos autorais ou permissão de uso.
-- **Conteúdo Ofensivo ou Obsceno:** Linguagem ou imagens sexualmente explícitas, vulgares ou graficamente violentas.
+- **Conteúdo Ofensivo ou Obsceno:** Linguagem ou imagens sexualmente explícitas, ilegais, imorais, vulgares ou graficamente violentas.
 
 ## **5. Moderação e Consequências**
 
