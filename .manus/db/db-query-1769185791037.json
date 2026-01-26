@@ -1,0 +1,18 @@
+{
+  "query": "SELECT u.name, u.email FROM user_credentials uc JOIN users u ON uc.user_id = u.id WHERE uc.username IN ('karen.trindade', 'leticia.uzeika');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT u.name, u.email FROM user_credentials uc JOIN users u ON uc.user_id = u.id WHERE uc.username IN ('karen.trindade', 'leticia.uzeika');",
+  "rows": [
+    {
+      "name": "Letícia Uzeika",
+      "email": "leticiauzeika@gmail.com"
+    },
+    {
+      "name": "Karen Trindade",
+      "email": "karen.trindade@andregorgen.com.br"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\temail\nLetícia Uzeika\tleticiauzeika@gmail.com\nKaren Trindade\tkaren.trindade@andregorgen.com.br\n",
+  "stderr": "",
+  "execution_time_ms": 721
+}

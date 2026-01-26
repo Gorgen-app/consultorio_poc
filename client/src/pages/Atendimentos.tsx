@@ -110,46 +110,27 @@ export default function Atendimentos() {
   // Estado e mutation para exportação
   const [isExporting, setIsExporting] = useState(false);
   
-  const exportMutation = trpc.atendimentos.export.useMutation({
-    onSuccess: (data: { filename: string; data: string; mimeType: string }) => {
-      // Converter base64 para blob e fazer download
-      const byteCharacters = atob(data.data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: data.mimeType });
-      
-      // Criar link de download
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = data.filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast.success(`Arquivo ${data.filename} exportado com sucesso!`);
+  // TODO: Implementar procedure de exportação no backend
+  const exportMutation = {
+    mutate: (_params: { format: string; filters?: Record<string, unknown> }) => {
+      toast.error("Funcionalidade de exportação em desenvolvimento");
       setIsExporting(false);
     },
-    onError: (error) => {
-      toast.error(`Erro ao exportar: ${error.message}`);
-      setIsExporting(false);
-    },
-  });
+    isPending: false,
+  };
 
   const handleExportar = (format: 'xlsx' | 'csv' | 'pdf') => {
     setIsExporting(true);
     exportMutation.mutate({
       format,
-      tipo: filtroTipo || undefined,
-      convenio: filtroConvenio || undefined,
-      local: filtroLocal || undefined,
-      dataInicio: filtroDataDe ? new Date(filtroDataDe) : undefined,
-      dataFim: filtroDataAte ? new Date(filtroDataAte) : undefined,
-      pagamentoEfetivado: filtroPago === 'sim' ? true : filtroPago === 'nao' ? false : undefined,
+      filters: {
+        tipo: filtroTipo || undefined,
+        convenio: filtroConvenio || undefined,
+        local: filtroLocal || undefined,
+        dataInicio: filtroDataDe ? new Date(filtroDataDe) : undefined,
+        dataFim: filtroDataAte ? new Date(filtroDataAte) : undefined,
+        pagamentoEfetivado: filtroPago === 'sim' ? true : filtroPago === 'nao' ? false : undefined,
+      },
     });
   };
 

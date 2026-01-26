@@ -36,11 +36,12 @@ type CategoriaDocumento =
 
 interface DocumentoUploadProps {
   pacienteId: number;
-  categoria: CategoriaDocumento;
+  categoria?: CategoriaDocumento;
   registroId?: number; // ID do registro específico (evolução, internação, etc.)
+  evolucaoId?: number | null;
   onSuccess?: () => void;
   onClose?: () => void;
-  isOpen: boolean;
+  isOpen?: boolean;
 }
 
 export function DocumentoUpload({
@@ -144,7 +145,8 @@ export function DocumentoUpload({
         const timestamp = Date.now();
         const randomSuffix = Math.random().toString(36).substring(2, 8);
         const extension = arquivo.name.split(".").pop();
-        const fileKey = `documentos/${pacienteId}/${categoria.toLowerCase().replace(/ /g, "-")}/${timestamp}-${randomSuffix}.${extension}`;
+        const categoriaPath = (categoria || "outros").toLowerCase().replace(/ /g, "-");
+        const fileKey = `documentos/${pacienteId}/${categoriaPath}/${timestamp}-${randomSuffix}.${extension}`;
 
         // Upload para S3 via endpoint do servidor
         const uploadResponse = await fetch("/api/upload", {
@@ -166,10 +168,11 @@ export function DocumentoUpload({
         const { url } = await uploadResponse.json();
 
         // Criar registro no banco
-        const registroIdField = getRegistroIdField(categoria);
+        const categoriaFinal = categoria || "Evolução";
+        const registroIdField = getRegistroIdField(categoriaFinal);
         const novoDocumento = await createDocumento.mutateAsync({
           pacienteId,
-          categoria,
+          categoria: categoriaFinal,
           titulo,
           descricao: descricao || undefined,
           dataDocumento: dataDocumento || undefined,
@@ -345,7 +348,9 @@ export function DocumentoUpload({
 // Componente para listar documentos de uma categoria
 interface DocumentosListProps {
   pacienteId: number;
-  categoria: CategoriaDocumento;
+  categoria?: CategoriaDocumento;
+  evolucaoId?: number | null;
+  compact?: boolean;
 }
 
 // Função para truncar texto OCR em 300 palavras

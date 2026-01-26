@@ -1,0 +1,25 @@
+{
+  "query": "\n-- Estatísticas gerais atualizadas\nSELECT \n  COUNT(*) as total_backups,\n  SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as sucesso,\n  SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as falhas,\n  SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as em_progresso,\n  MIN(created_at) as primeiro_backup,\n  MAX(created_at) as ultimo_backup\nFROM backup_history;\n\n-- Últimos 5 backups após dry run\nSELECT id, tenant_id, backup_type, status, created_at \nFROM backup_history \nORDER BY created_at DESC \nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute \n-- Estatísticas gerais atualizadas\nSELECT \n  COUNT(*) as total_backups,\n  SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as sucesso,\n  SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as falhas,\n  SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as em_progresso,\n  MIN(created_at) as primeiro_backup,\n  MAX(created_at) as ultimo_backup\nFROM backup_history;\n\n-- Últimos 5 backups após dry run\nSELECT id, tenant_id, backup_type, status, created_at \nFROM backup_history \nORDER BY created_at DESC \nLIMIT 5;\n",
+  "rows": [
+    {
+      "total_backups": "14",
+      "sucesso": "0",
+      "falhas": "0",
+      "em_progresso": "0",
+      "primeiro_backup": "2026-01-14 14:36:21",
+      "ultimo_backup": "2026-01-25 11:34:27"
+    }
+  ],
+  "messages": [
+    "id\ttenant_id\tbackup_type\tstatus\tcreated_at",
+    "240002\t30002\tfull\tsuccess\t2026-01-25 11:34:27",
+    "240001\t1\tfull\tsuccess\t2026-01-25 11:34:18",
+    "210002\t30002\tfull\tsuccess\t2026-01-25 10:39:09",
+    "210001\t1\tfull\tsuccess\t2026-01-25 10:39:06",
+    "180002\t30002\tfull\tsuccess\t2026-01-25 08:54:36"
+  ],
+  "stdout": "total_backups\tsucesso\tfalhas\tem_progresso\tprimeiro_backup\tultimo_backup\n14\t0\t0\t0\t2026-01-14 14:36:21\t2026-01-25 11:34:27\nid\ttenant_id\tbackup_type\tstatus\tcreated_at\n240002\t30002\tfull\tsuccess\t2026-01-25 11:34:27\n240001\t1\tfull\tsuccess\t2026-01-25 11:34:18\n210002\t30002\tfull\tsuccess\t2026-01-25 10:39:09\n210001\t1\tfull\tsuccess\t2026-01-25 10:39:06\n180002\t30002\tfull\tsuccess\t2026-01-25 08:54:36\n",
+  "stderr": "",
+  "execution_time_ms": 402
+}

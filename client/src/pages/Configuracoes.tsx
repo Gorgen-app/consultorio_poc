@@ -31,11 +31,13 @@ import {
   FlaskConical,
   HardDrive,
   HelpCircle,
+  FileText,
 } from "lucide-react";
 import { Link } from "wouter";
 import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especialidadesMedicas";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { HelpSupport } from "@/components/settings/HelpSupport";
+import { TextosPadraoSettings } from "@/components/settings/TextosPadraoSettings";
 
 // Mapeamento de perfis para labels e ícones
 const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -386,6 +388,19 @@ export default function Configuracoes() {
             >
               <Stethoscope className="h-4 w-4" />
               <span className="hidden sm:inline">Profissional</span>
+            </Button>
+          )}
+          
+          {/* Aba de Textos Padrão - visível para médicos */}
+          {currentPerfil === "medico" && (
+            <Button
+              variant={activeTab === "textosPadrao" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("textosPadrao")}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Textos Padrão</span>
             </Button>
           )}
           
@@ -1083,6 +1098,11 @@ export default function Configuracoes() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Tab: Textos Padrão */}
+        {activeTab === "textosPadrao" && (
+          <TextosPadraoSettings />
         )}
 
         {/* Tab: Segurança */}

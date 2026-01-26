@@ -2,17 +2,68 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    
+    <!-- Favicon Adaptativo - Detecta Dark/Light Mode -->
+    <!-- Dark Mode: Fundo Preto com Farol Branco -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64x64.png" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" sizes="128x128" href="/favicon-128x128.png" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" sizes="256x256" href="/favicon-256x256.png" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" media="(prefers-color-scheme: dark)">
+    
+    <!-- Light Mode: Fundo Branco com Farol Preto -->
+    <link rel="icon" type="image/x-icon" href="/favicon-white/favicon-white.ico" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-white/favicon-white-16x16.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-white/favicon-white-32x32.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-white/favicon-white-48x48.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-white/favicon-white-64x64.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" sizes="128x128" href="/favicon-white/favicon-white-128x128.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" sizes="256x256" href="/favicon-white/favicon-white-256x256.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-white/favicon-white-512x512.png" media="(prefers-color-scheme: light)">
+    
+    <!-- Fallback para navegadores sem suporte a media queries em link -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Apple Touch Icon (não suporta media queries) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    
+    <!-- Android Chrome Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
+    
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileImage" content="/mstile-150x150.png">
+    <meta name="msapplication-TileColor" content="#000000">
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#203864" />
-    <meta name="description" content="Gorgen - Aplicativo de Gestão em Saúde" />
+    
+    <!-- Theme Color Adaptativo -->
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#203864">
+    
+    <meta name="description" content="GORGEN - Plataforma de Gestão em Saúde com foco no paciente. Simplificamos a gestão médica da consulta ao faturamento." />
+    <meta name="keywords" content="gestão em saúde, prontuário eletrônico, consultório médico, GORGEN, saúde digital" />
+    <meta name="author" content="GORGEN" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="GORGEN - Gestão em Saúde" />
+    <meta property="og:description" content="Plataforma de gestão em saúde com foco no paciente. Simplificamos a gestão médica da consulta ao faturamento." />
+    <meta property="og:image" content="/android-chrome-512x512.png" />
     
     <!-- Preload Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <title>GORGEN - Aplicativo de Gestão em Saúde</title>
+    <title>GORGEN - Plataforma de Gestão em Saúde</title>
   </head>
   <body>
     <div id="root"></div>

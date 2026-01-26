@@ -11,12 +11,13 @@
  * - Endpoints sensíveis: 10 req/min (login, etc.)
  */
 
-import rateLimit from "express-rate-limit";
+import rateLimit, { type Options, ipKeyGenerator } from "express-rate-limit";
 import type { Request, Response, NextFunction } from "express";
 
 /**
  * Normaliza endereços IPv6 para IPv4 quando possível
  * Isso garante consistência no rate limiting
+ * Usa a função ipKeyGenerator recomendada pelo express-rate-limit v8
  */
 function normalizeIP(ip: string | undefined): string {
   if (!ip) return "unknown";
@@ -29,6 +30,14 @@ function normalizeIP(ip: string | undefined): string {
   // Normaliza localhost IPv6 para IPv4
   if (ip === "::1") {
     return "127.0.0.1";
+  }
+  
+  // Para endereços IPv6 puros, usa apenas os primeiros 64 bits (prefixo de rede)
+  // Isso evita bypass por usuários com múltiplos endereços IPv6 no mesmo /64
+  if (ip.includes(":") && !ip.includes(".")) {
+    const parts = ip.split(":");
+    // Retorna os primeiros 4 grupos (64 bits) como identificador
+    return parts.slice(0, 4).join(":") + "::";
   }
   
   return ip;
@@ -115,8 +124,8 @@ export const globalRateLimiter = rateLimit({
   legacyHeaders: false, // Desabilita headers `X-RateLimit-*`
   message: RATE_LIMITS.GLOBAL_IP.message,
   keyGenerator: (req: Request) => {
-    // Usa IP real considerando proxies, normalizado para IPv4 quando possível
-    return normalizeIP(req.ip || req.socket.remoteAddress);
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    return ipKeyGenerator(ip);
   },
   validate: { xForwardedForHeader: false },
   skip: (req: Request) => {
@@ -137,7 +146,8 @@ export const userRateLimiter = rateLimit({
   message: RATE_LIMITS.USER.message,
 keyGenerator: (req: Request) => {
     const userId = getUserId(req);
-    return userId || normalizeIP(req.ip || req.socket.remoteAddress);
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    return userId || ipKeyGenerator(ip);
   },
   validate: { xForwardedForHeader: false },
   skip: (req: Request) => {
@@ -158,7 +168,8 @@ export const tenantRateLimiter = rateLimit({
   message: RATE_LIMITS.TENANT.message,
 keyGenerator: (req: Request) => {
     const tenantId = getTenantId(req);
-    return tenantId ? `tenant:${tenantId}` : normalizeIP(req.ip || req.socket.remoteAddress);
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    return tenantId ? `tenant:${tenantId}` : ipKeyGenerator(ip);
   },
   validate: { xForwardedForHeader: false },
   skip: (req: Request) => {
@@ -181,7 +192,8 @@ export const sensitiveRateLimiter = rateLimit({
     // Combina IP + email/username para evitar ataques distribuídos
     const body = req.body || {};
     const identifier = body.email || body.username || "";
-    const ip = normalizeIP(req.ip || req.socket.remoteAddress);
+    const rawIp = req.ip || req.socket.remoteAddress || 'unknown';
+    const ip = ipKeyGenerator(rawIp);
     return `${ip}:${identifier}`;
   },
   validate: { xForwardedForHeader: false },
@@ -199,7 +211,8 @@ export const writeRateLimiter = rateLimit({
   message: RATE_LIMITS.WRITE.message,
   keyGenerator: (req: Request) => {
     const userId = getUserId(req);
-    const ip = normalizeIP(req.ip || req.socket.remoteAddress);
+    const rawIp = req.ip || req.socket.remoteAddress || 'unknown';
+    const ip = ipKeyGenerator(rawIp);
     return userId ? `write:${userId}` : `write:${ip}`;
   },
   validate: { xForwardedForHeader: false },

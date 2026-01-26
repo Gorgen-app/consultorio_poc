@@ -231,7 +231,7 @@ export async function executeFullBackup(
     tenantId,
     backupType: "full",
     status: "running",
-    startedAt: new Date().toISOString(),
+    startedAt: new Date(),
     filePath: "pending",
     triggeredBy,
     createdByUserId: userId,
@@ -292,13 +292,13 @@ export async function executeFullBackup(
       .update(backupHistory)
       .set({
         status: "success",
-        completedAt: new Date().toISOString(),
+        completedAt: new Date(),
         filePath: fileName,
         fileSizeBytes: encryptedData.length,
         checksumSha256: checksum,
         databaseRecords: totalRecords,
         destination: "s3_primary",
-        isEncrypted: 1, // Marcar como criptografado (TINYINT)
+        isEncrypted: true, // Marcar como criptografado (TINYINT)
         encryptionAlgorithm: "AES-256-GCM",
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -344,7 +344,7 @@ export async function executeFullBackup(
       .update(backupHistory)
       .set({
         status: "failed",
-        completedAt: new Date().toISOString(),
+        completedAt: new Date(),
         errorMessage,
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -503,7 +503,7 @@ export async function generateOfflineBackup(
     tenantId,
     backupType: "offline",
     status: "running",
-    startedAt: new Date().toISOString(),
+    startedAt: new Date(),
     filePath: "pending",
     destination: "offline_hd",
     triggeredBy: "manual",
@@ -569,7 +569,7 @@ export async function generateOfflineBackup(
       .update(backupHistory)
       .set({
         status: "success",
-        completedAt: new Date().toISOString(),
+        completedAt: new Date(),
         filePath: fileName,
         fileSizeBytes: compressedData.length,
         checksumSha256: checksum,
@@ -592,7 +592,7 @@ export async function generateOfflineBackup(
       .update(backupHistory)
       .set({
         status: "failed",
-        completedAt: new Date().toISOString(),
+        completedAt: new Date(),
         errorMessage,
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -1260,7 +1260,7 @@ async function getLastFullBackupState(tenantId: number): Promise<IncrementalBack
   
   return {
     lastBackupId: lastFull.id,
-    lastBackupDate: lastFull.completedAt || lastFull.startedAt,
+    lastBackupDate: (lastFull.completedAt || lastFull.startedAt).toISOString(),
     lastChecksum: lastFull.checksumSha256 || "",
   };
 }
@@ -1370,7 +1370,7 @@ export async function executeIncrementalBackup(
     tenantId,
     backupType: "incremental",
     status: "running",
-    startedAt: new Date().toISOString(),
+    startedAt: new Date(),
     filePath: "pending",
     triggeredBy,
     createdByUserId: userId,
@@ -1412,12 +1412,12 @@ export async function executeIncrementalBackup(
         .update(backupHistory)
         .set({
           status: "success",
-          completedAt: new Date().toISOString(),
+          completedAt: new Date(),
           filePath: "no_changes",
           fileSizeBytes: 0,
           databaseRecords: 0,
           destination: "s3_primary",
-          isEncrypted: 0,
+          isEncrypted: false,
         })
         .where(eq(backupHistory.id, Number(backupId)));
       
@@ -1471,13 +1471,13 @@ export async function executeIncrementalBackup(
       .update(backupHistory)
       .set({
         status: "success",
-        completedAt: new Date().toISOString(),
+        completedAt: new Date(),
         filePath: fileName,
         fileSizeBytes: encryptedData.length,
         checksumSha256: checksum,
         databaseRecords: totalRecords,
         destination: "s3_primary",
-        isEncrypted: 1,
+        isEncrypted: true,
         encryptionAlgorithm: "AES-256-GCM",
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -1522,7 +1522,7 @@ export async function executeIncrementalBackup(
       .update(backupHistory)
       .set({
         status: "failed",
-        completedAt: new Date().toISOString(),
+        completedAt: new Date(),
         errorMessage,
       })
       .where(eq(backupHistory.id, Number(backupId)));
@@ -1850,7 +1850,7 @@ export async function generateBackupAuditReport(
   // Criar entradas de auditoria
   const entries: BackupAuditEntry[] = periodBackups.map(b => ({
     id: b.id,
-    date: b.completedAt || b.startedAt,
+    date: (b.completedAt || b.startedAt).toISOString(),
     type: b.backupType,
     status: b.status,
     triggeredBy: b.triggeredBy || "unknown",
@@ -2078,7 +2078,8 @@ export async function runRestoreTest(
     
     // 7. Validação de schema
     const currentTables = await listTables(db);
-    const backupTables = backupData.tables?.map((t: any) => t.tableName) || [];
+    // backupData.tables é um objeto { tableName: { count, records } }, não um array
+    const backupTables = backupData.tables ? Object.keys(backupData.tables) : [];
     
     const missingTables = currentTables.filter(t => !backupTables.includes(t));
     const extraTables = backupTables.filter((t: string) => !currentTables.includes(t));
@@ -2098,21 +2099,24 @@ export async function runRestoreTest(
     let tablesChecked = 0;
     let recordsVerified = 0;
     
-    for (const tableData of (backupData.tables || [])) {
+    // backupData.tables é um objeto { tableName: { count, records } }
+    const tablesObject = backupData.tables || {};
+    for (const [tableName, tableData] of Object.entries(tablesObject)) {
       tablesChecked++;
+      const data = tableData as { count: number; records: any[] };
       
       // Verificar se cada registro tem campos obrigatórios
-      for (const record of tableData.records) {
+      for (const record of (data.records || [])) {
         recordsVerified++;
         
         // Verificar campos básicos
-        if (tableData.tableName === "pacientes") {
+        if (tableName === "pacientes") {
           if (!record.nome) {
             dataErrors.push(`Paciente ID ${record.id}: campo 'nome' ausente`);
           }
         }
         
-        if (tableData.tableName === "atendimentos") {
+        if (tableName === "atendimentos") {
           if (!record.paciente_id) {
             dataErrors.push(`Atendimento ID ${record.id}: campo 'paciente_id' ausente`);
           }
@@ -2153,7 +2157,7 @@ export async function runRestoreTest(
     // Registrar resultado do teste no histórico
     await db.update(backupHistory)
       .set({
-        lastVerifiedAt: testCompletedAt.toISOString(),
+        lastVerifiedAt: testCompletedAt,
         verificationStatus: result.success ? "valid" : "invalid",
       })
       .where(eq(backupHistory.id, backup.id));
@@ -2313,5 +2317,10 @@ export async function getRestoreTestHistory(
     .orderBy(desc(backupHistory.createdAt))
     .limit(limit);
   
-  return backups;
+  return backups.map(b => ({
+    backupId: b.backupId,
+    backupDate: b.backupDate.toISOString(),
+    lastTestedAt: b.lastTestedAt?.toISOString() ?? null,
+    verificationStatus: b.verificationStatus ?? null,
+  }));
 }

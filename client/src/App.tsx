@@ -21,6 +21,7 @@ import RelatorioDuplicados from "./pages/RelatorioDuplicados";
 import Relatorios from "./pages/Relatorios";
 import Performance from "./pages/Performance";
 import BackupSettings from "./pages/BackupSettings";
+import ExamExtraction from "./pages/ExamExtraction";
 import Dashboard from "./pages/DashboardCustom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 // Páginas de autenticação
@@ -30,6 +31,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ChangePassword from "./pages/ChangePassword";
+import QuemSomos from "./pages/QuemSomos";
 
 // Rotas de autenticação (públicas, sem DashboardLayout)
 function PublicRouter() {
@@ -42,6 +44,7 @@ function PublicRouter() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password/:token" component={ResetPassword} />
       <Route path="/change-password" component={ChangePassword} />
+      <Route path="/quem-somos" component={QuemSomos} />
     </Switch>
   );
 }
@@ -128,6 +131,11 @@ function ProtectedRouter() {
       <Route path="/configuracoes/backup">
         <ProtectedRoute funcionalidade="configuracoes.backup">
           <BackupSettings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/exames/extracao">
+        <ProtectedRoute funcionalidade="prontuario">
+          <ExamExtraction />
         </ProtectedRoute>
       </Route>
       <Route path="/config-simples">

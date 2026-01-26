@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  (SELECT COUNT(*) FROM pacientes) as total_pacientes,\n  (SELECT COUNT(*) FROM atendimentos) as total_atendimentos,\n  (SELECT COUNT(*) FROM users) as total_usuarios,\n  (SELECT COUNT(*) FROM user_credentials) as usuarios_com_login,\n  (SELECT COUNT(*) FROM audit_log) as registros_auditoria;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT \n  (SELECT COUNT(*) FROM pacientes) as total_pacientes,\n  (SELECT COUNT(*) FROM atendimentos) as total_atendimentos,\n  (SELECT COUNT(*) FROM users) as total_usuarios,\n  (SELECT COUNT(*) FROM user_credentials) as usuarios_com_login,\n  (SELECT COUNT(*) FROM audit_log) as registros_auditoria;",
+  "rows": [
+    {
+      "total_pacientes": "21654",
+      "total_atendimentos": "1345",
+      "total_usuarios": "5",
+      "usuarios_com_login": "3",
+      "registros_auditoria": "662"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_pacientes\ttotal_atendimentos\ttotal_usuarios\tusuarios_com_login\tregistros_auditoria\n21654\t1345\t5\t3\t662\n",
+  "stderr": "",
+  "execution_time_ms": 65
+}

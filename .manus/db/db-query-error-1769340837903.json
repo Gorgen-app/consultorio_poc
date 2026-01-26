@@ -1,0 +1,8 @@
+{
+  "query": "\n-- Configurações de backup\nSELECT id, tenant_id, enabled, frequency, schedule_time, retention_days, encryption_enabled, notify_on_success, notify_on_failure FROM backup_config LIMIT 5;\n\n-- Últimos 15 backups\nSELECT * FROM backup_history ORDER BY created_at DESC LIMIT 15;\n\n-- Estatísticas gerais\nSELECT \n  COUNT(*) as total_backups,\n  SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as sucesso,\n  SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as falhas,\n  MIN(created_at) as primeiro_backup,\n  MAX(created_at) as ultimo_backup\nFROM backup_history;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute \n-- Configurações de backup\nSELECT id, tenant_id, enabled, frequency, schedule_time, retention_days, encryption_enabled, notify_on_success, notify_on_failure FROM backup_config LIMIT 5;\n\n-- Últimos 15 backups\nSELECT * FROM backup_history ORDER BY created_at DESC LIMIT 15;\n\n-- Estatísticas gerais\nSELECT \n  COUNT(*) as total_backups,\n  SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as sucesso,\n  SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as falhas,\n  MIN(created_at) as primeiro_backup,\n  MAX(created_at) as ultimo_backup\nFROM backup_history;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 3: Unknown column 'enabled' in 'field list'"
+  ]
+}

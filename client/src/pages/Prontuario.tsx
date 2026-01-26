@@ -142,7 +142,18 @@ export default function Prontuario() {
   const [, setLocation] = useLocation();
   const pacienteId = parseInt(params.id || "0");
   
-  const [secaoAtiva, setSecaoAtiva] = useState("resumo");
+  // Ler parâmetros de URL para abrir evolução automaticamente
+  const urlParams = new URLSearchParams(window.location.search);
+  const secaoParam = urlParams.get('secao');
+  const novaEvolucaoParam = urlParams.get('novaEvolucao') === 'true';
+  const agendamentoIdParam = urlParams.get('agendamentoId');
+  
+  // Estado para controlar se já processamos os parâmetros de URL
+  const [parametrosProcessados, setParametrosProcessados] = useState(false);
+  const [abrirNovaEvolucao, setAbrirNovaEvolucao] = useState(false);
+  const [agendamentoIdVinculado, setAgendamentoIdVinculado] = useState<number | null>(null);
+  
+  const [secaoAtiva, setSecaoAtiva] = useState(secaoParam || "resumo");
   
   // Estados para modal de nova medida
   const [modalMedidaAberto, setModalMedidaAberto] = useState(false);
@@ -267,6 +278,28 @@ export default function Prontuario() {
       toast.error("Erro ao resolver problema: " + err.message);
     },
   });
+  
+  // Efeito para processar parâmetros de URL (abrir evolução automaticamente)
+  useEffect(() => {
+    if (!parametrosProcessados && novaEvolucaoParam) {
+      setSecaoAtiva('evolucoes');
+      setAbrirNovaEvolucao(true);
+      if (agendamentoIdParam) {
+        setAgendamentoIdVinculado(parseInt(agendamentoIdParam));
+      }
+      setParametrosProcessados(true);
+      
+      // Limpar parâmetros da URL após processar (para evitar reprocessamento)
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [parametrosProcessados, novaEvolucaoParam, agendamentoIdParam]);
+  
+  // Callback quando evolução é criada (para limpar estados)
+  const handleEvolucaoCriada = () => {
+    setAbrirNovaEvolucao(false);
+    setAgendamentoIdVinculado(null);
+  };
   
   if (isLoading) {
     return (
@@ -742,6 +775,9 @@ export default function Prontuario() {
               pacienteId={pacienteId} 
               evolucoes={prontuario.evolucoes}
               onUpdate={refetch}
+              abrirNovaEvolucao={abrirNovaEvolucao}
+              agendamentoIdVinculado={agendamentoIdVinculado}
+              onEvolucaoCriada={handleEvolucaoCriada}
             />
           )}
           {secaoAtiva === "internacoes" && (

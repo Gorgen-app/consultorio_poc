@@ -4,10 +4,10 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Eye, EyeOff, KeyRound, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, KeyRound, AlertCircle, Loader2, CheckCircle2, Shield, Lock } from "lucide-react";
+import { PasswordStrengthIndicator, PasswordConfirmIndicator } from "@/components/PasswordStrengthIndicator";
 
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
@@ -22,6 +22,12 @@ export default function ResetPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Validar token antes de exibir formulário
+  const { data: tokenValidation, isLoading: isValidatingToken } = trpc.auth.validateResetToken.useQuery(
+    { token },
+    { enabled: !!token, retry: false }
+  );
 
   const resetPasswordMutation = trpc.auth.resetPassword.useMutation({
     onSuccess: () => {
@@ -80,173 +86,307 @@ export default function ResetPassword() {
   // Tela de sucesso
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
-                <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
-              </div>
+      <div className="min-h-screen flex">
+        {/* Painel esquerdo - Branding */}
+        <div className="hidden lg:flex lg:w-1/2 bg-[#0056A4] relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0056A4] to-[#002B49]" />
+          <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
+            <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center mb-8 backdrop-blur-sm">
+              <img 
+                src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+                alt="Gorgen Logo" 
+                className="w-36 h-36 object-contain"
+              />
             </div>
-            <CardTitle className="text-2xl font-bold">Senha Redefinida!</CardTitle>
-            <CardDescription className="text-base">
-              Sua senha foi alterada com sucesso. Agora você pode fazer login com sua nova senha.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button
-              className="w-full"
-              onClick={() => setLocation("/login")}
-            >
-              Ir para Login
-            </Button>
-          </CardFooter>
-        </Card>
+            <h1 className="text-4xl font-bold text-white mb-4 tracking-wide">GORGEN</h1>
+            <p className="text-xl text-white/80 text-center max-w-md">
+              Gestão em Saúde com Arquitetura de Rede Social
+            </p>
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-[#002B49]/50 to-transparent" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/5 rounded-full" />
+          <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full" />
+        </div>
+
+        {/* Painel direito - Sucesso */}
+        <div className="flex-1 flex items-center justify-center p-8 bg-[#F5F7FA]">
+          <div className="w-full max-w-md">
+            <div className="lg:hidden flex flex-col items-center mb-8">
+              <div className="w-20 h-20 bg-[#0056A4] rounded-full flex items-center justify-center mb-4">
+                <img 
+                  src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+                  alt="Gorgen Logo" 
+                  className="w-14 h-14 object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-bold text-[#002B49]">GORGEN</h1>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 className="h-10 w-10 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-[#002B49] mb-2">Senha Redefinida!</h2>
+              <p className="text-gray-500 mb-8">
+                Sua senha foi alterada com sucesso. Agora você pode fazer login com sua nova senha.
+              </p>
+              <Button
+                className="w-full h-12 bg-[#0056A4] hover:bg-[#004080] text-white font-medium"
+                onClick={() => setLocation("/login")}
+              >
+                Ir para Login
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Verificar se tem token
-  if (!token) {
+  // Tela de loading enquanto valida token
+  if (isValidatingToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-red-100 dark:bg-red-900 rounded-full">
-                <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
+        <div className="flex flex-col items-center">
+          <div className="w-24 h-24 bg-[#0056A4] rounded-full flex items-center justify-center mb-6 animate-pulse">
+            <img 
+              src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+              alt="Gorgen Logo" 
+              className="w-16 h-16 object-contain"
+            />
+          </div>
+          <Loader2 className="h-8 w-8 text-[#0056A4] animate-spin mb-4" />
+          <p className="text-gray-500 text-sm">Validando link de recuperação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar se tem token ou se token é inválido - Tela de erro
+  if (!token || (tokenValidation && !tokenValidation.valid)) {
+    return (
+      <div className="min-h-screen flex">
+        {/* Painel esquerdo - Branding */}
+        <div className="hidden lg:flex lg:w-1/2 bg-[#0056A4] relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0056A4] to-[#002B49]" />
+          <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
+            <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center mb-8 backdrop-blur-sm">
+              <img 
+                src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+                alt="Gorgen Logo" 
+                className="w-36 h-36 object-contain"
+              />
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-4 tracking-wide">GORGEN</h1>
+            <p className="text-xl text-white/80 text-center max-w-md">
+              Gestão em Saúde com Arquitetura de Rede Social
+            </p>
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-[#002B49]/50 to-transparent" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/5 rounded-full" />
+          <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full" />
+        </div>
+
+        {/* Painel direito - Erro */}
+        <div className="flex-1 flex items-center justify-center p-8 bg-[#F5F7FA]">
+          <div className="w-full max-w-md">
+            <div className="lg:hidden flex flex-col items-center mb-8">
+              <div className="w-20 h-20 bg-[#0056A4] rounded-full flex items-center justify-center mb-4">
+                <img 
+                  src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+                  alt="Gorgen Logo" 
+                  className="w-14 h-14 object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-bold text-[#002B49]">GORGEN</h1>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="h-10 w-10 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-[#002B49] mb-2">Link Inválido</h2>
+              <p className="text-gray-500 mb-8">
+                O link de recuperação de senha é inválido ou expirou.
+              </p>
+              <div className="space-y-3">
+                <Button
+                  className="w-full h-12 bg-[#0056A4] hover:bg-[#004080] text-white font-medium"
+                  onClick={() => setLocation("/forgot-password")}
+                >
+                  Solicitar Novo Link
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full text-gray-500 hover:text-[#0056A4]"
+                  onClick={() => setLocation("/login")}
+                >
+                  Voltar ao Login
+                </Button>
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">Link Inválido</CardTitle>
-            <CardDescription className="text-base">
-              O link de recuperação de senha é inválido ou expirou.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter className="flex flex-col gap-4">
-            <Button
-              className="w-full"
-              onClick={() => setLocation("/forgot-password")}
-            >
-              Solicitar Novo Link
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => setLocation("/login")}
-            >
-              Voltar ao Login
-            </Button>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   // Formulário de redefinição
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-              <KeyRound className="h-8 w-8 text-[#0056A4] dark:text-blue-400" />
+    <div className="min-h-screen flex">
+      {/* Painel esquerdo - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#0056A4] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0056A4] to-[#002B49]" />
+        <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
+          <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center mb-8 backdrop-blur-sm">
+            <img 
+              src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+              alt="Gorgen Logo" 
+              className="w-36 h-36 object-contain"
+            />
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-4 tracking-wide">GORGEN</h1>
+          <p className="text-xl text-white/80 text-center max-w-md">
+            Gestão em Saúde com Arquitetura de Rede Social
+          </p>
+          <p className="text-lg text-white/60 text-center mt-4 max-w-sm">
+            Paciente no centro do cuidado
+          </p>
+          <div className="mt-12 flex items-center gap-6 text-white/60 text-sm">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span>LGPD Compliant</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              <span>AES-256</span>
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Redefinir Senha</CardTitle>
-          <CardDescription>
-            Digite sua nova senha abaixo
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+        </div>
+        <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-[#002B49]/50 to-transparent" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/5 rounded-full" />
+        <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full" />
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">Nova Senha</Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  name="newPassword"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={formData.newPassword}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  autoFocus
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
+      {/* Painel direito - Formulário */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-[#F5F7FA]">
+        <div className="w-full max-w-md">
+          {/* Logo mobile */}
+          <div className="lg:hidden flex flex-col items-center mb-8">
+            <div className="w-20 h-20 bg-[#0056A4] rounded-full flex items-center justify-center mb-4">
+              <img 
+                src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
+                alt="Gorgen Logo" 
+                className="w-14 h-14 object-contain"
+              />
+            </div>
+            <h1 className="text-2xl font-bold text-[#002B49]">GORGEN</h1>
+            <p className="text-gray-500 text-sm">Gestão em Saúde</p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-[#0056A4]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <KeyRound className="h-8 w-8 text-[#0056A4]" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Mínimo 8 caracteres, com maiúscula, minúscula e número
-              </p>
+              <h2 className="text-2xl font-bold text-[#002B49]">Redefinir Senha</h2>
+              <p className="text-gray-500 mt-2">Digite sua nova senha abaixo</p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={resetPasswordMutation.isPending}
-            >
-              {resetPasswordMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Redefinindo...
-                </>
-              ) : (
-                <>
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Redefinir Senha
-                </>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+
+              <div className="space-y-2">
+                <Label htmlFor="newPassword" className="text-[#002B49] font-medium">Nova Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    name="newPassword"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                    autoFocus
+                    className="h-12 border-gray-200 focus:border-[#0056A4] focus:ring-[#0056A4] pr-12"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-gray-400" />
+                    )}
+                  </Button>
+                </div>
+                <PasswordStrengthIndicator password={formData.newPassword} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-[#002B49] font-medium">Confirmar Nova Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                    className="h-12 border-gray-200 focus:border-[#0056A4] focus:ring-[#0056A4] pr-12"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-gray-400" />
+                    )}
+                  </Button>
+                </div>
+                <PasswordConfirmIndicator password={formData.newPassword} confirmPassword={formData.confirmPassword} />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-[#0056A4] hover:bg-[#004080] text-white font-medium mt-6"
+                disabled={resetPasswordMutation.isPending}
+              >
+                {resetPasswordMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Redefinindo...
+                  </>
+                ) : (
+                  <>
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Redefinir Senha
+                  </>
+                )}
+              </Button>
+            </form>
+          </div>
+
+          <p className="text-center text-xs text-gray-400 mt-6">
+            © 2026 GORGEN. Todos os direitos reservados.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
