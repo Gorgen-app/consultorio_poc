@@ -138,12 +138,15 @@ function buildPacienteConditions(tenantId: number, filters?: PacienteFilters) {
     sql`${pacientes.deletedAt} IS NULL`
   ];
   
-  // Busca global (nome, CPF ou ID)
+  // Busca global (nome, CPF ou ID) - case insensitive e sem acentos
   if (filters?.busca) {
     const termo = filters.busca.trim();
+    // Normalizar termo removendo acentos para busca
+    const termoNormalizado = termo.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     conditions.push(
       or(
-        like(pacientes.nome, `%${termo}%`),
+        // Busca por nome ignorando case e acentos usando COLLATE
+        sql`LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${pacientes.nome}, 'á', 'a'), 'à', 'a'), 'ã', 'a'), 'â', 'a'), 'é', 'e'), 'ê', 'e'), 'í', 'i'), 'ó', 'o'), 'ô', 'o'), 'õ', 'o'), 'ú', 'u'), 'ü', 'u'), 'Á', 'a'), 'É', 'e'), 'Í', 'i'), 'Ó', 'o')) LIKE ${`%${termoNormalizado}%`}`,
         like(pacientes.cpf, `%${termo}%`),
         like(pacientes.idPaciente, `%${termo}%`)
       )!
@@ -151,7 +154,11 @@ function buildPacienteConditions(tenantId: number, filters?: PacienteFilters) {
   }
   
   if (filters?.nome) {
-    conditions.push(like(pacientes.nome, `%${filters.nome}%`));
+    // Normalizar termo removendo acentos para busca por nome
+    const nomeNormalizado = filters.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    conditions.push(
+      sql`LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${pacientes.nome}, 'á', 'a'), 'à', 'a'), 'ã', 'a'), 'â', 'a'), 'é', 'e'), 'ê', 'e'), 'í', 'i'), 'ó', 'o'), 'ô', 'o'), 'õ', 'o'), 'ú', 'u'), 'ü', 'u'), 'Á', 'a'), 'É', 'e'), 'Í', 'i'), 'Ó', 'o')) LIKE ${`%${nomeNormalizado}%`}`
+    );
   }
   if (filters?.cpf) {
     conditions.push(like(pacientes.cpf, `%${filters.cpf}%`));
@@ -4688,7 +4695,10 @@ export async function searchPacientesRapido(termo: string, limit: number = 20) {
     if (byId.length > 0) return byId;
   }
   
-  // Buscar por nome
+  // Buscar por nome - ignorando case e acentos
+  // Normalizar termo removendo acentos
+  const termoNormalizado = termoLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
   const byNome = await db.select({
     id: pacientes.id,
     idPaciente: pacientes.idPaciente,
@@ -4703,7 +4713,7 @@ export async function searchPacientesRapido(termo: string, limit: number = 20) {
     .where(
       and(
         eq(pacientes.tenantId, 1),
-        like(sql`LOWER(${pacientes.nome})`, `%${termoLower}%`)
+        sql`LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${pacientes.nome}, 'á', 'a'), 'à', 'a'), 'ã', 'a'), 'â', 'a'), 'é', 'e'), 'ê', 'e'), 'í', 'i'), 'ó', 'o'), 'ô', 'o'), 'õ', 'o'), 'ú', 'u'), 'ü', 'u'), 'Á', 'a'), 'É', 'e'), 'Í', 'i'), 'Ó', 'o')) LIKE ${`%${termoNormalizado}%`}`
       )
     )
     .orderBy(pacientes.nome)

@@ -3158,3 +3158,27 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Executar verificação do sistema (18/19 checks passando)
 - [x] Storage operacional (Manus Proxy)
 - [ ] GitHub Actions aguardando configuração de secrets pelo usuário
+
+
+---
+
+## 🔔 GORGEN 3.9.26 - Verificação Automática de Backup (25/01/2026)
+
+- [x] Configurar tarefa agendada diária (08:00 BRT)
+- [x] Verificar backups das últimas 24 horas
+- [x] Reportar falhas automaticamente
+
+
+---
+
+## 🚨 GORGEN 3.9.27 - CORREÇÕES CRÍTICAS (25/01/2026)
+
+### Bug Crítico - Acesso ao Prontuário
+- [x] Identificar causa do erro de acesso ao prontuário (verificado - função getProntuarioCompleto OK)
+- [x] Corrigir erro de acesso ao prontuário (sem erros de TypeScript)
+- [ ] Testar acesso ao prontuário em produção (aguardando confirmação do usuário)
+
+### Bug - Busca de Pacientes
+- [x] Corrigir busca para ignorar maiúsculas/minúsculas (LOWER() aplicado)
+- [x] Corrigir busca para ignorar acentos (REPLACE() com normalização)
+- [x] Testar busca com variações de case e acentos (7 testes passando)

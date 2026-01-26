@@ -220,8 +220,8 @@ export async function executarDryRun(): Promise<ResultadoDryRun> {
   };
 
   try {
-    const filtroResult = quickFilter(docTeste);
-    if (filtroResult.decisao === FilterDecision.PROCESSAR) {
+    const filtroResult = quickFilter(docTeste.conteudo_texto, docTeste.caminho);
+    if (filtroResult.decision === FilterDecision.PROCESS) {
       resultado.etapas.push({
         nome: 'Filtro Rápido',
         status: 'OK',
@@ -232,7 +232,7 @@ export async function executarDryRun(): Promise<ResultadoDryRun> {
       resultado.etapas.push({
         nome: 'Filtro Rápido',
         status: 'AVISO',
-        mensagem: `Documento de teste foi ${filtroResult.decisao}`,
+        mensagem: `Documento de teste foi ${filtroResult.decision}`,
       });
       resultado.compatibilidade.funcoes += 15;
     }
@@ -249,19 +249,19 @@ export async function executarDryRun(): Promise<ResultadoDryRun> {
   // ============================================================================
   
   try {
-    const classResult = classifyDocument(docTeste);
-    if (classResult.tipo === DocumentType.LABORATORIAL) {
+    const classResult = classifyDocument(docTeste.conteudo_texto, 'test.pdf');
+    if (classResult.type === DocumentType.LABORATORIAL) {
       resultado.etapas.push({
         nome: 'Classificação de Documentos',
         status: 'OK',
-        mensagem: `Documento classificado como ${classResult.tipo}`,
+        mensagem: `Documento classificado como ${classResult.type}`,
       });
       resultado.compatibilidade.funcoes += 25;
     } else {
       resultado.etapas.push({
         nome: 'Classificação de Documentos',
         status: 'AVISO',
-        mensagem: `Classificação inesperada: ${classResult.tipo}`,
+        mensagem: `Classificação inesperada: ${classResult.type}`,
       });
       resultado.compatibilidade.funcoes += 15;
     }
