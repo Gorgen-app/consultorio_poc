@@ -3194,3 +3194,19 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Adicionar coluna agendamento_id via ALTER TABLE
 - [x] Sincronizar banco de dados
 - [x] Testar acesso ao prontuário (aguardando confirmação do usuário)
+
+
+---
+
+## 🎨 GORGEN 3.9.29 - GIF Animado do Farol (26/01/2026)
+
+### Criação do GIF
+- [x] Localizar logo do farol existente
+- [x] Criar animação com feixe de luz girando (Python/PIL)
+- [x] Exportar como GIF otimizado para web (3 tamanhos: 64px, 120px, 200px)
+
+### Integração no Sistema
+- [x] Criar componente GorgenLoader.tsx
+- [x] Atualizar GorgenLoadingScreen.tsx para usar GIF
+- [x] Criar variações: inline, centered, button loader
+- [ ] Substituir Loader2 em componentes individuais (opcional)

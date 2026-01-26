@@ -1,4 +1,7 @@
-import { Loader2 } from "lucide-react";
+/**
+ * Componentes de Loading do GORGEN
+ * Utiliza o GIF animado do farol com feixe de luz girando
+ */
 
 interface GorgenLoadingScreenProps {
   message?: string;
@@ -8,17 +11,12 @@ export function GorgenLoadingScreen({ message = "Carregando..." }: GorgenLoading
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
       <div className="flex flex-col items-center">
-        {/* Logo com animação de pulse */}
-        <div className="w-24 h-24 bg-[#0056A4] rounded-full flex items-center justify-center mb-6 animate-pulse">
-          <img 
-            src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
-            alt="Gorgen Logo" 
-            className="w-16 h-16 object-contain"
-          />
-        </div>
-        
-        {/* Spinner */}
-        <Loader2 className="h-8 w-8 text-[#0056A4] animate-spin mb-4" />
+        {/* GIF animado do farol */}
+        <img 
+          src="/assets/loader/gorgen-loader-large.gif" 
+          alt="Carregando..." 
+          className="w-48 h-48 mb-4"
+        />
         
         {/* Mensagem */}
         <p className="text-gray-500 text-sm">{message}</p>
@@ -34,10 +32,10 @@ export function GorgenLoadingSkeleton() {
       <div className="hidden lg:flex lg:w-1/2 bg-[#0056A4] relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0056A4] to-[#002B49]" />
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
-          <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center mb-8 backdrop-blur-sm animate-pulse">
+          <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center mb-8 backdrop-blur-sm">
             <img 
-              src="/assets/logo/gorgen_logo_master_2048_transparent_white.png" 
-              alt="Gorgen Logo" 
+              src="/assets/loader/gorgen-loader-large.gif" 
+              alt="Carregando..." 
               className="w-36 h-36 object-contain"
             />
           </div>
@@ -83,14 +81,22 @@ export function GorgenLoadingSkeleton() {
 
 export function GorgenInlineLoader({ size = "default" }: { size?: "small" | "default" | "large" }) {
   const sizeClasses = {
-    small: "h-4 w-4",
-    default: "h-6 w-6",
-    large: "h-8 w-8",
+    small: { width: 16, height: 16 },
+    default: { width: 24, height: 24 },
+    large: { width: 32, height: 32 },
   };
+
+  const { width, height } = sizeClasses[size];
 
   return (
     <div className="flex items-center justify-center gap-2">
-      <Loader2 className={`${sizeClasses[size]} text-[#0056A4] animate-spin`} />
+      <img 
+        src="/assets/loader/gorgen-loader-small.gif" 
+        alt="Carregando..." 
+        width={width}
+        height={height}
+        className="object-contain"
+      />
     </div>
   );
 }
@@ -136,6 +142,40 @@ export function GorgenTableSkeleton({ rows = 5 }: { rows?: number }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Loader para uso em botões durante ações assíncronas
+ */
+export function GorgenButtonLoader() {
+  return (
+    <img 
+      src="/assets/loader/gorgen-loader-small.gif" 
+      alt="Carregando..." 
+      width={20}
+      height={20}
+      className="inline-block"
+    />
+  );
+}
+
+/**
+ * Loader centralizado para uso em containers
+ */
+export function GorgenCenteredLoader({ message }: { message?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12">
+      <img 
+        src="/assets/loader/gorgen-loader.gif" 
+        alt="Carregando..." 
+        width={120}
+        height={120}
+      />
+      {message && (
+        <p className="text-gray-500 text-sm mt-4">{message}</p>
+      )}
     </div>
   );
 }
