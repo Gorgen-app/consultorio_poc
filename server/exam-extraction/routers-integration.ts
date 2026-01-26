@@ -8,7 +8,7 @@
  * INSTRUÇÕES DE INTEGRAÇÃO:
  * 
  * 1. Adicionar import no topo do routers.ts:
- *    import { preProcessarDocumento } from './exam-extraction/filtro-rapido-integrado';
+ *    import { preProcessarDocumento } from './filtro-rapido-integrado';
  * 
  * 2. Modificar a função extrairDePdf conforme código abaixo.
  * 
@@ -24,7 +24,7 @@
  * PASSO 1: Adicionar este import no topo do arquivo routers.ts (após linha 7)
  */
 const IMPORT_STATEMENT = `
-import { preProcessarDocumento } from './exam-extraction/filtro-rapido-integrado';
+import { preProcessarDocumento } from './filtro-rapido-integrado';
 `;
 
 /**
@@ -116,7 +116,7 @@ export function aplicarIntegracao(conteudoRouters: string): string {
   
   // 2. Adicionar import
   const importLine = 'import { invokeLLM } from "./_core/llm";';
-  const novoImport = `${importLine}\nimport { preProcessarDocumento } from './exam-extraction/filtro-rapido-integrado';`;
+  const novoImport = `${importLine}\nimport { preProcessarDocumento } from './filtro-rapido-integrado';`;
   let resultado = conteudoRouters.replace(importLine, novoImport);
   
   // 3. Modificar função extrairDePdf
