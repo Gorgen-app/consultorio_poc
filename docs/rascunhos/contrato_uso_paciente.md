@@ -1,4 +1,22 @@
-_Rascunho Preliminar - Sujeito a Alterações_
+---
+title: "Contrato de Prestação de Serviços e Uso da Plataforma – Perfil Paciente"
+document_type: "Documentação Legal"
+system: "Gorgen - Aplicativo de Gestão em Saúde"
+version: "1.0"
+status: "Rascunho"
+last_updated: "26/01/2026"
+updated_by: "Manus AI"
+---
+
+> **Controle de Versão**
+> 
+> | Campo | Valor |
+> |:---|:---|
+> | **Versão** | 1.0 |
+> | **Status** | Rascunho |
+> | **Última Atualização** | 26/01/2026 |
+> | **Atualizado por** | Manus AI |
+
 
 # **CONTRATO DE PRESTAÇÃO DE SERVIÇOS MÉDICOS E UTILIZAÇÃO DA PLATAFORMA GORGEN – PERFIL PACIENTE**
 

@@ -1,4 +1,22 @@
-_Rascunho Preliminar - Sujeito a Alterações_
+---
+title: "Política de Segurança do Usuário"
+document_type: "Documentação Legal"
+system: "Gorgen - Aplicativo de Gestão em Saúde"
+version: "1.0"
+status: "Aprovado"
+last_updated: "26/01/2026"
+updated_by: "Manus AI"
+---
+
+> **Controle de Versão**
+> 
+> | Campo | Valor |
+> |:---|:---|
+> | **Versão** | 1.0 |
+> | **Status** | Aprovado |
+> | **Última Atualização** | 26/01/2026 |
+> | **Atualizado por** | Manus AI |
+
 
 # **Política de Segurança do Usuário – Sistema Gorgen**
 

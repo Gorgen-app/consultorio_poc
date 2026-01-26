@@ -1,3 +1,23 @@
+---
+title: "Termos e Condições de Uso"
+document_type: "Documentação Legal"
+system: "Gorgen - Aplicativo de Gestão em Saúde"
+version: "2.0"
+status: "Rascunho"
+last_updated: "26/01/2026"
+updated_by: "Manus AI"
+---
+
+> **Controle de Versão**
+> 
+> | Campo | Valor |
+> |:---|:---|
+> | **Versão** | 2.0 |
+> | **Status** | Rascunho |
+> | **Última Atualização** | 26/01/2026 |
+> | **Atualizado por** | Manus AI |
+
+
 # **Termos e Condições de Uso – Sistema Gorgen**
 
 **Versão 2.0 | Última atualização: 20 de Janeiro de 2026**

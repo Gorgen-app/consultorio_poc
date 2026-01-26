@@ -1,6 +1,24 @@
-# **Manual de Operações – Perfil Secretária | Sistema Gorgen**
+---
+title: "Manual de Operações – Perfil Secretária"
+document_type: "Documentação Legal"
+system: "Gorgen - Aplicativo de Gestão em Saúde"
+version: "2.0"
+status: "Rascunho"
+last_updated: "26/01/2026"
+updated_by: "Manus AI"
+---
 
-_Versão 2.0 | Janeiro 2026_
+> **Controle de Versão**
+> 
+> | Campo | Valor |
+> |:---|:---|
+> | **Versão** | 2.0 |
+> | **Status** | Rascunho |
+> | **Última Atualização** | 26/01/2026 |
+> | **Atualizado por** | Manus AI |
+
+
+# **Manual de Operações – Perfil Secretária | Sistema Gorgen**
 
 ---
 

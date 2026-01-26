@@ -1,4 +1,22 @@
-_Rascunho Preliminar - Sujeito a Alterações_
+---
+title: "Termo de Reconhecimento de Propriedade Intelectual"
+document_type: "Documentação Legal"
+system: "Gorgen - Aplicativo de Gestão em Saúde"
+version: "1.0"
+status: "Rascunho"
+last_updated: "26/01/2026"
+updated_by: "Manus AI"
+---
+
+> **Controle de Versão**
+> 
+> | Campo | Valor |
+> |:---|:---|
+> | **Versão** | 1.0 |
+> | **Status** | Rascunho |
+> | **Última Atualização** | 26/01/2026 |
+> | **Atualizado por** | Manus AI |
+
 
 # **TERMO DE RECONHECIMENTO DE PROPRIEDADE INTELECTUAL E OBRIGAÇÃO DE NÃO VIOLAÇÃO – SISTEMA GORGEN**
 

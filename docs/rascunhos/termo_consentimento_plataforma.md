@@ -1,3 +1,23 @@
+---
+title: "Termo de Consentimento para Uso da Plataforma"
+document_type: "Documentação Legal"
+system: "Gorgen - Aplicativo de Gestão em Saúde"
+version: "1.0"
+status: "Rascunho"
+last_updated: "26/01/2026"
+updated_by: "Manus AI"
+---
+
+> **Controle de Versão**
+> 
+> | Campo | Valor |
+> |:---|:---|
+> | **Versão** | 1.0 |
+> | **Status** | Rascunho |
+> | **Última Atualização** | 26/01/2026 |
+> | **Atualizado por** | Manus AI |
+
+
 # **TERMO DE CONSENTIMENTO DO PACIENTE PARA USO DA PLATAFORMA DIGITAL DE PRONTUÁRIO MÉDICO - SISTEMA GORGEN**
 
 **Versão 1.0 | Janeiro 2026**
