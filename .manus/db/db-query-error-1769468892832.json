@@ -1,0 +1,8 @@
+{
+  "query": "-- Adicionar email_hash se não existir\nALTER TABLE pacientes ADD COLUMN IF NOT EXISTS email_hash VARCHAR(64);\n\n-- Adicionar telefone_hash se não existir\nALTER TABLE pacientes ADD COLUMN IF NOT EXISTS telefone_hash VARCHAR(64);\n\n-- Criar índices para busca por hash\nCREATE INDEX idx_pacientes_tenant_cpf_hash ON pacientes(tenant_id, cpf_hash);\nCREATE INDEX idx_pacientes_tenant_email_hash ON pacientes(tenant_id, email_hash);\nCREATE INDEX idx_pacientes_tenant_telefone_hash ON pacientes(tenant_id, telefone_hash);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute -- Adicionar email_hash se não existir\nALTER TABLE pacientes ADD COLUMN IF NOT EXISTS email_hash VARCHAR(64);\n\n-- Adicionar telefone_hash se não existir\nALTER TABLE pacientes ADD COLUMN IF NOT EXISTS telefone_hash VARCHAR(64);\n\n-- Criar índices para busca por hash\nCREATE INDEX idx_pacientes_tenant_cpf_hash ON pacientes(tenant_id, cpf_hash);\nCREATE INDEX idx_pacientes_tenant_email_hash ON pacientes(tenant_id, email_hash);\nCREATE INDEX idx_pacientes_tenant_telefone_hash ON pacientes(tenant_id, telefone_hash);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1061 (42000) at line 8: index already exist idx_pacientes_tenant_cpf_hash"
+  ]
+}

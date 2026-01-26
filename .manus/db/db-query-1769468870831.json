@@ -1,0 +1,9 @@
+{
+  "query": "-- Primeiro remover o índice que usa cpf\nDROP INDEX idx_pacientes_tenant_cpf ON pacientes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute -- Primeiro remover o índice que usa cpf\nDROP INDEX idx_pacientes_tenant_cpf ON pacientes;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 793
+}

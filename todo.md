@@ -3374,3 +3374,35 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Build e 527 testes passando
 
 **IMPORTANTE**: A animação do farol NÃO deve ser usada no Gorgen sob nenhuma hipótese.
+
+
+---
+
+## 🔐 GORGEN 3.9.38 - Implementação de Criptografia PII (Semana 3)
+
+### Fase 1: Alteração do Schema ✅
+- [x] Alterar campos CPF, telefone, email de VARCHAR para TEXT
+- [x] Adicionar campos de hash (cpf_hash, telefone_hash, email_hash)
+- [x] Executar migração do schema
+- [x] Criar índices para busca por hash
+
+### Fase 2: Refatoração do db.ts ✅
+- [x] Criar módulo encryption-helpers.ts com funções auxiliares
+- [x] Modificar createPaciente para criptografar dados sensíveis
+- [x] Modificar updatePaciente para criptografar dados sensíveis
+- [x] Modificar getPacienteById para descriptografar dados
+- [x] Modificar getPacienteByIdPaciente para descriptografar dados
+- [x] Modificar listPacientes para descriptografar dados
+- [x] Modificar buildPacienteConditions para usar hash na busca por CPF
+
+### Fase 3: Migração de Dados ✅
+- [x] Criar script migrate-encryption.ts para criptografar dados existentes
+- [ ] Executar migração em ambiente de produção (requer ENCRYPTION_KEY e HMAC_SECRET_KEY)
+- [ ] Validar integridade dos dados migrados
+
+### Fase 4: Testes ✅
+- [x] Criar testes unitários para encryption-helpers (13 testes passando)
+- [x] Testar criptografia/descriptografia de CPF, email, telefone
+- [x] Testar geração de hash para busca
+- [x] Testar isolamento de hash entre tenants
+- [x] Todos os 539 testes passando

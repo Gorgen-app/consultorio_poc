@@ -1,0 +1,30 @@
+{
+  "query": "-- Verificar colunas existentes\nSELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS \nWHERE TABLE_NAME = 'pacientes' AND COLUMN_NAME IN ('cpf', 'cpf_hash', 'email', 'email_hash', 'telefone', 'telefone_hash');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute -- Verificar colunas existentes\nSELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS \nWHERE TABLE_NAME = 'pacientes' AND COLUMN_NAME IN ('cpf', 'cpf_hash', 'email', 'email_hash', 'telefone', 'telefone_hash');",
+  "rows": [
+    {
+      "COLUMN_NAME": "cpf",
+      "DATA_TYPE": "text"
+    },
+    {
+      "COLUMN_NAME": "email",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "COLUMN_NAME": "telefone",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "COLUMN_NAME": "cpf_hash",
+      "DATA_TYPE": "varchar"
+    },
+    {
+      "COLUMN_NAME": "email_hash",
+      "DATA_TYPE": "varchar"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\tDATA_TYPE\ncpf\ttext\nemail\tvarchar\ntelefone\tvarchar\ncpf_hash\tvarchar\nemail_hash\tvarchar\n",
+  "stderr": "",
+  "execution_time_ms": 363
+}

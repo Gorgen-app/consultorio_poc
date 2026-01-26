@@ -169,7 +169,8 @@ export const pacientes = mysqlTable("pacientes", {
   nome: varchar("nome", { length: 255 }).notNull(),
   dataNascimento: date("data_nascimento"),
   sexo: mysqlEnum("sexo", ["M", "F", "Outro"]),
-  cpf: varchar("cpf", { length: 14 }),
+  cpf: text("cpf"), // Criptografado AES-256-GCM
+  cpfHash: varchar("cpf_hash", { length: 64 }), // HMAC-SHA256 para busca
   nomeMae: varchar("nome_mae", { length: 255 }),
   
   // Responsável / Next of Kin
@@ -178,8 +179,10 @@ export const pacientes = mysqlTable("pacientes", {
   responsavelTelefone: varchar("responsavel_telefone", { length: 20 }),
   responsavelEmail: varchar("responsavel_email", { length: 320 }),
   
-  email: varchar("email", { length: 320 }),
-  telefone: varchar("telefone", { length: 20 }),
+  email: text("email"), // Criptografado AES-256-GCM
+  emailHash: varchar("email_hash", { length: 64 }), // HMAC-SHA256 para busca
+  telefone: text("telefone"), // Criptografado AES-256-GCM
+  telefoneHash: varchar("telefone_hash", { length: 64 }), // HMAC-SHA256 para busca
   endereco: varchar("endereco", { length: 500 }),
   bairro: varchar("bairro", { length: 100 }),
   cep: varchar("cep", { length: 10 }),
@@ -221,6 +224,9 @@ export const pacientes = mysqlTable("pacientes", {
   tenantIdPacienteIdx: index("idx_pacientes_tenant_id_paciente").on(table.tenantId, table.idPaciente),
   tenantNomeIdx: index("idx_pacientes_tenant_nome").on(table.tenantId, table.nome),
   tenantCpfIdx: index("idx_pacientes_tenant_cpf").on(table.tenantId, table.cpf),
+  tenantCpfHashIdx: index("idx_pacientes_tenant_cpf_hash").on(table.tenantId, table.cpfHash),
+  tenantEmailHashIdx: index("idx_pacientes_tenant_email_hash").on(table.tenantId, table.emailHash),
+  tenantTelefoneHashIdx: index("idx_pacientes_tenant_telefone_hash").on(table.tenantId, table.telefoneHash),
 }));
 
 export type Paciente = typeof pacientes.$inferSelect;

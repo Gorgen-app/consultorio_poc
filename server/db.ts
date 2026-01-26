@@ -84,17 +84,24 @@ export async function getUserByOpenId(openId: string) {
 
 // ===== PACIENTES =====
 
+import { encryptPacienteData, decryptPacienteData, decryptPacientesList, hashCPFForSearch, isEncryptionEnabled } from './encryption-helpers';
+
 export async function createPaciente(tenantId: number, data: Omit<InsertPaciente, 'tenantId'>): Promise<Paciente> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Criptografar dados sensíveis antes de salvar
+  const encryptedData = encryptPacienteData(tenantId, data);
+  
   // Garantir que o tenantId seja definido
-  const dataWithTenant = { ...data, tenantId };
+  const dataWithTenant = { ...encryptedData, tenantId };
   const result = await db.insert(pacientes).values(dataWithTenant);
   const insertedId = Number(result[0].insertId);
   
   const inserted = await db.select().from(pacientes).where(eq(pacientes.id, insertedId)).limit(1);
-  return inserted[0]!;
+  
+  // Descriptografar antes de retornar
+  return decryptPacienteData(inserted[0]!);
 }
 
 export async function getPacienteById(tenantId: number, id: number): Promise<Paciente | undefined> {
@@ -104,7 +111,9 @@ export async function getPacienteById(tenantId: number, id: number): Promise<Pac
   const result = await db.select().from(pacientes)
     .where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)))
     .limit(1);
-  return result[0];
+  
+  // Descriptografar antes de retornar
+  return result[0] ? decryptPacienteData(result[0]) : undefined;
 }
 
 export async function getPacienteByIdPaciente(tenantId: number, idPaciente: string): Promise<Paciente | undefined> {
@@ -114,7 +123,9 @@ export async function getPacienteByIdPaciente(tenantId: number, idPaciente: stri
   const result = await db.select().from(pacientes)
     .where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.idPaciente, idPaciente)))
     .limit(1);
-  return result[0];
+  
+  // Descriptografar antes de retornar
+  return result[0] ? decryptPacienteData(result[0]) : undefined;
 }
 
 // Tipo para filtros de pacientes com paginação server-side
@@ -161,7 +172,14 @@ function buildPacienteConditions(tenantId: number, filters?: PacienteFilters) {
     );
   }
   if (filters?.cpf) {
-    conditions.push(like(pacientes.cpf, `%${filters.cpf}%`));
+    // Se criptografia estiver habilitada, buscar pelo hash exato
+    // Caso contrário, buscar pelo valor em texto plano
+    if (isEncryptionEnabled()) {
+      const cpfHash = hashCPFForSearch(filters.cpf, tenantId);
+      conditions.push(eq(pacientes.cpfHash, cpfHash));
+    } else {
+      conditions.push(like(pacientes.cpf, `%${filters.cpf}%`));
+    }
   }
   if (filters?.convenio) {
     conditions.push(
@@ -227,9 +245,12 @@ export async function listPacientes(tenantId: number, filters?: PacienteFilters)
 
   const result = await query;
   
+  // Descriptografar dados sensíveis
+  const decryptedResult = decryptPacientesList(result);
+  
   // Adicionar idade calculada a cada paciente
   const { adicionarIdadeAosPacientes } = await import('./idade-helper');
-  return adicionarIdadeAosPacientes(result);
+  return adicionarIdadeAosPacientes(decryptedResult);
 }
 
 // ===== CACHE DE MÉTRICAS =====
@@ -521,7 +542,10 @@ export async function updatePaciente(tenantId: number, id: number, data: Partial
   const existing = await getPacienteById(tenantId, id);
   if (!existing) return undefined;
 
-  await db.update(pacientes).set(data).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
+  // Criptografar dados sensíveis antes de atualizar
+  const encryptedData = encryptPacienteData(tenantId, data);
+
+  await db.update(pacientes).set(encryptedData).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   return getPacienteById(tenantId, id);
 }
 

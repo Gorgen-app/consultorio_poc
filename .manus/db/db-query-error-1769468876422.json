@@ -1,0 +1,8 @@
+{
+  "query": "-- Alterar coluna cpf para TEXT\nALTER TABLE pacientes MODIFY COLUMN cpf TEXT;\n\n-- Adicionar cpf_hash\nALTER TABLE pacientes ADD COLUMN cpf_hash VARCHAR(64);\n\n-- Alterar coluna email para TEXT\nALTER TABLE pacientes MODIFY COLUMN email TEXT;\n\n-- Adicionar email_hash\nALTER TABLE pacientes ADD COLUMN email_hash VARCHAR(64);\n\n-- Alterar coluna telefone para TEXT\nALTER TABLE pacientes MODIFY COLUMN telefone TEXT;\n\n-- Adicionar telefone_hash\nALTER TABLE pacientes ADD COLUMN telefone_hash VARCHAR(64);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute -- Alterar coluna cpf para TEXT\nALTER TABLE pacientes MODIFY COLUMN cpf TEXT;\n\n-- Adicionar cpf_hash\nALTER TABLE pacientes ADD COLUMN cpf_hash VARCHAR(64);\n\n-- Alterar coluna email para TEXT\nALTER TABLE pacientes MODIFY COLUMN email TEXT;\n\n-- Adicionar email_hash\nALTER TABLE pacientes ADD COLUMN email_hash VARCHAR(64);\n\n-- Alterar coluna telefone para TEXT\nALTER TABLE pacientes MODIFY COLUMN telefone TEXT;\n\n-- Adicionar telefone_hash\nALTER TABLE pacientes ADD COLUMN telefone_hash VARCHAR(64);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1060 (42S21) at line 5: Duplicate column name 'cpf_hash'"
+  ]
+}
