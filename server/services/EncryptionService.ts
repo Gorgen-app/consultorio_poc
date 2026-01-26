@@ -1,495 +1,348 @@
 /**
- * GORGEN - Encryption Service v2
+ * GORGEN - Serviço de Criptografia de Dados Pessoais (PII)
  * 
- * Serviço de criptografia AES-256-GCM para campos PII.
- * VERSÃO OTIMIZADA com cache de chaves derivadas.
+ * Este módulo implementa criptografia AES-256-GCM para proteção de dados
+ * pessoais identificáveis (PII) em conformidade com a LGPD.
  * 
- * @version 2.0.0
- * @author GORGEN Team
+ * Algoritmo: AES-256-GCM (Galois/Counter Mode)
+ * - Criptografia autenticada (confidencialidade + integridade)
+ * - IV (Initialization Vector) de 12 bytes, único por operação
+ * - Auth Tag de 16 bytes para verificação de integridade
  * 
- * MUDANÇAS DA v1:
- * - Adicionado cache de chaves derivadas (LRU)
- * - Salt fixo por tenant para performance
- * - Tempo de criptografia: 270ms -> ~1ms
+ * Formato do texto cifrado: iv:authTag:ciphertext (Base64)
+ * 
+ * @version 1.0.0
+ * @date 2026-01-26
  */
 
 import crypto from "crypto";
 
 // ==========================================
-// CONSTANTES DE CONFIGURAÇÃO
+// CONFIGURAÇÃO
 // ==========================================
 
-/** Algoritmo de criptografia */
 const ALGORITHM = "aes-256-gcm";
+const IV_LENGTH = 12; // 96 bits - recomendado para GCM
+const AUTH_TAG_LENGTH = 16; // 128 bits
+const KEY_LENGTH = 32; // 256 bits
+const ENCODING: BufferEncoding = "utf8";
+const OUTPUT_ENCODING: BufferEncoding = "base64";
 
-/** Tamanho da chave em bytes (256 bits) */
-const KEY_LENGTH = 32;
-
-/** Tamanho do IV em bytes (96 bits - recomendado para GCM) */
-const IV_LENGTH = 12;
-
-/** Tamanho do Auth Tag em bytes (128 bits) */
-const AUTH_TAG_LENGTH = 16;
-
-/** Número de iterações PBKDF2 */
-const PBKDF2_ITERATIONS = 100000;
-
-/** Algoritmo de hash para PBKDF2 */
-const PBKDF2_DIGEST = "sha512";
-
-/** Versão do formato de criptografia */
-const FORMAT_VERSION = 1;
-
-/** Tamanho do header de versão em bytes */
-const VERSION_LENGTH = 1;
-
-/** Tamanho do Salt em bytes (256 bits) */
-const SALT_LENGTH = 32;
-
-/** Tamanho máximo do cache de chaves (por instância) */
-const MAX_KEY_CACHE_SIZE = 100;
-
-// ==========================================
-// TIPOS E INTERFACES
-// ==========================================
-
-export interface EncryptionResult {
-  /** Dados criptografados em base64 */
-  encrypted: string;
-  /** Versão do formato de criptografia */
-  version: number;
-}
-
-export interface DecryptionResult {
-  /** Dados descriptografados */
-  decrypted: string;
-  /** Versão do formato usado */
-  version: number;
-}
-
-export interface EncryptionServiceConfig {
-  /** Chave mestra de criptografia (deve vir de variável de ambiente) */
-  masterKey: string;
-  /** Identificador do tenant (para isolamento de chaves) */
-  tenantId?: number;
-  /** Se true, usa salt fixo por tenant (mais rápido, recomendado) */
-  useFixedSalt?: boolean;
-}
+// Prefixo para identificar dados criptografados (evita re-criptografia)
+const ENCRYPTED_PREFIX = "enc:v1:";
 
 // ==========================================
 // CLASSE PRINCIPAL
 // ==========================================
 
 /**
- * Serviço de criptografia para campos PII
+ * Serviço singleton para criptografia de dados pessoais.
  * 
- * OTIMIZADO com cache de chaves derivadas para performance.
- * 
- * @example
+ * Uso:
  * ```typescript
- * const encService = new EncryptionService({
- *   masterKey: process.env.ENCRYPTION_KEY!,
- *   tenantId: 1
- * });
+ * import { encryptionService } from "./services/EncryptionService";
  * 
- * const { encrypted } = encService.encrypt("123.456.789-00");
- * const { decrypted } = encService.decrypt(encrypted);
+ * // Criptografar
+ * const encrypted = encryptionService.encrypt("123.456.789-00");
+ * 
+ * // Descriptografar
+ * const decrypted = encryptionService.decrypt(encrypted);
  * ```
  */
-export class EncryptionService {
-  private masterKey: string;
-  private tenantId: number;
-  private useFixedSalt: boolean;
-  
-  /** Cache de chaves derivadas (LRU simples) */
-  private keyCache: Map<string, { key: Buffer; timestamp: number }> = new Map();
-  
-  /** Salt fixo derivado do tenant (para modo rápido) */
-  private fixedSalt: Buffer | null = null;
-  
-  /** Chave pré-derivada para salt fixo */
-  private precomputedKey: Buffer | null = null;
-
-  constructor(config: EncryptionServiceConfig) {
-    if (!config.masterKey || config.masterKey.length < 32) {
-      throw new Error("Master key must be at least 32 characters long");
-    }
-    this.masterKey = config.masterKey;
-    this.tenantId = config.tenantId || 0;
-    this.useFixedSalt = config.useFixedSalt ?? true; // Default: modo rápido
-    
-    // Pré-computar chave se usando salt fixo
-    if (this.useFixedSalt) {
-      this.fixedSalt = this.generateTenantSalt();
-      this.precomputedKey = this.deriveKeyInternal(this.fixedSalt);
-    }
-  }
-
-  // ==========================================
-  // MÉTODOS PÚBLICOS
-  // ==========================================
+class EncryptionService {
+  private key: Buffer | null = null;
+  private initialized = false;
 
   /**
-   * Criptografa um valor usando AES-256-GCM
-   * 
-   * OTIMIZADO: Usa chave pré-computada quando possível
+   * Inicializa o serviço com a chave de criptografia.
+   * Chamado automaticamente na primeira operação.
+   */
+  private initialize(): void {
+    if (this.initialized) return;
+
+    const keyEnv = process.env.ENCRYPTION_KEY;
+
+    if (!keyEnv) {
+      throw new Error(
+        "[EncryptionService] ENCRYPTION_KEY não configurada. " +
+        "Defina a variável de ambiente ENCRYPTION_KEY com uma chave de 64 caracteres hexadecimais (256 bits)."
+      );
+    }
+
+    // Suporta chave em formato hexadecimal (64 chars) ou base64 (44 chars)
+    if (keyEnv.length === 64 && /^[0-9a-fA-F]+$/.test(keyEnv)) {
+      this.key = Buffer.from(keyEnv, "hex");
+    } else if (keyEnv.length === 44) {
+      this.key = Buffer.from(keyEnv, "base64");
+    } else {
+      throw new Error(
+        "[EncryptionService] ENCRYPTION_KEY inválida. " +
+        "Deve ter 64 caracteres hexadecimais ou 44 caracteres base64."
+      );
+    }
+
+    if (this.key.length !== KEY_LENGTH) {
+      throw new Error(
+        `[EncryptionService] Chave deve ter ${KEY_LENGTH} bytes (256 bits). ` +
+        `Recebido: ${this.key.length} bytes.`
+      );
+    }
+
+    this.initialized = true;
+    console.log("[EncryptionService] Inicializado com sucesso.");
+  }
+
+  /**
+   * Criptografa um texto plano usando AES-256-GCM.
    * 
    * @param plaintext - Texto a ser criptografado
-   * @returns Objeto com dados criptografados em base64
+   * @returns Texto cifrado no formato "enc:v1:iv:authTag:ciphertext" (Base64)
+   * @throws Error se a chave não estiver configurada
+   * 
+   * @example
+   * const encrypted = encryptionService.encrypt("123.456.789-00");
+   * // Retorna: "enc:v1:abc123...:def456...:ghi789..."
    */
-  encrypt(plaintext: string): EncryptionResult {
-    if (!plaintext) {
-      return { encrypted: "", version: FORMAT_VERSION };
+  encrypt(plaintext: string): string {
+    // Retorna vazio se input for vazio ou nulo
+    if (!plaintext || plaintext.trim() === "") {
+      return "";
     }
 
-    // Usar salt fixo ou aleatório
-    const salt = this.useFixedSalt ? this.fixedSalt! : crypto.randomBytes(SALT_LENGTH);
+    // Evita re-criptografia de dados já criptografados
+    if (this.isEncrypted(plaintext)) {
+      console.warn("[EncryptionService] Tentativa de re-criptografar dados já criptografados. Retornando original.");
+      return plaintext;
+    }
+
+    this.initialize();
+
+    // Gera IV aleatório (12 bytes)
     const iv = crypto.randomBytes(IV_LENGTH);
 
-    // Usar chave pré-computada ou derivar
-    const key = this.useFixedSalt ? this.precomputedKey! : this.deriveKey(salt);
+    // Cria cipher
+    const cipher = crypto.createCipheriv(ALGORITHM, this.key!, iv);
 
-    // Criar cipher e criptografar
-    const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-    
-    // Adicionar AAD (Additional Authenticated Data) para maior segurança
-    const aad = Buffer.from(`gorgen-v${FORMAT_VERSION}-tenant-${this.tenantId}`);
-    cipher.setAAD(aad);
-
+    // Criptografa
     const encrypted = Buffer.concat([
-      cipher.update(plaintext, "utf8"),
-      cipher.final()
+      cipher.update(plaintext, ENCODING),
+      cipher.final(),
     ]);
 
+    // Obtém auth tag
     const authTag = cipher.getAuthTag();
 
-    // Montar o payload: [version][salt][iv][authTag][ciphertext]
-    const payload = Buffer.concat([
-      Buffer.from([FORMAT_VERSION]),
-      salt,
-      iv,
-      authTag,
-      encrypted
-    ]);
+    // Formata saída: prefixo:iv:authTag:ciphertext (tudo em base64)
+    const result = [
+      ENCRYPTED_PREFIX.slice(0, -1), // Remove o ":" final pois já está no join
+      iv.toString(OUTPUT_ENCODING),
+      authTag.toString(OUTPUT_ENCODING),
+      encrypted.toString(OUTPUT_ENCODING),
+    ].join(":");
 
-    return {
-      encrypted: payload.toString("base64"),
-      version: FORMAT_VERSION
-    };
+    return result;
   }
 
   /**
-   * Descriptografa um valor criptografado com AES-256-GCM
+   * Descriptografa um texto cifrado.
    * 
-   * OTIMIZADO: Usa cache de chaves derivadas
+   * @param ciphertext - Texto cifrado no formato "enc:v1:iv:authTag:ciphertext"
+   * @returns Texto plano original
+   * @throws Error se o formato for inválido ou a autenticação falhar
    * 
-   * @param encryptedBase64 - Dados criptografados em base64
-   * @returns Objeto com dados descriptografados
+   * @example
+   * const decrypted = encryptionService.decrypt(encrypted);
+   * // Retorna: "123.456.789-00"
    */
-  decrypt(encryptedBase64: string): DecryptionResult {
-    if (!encryptedBase64) {
-      return { decrypted: "", version: FORMAT_VERSION };
+  decrypt(ciphertext: string): string {
+    // Retorna vazio se input for vazio ou nulo
+    if (!ciphertext || ciphertext.trim() === "") {
+      return "";
     }
 
-    const payload = Buffer.from(encryptedBase64, "base64");
-
-    // Extrair versão
-    const version = payload[0];
-
-    if (version !== FORMAT_VERSION) {
-      throw new Error(`Unsupported encryption format version: ${version}`);
+    // Se não estiver criptografado, retorna o original
+    if (!this.isEncrypted(ciphertext)) {
+      console.warn("[EncryptionService] Tentativa de descriptografar dados não criptografados. Retornando original.");
+      return ciphertext;
     }
 
-    // Calcular offsets
-    const saltStart = VERSION_LENGTH;
-    const saltEnd = saltStart + SALT_LENGTH;
-    const ivStart = saltEnd;
-    const ivEnd = ivStart + IV_LENGTH;
-    const authTagStart = ivEnd;
-    const authTagEnd = authTagStart + AUTH_TAG_LENGTH;
-    const ciphertextStart = authTagEnd;
+    this.initialize();
 
-    // Extrair componentes
-    const salt = payload.subarray(saltStart, saltEnd);
-    const iv = payload.subarray(ivStart, ivEnd);
-    const authTag = payload.subarray(authTagStart, authTagEnd);
-    const ciphertext = payload.subarray(ciphertextStart);
+    // Parse do formato: enc:v1:iv:authTag:ciphertext
+    const parts = ciphertext.split(":");
+    
+    if (parts.length !== 5) {
+      throw new Error(
+        `[EncryptionService] Formato de texto cifrado inválido. ` +
+        `Esperado 5 partes, recebido ${parts.length}.`
+      );
+    }
 
-    // Usar chave do cache ou derivar
-    const key = this.deriveKey(salt);
+    const [prefix, version, ivBase64, authTagBase64, encryptedBase64] = parts;
 
-    // Criar decipher
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    // Valida prefixo e versão
+    if (prefix !== "enc" || version !== "v1") {
+      throw new Error(
+        `[EncryptionService] Prefixo ou versão inválidos: ${prefix}:${version}`
+      );
+    }
+
+    // Decodifica componentes
+    const iv = Buffer.from(ivBase64, OUTPUT_ENCODING);
+    const authTag = Buffer.from(authTagBase64, OUTPUT_ENCODING);
+    const encrypted = Buffer.from(encryptedBase64, OUTPUT_ENCODING);
+
+    // Valida tamanhos
+    if (iv.length !== IV_LENGTH) {
+      throw new Error(
+        `[EncryptionService] IV inválido. Esperado ${IV_LENGTH} bytes, recebido ${iv.length}.`
+      );
+    }
+
+    if (authTag.length !== AUTH_TAG_LENGTH) {
+      throw new Error(
+        `[EncryptionService] Auth Tag inválido. Esperado ${AUTH_TAG_LENGTH} bytes, recebido ${authTag.length}.`
+      );
+    }
+
+    // Cria decipher
+    const decipher = crypto.createDecipheriv(ALGORITHM, this.key!, iv);
     decipher.setAuthTag(authTag);
 
-    // Adicionar AAD
-    const aad = Buffer.from(`gorgen-v${version}-tenant-${this.tenantId}`);
-    decipher.setAAD(aad);
-
-    // Descriptografar
-    const decrypted = Buffer.concat([
-      decipher.update(ciphertext),
-      decipher.final()
-    ]);
-
-    return {
-      decrypted: decrypted.toString("utf8"),
-      version
-    };
-  }
-
-  /**
-   * Verifica se um valor está criptografado no formato esperado
-   * 
-   * @param value - Valor a verificar
-   * @returns true se o valor parece estar criptografado
-   */
-  isEncrypted(value: string): boolean {
-    if (!value) return false;
-
+    // Descriptografa
     try {
-      const payload = Buffer.from(value, "base64");
-      
-      // Verificar tamanho mínimo
-      const minLength = VERSION_LENGTH + SALT_LENGTH + IV_LENGTH + AUTH_TAG_LENGTH + 1;
-      if (payload.length < minLength) return false;
+      const decrypted = Buffer.concat([
+        decipher.update(encrypted),
+        decipher.final(),
+      ]);
 
-      // Verificar versão
-      const version = payload[0];
-      if (version !== FORMAT_VERSION) return false;
-
-      return true;
-    } catch {
-      return false;
+      return decrypted.toString(ENCODING);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("Unsupported state")) {
+        throw new Error(
+          "[EncryptionService] Falha na autenticação. " +
+          "Os dados podem ter sido adulterados ou a chave está incorreta."
+        );
+      }
+      throw error;
     }
   }
 
   /**
-   * Rotaciona a criptografia de um valor com uma nova chave
+   * Verifica se um texto está criptografado (tem o prefixo correto).
    * 
-   * @param encryptedBase64 - Valor criptografado com chave antiga
-   * @param oldMasterKey - Chave mestra antiga
-   * @returns Valor recriptografado com a chave atual
+   * @param text - Texto a verificar
+   * @returns true se o texto estiver no formato criptografado
    */
-  rotate(encryptedBase64: string, oldMasterKey: string): EncryptionResult {
-    // Criar serviço temporário com chave antiga
-    const oldService = new EncryptionService({
-      masterKey: oldMasterKey,
-      tenantId: this.tenantId,
-      useFixedSalt: false // Rotação sempre usa salt original
-    });
-
-    // Descriptografar com chave antiga
-    const { decrypted } = oldService.decrypt(encryptedBase64);
-
-    // Recriptografar com chave nova
-    return this.encrypt(decrypted);
+  isEncrypted(text: string): boolean {
+    return text.startsWith(ENCRYPTED_PREFIX);
   }
 
   /**
-   * Limpa o cache de chaves (útil para testes ou rotação)
+   * Criptografa múltiplos campos de um objeto.
+   * 
+   * @param obj - Objeto com campos a criptografar
+   * @param fields - Lista de nomes dos campos a criptografar
+   * @returns Novo objeto com os campos especificados criptografados
+   * 
+   * @example
+   * const encrypted = encryptionService.encryptFields(
+   *   { cpf: "123.456.789-00", nome: "João", idade: 30 },
+   *   ["cpf", "nome"]
+   * );
+   * // Retorna: { cpf: "enc:v1:...", nome: "enc:v1:...", idade: 30 }
    */
-  clearKeyCache(): void {
-    this.keyCache.clear();
-  }
+  encryptFields<T extends Record<string, any>>(obj: T, fields: (keyof T)[]): T {
+    const result = { ...obj };
 
-  /**
-   * Retorna estatísticas do cache
-   */
-  getCacheStats(): { size: number; maxSize: number } {
-    return {
-      size: this.keyCache.size,
-      maxSize: MAX_KEY_CACHE_SIZE
-    };
-  }
-
-  // ==========================================
-  // MÉTODOS PRIVADOS
-  // ==========================================
-
-  /**
-   * Gera salt fixo baseado no tenant ID
-   */
-  private generateTenantSalt(): Buffer {
-    return crypto.createHash('sha256')
-      .update(`gorgen-tenant-salt-${this.tenantId}-${this.masterKey.substring(0, 8)}`)
-      .digest();
-  }
-
-  /**
-   * Deriva chave com cache LRU
-   */
-  private deriveKey(salt: Buffer): Buffer {
-    // Se usando salt fixo e já temos chave pré-computada
-    if (this.useFixedSalt && this.precomputedKey && 
-        salt.equals(this.fixedSalt!)) {
-      return this.precomputedKey;
-    }
-
-    const cacheKey = salt.toString('hex');
-    
-    // Verificar cache
-    const cached = this.keyCache.get(cacheKey);
-    if (cached) {
-      // Atualizar timestamp (LRU)
-      cached.timestamp = Date.now();
-      return cached.key;
-    }
-
-    // Derivar nova chave
-    const key = this.deriveKeyInternal(salt);
-
-    // Adicionar ao cache
-    this.addToCache(cacheKey, key);
-
-    return key;
-  }
-
-  /**
-   * Derivação real da chave (operação lenta)
-   */
-  private deriveKeyInternal(salt: Buffer): Buffer {
-    const keyMaterial = `${this.masterKey}-tenant-${this.tenantId}`;
-    
-    return crypto.pbkdf2Sync(
-      keyMaterial,
-      salt,
-      PBKDF2_ITERATIONS,
-      KEY_LENGTH,
-      PBKDF2_DIGEST
-    );
-  }
-
-  /**
-   * Adiciona chave ao cache com LRU
-   */
-  private addToCache(cacheKey: string, key: Buffer): void {
-    // Se cache cheio, remover entrada mais antiga
-    if (this.keyCache.size >= MAX_KEY_CACHE_SIZE) {
-      let oldestKey = '';
-      let oldestTime = Infinity;
-      
-      const entries = Array.from(this.keyCache.entries());
-      for (let i = 0; i < entries.length; i++) {
-        const [k, v] = entries[i];
-        if (v.timestamp < oldestTime) {
-          oldestTime = v.timestamp;
-          oldestKey = k;
-        }
-      }
-      
-      if (oldestKey) {
-        this.keyCache.delete(oldestKey);
+    for (const field of fields) {
+      const value = result[field];
+      if (typeof value === "string" && value.trim() !== "") {
+        (result as any)[field] = this.encrypt(value);
       }
     }
 
-    this.keyCache.set(cacheKey, {
-      key,
-      timestamp: Date.now()
-    });
+    return result;
+  }
+
+  /**
+   * Descriptografa múltiplos campos de um objeto.
+   * 
+   * @param obj - Objeto com campos criptografados
+   * @param fields - Lista de nomes dos campos a descriptografar
+   * @returns Novo objeto com os campos especificados descriptografados
+   * 
+   * @example
+   * const decrypted = encryptionService.decryptFields(
+   *   { cpf: "enc:v1:...", nome: "enc:v1:...", idade: 30 },
+   *   ["cpf", "nome"]
+   * );
+   * // Retorna: { cpf: "123.456.789-00", nome: "João", idade: 30 }
+   */
+  decryptFields<T extends Record<string, any>>(obj: T, fields: (keyof T)[]): T {
+    const result = { ...obj };
+
+    for (const field of fields) {
+      const value = result[field];
+      if (typeof value === "string" && this.isEncrypted(value)) {
+        (result as any)[field] = this.decrypt(value);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Gera uma nova chave de criptografia segura.
+   * Use este método para gerar a ENCRYPTION_KEY inicial.
+   * 
+   * @returns Chave de 256 bits em formato hexadecimal (64 caracteres)
+   * 
+   * @example
+   * const newKey = EncryptionService.generateKey();
+   * console.log(newKey); // "a1b2c3d4e5f6..."
+   */
+  static generateKey(): string {
+    return crypto.randomBytes(KEY_LENGTH).toString("hex");
+  }
+
+  /**
+   * Valida se a chave de criptografia está configurada corretamente.
+   * Útil para health checks na inicialização do servidor.
+   * 
+   * @returns true se a chave estiver válida
+   * @throws Error se a chave estiver inválida ou ausente
+   */
+  validateKey(): boolean {
+    this.initialize();
+    
+    // Testa criptografia/descriptografia
+    const testValue = "gorgen-health-check-" + Date.now();
+    const encrypted = this.encrypt(testValue);
+    const decrypted = this.decrypt(encrypted);
+
+    if (decrypted !== testValue) {
+      throw new Error(
+        "[EncryptionService] Falha no health check. " +
+        "O valor descriptografado não corresponde ao original."
+      );
+    }
+
+    return true;
   }
 }
 
 // ==========================================
-// SINGLETON PARA USO GLOBAL
-// ==========================================
-
-/** Cache de instâncias por tenant */
-const serviceCache: Map<number, EncryptionService> = new Map();
-
-/**
- * Obtém a instância do serviço de criptografia para um tenant
- * 
- * @param tenantId - ID do tenant (opcional, usa 0 se não fornecido)
- * @returns Instância do EncryptionService
- */
-export function getEncryptionService(tenantId?: number): EncryptionService {
-  const masterKey = process.env.ENCRYPTION_MASTER_KEY || process.env.JWT_SECRET;
-  
-  if (!masterKey) {
-    throw new Error("ENCRYPTION_MASTER_KEY or JWT_SECRET environment variable is required");
-  }
-
-  const tid = tenantId || 0;
-
-  // Verificar cache de instâncias
-  if (serviceCache.has(tid)) {
-    return serviceCache.get(tid)!;
-  }
-
-  // Criar nova instância
-  const service = new EncryptionService({ 
-    masterKey, 
-    tenantId: tid 
-  });
-
-  // Adicionar ao cache
-  serviceCache.set(tid, service);
-
-  return service;
-}
-
-// ==========================================
-// FUNÇÕES UTILITÁRIAS
+// EXPORTAÇÃO (SINGLETON)
 // ==========================================
 
 /**
- * Criptografa um campo PII
- * 
- * @param value - Valor a criptografar
- * @param tenantId - ID do tenant
- * @returns Valor criptografado em base64
+ * Instância singleton do serviço de criptografia.
+ * Use esta instância em toda a aplicação.
  */
-export function encryptField(value: string | null | undefined, tenantId?: number): string | null {
-  if (!value) return null;
-  
-  const service = getEncryptionService(tenantId);
-  const { encrypted } = service.encrypt(value);
-  return encrypted;
-}
+export const encryptionService = new EncryptionService();
 
 /**
- * Descriptografa um campo PII
- * 
- * @param encryptedValue - Valor criptografado em base64
- * @param tenantId - ID do tenant
- * @returns Valor descriptografado
+ * Exporta a classe para casos especiais (ex: testes).
  */
-export function decryptField(encryptedValue: string | null | undefined, tenantId?: number): string | null {
-  if (!encryptedValue) return null;
-  
-  const service = getEncryptionService(tenantId);
-  
-  // Verificar se o valor está criptografado
-  if (!service.isEncrypted(encryptedValue)) {
-    // Retornar valor original se não estiver criptografado (compatibilidade)
-    return encryptedValue;
-  }
-  
-  const { decrypted } = service.decrypt(encryptedValue);
-  return decrypted;
-}
-
-/**
- * Verifica se um valor está criptografado
- * 
- * @param value - Valor a verificar
- * @returns true se o valor está criptografado
- */
-export function isFieldEncrypted(value: string | null | undefined): boolean {
-  if (!value) return false;
-  
-  const service = getEncryptionService();
-  return service.isEncrypted(value);
-}
-
-/**
- * Limpa o cache de todas as instâncias (útil para testes)
- */
-export function clearAllCaches(): void {
-  const services = Array.from(serviceCache.values());
-  for (let i = 0; i < services.length; i++) {
-    services[i].clearKeyCache();
-  }
-  serviceCache.clear();
-}
+export { EncryptionService };
