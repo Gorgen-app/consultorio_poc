@@ -1,20 +1,36 @@
 /**
  * Componentes de Loading do GORGEN
- * Utiliza animação SVG do farol com feixe de luz girando no plano horizontal
+ * Utiliza spinner simples e profissional
  */
 
-import { GorgenLighthouseLoader, GorgenFullPageLoader, GorgenInlineLoader as LighthouseInlineLoader } from './GorgenLighthouseLoader';
+import { Loader2 } from 'lucide-react';
 
 interface GorgenLoadingScreenProps {
   message?: string;
 }
 
+/**
+ * Spinner simples e profissional
+ */
+function SimpleSpinner({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }) {
+  const sizeMap = {
+    sm: 'w-4 h-4',
+    md: 'w-8 h-8',
+    lg: 'w-12 h-12',
+    xl: 'w-16 h-16',
+  };
+
+  return (
+    <Loader2 className={`animate-spin text-[#0D3B66] ${sizeMap[size]} ${className}`} />
+  );
+}
+
 export function GorgenLoadingScreen({ message = "Carregando..." }: GorgenLoadingScreenProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
-      <div className="flex flex-col items-center">
-        {/* Animação SVG do farol */}
-        <GorgenLighthouseLoader size="xl" text={message} />
+      <div className="flex flex-col items-center gap-4">
+        <SimpleSpinner size="xl" />
+        <span className="text-sm text-muted-foreground">{message}</span>
       </div>
     </div>
   );
@@ -28,7 +44,7 @@ export function GorgenLoadingSkeleton() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#0056A4] to-[#002B49]" />
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
           <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center mb-8 backdrop-blur-sm">
-            <GorgenLighthouseLoader size="lg" />
+            <SimpleSpinner size="xl" className="text-white" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4 tracking-wide">GORGEN</h1>
           <p className="text-xl text-white/80 text-center max-w-md">
@@ -77,7 +93,7 @@ export function GorgenInlineLoader({ size = "default" }: { size?: "small" | "def
     large: 'md' as const,
   };
 
-  return <LighthouseInlineLoader className={size === 'small' ? 'scale-75' : ''} />;
+  return <SimpleSpinner size={sizeMap[size]} />;
 }
 
 export function GorgenCardSkeleton() {
@@ -130,28 +146,7 @@ export function GorgenTableSkeleton({ rows = 5 }: { rows?: number }) {
  */
 export function GorgenButtonLoader() {
   return (
-    <div className="inline-flex items-center justify-center w-5 h-5">
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 200 200"
-        xmlns="http://www.w3.org/2000/svg"
-        className="animate-spin"
-      >
-        <circle
-          cx="100"
-          cy="100"
-          r="80"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="16"
-          strokeLinecap="round"
-          strokeDasharray="400"
-          strokeDashoffset="300"
-          opacity="0.8"
-        />
-      </svg>
-    </div>
+    <Loader2 className="w-5 h-5 animate-spin" />
   );
 }
 
@@ -160,11 +155,23 @@ export function GorgenButtonLoader() {
  */
 export function GorgenCenteredLoader({ message }: { message?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12">
-      <GorgenLighthouseLoader size="lg" text={message} />
+    <div className="flex flex-col items-center justify-center py-12 gap-4">
+      <SimpleSpinner size="lg" />
+      {message && <span className="text-sm text-muted-foreground">{message}</span>}
     </div>
   );
 }
 
-// Re-exportar o loader de página inteira
-export { GorgenFullPageLoader };
+/**
+ * Loader de página inteira
+ */
+export function GorgenFullPageLoader({ text = 'Carregando...' }: { text?: string }) {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50">
+      <div className="flex flex-col items-center gap-4">
+        <SimpleSpinner size="xl" />
+        <span className="text-sm text-muted-foreground animate-pulse">{text}</span>
+      </div>
+    </div>
+  );
+}

@@ -3358,3 +3358,19 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 ### Testes
 - [x] 12 testes unitários para query-optimizer
 - [x] 527 testes totais passando (0 falhas)
+
+
+---
+
+## 🚫 GORGEN 3.9.36 - Remoção da Animação do Farol (26/01/2026)
+
+### Remoção Concluída ✅
+- [x] Remover GorgenLighthouseLoader.tsx do sistema
+- [x] Remover página LoaderDemo.tsx
+- [x] Remover rota /loader-demo do App.tsx
+- [x] Substituir por loader padrão simples (spinner Loader2 do lucide-react)
+- [x] Atualizar GorgenLoadingScreen para usar loader simples
+- [x] Testar que nenhuma referência ao LighthouseLoader permanece
+- [x] Build e 527 testes passando
+
+**IMPORTANTE**: A animação do farol NÃO deve ser usada no Gorgen sob nenhuma hipótese.

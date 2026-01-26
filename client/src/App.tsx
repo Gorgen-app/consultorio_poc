@@ -33,7 +33,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ChangePassword from "./pages/ChangePassword";
 import QuemSomos from "./pages/QuemSomos";
-import LoaderDemo from "./pages/LoaderDemo";
+// LoaderDemo removido - animação do farol não será usada
 
 // Rotas de autenticação (públicas, sem DashboardLayout)
 function PublicRouter() {
@@ -47,7 +47,7 @@ function PublicRouter() {
       <Route path="/reset-password/:token" component={ResetPassword} />
       <Route path="/change-password" component={ChangePassword} />
       <Route path="/quem-somos" component={QuemSomos} />
-      <Route path="/loader-demo" component={LoaderDemo} />
+      {/* LoaderDemo removido */}
     </Switch>
   );
 }
@@ -155,7 +155,7 @@ function ProtectedRouter() {
 }
 
 // Rotas públicas (sem sidebar)
-const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/landing", "/change-password", "/loader-demo", "/quem-somos"];
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/landing", "/change-password", "/quem-somos"];
 
 function isPublicRoute(path: string): boolean {
   if (path === "/" || path === "/landing") return true;
