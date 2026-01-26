@@ -9,6 +9,7 @@ import { preProcessarDocumento } from "./exam-extraction/filtro-rapido-integrado
 import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
 import * as backup from "./backup";
+import * as autoHealer from "./auto-healer";
 import { authRouter } from "./auth-router";
 
 // Schema de validação para Paciente
@@ -191,6 +192,83 @@ export const appRouter = router({
         } else {
           return performance.exportAggregatedMetricsToCSV();
         }
+      }),
+    
+    // Auto-Healing - Diagnóstico do sistema
+    diagnose: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return autoHealer.diagnoseSystem();
+      }),
+    
+    // Auto-Healing - Investigar e corrigir problemas
+    investigateAndFix: protectedProcedure
+      .input(z.object({ automatic: z.boolean().default(false) }).optional())
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return autoHealer.investigateAndFix(input?.automatic ?? false);
+      }),
+    
+    // Auto-Healing - Executar ação específica
+    executeAction: protectedProcedure
+      .input(z.object({ 
+        actionType: z.enum(['clear_cache', 'force_gc', 'reduce_buffers', 'acknowledge_alerts', 'adjust_thresholds', 'restart_recommended', 'investigate'])
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return autoHealer.executeManualAction(input.actionType);
+      }),
+    
+    // Auto-Healing - Histórico de ações
+    getHealingHistory: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(200).default(50) }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return autoHealer.getHealingHistory(input?.limit ?? 50);
+      }),
+    
+    // Auto-Healing - Estatísticas
+    getHealingStats: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return autoHealer.getHealingStats();
+      }),
+    
+    // Auto-Healing - Configuração
+    getHealingConfig: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return autoHealer.getHealingConfig();
+      }),
+    
+    // Auto-Healing - Habilitar/Desabilitar
+    setAutoHealingEnabled: protectedProcedure
+      .input(z.object({ enabled: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        autoHealer.setAutoHealingEnabled(input.enabled);
+        return { enabled: input.enabled };
       }),
   }),
   
