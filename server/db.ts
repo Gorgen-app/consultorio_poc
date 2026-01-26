@@ -245,8 +245,8 @@ interface MetricasCacheEntry {
 
 // Cache em memória para métricas de atendimento
 const metricasCache = new Map<string, MetricasCacheEntry>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
-const MAX_CACHE_SIZE = 10000; // Máximo de entradas no cache
+const CACHE_TTL = 3 * 60 * 1000; // 3 minutos (reduzido de 5 para liberar memória mais rápido)
+const MAX_CACHE_SIZE = 2000; // Reduzido de 10000 para 2000 para otimizar memória
 
 /**
  * Gera chave de cache para um paciente

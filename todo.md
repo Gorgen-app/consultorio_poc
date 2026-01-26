@@ -3261,3 +3261,25 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Integrado ao GorgenLoadingScreen.tsx
 - [x] Tamanhos: sm, md, lg, xl
 - [ ] Integrar como loader no sistema
+
+
+---
+
+## 🚨 GORGEN 3.9.32 - Alerta de Memória Alta (26/01/2026)
+
+### Problema Identificado
+- [x] Uso de memória heap: 93% (71MB de 76MB)
+- [x] Investigar causa do alto consumo - Buffers de métricas muito grandes
+
+### Correções Implementadas
+- [x] Corrigir erro 404 ao clicar em "Todos os alertas" - Página /notificacoes criada
+- [x] Adicionar alertas de performance na Dashboard principal - Card de alertas adicionado
+- [x] Otimizar uso de memória (limpar caches, reduzir buffers):
+  - Buffer de métricas reduzido de 10000 para 2000 entradas
+  - Período de retenção reduzido de 24h para 6h
+  - Cache de métricas de atendimento reduzido de 10000 para 2000
+  - TTL do cache reduzido de 5min para 3min
+  - Cache em memória limitado a 500 entradas
+  - Limpeza automática a cada 30 segundos
+  - Módulo memory-optimizer.ts criado para limpeza automática
+- [x] Aumentar limite de memória no ambiente - NODE_OPTIONS='--max-old-space-size=256' configurado

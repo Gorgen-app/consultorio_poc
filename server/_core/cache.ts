@@ -104,6 +104,7 @@ export async function initializeRedis(): Promise<Redis | null> {
  * Cache em memória como fallback quando Redis não está disponível
  */
 const memoryCache = new Map<string, { value: string; expiry: number }>();
+const MAX_MEMORY_CACHE_SIZE = 500; // Limite de entradas no cache em memória
 
 /**
  * Limpa entradas expiradas do cache em memória
@@ -117,10 +118,18 @@ function cleanExpiredMemoryCache(): void {
     }
   });
   keysToDelete.forEach(key => memoryCache.delete(key));
+  
+  // Se ainda estiver muito grande, remover as mais antigas
+  if (memoryCache.size > MAX_MEMORY_CACHE_SIZE) {
+    const entries = Array.from(memoryCache.entries());
+    entries.sort((a, b) => a[1].expiry - b[1].expiry);
+    const toRemove = entries.slice(0, entries.length - MAX_MEMORY_CACHE_SIZE);
+    toRemove.forEach(([key]) => memoryCache.delete(key));
+  }
 }
 
-// Limpar cache em memória a cada 60 segundos
-setInterval(cleanExpiredMemoryCache, 60000);
+// Limpar cache em memória a cada 30 segundos (aumentado de 60s para 30s)
+setInterval(cleanExpiredMemoryCache, 30000);
 
 /**
  * Obtém um valor do cache

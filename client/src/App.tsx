@@ -23,6 +23,7 @@ import Performance from "./pages/Performance";
 import BackupSettings from "./pages/BackupSettings";
 import ExamExtraction from "./pages/ExamExtraction";
 import Dashboard from "./pages/DashboardCustom";
+import Notificacoes from "./pages/Notificacoes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 // Páginas de autenticação
 import Login from "./pages/Login";
@@ -32,6 +33,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ChangePassword from "./pages/ChangePassword";
 import QuemSomos from "./pages/QuemSomos";
+import LoaderDemo from "./pages/LoaderDemo";
 
 // Rotas de autenticação (públicas, sem DashboardLayout)
 function PublicRouter() {
@@ -45,6 +47,7 @@ function PublicRouter() {
       <Route path="/reset-password/:token" component={ResetPassword} />
       <Route path="/change-password" component={ChangePassword} />
       <Route path="/quem-somos" component={QuemSomos} />
+      <Route path="/loader-demo" component={LoaderDemo} />
     </Switch>
   );
 }
@@ -138,6 +141,11 @@ function ProtectedRouter() {
           <ExamExtraction />
         </ProtectedRoute>
       </Route>
+      <Route path="/notificacoes">
+        <ProtectedRoute funcionalidade="dashboard">
+          <Notificacoes />
+        </ProtectedRoute>
+      </Route>
       <Route path="/config-simples">
       </Route>
       <Route path="/404" component={NotFound} />
@@ -147,7 +155,7 @@ function ProtectedRouter() {
 }
 
 // Rotas públicas (sem sidebar)
-const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/landing", "/change-password"];
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/landing", "/change-password", "/loader-demo", "/quem-somos"];
 
 function isPublicRoute(path: string): boolean {
   if (path === "/" || path === "/landing") return true;

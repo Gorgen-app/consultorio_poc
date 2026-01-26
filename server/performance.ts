@@ -42,10 +42,10 @@ interface SystemMetrics {
   };
 }
 
-// Armazenamento em memória (últimas 24 horas)
+// Armazenamento em memória (últimas 6 horas - reduzido para otimizar memória)
 const metricsBuffer: EndpointMetric[] = [];
-const MAX_BUFFER_SIZE = 10000;
-const RETENTION_PERIOD = 24 * 60 * 60 * 1000; // 24 horas
+const MAX_BUFFER_SIZE = 2000; // Reduzido de 10000 para 2000
+const RETENTION_PERIOD = 6 * 60 * 60 * 1000; // 6 horas (reduzido de 24 horas)
 
 // Estatísticas de cache
 let cacheHits = 0;
@@ -79,7 +79,7 @@ let alertConfig: AlertConfig = {
 };
 
 const alertsBuffer: PerformanceAlert[] = [];
-const MAX_ALERTS = 100;
+const MAX_ALERTS = 50; // Reduzido de 100 para 50
 const ALERT_COOLDOWN = 5 * 60 * 1000; // 5 minutos entre alertas do mesmo tipo/endpoint
 const lastAlertTime = new Map<string, number>();
 

@@ -40,9 +40,15 @@ import {
   X,
   MoreVertical,
   Scaling,
-  LogOut
+  LogOut,
+  AlertTriangle,
+  HardDrive,
+  Zap,
+  Check,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { useLocation } from 'wouter';
 import {
   LineChart,
   Line,
@@ -1048,7 +1054,8 @@ function MetricaConteudo({
 // ============================================
 
 export default function DashboardCustom() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const [periodo, setPeriodo] = useState<PeriodoTempo>('30d');
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([
     // KPIs convertidos em widgets micro
@@ -1071,6 +1078,27 @@ export default function DashboardCustom() {
   
   // CORREÇÃO: Usar a rota correta dashboard.stats em vez de getDashboardStats
   const { data: dashboardStats, isLoading: carregandoStats } = trpc.dashboard.stats.useQuery();
+  
+  // Buscar alertas de performance (apenas admin)
+  const { data: alertsPerformance, refetch: refetchAlerts } = trpc.performance.getAlerts.useQuery(
+    { includeAcknowledged: false },
+    {
+      refetchInterval: 30000,
+      enabled: user?.role === 'admin',
+    }
+  );
+  
+  const acknowledgeAlertMutation = trpc.performance.acknowledgeAlert.useMutation({
+    onSuccess: () => {
+      refetchAlerts();
+    },
+  });
+  
+  const acknowledgeAllMutation = trpc.performance.acknowledgeAllAlerts.useMutation({
+    onSuccess: () => {
+      refetchAlerts();
+    },
+  });
   
   // Buscar configuração salva
   const { data: configSalva, isLoading: carregandoConfig } = trpc.dashboardMetricas.getConfig.useQuery();
@@ -1286,7 +1314,94 @@ export default function DashboardCustom() {
         </div>
       </div>
       
-        {/* Area de Widgets Dinamicos com Drag-and-Drop */}
+      {/* Alertas de Sistema (apenas admin) */}
+      {user?.role === 'admin' && alertsPerformance && alertsPerformance.length > 0 && (
+        <Card className="mb-6 border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+                <AlertTriangle className="h-5 w-5" />
+                Alertas de Sistema ({alertsPerformance.length})
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => acknowledgeAllMutation.mutate()}
+                  className="text-xs"
+                >
+                  <Check className="h-3 w-3 mr-1" />
+                  Reconhecer Todos
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocation('/notificacoes')}
+                  className="text-xs"
+                >
+                  Ver Detalhes
+                  <ChevronRight className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {alertsPerformance.slice(0, 3).map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex items-center justify-between p-3 bg-white dark:bg-background rounded-lg border cursor-pointer hover:shadow-sm transition-all"
+                  onClick={() => setLocation('/performance')}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${
+                      alert.type === 'memory_warning' ? 'bg-orange-100 dark:bg-orange-900' :
+                      alert.type === 'slow_response' ? 'bg-yellow-100 dark:bg-yellow-900' :
+                      'bg-red-100 dark:bg-red-900'
+                    }`}>
+                      {alert.type === 'memory_warning' ? <HardDrive className="h-4 w-4 text-orange-600" /> :
+                       alert.type === 'slow_response' ? <Zap className="h-4 w-4 text-yellow-600" /> :
+                       <AlertTriangle className="h-4 w-4 text-red-600" />}
+                    </div>
+                    <div>
+                      <Badge
+                        variant={
+                          alert.type === 'slow_response' ? 'secondary' :
+                          alert.type === 'high_error_rate' ? 'destructive' :
+                          'outline'
+                        }
+                        className="text-xs"
+                      >
+                        {alert.type === 'slow_response' ? 'Lentidão' :
+                         alert.type === 'high_error_rate' ? 'Erros' :
+                         'Memória'}
+                      </Badge>
+                      <p className="text-sm mt-1">{alert.message}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      acknowledgeAlertMutation.mutate({ alertId: alert.id });
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {alertsPerformance.length > 3 && (
+                <p className="text-xs text-center text-muted-foreground pt-2">
+                  + {alertsPerformance.length - 3} alerta(s) adicional(is)
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Area de Widgets Dinamicos com Drag-and-Drop */}
       {metricasExibidas.length === 0 ? (
         <Card className="p-12 text-center bg-sidebar border border-widget">
           <LayoutGrid className="h-12 w-12 mx-auto text-widget-icon mb-4" />
