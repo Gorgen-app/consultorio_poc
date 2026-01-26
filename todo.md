@@ -3283,3 +3283,78 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
   - Limpeza automática a cada 30 segundos
   - Módulo memory-optimizer.ts criado para limpeza automática
 - [x] Aumentar limite de memória no ambiente - NODE_OPTIONS='--max-old-space-size=256' configurado
+
+
+---
+
+## 🤖 GORGEN 3.9.34 - Sistema de Auto-Correção de Performance (26/01/2026)
+
+### Funcionalidades de Auto-Healing
+- [x] Criar módulo auto-healer.ts com ações corretivas automáticas
+- [x] Implementar detecção e correção de memória alta
+- [x] Implementar detecção e correção de lentidão em endpoints
+- [x] Implementar detecção e correção de alta taxa de erros
+- [x] Criar log de ações automáticas tomadas
+- [x] Integrar auto-healing com sistema de alertas existente
+- [x] Adicionar botão "Investigar e Corrigir" nos alertas
+- [x] Criar UI para visualizar histórico de ações automáticas
+- [x] Adicionar notificação visual quando ação corretiva for executada
+- [x] Criar testes unitários para o módulo auto-healer (14 testes passando)
+
+
+---
+
+## 🚀 GORGEN 3.9.35 - Otimização de Endpoints Lentos (26/01/2026)
+
+### Investigação
+- [ ] Identificar endpoints mais lentos via métricas de performance
+- [ ] Analisar queries SQL dos endpoints problemáticos
+- [ ] Verificar índices de banco de dados
+
+### Otimizações
+- [ ] Adicionar índices faltantes nas tabelas
+- [ ] Implementar cache para queries frequentes
+- [ ] Otimizar queries N+1
+- [ ] Reduzir payload de respostas grandes
+
+
+---
+
+## 🚀 GORGEN 3.9.35 - Otimização de Endpoints Lentos (26/01/2026)
+
+### Análise Realizada
+- [x] Identificar endpoints mais lentos via métricas
+- [x] Analisar código dos endpoints problemáticos (listPacientesComMetricas, listAtendimentos, getFluxogramaLaboratorial, buscarPacienteRapido, getAgendamentos)
+
+### Índices de Performance Adicionados
+- [x] idx_evolucoes_paciente_data (evolucoes.paciente_id, data_evolucao DESC)
+- [x] idx_evolucoes_tenant_paciente (evolucoes.tenant_id, paciente_id)
+- [x] idx_agendamentos_tenant_data (agendamentos.tenant_id, data_hora_inicio)
+- [x] idx_agendamentos_data_status (agendamentos.data_hora_inicio, status)
+- [x] idx_agendamentos_paciente (agendamentos.paciente_id)
+- [x] idx_agendamentos_google_uid (agendamentos.google_uid)
+- [x] idx_docs_medicos_paciente_tipo (documentos_medicos.paciente_id, tipo)
+- [x] idx_docs_medicos_paciente_data (documentos_medicos.paciente_id, data_emissao DESC)
+- [x] idx_resultados_lab_paciente_data (resultados_laboratoriais.paciente_id, data_coleta DESC)
+- [x] idx_resultados_lab_paciente_exame (resultados_laboratoriais.paciente_id, nome_exame_original)
+- [x] idx_user_profiles_tenant (user_profiles.tenant_id)
+- [x] idx_audit_log_entity (audit_log.entity_type, entity_id)
+- [x] idx_audit_log_user_date (audit_log.user_id, created_at DESC)
+- [x] idx_audit_log_tenant_date (audit_log.tenant_id, created_at DESC)
+
+### Módulo de Otimização de Queries (query-optimizer.ts)
+- [x] Cache inteligente por tenant com TTL de 1 minuto
+- [x] Limite de 200 entradas no cache
+- [x] Limpeza automática de entradas expiradas
+- [x] Funções de invalidação por tenant e por prefixo
+- [x] getPacientesComMetricasOtimizado - Query com subqueries para evitar N+1
+- [x] getAgendamentosOtimizado - Query com dados do paciente via subquery
+- [x] buscarPacienteRapidoOtimizado - Busca com cache e índice
+- [x] batchLoadUserProfiles - Batch loader para evitar N+1 em usuários
+- [x] batchLoadPacientes - Batch loader para evitar N+1 em pacientes
+- [x] getCacheStats - Estatísticas do cache para monitoramento
+- [x] clearAllCache - Limpeza completa do cache
+
+### Testes
+- [x] 12 testes unitários para query-optimizer
+- [x] 527 testes totais passando (0 falhas)

@@ -311,7 +311,12 @@ export const auditLog = mysqlTable("audit_log", {
   userAgent: text("user_agent"),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Índices de performance
+  entityIdx: index("idx_audit_log_entity").on(table.entityType, table.entityId),
+  userDateIdx: index("idx_audit_log_user_date").on(table.userId, table.createdAt),
+  tenantDateIdx: index("idx_audit_log_tenant_date").on(table.tenantId, table.createdAt),
+}));
 
 export type AuditLog = typeof auditLog.$inferSelect;
 export type InsertAuditLog = typeof auditLog.$inferInsert;
@@ -457,7 +462,11 @@ export const evolucoes = mysqlTable("evolucoes", {
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  // Índices de performance
+  pacienteDataIdx: index("idx_evolucoes_paciente_data").on(table.pacienteId, table.dataEvolucao),
+  tenantPacienteIdx: index("idx_evolucoes_tenant_paciente").on(table.tenantId, table.pacienteId),
+}));
 
 export type Evolucao = typeof evolucoes.$inferSelect;
 export type InsertEvolucao = typeof evolucoes.$inferInsert;
@@ -787,7 +796,11 @@ export const documentosMedicos = mysqlTable("documentos_medicos", {
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  // Índices de performance
+  pacienteTipoIdx: index("idx_docs_medicos_paciente_tipo").on(table.pacienteId, table.tipo),
+  pacienteDataIdx: index("idx_docs_medicos_paciente_data").on(table.pacienteId, table.dataEmissao),
+}));
 
 export type DocumentoMedico = typeof documentosMedicos.$inferSelect;
 export type InsertDocumentoMedico = typeof documentosMedicos.$inferInsert;
@@ -916,7 +929,13 @@ export const agendamentos = mysqlTable("agendamentos", {
   cpfPaciente: varchar("cpf_paciente", { length: 14 }),
   telefonePaciente: varchar("telefone_paciente", { length: 20 }),
   emailPaciente: varchar("email_paciente", { length: 255 }),
-});
+}, (table) => ({
+  // Índices de performance
+  tenantDataIdx: index("idx_agendamentos_tenant_data").on(table.tenantId, table.dataHoraInicio),
+  dataStatusIdx: index("idx_agendamentos_data_status").on(table.dataHoraInicio, table.status),
+  pacienteIdx: index("idx_agendamentos_paciente").on(table.pacienteId),
+  googleUidIdx: index("idx_agendamentos_google_uid").on(table.googleUid),
+}));
 
 export type Agendamento = typeof agendamentos.$inferSelect;
 export type InsertAgendamento = typeof agendamentos.$inferInsert;
@@ -1041,7 +1060,10 @@ export const userProfiles = mysqlTable("user_profiles", {
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  // Índices de performance
+  tenantIdx: index("idx_user_profiles_tenant").on(table.tenantId),
+}));
 
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = typeof userProfiles.$inferInsert;
@@ -1343,7 +1365,11 @@ export const resultadosLaboratoriais = mysqlTable("resultados_laboratoriais", {
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  // Índices de performance
+  pacienteDataIdx: index("idx_resultados_lab_paciente_data").on(table.pacienteId, table.dataColeta),
+  pacienteExameIdx: index("idx_resultados_lab_paciente_exame").on(table.pacienteId, table.nomeExameOriginal),
+}));
 
 export type ResultadoLaboratorial = typeof resultadosLaboratoriais.$inferSelect;
 export type InsertResultadoLaboratorial = typeof resultadosLaboratoriais.$inferInsert;

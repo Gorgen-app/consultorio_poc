@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Activity, Clock, Database, Server, Zap, AlertTriangle, TrendingUp, HardDrive, Download, Bell, Settings, Check, X } from "lucide-react";
+import { Activity, Clock, Database, Server, Zap, AlertTriangle, TrendingUp, HardDrive, Download, Bell, Settings, Check, X, Wrench, Play, History, RefreshCw, Shield, Cpu } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -116,6 +116,56 @@ export default function Performance() {
       enabled: alertsEnabled,
     });
   };
+  
+  // Auto-Healing queries
+  const { data: diagnosis, refetch: refetchDiagnosis } = trpc.performance.diagnose.useQuery(undefined, {
+    refetchInterval: 60000,
+    enabled: user?.role === 'admin',
+  });
+  
+  const { data: healingStats } = trpc.performance.getHealingStats.useQuery(undefined, {
+    refetchInterval: 30000,
+    enabled: user?.role === 'admin',
+  });
+  
+  const { data: healingHistory } = trpc.performance.getHealingHistory.useQuery(
+    { limit: 10 },
+    {
+      refetchInterval: 30000,
+      enabled: user?.role === 'admin',
+    }
+  );
+  
+  const investigateAndFixMutation = trpc.performance.investigateAndFix.useMutation({
+    onSuccess: (result: { actionsTaken: unknown[]; message: string }) => {
+      if (result.actionsTaken.length > 0) {
+        toast.success(result.message);
+      } else {
+        toast.info(result.message);
+      }
+      refetchDiagnosis();
+      refetchAlerts();
+    },
+    onError: () => {
+      toast.error('Erro ao executar correção');
+    },
+  });
+  
+  const executeActionMutation = trpc.performance.executeAction.useMutation({
+    onSuccess: (result: { description: string }) => {
+      toast.success(result.description);
+      refetchDiagnosis();
+    },
+    onError: () => {
+      toast.error('Erro ao executar ação');
+    },
+  });
+  
+  const setAutoHealingMutation = trpc.performance.setAutoHealingEnabled.useMutation({
+    onSuccess: (result: { enabled: boolean }) => {
+      toast.success(`Auto-healing ${result.enabled ? 'habilitado' : 'desabilitado'}`);
+    },
+  });
   
   if (authLoading || isLoading) {
     return (
@@ -272,14 +322,26 @@ export default function Performance() {
                 <AlertTriangle className="h-5 w-5" />
                 Alertas Ativos ({alerts.length})
               </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => acknowledgeAllMutation.mutate()}
-              >
-                <Check className="h-4 w-4 mr-2" />
-                Reconhecer Todos
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => investigateAndFixMutation.mutate({ automatic: false })}
+                  disabled={investigateAndFixMutation.isPending}
+                  className="bg-[#0056A4] hover:bg-[#004080]"
+                >
+                  <Wrench className="h-4 w-4 mr-2" />
+                  {investigateAndFixMutation.isPending ? 'Corrigindo...' : 'Investigar e Corrigir'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => acknowledgeAllMutation.mutate()}
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Reconhecer Todos
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -321,6 +383,221 @@ export default function Performance() {
           </CardContent>
         </Card>
       )}
+      
+      {/* Card de Auto-Healing */}
+      <Card className="border-[#0056A4]/20">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-[#0056A4]" />
+              Auto-Healing
+            </CardTitle>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="auto-healing-toggle" className="text-sm">Auto-correção</Label>
+                <Switch
+                  id="auto-healing-toggle"
+                  checked={healingStats?.autoHealingEnabled ?? true}
+                  onCheckedChange={(checked) => setAutoHealingMutation.mutate({ enabled: checked })}
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchDiagnosis()}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Atualizar
+              </Button>
+            </div>
+          </div>
+          <CardDescription>
+            Sistema de diagnóstico e correção automática de problemas de performance
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Diagnóstico Atual */}
+            <div className="space-y-4">
+              <h4 className="font-medium flex items-center gap-2">
+                <Cpu className="h-4 w-4" />
+                Diagnóstico do Sistema
+              </h4>
+              
+              {diagnosis ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm">Saúde Geral</span>
+                    <Badge
+                      variant={
+                        diagnosis.overallHealth === 'healthy' ? 'default' :
+                        diagnosis.overallHealth === 'warning' ? 'secondary' :
+                        'destructive'
+                      }
+                    >
+                      {diagnosis.overallHealth === 'healthy' ? '✅ Saudável' :
+                       diagnosis.overallHealth === 'warning' ? '⚠️ Atenção' :
+                       '🚨 Crítico'}
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2 bg-gray-50 rounded text-center">
+                      <div className="text-lg font-bold">{diagnosis.metrics.memoryUsagePercent}%</div>
+                      <div className="text-xs text-muted-foreground">Memória</div>
+                    </div>
+                    <div className="p-2 bg-gray-50 rounded text-center">
+                      <div className="text-lg font-bold">{diagnosis.metrics.avgResponseTime}ms</div>
+                      <div className="text-xs text-muted-foreground">Tempo Médio</div>
+                    </div>
+                    <div className="p-2 bg-gray-50 rounded text-center">
+                      <div className="text-lg font-bold">{diagnosis.metrics.errorRate}%</div>
+                      <div className="text-xs text-muted-foreground">Taxa Erro</div>
+                    </div>
+                    <div className="p-2 bg-gray-50 rounded text-center">
+                      <div className="text-lg font-bold">{diagnosis.metrics.activeAlerts}</div>
+                      <div className="text-xs text-muted-foreground">Alertas</div>
+                    </div>
+                  </div>
+                  
+                  {diagnosis.problems.length > 0 && (
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium text-orange-700">Problemas Detectados:</h5>
+                      {diagnosis.problems.map((problem: { type: string; severity: string; description: string; autoFixable: boolean }, idx: number) => (
+                        <div key={idx} className="p-2 bg-orange-50 rounded border border-orange-200 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span>{problem.description}</span>
+                            <Badge variant={problem.autoFixable ? 'default' : 'secondary'} className="text-xs">
+                              {problem.autoFixable ? 'Auto-corrigível' : 'Manual'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {diagnosis.recommendations.length > 0 && (
+                    <div className="space-y-1">
+                      <h5 className="text-sm font-medium">Recomendações:</h5>
+                      {diagnosis.recommendations.map((rec: string, idx: number) => (
+                        <p key={idx} className="text-xs text-muted-foreground">• {rec}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  Carregando diagnóstico...
+                </div>
+              )}
+              
+              {/* Botões de Ação Manual */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => executeActionMutation.mutate({ actionType: 'clear_cache' })}
+                  disabled={executeActionMutation.isPending}
+                >
+                  Limpar Cache
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => executeActionMutation.mutate({ actionType: 'force_gc' })}
+                  disabled={executeActionMutation.isPending}
+                >
+                  Forçar GC
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => executeActionMutation.mutate({ actionType: 'investigate' })}
+                  disabled={executeActionMutation.isPending}
+                >
+                  Investigar
+                </Button>
+              </div>
+            </div>
+            
+            {/* Histórico de Ações */}
+            <div className="space-y-4">
+              <h4 className="font-medium flex items-center gap-2">
+                <History className="h-4 w-4" />
+                Histórico de Ações ({healingStats?.actionsLast24h || 0} nas últimas 24h)
+              </h4>
+              
+              {healingHistory && healingHistory.length > 0 ? (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {healingHistory.map((action: {
+                    id: string;
+                    timestamp: number;
+                    actionType: string;
+                    description: string;
+                    success: boolean;
+                    automatic: boolean;
+                    memoryBefore?: number;
+                    memoryAfter?: number;
+                  }) => (
+                    <div
+                      key={action.id}
+                      className={`p-2 rounded border text-sm ${
+                        action.success ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={action.automatic ? 'secondary' : 'outline'} className="text-xs">
+                            {action.automatic ? 'Auto' : 'Manual'}
+                          </Badge>
+                          <span className="font-medium">
+                            {action.actionType === 'clear_cache' ? 'Limpeza de Cache' :
+                             action.actionType === 'force_gc' ? 'Garbage Collection' :
+                             action.actionType === 'acknowledge_alerts' ? 'Reconhecer Alertas' :
+                             action.actionType === 'investigate' ? 'Investigação' :
+                             action.actionType}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {formatTimestamp(action.timestamp)}
+                        </span>
+                      </div>
+                      <p className="text-xs mt-1">{action.description}</p>
+                      {action.memoryBefore !== undefined && action.memoryAfter !== undefined && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Memória: {action.memoryBefore}MB → {action.memoryAfter}MB
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground text-sm">
+                  Nenhuma ação registrada ainda.
+                </div>
+              )}
+              
+              {/* Estatísticas */}
+              {healingStats && (
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <div className="p-2 bg-gray-50 rounded text-center">
+                    <div className="text-lg font-bold text-emerald-600">{healingStats.successfulActions}</div>
+                    <div className="text-xs text-muted-foreground">Sucesso</div>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded text-center">
+                    <div className="text-lg font-bold text-red-600">{healingStats.failedActions}</div>
+                    <div className="text-xs text-muted-foreground">Falhas</div>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded text-center">
+                    <div className="text-lg font-bold">{healingStats.totalActions}</div>
+                    <div className="text-xs text-muted-foreground">Total</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Cards de Estatísticas Gerais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
