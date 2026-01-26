@@ -2628,7 +2628,22 @@ Retorne um JSON válido com a estrutura:
         // PRÉ-PROCESSAMENTO COM FILTRO RÁPIDO (Fase 2 - Integração)
         // =====================================================================
         const tenantId = ctx.tenant?.tenantId || 1;
-        const preProcessamento = preProcessarDocumento(textoOcr, tenantId);
+        
+        // CORREÇÃO: Try-catch para evitar falha total se filtro der erro
+        let preProcessamento;
+        try {
+          preProcessamento = preProcessarDocumento(textoOcr, tenantId);
+        } catch (erroFiltro) {
+          console.error(`[LAB-EXTRACT] Erro no filtro rápido: ${erroFiltro instanceof Error ? erroFiltro.message : 'Erro desconhecido'}`);
+          // Fallback: continuar com extração LLM normal
+          preProcessamento = { processar: true, motivo: 'FALLBACK_ERRO_FILTRO', tipo: 'DESCONHECIDO', laboratorio: null, tempoTotalMs: 0 };
+        }
+        
+        // CORREÇÃO: Validar resultado do filtro para evitar TypeError
+        if (!preProcessamento || typeof preProcessamento.processar !== 'boolean') {
+          console.warn('[LAB-EXTRACT] Resultado do filtro inválido, usando fallback');
+          preProcessamento = { processar: true, motivo: 'FALLBACK_RESULTADO_INVALIDO', tipo: 'DESCONHECIDO', laboratorio: null, tempoTotalMs: 0 };
+        }
         
         console.log(`[LAB-EXTRACT] Pré-processamento: processar=${preProcessamento.processar}, motivo=${preProcessamento.motivo}, tipo=${preProcessamento.tipo}, lab=${preProcessamento.laboratorio}, tempo=${preProcessamento.tempoTotalMs}ms`);
         
