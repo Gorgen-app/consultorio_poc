@@ -3182,3 +3182,15 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Corrigir busca para ignorar maiúsculas/minúsculas (LOWER() aplicado)
 - [x] Corrigir busca para ignorar acentos (REPLACE() com normalização)
 - [x] Testar busca com variações de case e acentos (7 testes passando)
+
+
+---
+
+## 🚨 GORGEN 3.9.28 - BUG CRÍTICO PRONTUÁRIO (25/01/2026)
+
+### Erro: Colunas inexistentes na tabela evolucoes
+- [x] Verificar schema da tabela evolucoes
+- [x] Identificar colunas faltantes (agendamento_id)
+- [x] Adicionar coluna agendamento_id via ALTER TABLE
+- [x] Sincronizar banco de dados
+- [x] Testar acesso ao prontuário (aguardando confirmação do usuário)
