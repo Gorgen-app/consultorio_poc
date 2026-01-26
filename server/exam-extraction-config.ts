@@ -1,7 +1,7 @@
 /**
  * Configuração do Algoritmo de Extração de Exames Laboratoriais
- * Versão: 1.2.0
- * Última atualização: 2026-01-23 (Sessão 2)
+ * Versão: 1.3.0
+ * Última atualização: 2026-01-26 (Sessão 8)
  * 
  * Este arquivo contém as configurações e aprendizados do algoritmo de extração
  * de dados de exames laboratoriais de PDFs.
@@ -167,8 +167,17 @@ export const KNOWN_LABORATORIES = [
   "UNILAB",
   "UNIRAD",
   "Unimed Porto Alegre",
+  "Unimed Pelotas",
   "Solução Laboratório",
   "Raio Som",
+  "Moinhos de Vento",
+  "Diagnósticos do Brasil",
+  "Instituto de Patologia",
+  "DB Diagnósticos",
+  "Laboratório Galle",
+  "Serdil",
+  "Imagem da Confiança",
+  "Saúde Medicina",
 ];
 
 /**
