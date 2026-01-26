@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, tenantProcedure, router } from "./
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
+import { preProcessarDocumento } from "./exam-extraction/filtro-rapido-integrado";
 import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
 import * as backup from "./backup";
@@ -930,7 +931,7 @@ export const appRouter = router({
           pesoAtual: z.string().optional().nullable(),
           altura: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.upsertResumoClinico(input as any);
         }),
     }),
@@ -953,7 +954,7 @@ export const appRouter = router({
           ativo: z.boolean().default(true),
           observacoes: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createProblemaAtivo(input as any);
         }),
       
@@ -967,7 +968,7 @@ export const appRouter = router({
           ativo: z.boolean().optional(),
           observacoes: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           const { id, ...data } = input;
           return await db.updateProblemaAtivo(id, data as any);
         }),
@@ -990,13 +991,13 @@ export const appRouter = router({
           gravidade: z.enum(["Leve", "Moderada", "Grave"]).optional().nullable(),
           confirmada: z.boolean().default(false),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createAlergia(input as any);
         }),
       
       delete: protectedProcedure
         .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.deleteAlergia(input.id);
         }),
     }),
@@ -1026,7 +1027,7 @@ export const appRouter = router({
           prescritoPor: z.string().optional().nullable(),
           ativo: z.boolean().default(true),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createMedicamentoUso(input as any);
         }),
       
@@ -1044,7 +1045,7 @@ export const appRouter = router({
           prescritoPor: z.string().optional().nullable(),
           ativo: z.boolean().optional(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           const { id, ...data } = input;
           return await db.updateMedicamentoUso(id, data as any);
         }),
@@ -1104,7 +1105,7 @@ export const appRouter = router({
           altura: z.string().optional().nullable(),
           assinado: z.boolean().optional(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           const { id, ...data } = input;
           return await db.updateEvolucao(id, data as any);
         }),
@@ -1152,7 +1153,7 @@ export const appRouter = router({
           resumoInternacao: z.string().optional().nullable(),
           complicacoes: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createInternacao(input as any);
         }),
       
@@ -1169,7 +1170,7 @@ export const appRouter = router({
           resumoInternacao: z.string().optional().nullable(),
           complicacoes: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           const { id, ...data } = input;
           return await db.updateInternacao(id, data as any);
         }),
@@ -1204,7 +1205,7 @@ export const appRouter = router({
           sangramento: z.string().optional().nullable(),
           status: z.enum(["Agendada", "Realizada", "Cancelada", "Adiada"]).default("Agendada"),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createCirurgia(input as any);
         }),
       
@@ -1228,7 +1229,7 @@ export const appRouter = router({
           sangramento: z.string().optional().nullable(),
           status: z.enum(["Agendada", "Realizada", "Cancelada", "Adiada"]).optional(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           const { id, ...data } = input;
           return await db.updateCirurgia(id, data as any);
         }),
@@ -1258,7 +1259,7 @@ export const appRouter = router({
           arquivoUrl: z.string().optional().nullable(),
           arquivoNome: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createExameLaboratorial(input as any);
         }),
     }),
@@ -1286,7 +1287,7 @@ export const appRouter = router({
           arquivoLaudoUrl: z.string().optional().nullable(),
           arquivoImagemUrl: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createExameImagem(input as any);
         }),
     }),
@@ -1317,7 +1318,7 @@ export const appRouter = router({
           arquivoLaudoUrl: z.string().optional().nullable(),
           arquivoImagensUrl: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createEndoscopia(input as any);
         }),
     }),
@@ -1347,7 +1348,7 @@ export const appRouter = router({
           arquivoLaudoUrl: z.string().optional().nullable(),
           arquivoExameUrl: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createCardiologia(input as any);
         }),
     }),
@@ -1374,7 +1375,7 @@ export const appRouter = router({
           intercorrencias: z.string().optional().nullable(),
           observacoes: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createTerapia(input as any);
         }),
     }),
@@ -1404,7 +1405,7 @@ export const appRouter = router({
           sexoRn: z.enum(["M", "F"]).optional().nullable(),
           observacoes: z.string().optional().nullable(),
         }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ ctx, input }) => {
           return await db.createObstetricia(input as any);
         }),
     }),
@@ -1755,7 +1756,7 @@ export const appRouter = router({
       .input(z.object({
         agendamentoId: z.number(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const agendamento = await db.getAgendamentoById(input.agendamentoId);
         if (!agendamento) {
           throw new Error('Agendamento não encontrado');
@@ -1784,7 +1785,7 @@ export const appRouter = router({
         agendamentoId: z.number(),
         googleUid: z.string(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         return await db.atualizarAgendamentoGoogleUid(input.agendamentoId, input.googleUid);
       }),
 
@@ -2403,7 +2404,7 @@ Retorne um JSON válido com a estrutura:
         arquivoPdfUrl: z.string().optional(),
         arquivoPdfNome: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         await db.updateDocumentoExterno(input.id, {
           textoOcr: input.textoOcr,
           arquivoPdfUrl: input.arquivoPdfUrl,
@@ -2414,7 +2415,7 @@ Retorne um JSON válido com a estrutura:
 
     extractOcr: protectedProcedure
       .input(z.object({ documentoId: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         // Buscar o documento
         const documento = await db.getDocumentoExterno(input.documentoId);
         if (!documento) {
@@ -2551,7 +2552,7 @@ Retorne um JSON válido com a estrutura:
         arquivoLaminasUrl: z.string().optional(),
         observacoes: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         return await db.createPatologia(input as any);
       }),
 
@@ -2570,7 +2571,7 @@ Retorne um JSON válido com a estrutura:
         arquivoLaudoUrl: z.string().optional(),
         observacoes: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
         await db.updatePatologia(id, data as any);
         return { success: true };
@@ -2606,7 +2607,7 @@ Retorne um JSON válido com a estrutura:
         documentoExternoId: z.number(),
         pdfUrl: z.string(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         console.log(`[LAB-EXTRACT] Iniciando extração de dados laboratoriais para documento ${input.documentoExternoId}`);
         
         // Buscar o documento para obter o texto OCR já extraído
@@ -2622,6 +2623,29 @@ Retorne um JSON válido com a estrutura:
         }
         
         console.log(`[LAB-EXTRACT] Usando texto OCR já extraído (${textoOcr.length} caracteres)`);
+        
+        // =====================================================================
+        // PRÉ-PROCESSAMENTO COM FILTRO RÁPIDO (Fase 2 - Integração)
+        // =====================================================================
+        const tenantId = ctx.tenant?.tenantId || 1;
+        const preProcessamento = preProcessarDocumento(textoOcr, tenantId);
+        
+        console.log(`[LAB-EXTRACT] Pré-processamento: processar=${preProcessamento.processar}, motivo=${preProcessamento.motivo}, tipo=${preProcessamento.tipo}, lab=${preProcessamento.laboratorio}, tempo=${preProcessamento.tempoTotalMs}ms`);
+        
+        // Se filtro decidiu não processar, retornar sem chamar LLM
+        if (!preProcessamento.processar) {
+          console.log(`[LAB-EXTRACT] Documento ignorado pelo filtro rápido: ${preProcessamento.motivo}`);
+          return {
+            sucesso: false,
+            motivo: preProcessamento.motivo,
+            mensagem: `Documento identificado como ${preProcessamento.motivo}. Não é um resultado de exame laboratorial.`,
+            examesInseridos: 0,
+            economiaLLM: true
+          };
+        }
+        // =====================================================================
+        // FIM DO PRÉ-PROCESSAMENTO - Continuar com extração via LLM
+        // =====================================================================
         
         // Usar LLM para extrair dados estruturados do texto OCR
         let response;
@@ -2773,7 +2797,7 @@ Retorne um JSON válido com a estrutura:
 
     deletePorDocumento: protectedProcedure
       .input(z.object({ documentoExternoId: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         await db.deleteResultadosLaboratoriaisPorDocumento(input.documentoExternoId);
         return { success: true };
       }),
@@ -2793,7 +2817,7 @@ Retorne um JSON válido com a estrutura:
         sinonimos: z.string().optional(),
         descricao: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         return await db.createExamePadronizado(input as any);
       }),
   }),
@@ -2976,7 +3000,7 @@ Retorne um JSON válido com a estrutura:
         maxUsuarios: z.number().optional(),
         maxPacientes: z.number().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         // Verificar se slug já existe
         const existing = await db.getTenantBySlug(input.slug);
         if (existing) {
@@ -3000,7 +3024,7 @@ Retorne um JSON válido com a estrutura:
         maxUsuarios: z.number().optional(),
         maxPacientes: z.number().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
         await db.updateTenant(id, data);
         return { success: true };
@@ -3011,7 +3035,7 @@ Retorne um JSON válido com a estrutura:
         id: z.number(),
         status: z.enum(["ativo", "inativo", "suspenso"]),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         await db.toggleTenantStatus(input.id, input.status);
         return { success: true };
       }),
