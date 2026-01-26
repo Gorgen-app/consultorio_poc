@@ -1,369 +1,318 @@
 /**
- * GORGEN - Hashing Service
+ * GORGEN - Serviço de Hashing para Buscas Seguras
  * 
- * Serviço de hashing HMAC-SHA256 para permitir buscas em campos criptografados.
- * O hash é determinístico, permitindo comparações exatas.
+ * Este módulo implementa HMAC-SHA256 para permitir buscas em campos
+ * criptografados sem expor os dados originais.
+ * 
+ * Características:
+ * - HMAC-SHA256 com chave secreta
+ * - Hash tenant-specific (inclui tenantId no cálculo)
+ * - Determinístico (mesmo input = mesmo output)
+ * - Irreversível (não é possível recuperar o dado original)
+ * 
+ * Uso principal: Busca de pacientes por CPF em campos criptografados.
  * 
  * @version 1.0.0
- * @author GORGEN Team
+ * @date 2026-01-26
  */
 
 import crypto from "crypto";
 
 // ==========================================
-// CONSTANTES DE CONFIGURAÇÃO
+// CONFIGURAÇÃO
 // ==========================================
 
-/** Algoritmo de hash */
-const HASH_ALGORITHM = "sha256";
-
-/** Tamanho do hash em bytes */
-const HASH_LENGTH = 32;
-
-/** Prefixo para identificar hashes */
-const HASH_PREFIX = "gh1_"; // gorgen hash v1
-
-// ==========================================
-// TIPOS E INTERFACES
-// ==========================================
-
-export interface HashingServiceConfig {
-  /** Chave secreta para HMAC (deve vir de variável de ambiente) */
-  secretKey: string;
-  /** Identificador do tenant (para isolamento de hashes) */
-  tenantId?: number;
-}
-
-export interface HashResult {
-  /** Hash em formato hexadecimal com prefixo */
-  hash: string;
-  /** Valor normalizado usado para gerar o hash */
-  normalizedValue: string;
-}
+const ALGORITHM = "sha256";
+const OUTPUT_ENCODING: BufferEncoding = "hex";
+const HASH_LENGTH = 64; // SHA256 em hex = 64 caracteres
 
 // ==========================================
 // CLASSE PRINCIPAL
 // ==========================================
 
 /**
- * Serviço de hashing para campos PII
+ * Serviço singleton para geração de hashes seguros para buscas.
  * 
- * @example
+ * O hash é tenant-specific, ou seja, o mesmo CPF gera hashes diferentes
+ * em tenants diferentes, impedindo a correlação de pacientes entre clínicas.
+ * 
+ * Uso:
  * ```typescript
- * const hashService = new HashingService({
- *   secretKey: process.env.HASH_SECRET_KEY!,
- *   tenantId: 1
+ * import { hashingService } from "./services/HashingService";
+ * 
+ * // Gerar hash para busca
+ * const cpfHash = hashingService.createHash("123.456.789-00", tenantId);
+ * 
+ * // Buscar no banco
+ * const paciente = await db.query.pacientes.findFirst({
+ *   where: eq(pacientes.cpf_hash, cpfHash)
  * });
- * 
- * const { hash } = hashService.hash("123.456.789-00");
- * // hash = "gh1_a1b2c3d4..."
- * 
- * const isMatch = hashService.verify("123.456.789-00", hash);
- * // isMatch = true
  * ```
  */
-export class HashingService {
-  private secretKey: string;
-  private tenantId: number;
-
-  constructor(config: HashingServiceConfig) {
-    if (!config.secretKey || config.secretKey.length < 32) {
-      throw new Error("Secret key must be at least 32 characters long");
-    }
-    this.secretKey = config.secretKey;
-    this.tenantId = config.tenantId || 0;
-  }
-
-  // ==========================================
-  // MÉTODOS PÚBLICOS
-  // ==========================================
+class HashingService {
+  private secretKey: Buffer | null = null;
+  private initialized = false;
 
   /**
-   * Gera um hash HMAC-SHA256 de um valor
+   * Inicializa o serviço com a chave secreta do HMAC.
+   * Chamado automaticamente na primeira operação.
+   */
+  private initialize(): void {
+    if (this.initialized) return;
+
+    const keyEnv = process.env.HMAC_SECRET_KEY;
+
+    if (!keyEnv) {
+      throw new Error(
+        "[HashingService] HMAC_SECRET_KEY não configurada. " +
+        "Defina a variável de ambiente HMAC_SECRET_KEY com uma chave secreta."
+      );
+    }
+
+    // Aceita chave em qualquer formato (será convertida para buffer)
+    this.secretKey = Buffer.from(keyEnv, "utf8");
+
+    if (this.secretKey.length < 32) {
+      console.warn(
+        "[HashingService] HMAC_SECRET_KEY tem menos de 32 bytes. " +
+        "Recomenda-se uma chave de pelo menos 256 bits para segurança adequada."
+      );
+    }
+
+    this.initialized = true;
+    console.log("[HashingService] Inicializado com sucesso.");
+  }
+
+  /**
+   * Cria um hash HMAC-SHA256 de um valor, incluindo o tenantId para
+   * garantir isolamento entre tenants.
+   * 
+   * @param value - Valor a ser hasheado (ex: CPF)
+   * @param tenantId - ID do tenant para isolamento
+   * @returns Hash em formato hexadecimal (64 caracteres)
+   * 
+   * @example
+   * const hash = hashingService.createHash("123.456.789-00", 1);
+   * // Retorna: "a1b2c3d4e5f6..." (64 caracteres)
+   */
+  createHash(value: string, tenantId: number | string): string {
+    // Retorna string vazia se input for vazio ou nulo
+    if (!value || value.trim() === "") {
+      return "";
+    }
+
+    this.initialize();
+
+    // Normaliza o valor (remove espaços, converte para minúsculas)
+    const normalizedValue = this.normalizeValue(value);
+
+    // Combina valor + tenantId para hash tenant-specific
+    const dataToHash = `${tenantId}:${normalizedValue}`;
+
+    // Cria HMAC
+    const hmac = crypto.createHmac(ALGORITHM, this.secretKey!);
+    hmac.update(dataToHash, "utf8");
+
+    return hmac.digest(OUTPUT_ENCODING);
+  }
+
+  /**
+   * Cria um hash sem incluir o tenantId.
+   * 
+   * ⚠️ ATENÇÃO: Use apenas para casos especiais onde o isolamento
+   * entre tenants não é necessário (ex: hash de senhas).
    * 
    * @param value - Valor a ser hasheado
-   * @param fieldName - Nome do campo (para isolamento adicional)
-   * @returns Objeto com hash e valor normalizado
+   * @returns Hash em formato hexadecimal (64 caracteres)
    */
-  hash(value: string, fieldName: string = "default"): HashResult {
-    if (!value) {
-      return { hash: "", normalizedValue: "" };
+  createGlobalHash(value: string): string {
+    if (!value || value.trim() === "") {
+      return "";
     }
 
-    // Normalizar o valor
-    const normalizedValue = this.normalize(value);
+    this.initialize();
 
-    // Criar HMAC com chave derivada
-    const key = this.deriveKey(fieldName);
-    const hmac = crypto.createHmac(HASH_ALGORITHM, key);
-    hmac.update(normalizedValue);
+    const normalizedValue = this.normalizeValue(value);
 
-    const hashHex = hmac.digest("hex");
+    const hmac = crypto.createHmac(ALGORITHM, this.secretKey!);
+    hmac.update(normalizedValue, "utf8");
 
-    return {
-      hash: `${HASH_PREFIX}${hashHex}`,
-      normalizedValue
-    };
+    return hmac.digest(OUTPUT_ENCODING);
   }
 
   /**
-   * Verifica se um valor corresponde a um hash
+   * Verifica se um valor corresponde a um hash existente.
    * 
-   * @param value - Valor a verificar
-   * @param expectedHash - Hash esperado
-   * @param fieldName - Nome do campo
-   * @returns true se o valor corresponde ao hash
+   * @param value - Valor a verificar (ex: CPF digitado pelo usuário)
+   * @param tenantId - ID do tenant
+   * @param existingHash - Hash armazenado no banco de dados
+   * @returns true se o valor corresponder ao hash
+   * 
+   * @example
+   * const isMatch = hashingService.verifyHash("123.456.789-00", 1, storedHash);
    */
-  verify(value: string, expectedHash: string, fieldName: string = "default"): boolean {
-    if (!value || !expectedHash) return false;
+  verifyHash(value: string, tenantId: number | string, existingHash: string): boolean {
+    if (!value || !existingHash) {
+      return false;
+    }
 
-    const { hash } = this.hash(value, fieldName);
+    const computedHash = this.createHash(value, tenantId);
     
     // Comparação em tempo constante para evitar timing attacks
     return crypto.timingSafeEqual(
-      Buffer.from(hash),
-      Buffer.from(expectedHash)
+      Buffer.from(computedHash, "hex"),
+      Buffer.from(existingHash, "hex")
     );
   }
 
   /**
-   * Verifica se um valor é um hash válido do serviço
+   * Normaliza um valor antes de hashear.
    * 
-   * @param value - Valor a verificar
-   * @returns true se o valor é um hash válido
-   */
-  isHash(value: string): boolean {
-    if (!value) return false;
-    
-    // Verificar prefixo
-    if (!value.startsWith(HASH_PREFIX)) return false;
-    
-    // Verificar tamanho (prefixo + 64 caracteres hex)
-    const expectedLength = HASH_PREFIX.length + (HASH_LENGTH * 2);
-    if (value.length !== expectedLength) return false;
-    
-    // Verificar se o resto é hexadecimal válido
-    const hashPart = value.substring(HASH_PREFIX.length);
-    return /^[0-9a-f]+$/i.test(hashPart);
-  }
-
-  // ==========================================
-  // MÉTODOS DE NORMALIZAÇÃO
-  // ==========================================
-
-  /**
-   * Normaliza um valor para hashing consistente
+   * Para CPF:
+   * - Remove pontos e traços
+   * - Remove espaços
+   * 
+   * Para outros valores:
+   * - Remove espaços extras
+   * - Converte para minúsculas
    * 
    * @param value - Valor a normalizar
    * @returns Valor normalizado
    */
-  normalize(value: string): string {
-    if (!value) return "";
+  private normalizeValue(value: string): string {
+    // Remove caracteres não numéricos para CPF (detecta pelo padrão)
+    if (this.isCpfFormat(value)) {
+      return value.replace(/\D/g, "");
+    }
 
-    return value
-      .toLowerCase()
-      .trim()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, ""); // Remove acentos
+    // Para outros valores, apenas trim e lowercase
+    return value.trim().toLowerCase();
   }
 
   /**
-   * Normaliza um CPF para hashing
-   * Remove pontos e traços, mantém apenas números
+   * Verifica se um valor parece ser um CPF (com ou sem formatação).
+   */
+  private isCpfFormat(value: string): boolean {
+    // CPF formatado: 123.456.789-00
+    // CPF sem formatação: 12345678900
+    const cpfPattern = /^[\d.\-\s]{11,14}$/;
+    return cpfPattern.test(value);
+  }
+
+  /**
+   * Valida se um hash tem o formato correto.
    * 
-   * @param cpf - CPF a normalizar
-   * @returns CPF normalizado (apenas números)
+   * @param hash - Hash a validar
+   * @returns true se o hash tiver formato válido (64 caracteres hex)
    */
-  normalizeCPF(cpf: string): string {
-    if (!cpf) return "";
-    return cpf.replace(/\D/g, "");
+  isValidHash(hash: string): boolean {
+    if (!hash || hash.length !== HASH_LENGTH) {
+      return false;
+    }
+
+    return /^[0-9a-f]+$/.test(hash);
   }
 
   /**
-   * Normaliza um telefone para hashing
-   * Remove caracteres especiais, mantém apenas números
+   * Gera uma nova chave secreta para HMAC.
+   * Use este método para gerar a HMAC_SECRET_KEY inicial.
    * 
-   * @param telefone - Telefone a normalizar
-   * @returns Telefone normalizado (apenas números)
-   */
-  normalizeTelefone(telefone: string): string {
-    if (!telefone) return "";
-    return telefone.replace(/\D/g, "");
-  }
-
-  /**
-   * Normaliza um email para hashing
-   * Lowercase e trim
+   * @returns Chave secreta de 256 bits em formato hexadecimal
    * 
-   * @param email - Email a normalizar
-   * @returns Email normalizado
+   * @example
+   * const newKey = HashingService.generateSecretKey();
+   * console.log(newKey); // "a1b2c3d4e5f6..."
    */
-  normalizeEmail(email: string): string {
-    if (!email) return "";
-    return email.toLowerCase().trim();
+  static generateSecretKey(): string {
+    return crypto.randomBytes(32).toString("hex");
   }
-
-  // ==========================================
-  // MÉTODOS PRIVADOS
-  // ==========================================
 
   /**
-   * Deriva uma chave HMAC específica para o campo e tenant
+   * Valida se a chave secreta está configurada corretamente.
+   * Útil para health checks na inicialização do servidor.
+   * 
+   * @returns true se a chave estiver válida
+   * @throws Error se a chave estiver inválida ou ausente
    */
-  private deriveKey(fieldName: string): Buffer {
-    const keyMaterial = `${this.secretKey}-tenant-${this.tenantId}-field-${fieldName}`;
-    
-    // Usar SHA-256 para derivar a chave
-    return crypto.createHash("sha256")
-      .update(keyMaterial)
-      .digest();
+  validateKey(): boolean {
+    this.initialize();
+
+    // Testa geração de hash
+    const testValue = "gorgen-health-check";
+    const testTenantId = 0;
+    const hash1 = this.createHash(testValue, testTenantId);
+    const hash2 = this.createHash(testValue, testTenantId);
+
+    // Hash deve ser determinístico
+    if (hash1 !== hash2) {
+      throw new Error(
+        "[HashingService] Falha no health check. " +
+        "O hash não é determinístico."
+      );
+    }
+
+    // Hash deve ter o tamanho correto
+    if (hash1.length !== HASH_LENGTH) {
+      throw new Error(
+        `[HashingService] Falha no health check. ` +
+        `Hash tem ${hash1.length} caracteres, esperado ${HASH_LENGTH}.`
+      );
+    }
+
+    return true;
+  }
+
+  /**
+   * Demonstra o isolamento entre tenants.
+   * Útil para testes e validação.
+   * 
+   * @param value - Valor a hashear
+   * @returns Objeto com hashes para diferentes tenants
+   */
+  demonstrateTenantIsolation(value: string): { tenant1: string; tenant2: string; areEqual: boolean } {
+    const tenant1Hash = this.createHash(value, 1);
+    const tenant2Hash = this.createHash(value, 2);
+
+    return {
+      tenant1: tenant1Hash,
+      tenant2: tenant2Hash,
+      areEqual: tenant1Hash === tenant2Hash,
+    };
   }
 }
 
 // ==========================================
-// SINGLETON PARA USO GLOBAL
-// ==========================================
-
-/** Cache de instâncias por tenant */
-const serviceCache: Map<number, HashingService> = new Map();
-
-/**
- * Obtém a instância do serviço de hashing para um tenant
- * 
- * OTIMIZADO: Usa cache de instâncias por tenant
- * 
- * @param tenantId - ID do tenant (opcional)
- * @returns Instância do HashingService
- */
-export function getHashingService(tenantId?: number): HashingService {
-  const secretKey = process.env.HASH_SECRET_KEY || process.env.JWT_SECRET;
-  
-  if (!secretKey) {
-    throw new Error("HASH_SECRET_KEY or JWT_SECRET environment variable is required");
-  }
-
-  const tid = tenantId || 0;
-
-  // Verificar cache de instâncias
-  if (serviceCache.has(tid)) {
-    return serviceCache.get(tid)!;
-  }
-
-  // Criar nova instância
-  const service = new HashingService({ 
-    secretKey, 
-    tenantId: tid 
-  });
-
-  // Adicionar ao cache
-  serviceCache.set(tid, service);
-
-  return service;
-}
-
-/**
- * Limpa o cache de instâncias (útil para testes)
- */
-export function clearHashingServiceCache(): void {
-  serviceCache.clear();
-}
-
-// ==========================================
-// FUNÇÕES UTILITÁRIAS POR TIPO DE CAMPO
+// TIPOS AUXILIARES
 // ==========================================
 
 /**
- * Gera hash de um CPF
- * 
- * @param cpf - CPF a hashear
- * @param tenantId - ID do tenant
- * @returns Hash do CPF
+ * Interface para campos que precisam de hash para busca.
  */
-export function hashCPF(cpf: string | null | undefined, tenantId?: number): string | null {
-  if (!cpf) return null;
-  
-  const service = getHashingService(tenantId);
-  const normalizedCPF = service.normalizeCPF(cpf);
-  const { hash } = service.hash(normalizedCPF, "cpf");
-  return hash;
+export interface HashableField {
+  /** Nome do campo original (ex: "cpf") */
+  field: string;
+  /** Nome do campo de hash (ex: "cpf_hash") */
+  hashField: string;
 }
 
 /**
- * Gera hash de um telefone
- * 
- * @param telefone - Telefone a hashear
- * @param tenantId - ID do tenant
- * @returns Hash do telefone
+ * Campos padrão que precisam de hash no Gorgen.
  */
-export function hashTelefone(telefone: string | null | undefined, tenantId?: number): string | null {
-  if (!telefone) return null;
-  
-  const service = getHashingService(tenantId);
-  const normalizedTelefone = service.normalizeTelefone(telefone);
-  const { hash } = service.hash(normalizedTelefone, "telefone");
-  return hash;
-}
+export const HASHABLE_FIELDS: HashableField[] = [
+  { field: "cpf", hashField: "cpf_hash" },
+];
+
+// ==========================================
+// EXPORTAÇÃO (SINGLETON)
+// ==========================================
 
 /**
- * Gera hash de um email
- * 
- * @param email - Email a hashear
- * @param tenantId - ID do tenant
- * @returns Hash do email
+ * Instância singleton do serviço de hashing.
+ * Use esta instância em toda a aplicação.
  */
-export function hashEmail(email: string | null | undefined, tenantId?: number): string | null {
-  if (!email) return null;
-  
-  const service = getHashingService(tenantId);
-  const normalizedEmail = service.normalizeEmail(email);
-  const { hash } = service.hash(normalizedEmail, "email");
-  return hash;
-}
+export const hashingService = new HashingService();
 
 /**
- * Verifica se um CPF corresponde a um hash
- * 
- * @param cpf - CPF a verificar
- * @param expectedHash - Hash esperado
- * @param tenantId - ID do tenant
- * @returns true se corresponde
+ * Exporta a classe para casos especiais (ex: testes).
  */
-export function verifyCPF(cpf: string, expectedHash: string, tenantId?: number): boolean {
-  if (!cpf || !expectedHash) return false;
-  
-  const service = getHashingService(tenantId);
-  const normalizedCPF = service.normalizeCPF(cpf);
-  return service.verify(normalizedCPF, expectedHash, "cpf");
-}
-
-/**
- * Verifica se um telefone corresponde a um hash
- * 
- * @param telefone - Telefone a verificar
- * @param expectedHash - Hash esperado
- * @param tenantId - ID do tenant
- * @returns true se corresponde
- */
-export function verifyTelefone(telefone: string, expectedHash: string, tenantId?: number): boolean {
-  if (!telefone || !expectedHash) return false;
-  
-  const service = getHashingService(tenantId);
-  const normalizedTelefone = service.normalizeTelefone(telefone);
-  return service.verify(normalizedTelefone, expectedHash, "telefone");
-}
-
-/**
- * Verifica se um email corresponde a um hash
- * 
- * @param email - Email a verificar
- * @param expectedHash - Hash esperado
- * @param tenantId - ID do tenant
- * @returns true se corresponde
- */
-export function verifyEmail(email: string, expectedHash: string, tenantId?: number): boolean {
-  if (!email || !expectedHash) return false;
-  
-  const service = getHashingService(tenantId);
-  const normalizedEmail = service.normalizeEmail(email);
-  return service.verify(normalizedEmail, expectedHash, "email");
-}
+export { HashingService };
