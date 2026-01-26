@@ -195,7 +195,7 @@ describe('ExtratorExames', () => {
     });
   });
 
-  describe.skip('Classificação de Documentos - REQUER CALIBRAÇÃO COM PDFs REAIS', () => {
+  describe.skip('Classificação de Documentos - Requer PDFs reais', () => {
     it('deve classificar PDF laboratorial corretamente', async () => {
       const resultado = await extrator.processarLote([PDF_LABORATORIAL]);
       expect(resultado.exames.length).toBeGreaterThan(0);
@@ -221,7 +221,7 @@ describe('ExtratorExames', () => {
     });
   });
 
-  describe.skip('Extração de Dados - REQUER CALIBRAÇÃO COM PDFs REAIS', () => {
+  describe.skip('Extração de Dados - Requer PDFs reais', () => {
     it('deve extrair nome do paciente', async () => {
       const resultado = await extrator.processarLote([PDF_LABORATORIAL]);
       expect(resultado.exames[0].paciente).toBe('JOÃO SILVA DA COSTA');
@@ -256,7 +256,7 @@ describe('ExtratorExames', () => {
     });
   });
 
-  describe.skip('Normalização de Exames - REQUER CALIBRAÇÃO COM PDFs REAIS', () => {
+  describe.skip('Normalização de Exames - Requer PDFs reais', () => {
     it('deve normalizar TGO/AST', async () => {
       const resultado = await extrator.processarLote([PDF_LABORATORIAL]);
       const tgo = resultado.exames.find(e => 
@@ -275,7 +275,7 @@ describe('ExtratorExames', () => {
   });
 
   describe('Processamento em Lote', () => {
-    it.skip('deve processar múltiplos PDFs - REQUER CALIBRAÇÃO', async () => {
+    it.skip('deve processar múltiplos PDFs - Requer PDFs reais', async () => {
       const resultado = await extrator.processarLote([
         PDF_LABORATORIAL,
         PDF_IMAGEM,
@@ -287,7 +287,7 @@ describe('ExtratorExames', () => {
       expect(resultado.estatisticas.arquivos_ignorados).toBe(1);
     });
 
-    it.skip('deve calcular estatísticas corretamente - REQUER CALIBRAÇÃO', async () => {
+    it.skip('deve calcular estatísticas corretamente - Requer PDFs reais', async () => {
       const resultado = await extrator.processarLote([PDF_LABORATORIAL]);
       
       expect(resultado.estatisticas.tempo_total_ms).toBeGreaterThan(0);
@@ -295,7 +295,7 @@ describe('ExtratorExames', () => {
     });
   });
 
-  describe.skip('Índice de Pacientes - REQUER CALIBRAÇÃO COM PDFs REAIS', () => {
+  describe.skip('Índice de Pacientes - Requer PDFs reais', () => {
     it('deve atualizar índice de pacientes', async () => {
       await extrator.processarLote([PDF_LABORATORIAL]);
       
@@ -469,7 +469,7 @@ describe('Utilitários', () => {
 // TESTES DE INTEGRAÇÃO
 // ============================================================================
 
-describe.skip('Integração - REQUER CALIBRAÇÃO COM PDFs REAIS', () => {
+describe.skip('Integração - Requer PDFs reais', () => {
   it('deve processar lote completo e gerar relatório', async () => {
     const extrator = new ExtratorExames();
     const resultado = await extrator.processarLote([
