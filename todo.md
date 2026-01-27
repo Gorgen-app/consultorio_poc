@@ -3936,3 +3936,11 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Adicionar confirmação antes de assinar (ação irreversível)
 - [x] Exibir informações de quem assinou e quando após assinatura
 
+
+---
+
+## ✍️ Assinar e Encerrar no Modal (27/01/2026)
+
+### A Implementar
+- [x] Adicionar botão "Assinar e Encerrar" no modal de confirmação de assinatura
+- [x] Manter botão "Apenas Assinar" como opção alternativa

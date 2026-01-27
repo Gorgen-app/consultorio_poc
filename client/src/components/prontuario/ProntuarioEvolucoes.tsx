@@ -884,39 +884,69 @@ export default function ProntuarioEvolucoes({
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel 
               onClick={() => {
                 setModalAssinarAberto(false);
                 setEvolucaoParaAssinar(null);
               }}
+              className="sm:mr-auto"
             >
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (evolucaoParaAssinar) {
-                  assinarEvolucao.mutate({ 
-                    id: evolucaoParaAssinar.id,
-                    encerrarAtendimento: false 
-                  });
-                }
-              }}
-              disabled={assinarEvolucao.isPending}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {assinarEvolucao.isPending ? (
-                <>
-                  <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  Assinando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Confirmar Assinatura
-                </>
-              )}
-            </AlertDialogAction>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (evolucaoParaAssinar) {
+                    assinarEvolucao.mutate({ 
+                      id: evolucaoParaAssinar.id,
+                      encerrarAtendimento: false 
+                    });
+                  }
+                }}
+                disabled={assinarEvolucao.isPending}
+                className="border-green-300 text-green-700 hover:bg-green-50"
+                title="Assina a evolução mas mantém o atendimento aberto"
+              >
+                {assinarEvolucao.isPending ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                    Assinando...
+                  </>
+                ) : (
+                  <>
+                    <PenLine className="h-4 w-4 mr-2" />
+                    Apenas Assinar
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => {
+                  if (evolucaoParaAssinar) {
+                    assinarEvolucao.mutate({ 
+                      id: evolucaoParaAssinar.id,
+                      encerrarAtendimento: true 
+                    });
+                  }
+                }}
+                disabled={assinarEvolucao.isPending}
+                className="bg-green-600 hover:bg-green-700"
+                title="Assina a evolução e encerra o atendimento"
+              >
+                {assinarEvolucao.isPending ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                    Assinando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Assinar e Encerrar
+                  </>
+                )}
+              </Button>
+            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
