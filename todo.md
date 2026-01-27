@@ -3924,3 +3924,15 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Bloquear edição de evoluções assinadas (botão "Bloqueada" com ícone de cadeado)
 - [x] Exibir mensagem explicativa quando tentar editar evolução assinada (tooltip explicativo)
 
+
+
+---
+
+## ✍️ Assinatura Digital Posterior (27/01/2026)
+
+### A Implementar
+- [x] Criar rota de backend para assinar evolução existente (evolucoes.assinar)
+- [x] Implementar botão de assinatura funcional no frontend
+- [x] Adicionar confirmação antes de assinar (ação irreversível)
+- [x] Exibir informações de quem assinou e quando após assinatura
+

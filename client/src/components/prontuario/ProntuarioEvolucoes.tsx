@@ -7,12 +7,13 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2, FileOutput, Pill, FileCheck, Scissors, ClipboardList, File, Save, Clock, PenLine, CheckCircle, Lock, Pencil } from "lucide-react";
+import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2, FileOutput, Pill, FileCheck, Scissors, ClipboardList, File, Save, Clock, PenLine, CheckCircle, Lock, Pencil, AlertTriangle } from "lucide-react";
 import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props {
@@ -39,6 +40,10 @@ export default function ProntuarioEvolucoes({
   const [modalUploadAberto, setModalUploadAberto] = useState(false);
   const [evolucaoIdParaUpload, setEvolucaoIdParaUpload] = useState<number | null>(null);
   const [agendamentoId, setAgendamentoId] = useState<number | null>(agendamentoIdVinculado);
+  
+  // Estado para modal de confirmação de assinatura
+  const [modalAssinarAberto, setModalAssinarAberto] = useState(false);
+  const [evolucaoParaAssinar, setEvolucaoParaAssinar] = useState<any | null>(null);
   
   const [form, setForm] = useState({
     dataEvolucao: new Date().toISOString().split("T")[0],
@@ -88,6 +93,19 @@ export default function ProntuarioEvolucoes({
     }
   }, [agendamentoVinculado, agendamentoIdVinculado]);
   
+  // Mutation para assinar evolução existente
+  const assinarEvolucao = trpc.prontuario.evolucoes.assinar.useMutation({
+    onSuccess: () => {
+      toast.success("Evolução assinada com sucesso!");
+      setModalAssinarAberto(false);
+      setEvolucaoParaAssinar(null);
+      onUpdate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao assinar evolução: " + error.message);
+    },
+  });
+
   const createEvolucao = trpc.prontuario.evolucoes.create.useMutation({
     onSuccess: () => {
       toast.success("Evolução registrada com sucesso!");
@@ -552,7 +570,13 @@ export default function ProntuarioEvolucoes({
                         )}
                         {/* Badge de Status de Assinatura */}
                         {ev.statusAssinatura === 'assinado' || ev.assinado ? (
-                          <Badge className="bg-green-500 hover:bg-green-600">
+                          <Badge 
+                            className="bg-green-500 hover:bg-green-600"
+                            title={ev.assinadoPorNome && ev.dataAssinatura 
+                              ? `Assinada por ${ev.assinadoPorNome} em ${formatarData(ev.dataAssinatura)}`
+                              : 'Evolução assinada digitalmente'
+                            }
+                          >
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Assinada
                           </Badge>
@@ -674,6 +698,24 @@ export default function ProntuarioEvolucoes({
                       </div>
                     )}
                     
+                    {/* Informações de Assinatura */}
+                    {(ev.statusAssinatura === 'assinado' || ev.assinado) && ev.assinadoPorNome && (
+                      <div className="pt-2 border-t">
+                        <Label className="mb-2 block">Assinatura Digital</Label>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-sm text-green-800">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span>Assinada digitalmente por <strong>{ev.assinadoPorNome}</strong></span>
+                          </div>
+                          {ev.dataAssinatura && (
+                            <div className="text-xs text-green-600 mt-1 ml-6">
+                              em {formatarData(ev.dataAssinatura)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* Ações da Evolução */}
                       <div className="pt-2 border-t">
                         <div className="flex items-center justify-between mb-4">
@@ -714,10 +756,10 @@ export default function ProntuarioEvolucoes({
                                 className="text-blue-600 border-blue-300 hover:bg-blue-50"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // TODO: Implementar assinatura posterior
-                                  toast.info('Funcionalidade de assinatura posterior em desenvolvimento');
+                                  setEvolucaoParaAssinar(ev);
+                                  setModalAssinarAberto(true);
                                 }}
-                                title="Assinar esta evolução"
+                                title="Assinar esta evolução digitalmente"
                               >
                                 <PenLine className="h-3 w-3 mr-1" />
                                 Assinar
@@ -774,6 +816,110 @@ export default function ProntuarioEvolucoes({
           />
         </DialogContent>
       </Dialog>
+      
+      {/* Modal de Confirmação de Assinatura Digital */}
+      <AlertDialog open={modalAssinarAberto} onOpenChange={setModalAssinarAberto}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirmar Assinatura Digital
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p className="text-amber-600 font-medium">
+                  Atenção: Após assinada, esta evolução não poderá mais ser editada.
+                </p>
+                
+                {evolucaoParaAssinar && (
+                  <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <span className="font-medium">Data:</span>
+                      <span>{formatarData(evolucaoParaAssinar.dataEvolucao)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Badge variant="outline">{evolucaoParaAssinar.tipo}</Badge>
+                      {evolucaoParaAssinar.statusAssinatura === 'pendente_assinatura' ? (
+                        <Badge className="bg-amber-500">Pendente</Badge>
+                      ) : (
+                        <Badge variant="secondary">Rascunho</Badge>
+                      )}
+                    </div>
+                    
+                    {/* Preview do conteúdo SOAP */}
+                    <div className="space-y-2 mt-3 pt-3 border-t">
+                      {evolucaoParaAssinar.subjetivo && (
+                        <div className="text-sm">
+                          <span className="bg-blue-100 text-[#0056A4] px-1.5 py-0.5 rounded text-xs font-bold mr-2">S</span>
+                          <span className="text-gray-600 line-clamp-2">{evolucaoParaAssinar.subjetivo}</span>
+                        </div>
+                      )}
+                      {evolucaoParaAssinar.objetivo && (
+                        <div className="text-sm">
+                          <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-xs font-bold mr-2">O</span>
+                          <span className="text-gray-600 line-clamp-2">{evolucaoParaAssinar.objetivo}</span>
+                        </div>
+                      )}
+                      {evolucaoParaAssinar.avaliacao && (
+                        <div className="text-sm">
+                          <span className="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded text-xs font-bold mr-2">A</span>
+                          <span className="text-gray-600 line-clamp-2">{evolucaoParaAssinar.avaliacao}</span>
+                        </div>
+                      )}
+                      {evolucaoParaAssinar.plano && (
+                        <div className="text-sm">
+                          <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-xs font-bold mr-2">P</span>
+                          <span className="text-gray-600 line-clamp-2">{evolucaoParaAssinar.plano}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                <p className="text-sm text-gray-500">
+                  Ao assinar, você confirma que revisou o conteúdo e que as informações estão corretas.
+                  A assinatura digital registrará seu nome e a data/hora da assinatura.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => {
+                setModalAssinarAberto(false);
+                setEvolucaoParaAssinar(null);
+              }}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (evolucaoParaAssinar) {
+                  assinarEvolucao.mutate({ 
+                    id: evolucaoParaAssinar.id,
+                    encerrarAtendimento: false 
+                  });
+                }
+              }}
+              disabled={assinarEvolucao.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {assinarEvolucao.isPending ? (
+                <>
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
+                  Assinando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Confirmar Assinatura
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

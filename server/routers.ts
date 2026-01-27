@@ -1281,6 +1281,30 @@ export const appRouter = router({
           return await db.updateEvolucao(id, data as any);
         }),
       
+      // Assinar evolução existente
+      assinar: protectedProcedure
+        .input(z.object({
+          id: z.number(),
+          encerrarAtendimento: z.boolean().optional().default(false),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          const now = new Date();
+          const updateData: any = {
+            assinado: true,
+            statusAssinatura: 'assinado',
+            dataAssinatura: now,
+            assinadoPorId: ctx.user?.id,
+            assinadoPorNome: ctx.user?.name,
+          };
+          
+          if (input.encerrarAtendimento) {
+            updateData.atendimentoEncerrado = true;
+            updateData.dataEncerramentoAtendimento = now;
+          }
+          
+          return await db.updateEvolucao(input.id, updateData);
+        }),
+      
       // Textos Padrão para Evoluções (SOAP)
       getTextosPadrao: tenantProcedure
         .query(async ({ ctx }) => {
