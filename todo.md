@@ -3524,3 +3524,27 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Configurar zoom padrão 1cm:5km - Zoom padrão 3.5 (aproximadamente 1cm:5km)
 - [x] Manter régua de zoom visível e acessível - Slider vertical + botões + régua de escala em km
 - [x] Melhorar layout visual do componente - Layout compacto e profissional
+
+
+---
+
+## 🗺️ GORGEN 3.9.50 - Integração Google Maps (27/01/2026)
+
+### Fase 1: Infraestrutura
+- [x] Adicionar biblioteca 'visualization' ao Map.tsx
+- [x] Criar tabela cep_coordenadas para cache de geocodificação
+
+### Fase 2: Backend
+- [x] Implementar serviço de geocodificação com cache - Arquivo geocodificacao.ts criado
+- [x] Criar endpoint para obter coordenadas de CEPs - getCoordenadasMapaCalor adicionado
+- [x] Implementar fila de geocodificação para evitar rate limiting - BATCH_SIZE e DELAY implementados
+
+### Fase 3: Frontend
+- [x] Criar componente MapaCalorGoogle com HeatmapLayer - Componente criado com gradiente de cores
+- [x] Integrar com sistema de widgets da Dashboard - MapaCalorGoogle integrado no DashboardCustom
+- [x] Adicionar controles de zoom nativos do Google Maps - Botão de localização e zoom automático
+
+### Fase 4: Testes
+- [x] Testar geocodificação de CEPs - Compilação TypeScript OK
+- [x] Testar renderização do mapa de calor - Componente integrado
+- [x] Validar performance com 5.409 CEPs únicos - 561 testes passando

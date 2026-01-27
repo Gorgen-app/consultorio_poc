@@ -1044,14 +1044,14 @@ function MetricaConteudo({
     );
   }
   
-  // Mapa de Calor de CEPs
+  // Mapa de Calor de CEPs com Google Maps
   if (metrica.tipoGrafico === 'mapa') {
-    // Importar dinamicamente o componente MapaCalorCeps
-    const MapaCalorCeps = React.lazy(() => import('@/components/dashboard/MapaCalorCeps').then(m => ({ default: m.MapaCalorCeps })));
+    // Importar dinamicamente o componente MapaCalorGoogle (com HeatmapLayer do Google Maps)
+    const MapaCalorGoogle = React.lazy(() => import('@/components/dashboard/MapaCalorGoogle').then(m => ({ default: m.MapaCalorGoogle })));
     
     return (
       <React.Suspense fallback={<div className="flex items-center justify-center h-full text-muted-foreground text-sm">Carregando mapa...</div>}>
-        <MapaCalorCeps className="h-full border-0 shadow-none" />
+        <MapaCalorGoogle className="h-full border-0 shadow-none" />
       </React.Suspense>
     );
   }

@@ -1593,3 +1593,58 @@ export const enderecoHistorico = mysqlTable("endereco_historico", {
 
 export type EnderecoHistorico = typeof enderecoHistorico.$inferSelect;
 export type InsertEnderecoHistorico = typeof enderecoHistorico.$inferInsert;
+
+
+// ==========================================
+// CACHE DE COORDENADAS DE CEP
+// Para integração com Google Maps - Mapa de Calor
+// ==========================================
+
+/**
+ * Cache de Coordenadas de CEP
+ * Armazena as coordenadas geográficas obtidas via geocodificação
+ * para evitar requisições repetidas à API do Google Maps
+ */
+export const cepCoordenadas = mysqlTable("cep_coordenadas", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // CEP (chave única)
+  cep: varchar("cep", { length: 10 }).notNull().unique(),
+  
+  // Coordenadas geográficas
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  
+  // Endereço formatado retornado pelo Google
+  enderecoFormatado: varchar("endereco_formatado", { length: 500 }),
+  
+  // Cidade e UF para agrupamento
+  cidade: varchar("cidade", { length: 100 }),
+  uf: varchar("uf", { length: 2 }),
+  
+  // Status da geocodificação
+  status: mysqlEnum("status", [
+    "sucesso",           // Coordenadas obtidas com sucesso
+    "nao_encontrado",    // CEP não encontrado no Google
+    "erro",              // Erro na requisição
+    "pendente"           // Aguardando geocodificação
+  ]).default("pendente"),
+  
+  // Metadados
+  fonte: varchar("fonte", { length: 50 }).default("google_maps"),
+  tentativas: int("tentativas").default(0),
+  ultimoErro: text("ultimo_erro"),
+  
+  // Timestamps
+  geocodificadoEm: timestamp("geocodificado_em"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  // Índices para busca rápida
+  statusIdx: index("idx_cep_coord_status").on(table.status),
+  cidadeIdx: index("idx_cep_coord_cidade").on(table.cidade),
+  ufIdx: index("idx_cep_coord_uf").on(table.uf),
+}));
+
+export type CepCoordenadas = typeof cepCoordenadas.$inferSelect;
+export type InsertCepCoordenadas = typeof cepCoordenadas.$inferInsert;

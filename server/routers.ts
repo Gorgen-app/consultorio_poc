@@ -10,6 +10,7 @@ import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
 import * as backup from "./backup";
 import * as autoHealer from "./auto-healer";
+import * as geocodificacao from "./geocodificacao";
 import { authRouter } from "./auth-router";
 
 // Schema de validação para Paciente
@@ -334,6 +335,18 @@ export const appRouter = router({
       .input(z.object({ cep: z.string() }))
       .query(async ({ input }) => {
         return dashboardMetricas.getCoordenadaCep(input.cep);
+      }),
+    
+    // Coordenadas para mapa de calor com Google Maps
+    getCoordenadasMapaCalor: tenantProcedure
+      .query(async ({ ctx }) => {
+        return geocodificacao.obterCoordenadasParaMapaCalor(ctx.tenant.tenantId);
+      }),
+    
+    // Estatísticas do cache de geocodificação
+    getEstatisticasGeocodificacao: tenantProcedure
+      .query(async () => {
+        return geocodificacao.obterEstatisticasCache();
       }),
     
     pacTaxaRetencao: tenantProcedure
