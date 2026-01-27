@@ -3762,4 +3762,37 @@ de caracteres acentuados como "ã" em "Não".
 
 ### Correção Implementada
 - [x] Adicionar charset: "utf8mb4" na configuração do pool MySQL
-- [ ] Testar inserção de novo paciente
+- [x] Testar inserção de novo paciente - RESOLVIDO
+
+
+---
+
+## 🔴 ERRO - Atualização de Paciente (27/01/2026 - Continuação)
+
+### Erro Reportado
+Query de UPDATE não inclui campo `email_hash` quando email é atualizado.
+Inserção funciona, mas atualização falha.
+
+### Análise
+- [ ] Verificar função updatePaciente no db.ts
+- [ ] Verificar se email_hash está sendo gerado na atualização
+- [ ] Identificar por que email_hash não aparece na query
+
+
+---
+
+## 🔴 ERRO - Validação do Campo Sexo (27/01/2026)
+
+### Erro Reportado
+```
+Invalid option: expected one of "M"|"F"|"Outro"
+```
+
+### Análise
+- [x] Verificar pacienteSchema no routers.ts - Já permite null
+- [x] Problema real identificado: colunas email e telefone eram varchar e não suportavam dados criptografados
+
+### Correção Implementada
+- [x] ALTER TABLE pacientes MODIFY COLUMN email TEXT
+- [x] ALTER TABLE pacientes MODIFY COLUMN telefone TEXT
+- [x] Testar inserção de novo paciente - RESOLVIDO

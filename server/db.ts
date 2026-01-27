@@ -95,13 +95,25 @@ export async function createPaciente(tenantId: number, data: Omit<InsertPaciente
   
   // Garantir que o tenantId seja definido
   const dataWithTenant = { ...encryptedData, tenantId };
-  const result = await db.insert(pacientes).values(dataWithTenant);
-  const insertedId = Number(result[0].insertId);
   
-  const inserted = await db.select().from(pacientes).where(eq(pacientes.id, insertedId)).limit(1);
+  // Log para debug
+  console.log('[createPaciente] Campos a inserir:', Object.keys(dataWithTenant));
   
-  // Descriptografar antes de retornar
-  return decryptPacienteData(inserted[0]!);
+  try {
+    const result = await db.insert(pacientes).values(dataWithTenant);
+    const insertedId = Number(result[0].insertId);
+    
+    const inserted = await db.select().from(pacientes).where(eq(pacientes.id, insertedId)).limit(1);
+    
+    // Descriptografar antes de retornar
+    return decryptPacienteData(inserted[0]!);
+  } catch (error: any) {
+    console.error('[createPaciente] Erro MySQL:', error.message);
+    console.error('[createPaciente] Causa:', error.cause?.message || 'N/A');
+    console.error('[createPaciente] SQL State:', error.cause?.sqlState || 'N/A');
+    console.error('[createPaciente] Errno:', error.cause?.errno || 'N/A');
+    throw error;
+  }
 }
 
 export async function getPacienteById(tenantId: number, id: number): Promise<Paciente | undefined> {
@@ -575,12 +587,33 @@ export async function updatePaciente(
     console.warn('[updatePaciente] ATENÇÃO: Telefone já criptografado recebido do frontend');
   }
   
+  // Converter campos que podem causar erro de tipo
+  // tempoSeguimentoAnos é decimal e não aceita string vazia
+  if (dataWithoutHashes.tempoSeguimentoAnos === '' || dataWithoutHashes.tempoSeguimentoAnos === undefined) {
+    delete dataWithoutHashes.tempoSeguimentoAnos;
+  } else if (typeof dataWithoutHashes.tempoSeguimentoAnos === 'string') {
+    // Converter string para número ou null
+    const parsed = parseFloat(dataWithoutHashes.tempoSeguimentoAnos);
+    dataWithoutHashes.tempoSeguimentoAnos = isNaN(parsed) ? null : parsed.toString();
+  }
+  
   // Normalizar e criptografar dados sensíveis antes de atualizar
   // Usa normalizeAndEncryptPacienteData para garantir consistência de hash
   // mesmo quando dados já criptografados são enviados para atualização
   const encryptedData = normalizeAndEncryptPacienteData(tenantId, dataWithoutHashes);
 
-  await db.update(pacientes).set(encryptedData).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
+  // Log para debug - verificar campos sendo atualizados
+  console.log('[updatePaciente] Campos a atualizar:', Object.keys(encryptedData));
+  console.log('[updatePaciente] emailHash presente?', 'emailHash' in encryptedData);
+  console.log('[updatePaciente] email presente?', 'email' in encryptedData);
+  
+  try {
+    await db.update(pacientes).set(encryptedData).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
+  } catch (error: any) {
+    console.error('[updatePaciente] Erro MySQL:', error.message);
+    console.error('[updatePaciente] Dados enviados:', JSON.stringify(encryptedData, null, 2));
+    throw error;
+  }
   return getPacienteById(tenantId, id);
 }
 

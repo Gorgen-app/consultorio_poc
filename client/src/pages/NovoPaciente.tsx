@@ -145,6 +145,7 @@ export default function NovoPaciente() {
         privativo2: formData.privativo2 ? "Sim" : "Não",
         obitoPerda: formData.obitoPerda ? "Sim" : "Não",
         // Converter campos vazios para null
+        sexo: formData.sexo || null,
         cpf: formData.cpf || null,
         nomeMae: formData.nomeMae || null,
         email: formData.email || null,
