@@ -3822,3 +3822,44 @@ Facilitar a vida do usuário eliminando redundância. Tudo que puder vir pré-pr
 - [x] Agenda → Agendamento: Data e horário clicados vêm preenchidos automaticamente (visualização semana e dia)
 - [x] Agendamento → Atendimento: Data do agendamento vem preenchida no registro do atendimento (via agendamentoId)
 - [x] Prontuário → Novo Atendimento: Dados do paciente já preenchidos (implementado em 3.9.64)
+
+
+---
+
+## 🔢 Padronização de Números e Moedas (27/01/2026)
+
+### Padrão Brasileiro
+- Números: XX,XX (vírgula como decimal, ponto como separador de milhar: xxx.xxx,xx)
+- Moeda: R$ XXX,XX (Real brasileiro)
+
+### Implementação
+- [ ] Criar componente NumberInput com máscara brasileira
+- [ ] Criar componente CurrencyInput com máscara R$
+- [ ] Criar funções utilitárias (formatNumber, formatCurrency, parseNumber)
+- [ ] Atualizar campos numéricos em todo o sistema
+- [ ] Atualizar campos monetários em todo o sistema
+- [ ] Testar formatações
+
+
+---
+
+## 🔢 Padronização de Números e Moedas (27/01/2026) ✅ CONCLUÍDO
+
+### Padrão Brasileiro Implementado
+- Números: XX,XX (vírgula decimal, ponto separador de milhar)
+- Moeda: R$ XXX,XX (Real brasileiro)
+
+### Componentes Criados
+- [x] `NumberInput` - Campo numérico com máscara brasileira
+- [x] `CurrencyInput` - Campo monetário com R$ e máscara
+- [x] Funções utilitárias: formatNumber, formatCurrency, parseNumber
+
+### Arquivos Atualizados
+- [x] EditarAtendimentoModal.tsx - 5 campos de faturamento (CurrencyInput)
+- [x] HistoricoMedidas.tsx - 7 campos de medidas (NumberInput)
+- [x] ProntuarioResumoClinico.tsx - 2 campos peso/altura (NumberInput)
+- [x] ProntuarioEvolucoes.tsx - 1 campo frequência cardíaca (NumberInput)
+- [x] ProntuarioDocumentos.tsx - 1 campo dias afastamento (NumberInput)
+- [x] ProntuarioObstetricia.tsx - 3 campos gesta/para/abortos (NumberInput)
+
+### Total: 19 campos atualizados

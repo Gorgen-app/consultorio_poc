@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -408,10 +409,10 @@ export default function ProntuarioEvolucoes({
                   </div>
                   <div>
                     <Label>Frequência Cardíaca (bpm)</Label>
-                    <Input
-                      type="number"
+                    <NumberInput
+                      decimals={0}
                       value={form.frequenciaCardiaca}
-                      onChange={(e) => setForm({ ...form, frequenciaCardiaca: e.target.value })}
+                      onChange={(value) => setForm({ ...form, frequenciaCardiaca: value?.toString() || "" })}
                       placeholder="Ex: 72"
                     />
                   </div>

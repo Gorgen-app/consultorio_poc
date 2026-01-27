@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -141,22 +142,22 @@ export default function HistoricoMedidas({ pacienteId, onUpdate }: Props) {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label>Peso (kg)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
+                  <NumberInput
+                    decimals={1}
                     value={medidasForm.peso}
-                    onChange={(e) => setMedidasForm({ ...medidasForm, peso: e.target.value })}
-                    placeholder="Ex: 75.5"
+                    onChange={(value) => setMedidasForm({ ...medidasForm, peso: value?.toString() || "" })}
+                    placeholder="Ex: 75,5"
+                    suffix="kg"
                   />
                 </div>
                 <div>
                   <Label>Altura (m)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
+                  <NumberInput
+                    decimals={2}
                     value={medidasForm.altura}
-                    onChange={(e) => setMedidasForm({ ...medidasForm, altura: e.target.value })}
-                    placeholder="Ex: 1.75"
+                    onChange={(value) => setMedidasForm({ ...medidasForm, altura: value?.toString() || "" })}
+                    placeholder="Ex: 1,75"
+                    suffix="m"
                   />
                 </div>
                 <div>
@@ -179,38 +180,39 @@ export default function HistoricoMedidas({ pacienteId, onUpdate }: Props) {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <Label>PA Sistólica (mmHg)</Label>
-                    <Input
-                      type="number"
+                    <NumberInput
+                      decimals={0}
                       value={medidasForm.pressaoSistolica}
-                      onChange={(e) => setMedidasForm({ ...medidasForm, pressaoSistolica: e.target.value })}
+                      onChange={(value) => setMedidasForm({ ...medidasForm, pressaoSistolica: value?.toString() || "" })}
                       placeholder="120"
                     />
                   </div>
                   <div>
                     <Label>PA Diastólica (mmHg)</Label>
-                    <Input
-                      type="number"
+                    <NumberInput
+                      decimals={0}
                       value={medidasForm.pressaoDiastolica}
-                      onChange={(e) => setMedidasForm({ ...medidasForm, pressaoDiastolica: e.target.value })}
+                      onChange={(value) => setMedidasForm({ ...medidasForm, pressaoDiastolica: value?.toString() || "" })}
                       placeholder="80"
                     />
                   </div>
                   <div>
                     <Label>FC (bpm)</Label>
-                    <Input
-                      type="number"
+                    <NumberInput
+                      decimals={0}
                       value={medidasForm.frequenciaCardiaca}
-                      onChange={(e) => setMedidasForm({ ...medidasForm, frequenciaCardiaca: e.target.value })}
+                      onChange={(value) => setMedidasForm({ ...medidasForm, frequenciaCardiaca: value?.toString() || "" })}
                       placeholder="72"
                     />
                   </div>
                   <div>
                     <Label>SpO2 (%)</Label>
-                    <Input
-                      type="number"
+                    <NumberInput
+                      decimals={0}
                       value={medidasForm.saturacao}
-                      onChange={(e) => setMedidasForm({ ...medidasForm, saturacao: e.target.value })}
+                      onChange={(value) => setMedidasForm({ ...medidasForm, saturacao: value?.toString() || "" })}
                       placeholder="98"
+                      suffix="%"
                     />
                   </div>
                 </div>
@@ -220,12 +222,12 @@ export default function HistoricoMedidas({ pacienteId, onUpdate }: Props) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Temperatura (°C)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
+                  <NumberInput
+                    decimals={1}
                     value={medidasForm.temperatura}
-                    onChange={(e) => setMedidasForm({ ...medidasForm, temperatura: e.target.value })}
-                    placeholder="36.5"
+                    onChange={(value) => setMedidasForm({ ...medidasForm, temperatura: value?.toString() || "" })}
+                    placeholder="36,5"
+                    suffix="°C"
                   />
                 </div>
               </div>

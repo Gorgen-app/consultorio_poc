@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -193,10 +194,11 @@ export default function ProntuarioDocumentos({ pacienteId, pacienteNome, documen
                       <>
                         <div>
                           <Label>Dias de Afastamento</Label>
-                          <Input
-                            type="number"
+                          <NumberInput
+                            decimals={0}
                             value={form.diasAfastamento}
-                            onChange={(e) => setForm({ ...form, diasAfastamento: e.target.value })}
+                            onChange={(value) => setForm({ ...form, diasAfastamento: value?.toString() || "" })}
+                            placeholder="Ex: 3"
                           />
                         </div>
                         <div>

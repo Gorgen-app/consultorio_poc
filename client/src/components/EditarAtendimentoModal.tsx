@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -283,35 +284,29 @@ export function EditarAtendimentoModal({ atendimento, open, onOpenChange }: Edit
               <TabsContent value="faturamento" className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="faturamentoPrevisto">Faturamento Previsto (R$)</Label>
-                    <Input
+                    <Label htmlFor="faturamentoPrevisto">Faturamento Previsto</Label>
+                    <CurrencyInput
                       id="faturamentoPrevisto"
-                      type="number"
-                      step="0.01"
-                      value={formData.faturamentoPrevisto || ""}
-                      onChange={(e) => setFormData({ ...formData, faturamentoPrevisto: e.target.value })}
+                      value={formData.faturamentoPrevisto}
+                      onChange={(value) => setFormData({ ...formData, faturamentoPrevisto: value?.toString() || "" })}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="registroManualValorHM">Registro Manual Valor HM (R$)</Label>
-                    <Input
+                    <Label htmlFor="registroManualValorHM">Registro Manual Valor HM</Label>
+                    <CurrencyInput
                       id="registroManualValorHM"
-                      type="number"
-                      step="0.01"
-                      value={formData.registroManualValorHM || ""}
-                      onChange={(e) => setFormData({ ...formData, registroManualValorHM: e.target.value })}
+                      value={formData.registroManualValorHM}
+                      onChange={(value) => setFormData({ ...formData, registroManualValorHM: value?.toString() || "" })}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="faturamentoPrevistoFinal">Faturamento Previsto Final (R$)</Label>
-                    <Input
+                    <Label htmlFor="faturamentoPrevistoFinal">Faturamento Previsto Final</Label>
+                    <CurrencyInput
                       id="faturamentoPrevistoFinal"
-                      type="number"
-                      step="0.01"
-                      value={formData.faturamentoPrevistoFinal || ""}
-                      onChange={(e) => setFormData({ ...formData, faturamentoPrevistoFinal: e.target.value })}
+                      value={formData.faturamentoPrevistoFinal}
+                      onChange={(value) => setFormData({ ...formData, faturamentoPrevistoFinal: value?.toString() || "" })}
                     />
                   </div>
 
@@ -336,24 +331,20 @@ export function EditarAtendimentoModal({ atendimento, open, onOpenChange }: Edit
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="faturamentoLeticia">Faturamento Letícia (R$)</Label>
-                    <Input
+                    <Label htmlFor="faturamentoLeticia">Faturamento Letícia</Label>
+                    <CurrencyInput
                       id="faturamentoLeticia"
-                      type="number"
-                      step="0.01"
-                      value={formData.faturamentoLeticia || ""}
-                      onChange={(e) => setFormData({ ...formData, faturamentoLeticia: e.target.value })}
+                      value={formData.faturamentoLeticia}
+                      onChange={(value) => setFormData({ ...formData, faturamentoLeticia: value?.toString() || "" })}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="faturamentoAGLU">Faturamento AG/LU (R$)</Label>
-                    <Input
+                    <Label htmlFor="faturamentoAGLU">Faturamento AG/LU</Label>
+                    <CurrencyInput
                       id="faturamentoAGLU"
-                      type="number"
-                      step="0.01"
-                      value={formData.faturamentoAGLU || ""}
-                      onChange={(e) => setFormData({ ...formData, faturamentoAGLU: e.target.value })}
+                      value={formData.faturamentoAGLU}
+                      onChange={(value) => setFormData({ ...formData, faturamentoAGLU: value?.toString() || "" })}
                     />
                   </div>
                 </div>

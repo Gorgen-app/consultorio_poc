@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -532,22 +533,22 @@ export default function ProntuarioResumoClinico({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Peso Atual (kg)</Label>
-                <Input
-                  type="number"
-                  step="0.1"
+                <NumberInput
+                  decimals={1}
                   value={resumoForm.pesoAtual}
-                  onChange={(e) => setResumoForm({ ...resumoForm, pesoAtual: e.target.value })}
-                  placeholder="Ex: 70.5"
+                  onChange={(value) => setResumoForm({ ...resumoForm, pesoAtual: value?.toString() || "" })}
+                  placeholder="Ex: 70,5"
+                  suffix="kg"
                 />
               </div>
               <div>
                 <Label>Altura (m)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
+                <NumberInput
+                  decimals={2}
                   value={resumoForm.altura}
-                  onChange={(e) => setResumoForm({ ...resumoForm, altura: e.target.value })}
-                  placeholder="Ex: 1.75"
+                  onChange={(value) => setResumoForm({ ...resumoForm, altura: value?.toString() || "" })}
+                  placeholder="Ex: 1,75"
+                  suffix="m"
                 />
               </div>
             </div>

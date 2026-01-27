@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -48,9 +49,9 @@ export default function ProntuarioObstetricia({ pacienteId, registros, onUpdate 
                 <div><Label>IG (semanas)</Label><Input value={form.ig} onChange={(e) => setForm({...form, ig: e.target.value})} /></div>
               </div>
               <div className="grid grid-cols-3 gap-4">
-                <div><Label>Gesta</Label><Input type="number" value={form.gesta} onChange={(e) => setForm({...form, gesta: e.target.value})} /></div>
-                <div><Label>Para</Label><Input type="number" value={form.para} onChange={(e) => setForm({...form, para: e.target.value})} /></div>
-                <div><Label>Abortos</Label><Input type="number" value={form.abortos} onChange={(e) => setForm({...form, abortos: e.target.value})} /></div>
+                <div><Label>Gesta</Label><NumberInput decimals={0} value={form.gesta} onChange={(value) => setForm({...form, gesta: value?.toString() || ""})} /></div>
+                <div><Label>Para</Label><NumberInput decimals={0} value={form.para} onChange={(value) => setForm({...form, para: value?.toString() || ""})} /></div>
+                <div><Label>Abortos</Label><NumberInput decimals={0} value={form.abortos} onChange={(value) => setForm({...form, abortos: value?.toString() || ""})} /></div>
               </div>
               <div><Label>Observações</Label><Textarea rows={4} value={form.observacoes} onChange={(e) => setForm({...form, observacoes: e.target.value})} /></div>
             </div>
