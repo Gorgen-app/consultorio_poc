@@ -4838,7 +4838,7 @@ export async function searchPacientesRapido(termo: string, limit: number = 20) {
       )
       .limit(limit);
     
-    if (byId.length > 0) return byId;
+    if (byId.length > 0) return decryptPacientesList(byId);
   }
   
   // Buscar por nome - ignorando case e acentos
@@ -4865,7 +4865,8 @@ export async function searchPacientesRapido(termo: string, limit: number = 20) {
     .orderBy(pacientes.nome)
     .limit(limit);
   
-  return byNome;
+  // Descriptografar dados sensíveis antes de retornar
+  return decryptPacientesList(byNome);
 }
 
 

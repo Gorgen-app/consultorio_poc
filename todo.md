@@ -3863,3 +3863,12 @@ Facilitar a vida do usuário eliminando redundância. Tudo que puder vir pré-pr
 - [x] ProntuarioObstetricia.tsx - 3 campos gesta/para/abortos (NumberInput)
 
 ### Total: 19 campos atualizados
+
+
+---
+
+## 🐛 Bugs - Modal Novo Agendamento (27/01/2026)
+
+### Problemas Identificados
+- [x] Modal de Novo Agendamento saindo da configuração da janela (overflow) - adicionado max-h-[90vh] overflow-y-auto
+- [x] CPF e Telefone não descriptografados na lista de sugestões de pacientes (adicionado decryptPacientesList em searchPacientesRapido)
