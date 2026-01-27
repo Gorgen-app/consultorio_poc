@@ -341,7 +341,7 @@ function DashboardLayoutContent({
                     >
                       <SidebarMenuItem>
                         <div 
-                          className="flex items-center w-full group/menu-item rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                          className="flex items-center w-full group/menu-item rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer"
                           onClick={() => {
                             if (hasVisibleSubitems && !isCollapsed) {
                               toggleMenu(item.path);

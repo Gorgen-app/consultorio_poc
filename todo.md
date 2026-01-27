@@ -3607,3 +3607,12 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Atualizar página Quem Somos (já existe) - QuemSomos.tsx
 - [x] Adicionar rotas no App.tsx - /termos-de-uso e /politica-de-privacidade
 - [ ] Atualizar links no rodapé para apontar para as novas páginas
+
+
+---
+
+## 🐛 GORGEN 3.9.55 - Correção de Cor de Hover na Barra Lateral (27/01/2026)
+
+### Bug Corrigido
+- [x] Botões "Pacientes" e "Atendimentos" ficam vermelhos ao passar o mouse - Alterado hover:bg-accent para hover:bg-sidebar-accent
+- [x] Uniformizar cor de hover de todos os botões da barra lateral - Agora todos usam sidebar-accent (azul)
