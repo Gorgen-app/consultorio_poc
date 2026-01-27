@@ -114,8 +114,6 @@ export interface ExtractionResult {
   /** Data do resultado */
   resultDate?: string;
   
-  /** Nome do laboratório (string simples) */
-  laboratory?: LaboratoryInfo;
 }
 
 /**

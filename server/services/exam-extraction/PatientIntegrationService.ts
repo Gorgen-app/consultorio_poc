@@ -126,9 +126,9 @@ export class PatientIntegrationService {
 
   constructor(config: PatientIntegrationConfig, db: DatabaseAdapter) {
     this.config = {
-      nameMatchThreshold: 0.8,
-      autoCreatePatient: false,
       ...config,
+      nameMatchThreshold: config.nameMatchThreshold ?? 0.8,
+      autoCreatePatient: config.autoCreatePatient ?? false,
     };
     this.db = db;
   }
@@ -396,7 +396,7 @@ export class PatientIntegrationService {
             pacienteId,
             dataColeta: extraction.collectionDate || new Date().toISOString().split('T')[0],
             dataResultado: extraction.resultDate,
-            laboratorio: extraction.laboratory,
+            laboratorio: typeof extraction.laboratory === 'string' ? extraction.laboratory : extraction.laboratory?.name || undefined,
             tipoExame: this.classifyExamType(exam.name),
             exame: exam.name,
             resultado: exam.value,

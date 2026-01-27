@@ -3631,3 +3631,30 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Adicionar componente de últimos prontuários na página de pacientes - UltimosProntuariosAcessados
 - [x] Exibir abaixo do quadro "Busque paciente" - Grid com 5 colunas
 - [x] Mostrar nome do paciente, data do último acesso e link para o prontuário - Com idade e convênio
+
+
+---
+
+## 🧪 GORGEN 3.9.57 - Reestruturação de Exames Laboratoriais (27/01/2026)
+
+### Backend - Banco de Dados
+- [x] Tabela de resultados laboratoriais já existe (exam-extraction-schema.ts)
+- [x] Campos já definidos: pacienteId, nomeExame, valor, unidade, valorReferencia, dataColeta
+
+### Backend - Extração de Dados
+- [x] Endpoint extrairDePdf já existe em resultadosLaboratoriais
+- [x] Integração com LLM já implementada
+- [x] Armazenamento de resultados já funciona
+
+### Frontend - Layout 3 Cards
+- [x] Card 1: Fluxograma laboratorial com tabela de resultados (Exame x Datas)
+- [x] Card 2: Lista de PDFs com data, status, link PDF, botão "Extrair Dados"
+- [x] Card 3: Exames manuais (legado, mantido para compatibilidade)
+
+### Frontend - Gráfico Evolutivo
+- [x] Modal com gráfico ao clicar em linha de exame - Dialog com LineChart
+- [x] Eixo X: datas dos exames - formatDate()
+- [x] Eixo Y: valores numéricos - resultadoNumerico
+- [x] Pontos de dados: valores aferidos - Recharts Line
+- [x] Linhas de referência (mín/máx) - ReferenceLine
+- [x] Tabela de histórico abaixo do gráfico
