@@ -12,6 +12,7 @@ import * as backup from "./backup";
 import * as autoHealer from "./auto-healer";
 import * as geocodificacao from "./geocodificacao";
 import * as geocodificacaoJob from "./geocodificacao-job";
+import { gerarRelatorioPdfExames } from "./relatorio-exames-pdf";
 import { authRouter } from "./auth-router";
 
 // Schema de validação para Paciente
@@ -2974,6 +2975,17 @@ Retorne um JSON válido com a estrutura:
       .mutation(async ({ ctx, input }) => {
         await db.deleteResultadosLaboratoriaisPorDocumento(input.documentoExternoId);
         return { success: true };
+      }),
+
+    // Gerar relatório PDF com histórico de exames
+    gerarRelatorioPdf: tenantProcedure
+      .input(z.object({ pacienteId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const pdfBuffer = await gerarRelatorioPdfExames(input.pacienteId, ctx.tenant.tenantId);
+        return {
+          pdf: pdfBuffer.toString('base64'),
+          filename: `relatorio-exames-${input.pacienteId}-${Date.now()}.pdf`,
+        };
       }),
   }),
 

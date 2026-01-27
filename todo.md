@@ -3658,3 +3658,18 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Pontos de dados: valores aferidos - Recharts Line
 - [x] Linhas de referência (mín/máx) - ReferenceLine
 - [x] Tabela de histórico abaixo do gráfico
+
+
+---
+
+## 📄 GORGEN 3.9.58 - Exportar Relatório PDF de Exames (27/01/2026)
+
+### Backend
+- [x] Criar endpoint para gerar PDF com histórico de exames laboratoriais - gerarRelatorioPdf
+- [x] Incluir dados do paciente, tabela de exames, valores de referência - PDFKit
+- [x] Usar biblioteca de geração de PDF - pdfkit instalado
+
+### Frontend
+- [x] Adicionar botão "Exportar PDF" no componente ProntuarioExamesLab - Botão com ícone FileDown
+- [x] Mostrar loading durante geração do PDF - Loader2 com animação spin
+- [x] Download automático do arquivo gerado - Blob + createObjectURL

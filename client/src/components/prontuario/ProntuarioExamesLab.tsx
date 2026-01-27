@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, TestTube, FileText, Download, Upload, Loader2, ExternalLink, TrendingUp, TrendingDown, Minus, Activity, LineChart as LineChartIcon, X } from "lucide-react";
+import { Plus, TestTube, FileText, Download, Upload, Loader2, ExternalLink, TrendingUp, TrendingDown, Minus, Activity, LineChart as LineChartIcon, X, FileDown } from "lucide-react";
 import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
   const [extraindoDocId, setExtraindoDocId] = useState<number | null>(null);
   const [graficoAberto, setGraficoAberto] = useState(false);
   const [exameSelecionado, setExameSelecionado] = useState<string | null>(null);
+  const [gerandoPdf, setGerandoPdf] = useState(false);
   const [form, setForm] = useState({
     dataColeta: new Date().toISOString().split("T")[0],
     laboratorio: "",
@@ -87,6 +88,42 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
       documentoExternoId: docId,
       pdfUrl,
     });
+  };
+
+  // Mutation para gerar relatório PDF
+  const gerarPdf = trpc.resultadosLaboratoriais.gerarRelatorioPdf.useMutation({
+    onSuccess: (result) => {
+      // Converter base64 para blob e fazer download
+      const byteCharacters = atob(result.pdf);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      
+      // Criar link e fazer download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Relatório PDF gerado com sucesso!');
+      setGerandoPdf(false);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao gerar PDF: ${error.message}`);
+      setGerandoPdf(false);
+    },
+  });
+
+  const handleExportarPdf = () => {
+    setGerandoPdf(true);
+    gerarPdf.mutate({ pacienteId });
   };
 
   const formatDate = (dateStr: string) => {
@@ -175,11 +212,27 @@ export default function ProntuarioExamesLab({ pacienteId, exames, onUpdate }: Pr
               <Activity className="h-5 w-5" />
               Fluxograma Laboratorial
             </CardTitle>
-            {fluxograma && fluxograma.exames.length > 0 && (
-              <Badge variant="outline">
-                {fluxograma.exames.length} exames • {fluxograma.datas.length} datas
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {fluxograma && fluxograma.exames.length > 0 && (
+                <Badge variant="outline">
+                  {fluxograma.exames.length} exames • {fluxograma.datas.length} datas
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportarPdf}
+                disabled={gerandoPdf || !fluxograma || fluxograma.exames.length === 0}
+                className="gap-1"
+              >
+                {gerandoPdf ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
+                Exportar PDF
+              </Button>
+            </div>
           </div>
           <p className="text-sm text-muted-foreground">
             Clique em uma linha para ver o gráfico evolutivo do exame
