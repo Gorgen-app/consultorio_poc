@@ -3913,3 +3913,14 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Atualizado router evolucoes.create com novos campos
 - [x] Registro automático de data/usuário ao assinar
 
+
+
+---
+
+## 📊 Indicador Visual e Bloqueio de Edição (27/01/2026)
+
+### A Implementar
+- [x] Badge colorido na lista de evoluções (Rascunho=cinza, Pendente=âmbar, Assinada=verde)
+- [x] Bloquear edição de evoluções assinadas (botão "Bloqueada" com ícone de cadeado)
+- [x] Exibir mensagem explicativa quando tentar editar evolução assinada (tooltip explicativo)
+

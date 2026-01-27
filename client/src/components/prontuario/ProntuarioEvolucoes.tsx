@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2, FileOutput, Pill, FileCheck, Scissors, ClipboardList, File, Save, Clock, PenLine, CheckCircle } from "lucide-react";
+import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2, FileOutput, Pill, FileCheck, Scissors, ClipboardList, File, Save, Clock, PenLine, CheckCircle, Lock, Pencil } from "lucide-react";
 import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props {
@@ -550,8 +550,28 @@ export default function ProntuarioEvolucoes({
                             Agendamento #{ev.agendamentoId}
                           </Badge>
                         )}
-                        {ev.assinado && (
-                          <Badge variant="default" className="bg-green-500">Assinado</Badge>
+                        {/* Badge de Status de Assinatura */}
+                        {ev.statusAssinatura === 'assinado' || ev.assinado ? (
+                          <Badge className="bg-green-500 hover:bg-green-600">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Assinada
+                          </Badge>
+                        ) : ev.statusAssinatura === 'pendente_assinatura' ? (
+                          <Badge className="bg-amber-500 hover:bg-amber-600">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Pendente
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-gray-200 text-gray-600">
+                            <Save className="h-3 w-3 mr-1" />
+                            Rascunho
+                          </Badge>
+                        )}
+                        {/* Indicador de Atendimento Encerrado */}
+                        {ev.atendimentoEncerrado && (
+                          <Badge className="bg-blue-500 hover:bg-blue-600">
+                            Atendimento Encerrado
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -654,23 +674,76 @@ export default function ProntuarioEvolucoes({
                       </div>
                     )}
                     
-                    {/* Documentos anexados */}
-                    <div className="pt-2 border-t">
-                      <div className="flex items-center justify-between mb-2">
-                        <Label>Documentos Anexados</Label>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEvolucaoIdParaUpload(ev.id);
-                            setModalUploadAberto(true);
-                          }}
-                        >
-                          <Upload className="h-3 w-3 mr-1" />
-                          Anexar
-                        </Button>
+                    {/* Ações da Evolução */}
+                      <div className="pt-2 border-t">
+                        <div className="flex items-center justify-between mb-4">
+                          <Label>Ações</Label>
+                          <div className="flex gap-2">
+                            {/* Botão Editar - bloqueado se assinada */}
+                            {(ev.statusAssinatura === 'assinado' || ev.assinado) ? (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                disabled
+                                className="opacity-50 cursor-not-allowed"
+                                title="Evoluções assinadas não podem ser editadas para manter a integridade do registro médico"
+                              >
+                                <Lock className="h-3 w-3 mr-1" />
+                                Bloqueada
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // TODO: Implementar modal de edição
+                                  toast.info('Funcionalidade de edição em desenvolvimento');
+                                }}
+                                title="Editar esta evolução"
+                              >
+                                <Pencil className="h-3 w-3 mr-1" />
+                                Editar
+                              </Button>
+                            )}
+                            {/* Botão Assinar - apenas se não assinada */}
+                            {!(ev.statusAssinatura === 'assinado' || ev.assinado) && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // TODO: Implementar assinatura posterior
+                                  toast.info('Funcionalidade de assinatura posterior em desenvolvimento');
+                                }}
+                                title="Assinar esta evolução"
+                              >
+                                <PenLine className="h-3 w-3 mr-1" />
+                                Assinar
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
+                    
+                    {/* Documentos anexados */}
+                      <div className="pt-2 border-t">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label>Documentos Anexados</Label>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEvolucaoIdParaUpload(ev.id);
+                              setModalUploadAberto(true);
+                            }}
+                          >
+                            <Upload className="h-3 w-3 mr-1" />
+                            Anexar
+                          </Button>
+                        </div>
                       <DocumentosList 
                         pacienteId={pacienteId} 
                         evolucaoId={ev.id}
