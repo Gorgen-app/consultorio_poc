@@ -3426,3 +3426,14 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Sistema confirma que salvou mas campo fica em branco
 - [x] Causa: EditarPacienteModal só invalidava pacientes.list, não prontuario.completo
 - [x] Solução: Adicionado invalidate para pacientes.getById e prontuario.completo
+
+
+---
+
+## 🐛 GORGEN 3.9.43 - Erro ao Atualizar Telefone (27/01/2026)
+
+### Bug Corrigido
+- [x] Erro "Failed query" ao atualizar telefone de paciente
+- [x] Query mostra campos vazios sendo enviados (pasta_paciente, data_inclusao)
+- [x] Causa: handleSubmit enviava todos os campos do formData, incluindo strings vazias
+- [x] Solução: Filtrar campos vazios antes de enviar (manter apenas valores válidos)

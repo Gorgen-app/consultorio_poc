@@ -325,9 +325,22 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
         : formData.dataObitoLastFU,
     };
 
+    // Filtrar campos vazios ou undefined para não sobrescrever dados existentes
+    // Manter null explícito para permitir limpar campos
+    const cleanedData = Object.fromEntries(
+      Object.entries(dataToSubmit).filter(([key, value]) => {
+        // Remover campos que não devem ser atualizados
+        if (key === 'id' || key === 'tenantId') return false;
+        // Manter valores que não são string vazia
+        if (value === '') return false;
+        // Manter todos os outros valores (incluindo null, 0, false)
+        return true;
+      })
+    );
+
     updateMutation.mutate({
       id: paciente.id,
-      data: dataToSubmit as any,
+      data: cleanedData as any,
     });
   };
 
