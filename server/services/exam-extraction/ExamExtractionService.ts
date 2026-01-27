@@ -179,7 +179,7 @@ export class ExamExtractionService {
    * Identifica o laboratório baseado em padrões conhecidos
    */
   private identifyLaboratory(text: string): LaboratoryInfo {
-    for (const [labName, patterns] of this.laboratoryPatterns.entries()) {
+    for (const [labName, patterns] of Array.from(this.laboratoryPatterns.entries())) {
       for (const pattern of patterns) {
         if (pattern.test(text)) {
           const labConfig = KNOWN_LABORATORIES[labName];

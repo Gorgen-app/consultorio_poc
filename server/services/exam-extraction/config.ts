@@ -415,4 +415,5 @@ Para cada exame, extraia:
 - isAltered: true se o valor está fora da referência
 
 Retorne um array JSON com todos os exames encontrados.`,
+  fewShotExamples: [] as { input: string; output: { name: string; value: string; unit: string; reference: string; isAltered: boolean }[] }[],
 };

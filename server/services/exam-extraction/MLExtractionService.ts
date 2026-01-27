@@ -182,8 +182,9 @@ Bilirrubina Total: 1.8 mg/dL (0.20-1.10)`,
    * Chama a API OpenAI
    */
   private async callOpenAI(prompt: string): Promise<string> {
-    // Usar OpenAI SDK
-    const OpenAI = await import('openai');
+    // Usar OpenAI SDK (import dinâmico para evitar dependência obrigatória)
+    // @ts-ignore - openai será instalado quando ML for ativado
+    const OpenAI = await import('openai' as string);
     const client = new OpenAI.default();
     
     const response = await client.chat.completions.create({

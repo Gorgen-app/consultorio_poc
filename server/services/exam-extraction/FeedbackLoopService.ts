@@ -203,7 +203,7 @@ export class FeedbackLoopService {
       labCounts.set(correction.fieldName, count + 1);
     }
     
-    for (const [lab, count] of labCounts.entries()) {
+    for (const [lab, count] of Array.from(labCounts.entries())) {
       if (count >= 3) {
         suggestions.push({
           type: 'NEW_LABORATORY',
