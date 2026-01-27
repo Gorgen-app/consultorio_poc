@@ -31,6 +31,7 @@ import {
   sendBackupEmailNotification,
   getBackupConfig,
 } from "./backup";
+import { executarJobGeocodificacao } from "./geocodificacao-job";
 
 // ==========================================
 // CONFIGURAÇÕES DO SCHEDULER
@@ -43,6 +44,7 @@ interface SchedulerConfig {
   monthlyReportCron: string;    // Cron expression para relatório mensal
   cleanupCron: string;          // Cron expression para limpeza de backups antigos
   integrityCheckCron: string;   // Cron expression para verificação de integridade
+  geocodificacaoCron: string;   // Cron expression para geocodificação de CEPs
 }
 
 const DEFAULT_CONFIG: SchedulerConfig = {
@@ -52,6 +54,7 @@ const DEFAULT_CONFIG: SchedulerConfig = {
   monthlyReportCron: "0 5 1 * *",         // Dia 1 de cada mês às 05:00
   cleanupCron: "0 2 * * *",               // Todos os dias às 02:00
   integrityCheckCron: "0 6 * * 1",        // Segundas-feiras às 06:00
+  geocodificacaoCron: "30 3 * * *",       // Todos os dias às 03:30 (após backup)
 };
 
 // ==========================================
@@ -343,6 +346,43 @@ async function runMonthlyAuditReport(): Promise<void> {
   }
 }
 
+/**
+ * Executa geocodificação diária de novos CEPs
+ */
+async function runDailyGeocodificacao(): Promise<void> {
+  logScheduler("info", "Iniciando geocodificação diária de CEPs");
+  
+  try {
+    const resultado = await executarJobGeocodificacao();
+    
+    logScheduler("info", "Geocodificação diária concluída", {
+      totalCeps: resultado.totalCeps,
+      processados: resultado.processados,
+      sucesso: resultado.sucesso,
+      erros: resultado.erros,
+      progresso: resultado.progresso + "%",
+    });
+    
+    const task = scheduledTasks.get("geocodificacao");
+    if (task) {
+      task.lastRun = new Date();
+      task.lastStatus = resultado.erros === 0 ? "success" : "failed";
+      if (resultado.erros > 0) {
+        task.lastError = `${resultado.erros} CEPs com erro`;
+      }
+    }
+  } catch (error: any) {
+    logScheduler("error", "Erro na geocodificação diária", error);
+    
+    const task = scheduledTasks.get("geocodificacao");
+    if (task) {
+      task.lastRun = new Date();
+      task.lastStatus = "failed";
+      task.lastError = error.message;
+    }
+  }
+}
+
 // ==========================================
 // FUNÇÕES DE GERENCIAMENTO DO SCHEDULER
 // ==========================================
@@ -372,6 +412,7 @@ export function initializeBackupScheduler(config: Partial<SchedulerConfig> = {})
     { name: "monthlyReportCron", expr: finalConfig.monthlyReportCron },
     { name: "cleanupCron", expr: finalConfig.cleanupCron },
     { name: "integrityCheckCron", expr: finalConfig.integrityCheckCron },
+    { name: "geocodificacaoCron", expr: finalConfig.geocodificacaoCron },
   ];
 
   for (const { name, expr } of cronExpressions) {
@@ -429,6 +470,16 @@ export function initializeBackupScheduler(config: Partial<SchedulerConfig> = {})
     name: "Relatório Mensal de Auditoria",
     task: monthlyReportTask,
     cronExpression: finalConfig.monthlyReportCron,
+  });
+
+  // Agendar geocodificação diária de CEPs (às 03:30, após backup)
+  const geocodificacaoTask = cron.schedule(finalConfig.geocodificacaoCron, runDailyGeocodificacao, {
+    timezone: "America/Sao_Paulo",
+  });
+  scheduledTasks.set("geocodificacao", {
+    name: "Geocodificação Diária de CEPs",
+    task: geocodificacaoTask,
+    cronExpression: finalConfig.geocodificacaoCron,
   });
 
   isInitialized = true;

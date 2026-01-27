@@ -91,8 +91,8 @@ describe("Backup Scheduler Module", () => {
       const status = getSchedulerStatus();
       
       expect(status.initialized).toBe(true);
-      expect(status.tasks.length).toBe(5);
-      expect(cron.schedule).toHaveBeenCalledTimes(5);
+      expect(status.tasks.length).toBe(6); // Inclui geocodificação
+      expect(cron.schedule).toHaveBeenCalledTimes(6);
     });
 
     it("deve validar expressões cron antes de agendar", () => {
@@ -115,8 +115,8 @@ describe("Backup Scheduler Module", () => {
       initializeBackupScheduler();
       initializeBackupScheduler(); // Segunda chamada
       
-      // Deve ter sido chamado apenas 5 vezes (primeira inicialização)
-      expect(cron.schedule).toHaveBeenCalledTimes(5);
+      // Deve ter sido chamado apenas 6 vezes (primeira inicialização, inclui geocodificação)
+      expect(cron.schedule).toHaveBeenCalledTimes(6);
     });
 
     it("não deve inicializar se estiver desabilitado", () => {
@@ -155,10 +155,11 @@ describe("Backup Scheduler Module", () => {
       const status = getSchedulerStatus();
       
       expect(status.initialized).toBe(true);
-      expect(status.tasks).toHaveLength(5);
+      expect(status.tasks).toHaveLength(6); // Inclui geocodificação
       expect(status.tasks.map(t => t.name)).toContain("Backup Diário");
       expect(status.tasks.map(t => t.name)).toContain("Limpeza de Backups");
       expect(status.tasks.map(t => t.name)).toContain("Teste de Restauração Semanal");
+      expect(status.tasks.map(t => t.name)).toContain("Geocodificação Diária de CEPs");
     });
   });
 

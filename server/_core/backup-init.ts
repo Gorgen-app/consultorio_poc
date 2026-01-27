@@ -64,6 +64,7 @@ export function initializeBackupSystem(): void {
   console.log("[GORGEN] ");
   console.log("[GORGEN] 📅 Agendamento (via GitHub Actions):");
   console.log("[GORGEN]   - Backup Diário:        03:00 BRT (todos os dias)");
+  console.log("[GORGEN]   - Geocodificação CEPs:  03:30 BRT (todos os dias)");
   console.log("[GORGEN]   - Limpeza:              Após backup diário");
   console.log("[GORGEN]   - Teste de Restauração: 04:00 BRT (domingos)");
   console.log("[GORGEN]   - Relatório de Auditoria: 06:00 BRT (dia 1 de cada mês)");
