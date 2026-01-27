@@ -13,7 +13,8 @@ import { drizzle, MySql2Database } from "drizzle-orm/mysql2";
 // Configuração do pool de conexões
 const POOL_CONFIG: Partial<PoolOptions> = {
   // Número máximo de conexões no pool
-  connectionLimit: 50,
+  // Reduzido de 50 para 20 para economizar memória
+  connectionLimit: 20,
   // Aguardar por conexões disponíveis
   waitForConnections: true,
   // Máximo de requisições na fila

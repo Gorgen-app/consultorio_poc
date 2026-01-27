@@ -9,11 +9,14 @@
 
 import { invalidarCacheMetricas } from './db';
 
-// Intervalo de limpeza automática (5 minutos)
-const AUTO_CLEANUP_INTERVAL = 5 * 60 * 1000;
+// Intervalo de limpeza automática (3 minutos - reduzido para melhor controle de memória)
+const AUTO_CLEANUP_INTERVAL = 3 * 60 * 1000;
 
-// Limite de uso de heap para trigger de limpeza (80%)
-const HEAP_CLEANUP_THRESHOLD = 0.80;
+// Limite de uso de heap para trigger de limpeza (70% - mais agressivo)
+const HEAP_CLEANUP_THRESHOLD = 0.70;
+
+// Limite crítico para forçar GC imediato (85%)
+const HEAP_CRITICAL_THRESHOLD = 0.85;
 
 /**
  * Força garbage collection se disponível
@@ -25,6 +28,20 @@ function forceGC(): boolean {
     return true;
   }
   return false;
+}
+
+/**
+ * Limpa referências de objetos grandes para liberar memória
+ */
+function clearLargeObjectReferences(): void {
+  // Forçar limpeza de buffers temporários
+  if (global.gc) {
+    // Executar GC duas vezes para garantir limpeza completa
+    global.gc();
+    setTimeout(() => {
+      if (global.gc) global.gc();
+    }, 100);
+  }
 }
 
 /**
@@ -58,7 +75,23 @@ export function checkAndOptimizeMemory(): {
   let cleaned = false;
   let gcRan = false;
   
-  if (heapUsagePercent > HEAP_CLEANUP_THRESHOLD) {
+  if (heapUsagePercent > HEAP_CRITICAL_THRESHOLD) {
+    console.log(`[Memory Optimizer] Uso de heap CRÍTICO (${Math.round(heapUsagePercent * 100)}%), forçando limpeza agressiva...`);
+    
+    // Limpar caches
+    clearAllCaches();
+    cleaned = true;
+    
+    // Limpar referências grandes
+    clearLargeObjectReferences();
+    
+    // Forçar GC múltiplas vezes
+    gcRan = forceGC();
+    if (gcRan) {
+      setTimeout(() => forceGC(), 500);
+      console.log('[Memory Optimizer] Garbage collection agressivo executado');
+    }
+  } else if (heapUsagePercent > HEAP_CLEANUP_THRESHOLD) {
     console.log(`[Memory Optimizer] Uso de heap alto (${Math.round(heapUsagePercent * 100)}%), iniciando limpeza...`);
     
     // Limpar caches

@@ -3944,3 +3944,18 @@ Adicionar os seguintes botões ao final da janela de evolução:
 ### A Implementar
 - [x] Adicionar botão "Assinar e Encerrar" no modal de confirmação de assinatura
 - [x] Manter botão "Apenas Assinar" como opção alternativa
+
+---
+
+## 🧠 Otimização de Memória Heap (27/01/2026)
+
+### Problema Identificado
+- Uso de memória heap alto: 91-93% (55-60MB de 59-66MB)
+- Alerta crítico no painel de performance
+- Auto-Healer tentando limpar caches mas sem liberar memória significativa
+
+### A Implementar
+- [x] Diagnosticar causa do alto uso de memória
+- [x] Otimizar queries e conexões de banco de dados (pool reduzido de 50 para 20)
+- [x] Implementar limpeza de cache mais agressiva (threshold 70%, intervalo 3min)
+- [x] Aumentar limite de memória do Node.js (256MB → 512MB + --expose-gc)
