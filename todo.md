@@ -3560,3 +3560,13 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Adicionar endpoint para iniciar o job - iniciarJobGeocodificacao
 - [x] Adicionar endpoint para monitorar status do job - statusJobGeocodificacao
 - [x] Implementar controle de rate limiting (200 req/período) - MAX_REQUESTS_PER_RUN = 180
+
+
+---
+
+## ⏰ GORGEN 3.9.52 - Agendamento Automático de Geocodificação (27/01/2026)
+
+### Agendamento Diário
+- [x] Configurar cron job para executar diariamente às 03:30 BRT
+- [x] Processar apenas CEPs novos (não processados anteriormente) - buscarCepsPendentes() já filtra
+- [x] Registrar log de execução do job agendado - logScheduler() com estatísticas
