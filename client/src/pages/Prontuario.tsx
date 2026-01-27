@@ -486,7 +486,7 @@ export default function Prontuario() {
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => {
-                      setEditarPacienteOpen(true);
+                      setModalEditarPacienteAberto(true);
                     }}
                     title="Editar dados de contato"
                   >

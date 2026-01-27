@@ -3446,3 +3446,15 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 ### Bugs Corrigidos
 - [x] Erro "Failed query" ao atualizar dados na aba Contato - Adicionado filtro para excluir campos idPaciente, dataInclusao, pastaPaciente
 - [x] Falta botão de lápis na seção Contato do prontuário - Botão adicionado
+
+
+---
+
+## 🧹 GORGEN 3.9.45 - Limpeza e Testes (27/01/2026)
+
+### Tarefas Concluídas
+- [x] Limpar erros de TypeScript - Corrigido setEditarPacienteOpen → setModalEditarPacienteAberto
+- [x] Remover scripts de teste com erros (test-cpf-search.ts, test-performance.ts)
+- [x] Criar teste automatizado para atualização de contato (12 testes)
+- [x] Criar teste automatizado para convênio e dados clínicos (incluído no mesmo arquivo)
+- [x] Todos os 535 testes passando (39 arquivos)
