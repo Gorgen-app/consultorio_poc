@@ -3809,3 +3809,16 @@ Invalid option: expected one of "M"|"F"|"Outro"
   - [x] Convênio (operadora_1 via convenio param)
   - [x] Plano/Modalidade (plano_modalidade_1 via planoModalidade param)
   - [x] Matrícula (matricula_convenio_1 via matriculaConvenio param)
+
+
+---
+
+## 🚀 Filosofia de Pré-preenchimento Automático (27/01/2026)
+
+### Princípio
+Facilitar a vida do usuário eliminando redundância. Tudo que puder vir pré-preenchido deve vir.
+
+### Implementações Necessárias
+- [x] Agenda → Agendamento: Data e horário clicados vêm preenchidos automaticamente (visualização semana e dia)
+- [x] Agendamento → Atendimento: Data do agendamento vem preenchida no registro do atendimento (via agendamentoId)
+- [x] Prontuário → Novo Atendimento: Dados do paciente já preenchidos (implementado em 3.9.64)

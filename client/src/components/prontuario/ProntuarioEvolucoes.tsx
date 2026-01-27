@@ -56,16 +56,36 @@ export default function ProntuarioEvolucoes({
   // Buscar textos padrão do usuário
   const { data: textosPadrao } = trpc.prontuario.evolucoes.getTextosPadrao.useQuery();
   
+  // Buscar dados do agendamento vinculado para pré-preencher a data
+  const { data: agendamentoVinculado } = trpc.agenda.getById.useQuery(
+    { id: agendamentoIdVinculado! },
+    { enabled: !!agendamentoIdVinculado }
+  );
+  
   // Efeito para abrir automaticamente o formulário quando solicitado via parâmetros
   useEffect(() => {
     if (abrirNovaEvolucao) {
       setNovaEvolucao(true);
       if (agendamentoIdVinculado) {
         setAgendamentoId(agendamentoIdVinculado);
-        toast.info("Evolução vinculada ao agendamento. Preencha os dados do atendimento.");
+        toast.info("Evolução vinculada ao agendamento. Data pré-preenchida automaticamente.");
       }
     }
   }, [abrirNovaEvolucao, agendamentoIdVinculado]);
+  
+  // Efeito para pré-preencher a data quando o agendamento é carregado
+  useEffect(() => {
+    if (agendamentoVinculado && agendamentoIdVinculado) {
+      // Formatar a data do agendamento para datetime-local
+      const dataAgendamento = new Date(agendamentoVinculado.dataHoraInicio);
+      const dataFormatada = dataAgendamento.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+      setForm(prev => ({
+        ...prev,
+        dataEvolucao: dataFormatada,
+        tipo: agendamentoVinculado.tipoCompromisso === "Consulta" ? "Consulta" : "Consulta"
+      }));
+    }
+  }, [agendamentoVinculado, agendamentoIdVinculado]);
   
   const createEvolucao = trpc.prontuario.evolucoes.create.useMutation({
     onSuccess: () => {

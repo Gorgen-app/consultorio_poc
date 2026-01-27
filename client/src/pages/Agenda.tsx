@@ -563,6 +563,38 @@ export default function Agenda() {
     setModalDetalhesAberto(true);
   };
 
+  // Função para abrir modal de novo agendamento com data/hora pré-preenchidos
+  const abrirNovoAgendamentoComHorario = (data: Date, hora: number, minuto: number = 0) => {
+    // Formatar data como YYYY-MM-DD
+    const dataFormatada = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+    
+    // Formatar hora de início como HH:MM
+    const horaInicioFormatada = `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
+    
+    // Calcular hora de fim (30 minutos depois por padrão)
+    let horaFim = hora;
+    let minutoFim = minuto + 30;
+    if (minutoFim >= 60) {
+      horaFim += 1;
+      minutoFim -= 60;
+    }
+    const horaFimFormatada = `${String(horaFim).padStart(2, '0')}:${String(minutoFim).padStart(2, '0')}`;
+    
+    // Atualizar estado do formulário
+    setNovoAgendamento(prev => ({
+      ...prev,
+      data: dataFormatada,
+      horaInicio: horaInicioFormatada,
+      horaFim: horaFimFormatada,
+    }));
+    
+    // Abrir modal
+    setModalNovoAberto(true);
+    
+    // Notificar usuário
+    toast.info(`Horário selecionado: ${dataFormatada} às ${horaInicioFormatada}`);
+  };
+
   const selecionarPaciente = (paciente: any) => {
     setNovoAgendamento({
       ...novoAgendamento,
@@ -756,10 +788,20 @@ export default function Agenda() {
                     return (
                       <div 
                         key={i} 
-                        className={`px-0.5 py-0 border-r overflow-hidden ${
+                        className={`px-0.5 py-0 border-r overflow-hidden cursor-pointer hover:bg-primary/5 transition-colors ${
                           isHoje ? "bg-blue-50/50" : feriado ? "bg-amber-50" : ""
                         }`}
+                        onClick={(e) => {
+                          // Só abre modal se clicar no slot vazio (não em um agendamento existente)
+                          if (e.target === e.currentTarget || (e.target as HTMLElement).closest('[data-slot-empty]')) {
+                            abrirNovoAgendamentoComHorario(dia, hora);
+                          }
+                        }}
+                        title={`Clique para agendar às ${hora.toString().padStart(2, '0')}:00`}
                       >
+                        {agendamentosHora.length === 0 && (
+                          <div data-slot-empty className="h-full w-full" />
+                        )}
                         {agendamentosHora.map(renderAgendamento)}
                       </div>
                     );
@@ -785,15 +827,34 @@ export default function Agenda() {
                 });
 
                 return (
-                  <div key={hora} className="flex gap-4 min-h-[50px] border-b pb-2">
+                  <div 
+                    key={hora} 
+                    className="flex gap-4 min-h-[50px] border-b pb-2 cursor-pointer hover:bg-primary/5 transition-colors rounded"
+                    onClick={(e) => {
+                      // Só abre modal se clicar no slot vazio (não em um agendamento existente)
+                      if (e.target === e.currentTarget || agendamentosHora.length === 0) {
+                        abrirNovoAgendamentoComHorario(dataAtual, hora);
+                      }
+                    }}
+                    title={`Clique para agendar às ${hora.toString().padStart(2, '0')}:00`}
+                  >
                     <div className="w-16 text-sm text-muted-foreground font-medium">
                       {hora.toString().padStart(2, "0")}:00
                     </div>
                     <div className="flex-1">
+                      {agendamentosHora.length === 0 && (
+                        <div className="h-full flex items-center text-muted-foreground text-sm">
+                          <Plus className="w-4 h-4 mr-1 opacity-50" />
+                          <span className="opacity-50">Clique para agendar</span>
+                        </div>
+                      )}
                       {agendamentosHora.map((ag: any) => (
                         <div
                           key={ag.id}
-                          onClick={() => abrirDetalhes(ag)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            abrirDetalhes(ag);
+                          }}
                           className={`
                             p-3 rounded cursor-pointer text-white mb-2
                             ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
