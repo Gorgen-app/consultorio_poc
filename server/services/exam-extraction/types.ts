@@ -32,6 +32,9 @@ export interface ExamResult {
   
   /** Confiança da extração (0-1) */
   confidence?: number;
+  
+  /** Observações adicionais */
+  observation?: string;
 }
 
 /**
@@ -101,6 +104,18 @@ export interface ExtractionResult {
   
   /** Nome do arquivo processado */
   fileName?: string;
+  
+  /** Nome do paciente extraído (para integração) */
+  patientName?: string;
+  
+  /** Data da coleta */
+  collectionDate?: string;
+  
+  /** Data do resultado */
+  resultDate?: string;
+  
+  /** Nome do laboratório (string simples) */
+  laboratory?: LaboratoryInfo;
 }
 
 /**

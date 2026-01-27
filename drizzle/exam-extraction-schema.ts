@@ -12,8 +12,7 @@
  */
 
 import { mysqlTable, int, varchar, text, boolean, timestamp, mysqlEnum, json } from "drizzle-orm/mysql-core";
-import { users } from "./schema";
-import { tenants } from "./schema";
+import { users, tenants, pacientes } from "./schema";
 
 /**
  * Tabela de Correções de Extração (Opção 1 - Feedback Loop Manual)
@@ -211,7 +210,7 @@ export const extractionLogs = mysqlTable("extraction_logs", {
   errorStack: text("error_stack"),
   
   // Paciente associado (se identificado)
-  patientId: int("patient_id"),
+  pacienteId: int("paciente_id").references(() => pacientes.id),
   patientName: varchar("patient_name", { length: 255 }),
   examDate: varchar("exam_date", { length: 10 }),
   
