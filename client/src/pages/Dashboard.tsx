@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users, Calendar, DollarSign, TrendingUp, Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { MapaCalorCeps } from "@/components/dashboard/MapaCalorCeps";
 
 // Formata número inteiro no padrão brasileiro (21.644)
 const formatarNumero = (valor: number | undefined | null): string => {
@@ -75,6 +76,8 @@ export default function Dashboard() {
           Visão geral • <span className="font-medium">{tenantName}</span>
         </p>
       </div>
+      
+      {/* Cards de métricas principais */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="card-elevated">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -117,37 +120,47 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle>Distribuição por Convênio</CardTitle>
-          <CardDescription>Top 10 convênios por número de atendimentos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {stats?.distribuicaoConvenio && stats.distribuicaoConvenio.length > 0 ? (
-            <div className="space-y-3">
-              {stats.distribuicaoConvenio.map((item, index) => {
-                const total = stats.totalAtendimentos || 1;
-                const percentage = ((item.total / total) * 100).toFixed(1);
-                return (
-                  <div key={index} className="flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium truncate">{item.convenio}</span>
-                        <span className="text-sm text-muted-foreground ml-2">{item.total} ({percentage}%)</span>
-                      </div>
-                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${percentage}%` }} />
+      
+      {/* Grid de 2 colunas para gráficos */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Distribuição por Convênio */}
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle>Distribuição por Convênio</CardTitle>
+            <CardDescription>Top 10 convênios por número de atendimentos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats?.distribuicaoConvenio && stats.distribuicaoConvenio.length > 0 ? (
+              <div className="space-y-3">
+                {stats.distribuicaoConvenio.map((item, index) => {
+                  const total = stats.totalAtendimentos || 1;
+                  const percentage = ((item.total / total) * 100).toFixed(1);
+                  return (
+                    <div key={index} className="flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium truncate">{item.convenio}</span>
+                          <span className="text-sm text-muted-foreground ml-2">{item.total} ({percentage}%)</span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
-          )}
-        </CardContent>
-      </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível</p>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Mapa de Calor de CEPs */}
+        <MapaCalorCeps className="card-elevated" />
+      </div>
+      
+      {/* Faturamento Pendente */}
       {faturamentoPendente > 0 && (
         <Card className="card-elevated border-yellow-200 dark:border-yellow-900">
           <CardHeader>

@@ -319,6 +319,23 @@ export const appRouter = router({
     pacDistribuicaoCidade: tenantProcedure
       .query(async ({ ctx }) => dashboardMetricas.getPacientesDistribuicaoCidade(ctx.tenant.tenantId)),
     
+    // Mapa de calor de CEPs
+    pacDistribuicaoCep: tenantProcedure
+      .input(z.object({ 
+        nivelAgrupamento: z.enum(['regiao', 'subregiao', 'completo']).optional().default('subregiao')
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const nivel = input?.nivelAgrupamento || 'subregiao';
+        return dashboardMetricas.getPacientesDistribuicaoCep(ctx.tenant.tenantId, nivel);
+      }),
+    
+    // Coordenadas para CEPs (usado pelo mapa de calor)
+    getCoordenadaCep: tenantProcedure
+      .input(z.object({ cep: z.string() }))
+      .query(async ({ input }) => {
+        return dashboardMetricas.getCoordenadaCep(input.cep);
+      }),
+    
     pacTaxaRetencao: tenantProcedure
       .input(z.object({ periodo: z.enum(['7d', '30d', '3m', '6m', '1a', '3a', '5a', 'todo']) }))
       .query(async ({ ctx, input }) => dashboardMetricas.getPacientesTaxaRetencao(ctx.tenant.tenantId, input.periodo)),

@@ -981,3 +981,242 @@ export async function saveDashboardConfig(
   
   return await getDashboardConfig(tenantId, userId);
 }
+
+
+// ========================================
+// MAPA DE CALOR DE CEPs
+// ========================================
+
+/**
+ * Retorna a distribuição de pacientes por CEP para o mapa de calor.
+ * Agrupa os CEPs pelo prefixo (5 primeiros dígitos) para melhor visualização.
+ * @param tenantId - ID do tenant
+ * @param nivelAgrupamento - Nível de agrupamento: 'regiao' (2 dígitos), 'subregiao' (5 dígitos), 'completo' (8 dígitos)
+ */
+export async function getPacientesDistribuicaoCep(
+  tenantId: number, 
+  nivelAgrupamento: 'regiao' | 'subregiao' | 'completo' = 'subregiao'
+) {
+  const db = await getDb();
+  if (!db) return { dados: [], total: 0, maxContagem: 0 };
+  
+  // Determinar quantos dígitos usar baseado no nível de agrupamento
+  let digitosPrefixo: number;
+  switch (nivelAgrupamento) {
+    case 'regiao':
+      digitosPrefixo = 2; // Agrupa por região (ex: 90, 91, 92...)
+      break;
+    case 'subregiao':
+      digitosPrefixo = 5; // Agrupa por sub-região (ex: 90000, 90010, 90020...)
+      break;
+    case 'completo':
+    default:
+      digitosPrefixo = 8; // CEP completo
+  }
+  
+  const resultado = await db.execute(sql`
+    SELECT 
+      LEFT(REPLACE(REPLACE(cep, '-', ''), '.', ''), ${digitosPrefixo}) as cep_prefixo,
+      COUNT(*) as quantidade,
+      GROUP_CONCAT(DISTINCT COALESCE(cidade, 'N/I') ORDER BY cidade SEPARATOR ', ') as cidades
+    FROM pacientes
+    WHERE tenant_id = ${tenantId}
+      AND deleted_at IS NULL
+      AND cep IS NOT NULL
+      AND cep != ''
+      AND LENGTH(REPLACE(REPLACE(cep, '-', ''), '.', '')) >= ${digitosPrefixo}
+    GROUP BY cep_prefixo
+    ORDER BY quantidade DESC
+  `);
+  
+  const rows = (resultado[0] as unknown) as any[];
+  
+  // Calcular total e máximo para normalização das cores
+  const total = rows.reduce((acc: number, r: any) => acc + Number(r.quantidade), 0);
+  const maxContagem = rows.length > 0 ? Math.max(...rows.map((r: any) => Number(r.quantidade))) : 0;
+  
+  const dados = rows.map((r: any) => ({
+    cep: r.cep_prefixo,
+    quantidade: Number(r.quantidade),
+    cidades: r.cidades || '',
+    // Calcular intensidade de 0 a 1 para o mapa de calor
+    intensidade: maxContagem > 0 ? Number(r.quantidade) / maxContagem : 0
+  }));
+  
+  return { 
+    dados, 
+    total,
+    maxContagem,
+    nivelAgrupamento
+  };
+}
+
+/**
+ * Retorna coordenadas aproximadas para CEPs brasileiros baseado no prefixo.
+ * Mapeamento simplificado das regiões postais do Brasil.
+ */
+export function getCoordenadaCep(cepPrefixo: string): { lat: number; lng: number } | null {
+  // Mapeamento aproximado das regiões postais brasileiras
+  // Baseado nos 2 primeiros dígitos do CEP
+  const regioes: Record<string, { lat: number; lng: number }> = {
+    // São Paulo Capital e Grande SP
+    '01': { lat: -23.5505, lng: -46.6333 },
+    '02': { lat: -23.4800, lng: -46.6200 },
+    '03': { lat: -23.5400, lng: -46.5800 },
+    '04': { lat: -23.6100, lng: -46.6500 },
+    '05': { lat: -23.5300, lng: -46.7000 },
+    '06': { lat: -23.5200, lng: -46.8500 },
+    '07': { lat: -23.4600, lng: -46.5300 },
+    '08': { lat: -23.5100, lng: -46.4500 },
+    '09': { lat: -23.6500, lng: -46.5500 },
+    
+    // Interior de São Paulo
+    '11': { lat: -23.9600, lng: -46.3300 }, // Santos
+    '12': { lat: -23.2000, lng: -45.9000 }, // Vale do Paraíba
+    '13': { lat: -22.9100, lng: -47.0600 }, // Campinas
+    '14': { lat: -21.1800, lng: -47.8100 }, // Ribeirão Preto
+    '15': { lat: -20.8200, lng: -49.3800 }, // São José do Rio Preto
+    '16': { lat: -21.2100, lng: -50.4300 }, // Araçatuba
+    '17': { lat: -22.3200, lng: -49.0700 }, // Bauru
+    '18': { lat: -23.5000, lng: -47.4600 }, // Sorocaba
+    '19': { lat: -22.1200, lng: -51.3900 }, // Presidente Prudente
+    
+    // Rio de Janeiro
+    '20': { lat: -22.9068, lng: -43.1729 },
+    '21': { lat: -22.8800, lng: -43.2500 },
+    '22': { lat: -22.9500, lng: -43.1800 },
+    '23': { lat: -22.9200, lng: -43.4000 },
+    '24': { lat: -22.8900, lng: -43.1000 },
+    '25': { lat: -22.4500, lng: -42.9700 }, // Petrópolis
+    '26': { lat: -22.7600, lng: -43.4500 }, // Nova Iguaçu
+    '27': { lat: -22.4100, lng: -42.9700 }, // Teresópolis
+    '28': { lat: -22.0100, lng: -41.0600 }, // Campos
+    
+    // Espírito Santo
+    '29': { lat: -20.3155, lng: -40.3128 },
+    
+    // Minas Gerais
+    '30': { lat: -19.9167, lng: -43.9345 }, // BH
+    '31': { lat: -19.8700, lng: -43.9700 },
+    '32': { lat: -20.0000, lng: -44.0500 },
+    '33': { lat: -19.9300, lng: -43.8500 },
+    '34': { lat: -19.8500, lng: -43.9200 },
+    '35': { lat: -21.7600, lng: -43.3500 }, // Juiz de Fora
+    '36': { lat: -21.2500, lng: -45.0000 }, // Varginha
+    '37': { lat: -21.5500, lng: -45.4500 }, // Poços de Caldas
+    '38': { lat: -18.9200, lng: -48.2800 }, // Uberlândia
+    '39': { lat: -16.7200, lng: -43.8600 }, // Montes Claros
+    
+    // Bahia
+    '40': { lat: -12.9714, lng: -38.5014 }, // Salvador
+    '41': { lat: -12.9500, lng: -38.4500 },
+    '42': { lat: -12.2600, lng: -38.9600 }, // Feira de Santana
+    '43': { lat: -12.1400, lng: -38.4200 },
+    '44': { lat: -14.8600, lng: -40.8400 }, // Vitória da Conquista
+    '45': { lat: -14.7900, lng: -39.2800 }, // Ilhéus
+    '46': { lat: -13.0100, lng: -38.5200 },
+    '47': { lat: -10.5100, lng: -40.3100 }, // Petrolina
+    '48': { lat: -12.2500, lng: -38.9500 },
+    
+    // Sergipe
+    '49': { lat: -10.9472, lng: -37.0731 },
+    
+    // Pernambuco
+    '50': { lat: -8.0476, lng: -34.8770 }, // Recife
+    '51': { lat: -8.0300, lng: -34.9200 },
+    '52': { lat: -8.0600, lng: -34.8900 },
+    '53': { lat: -8.0100, lng: -34.8500 },
+    '54': { lat: -8.1200, lng: -34.9100 },
+    '55': { lat: -8.2800, lng: -35.9700 }, // Caruaru
+    '56': { lat: -9.4000, lng: -40.5000 }, // Petrolina
+    
+    // Alagoas
+    '57': { lat: -9.6658, lng: -35.7350 },
+    
+    // Paraíba
+    '58': { lat: -7.1195, lng: -34.8450 },
+    
+    // Rio Grande do Norte
+    '59': { lat: -5.7945, lng: -35.2110 },
+    
+    // Ceará
+    '60': { lat: -3.7172, lng: -38.5433 }, // Fortaleza
+    '61': { lat: -3.7500, lng: -38.5800 },
+    '62': { lat: -3.6900, lng: -40.3500 }, // Sobral
+    '63': { lat: -7.2100, lng: -39.3100 }, // Juazeiro do Norte
+    
+    // Piauí
+    '64': { lat: -5.0892, lng: -42.8019 },
+    
+    // Maranhão
+    '65': { lat: -2.5307, lng: -44.3068 },
+    
+    // Pará
+    '66': { lat: -1.4558, lng: -48.4902 }, // Belém
+    '67': { lat: -2.4400, lng: -54.7100 }, // Santarém
+    '68': { lat: -0.0400, lng: -51.0700 }, // Macapá
+    
+    // Amazonas
+    '69': { lat: -3.1190, lng: -60.0217 },
+    
+    // Distrito Federal
+    '70': { lat: -15.7942, lng: -47.8822 },
+    '71': { lat: -15.8300, lng: -47.9500 },
+    '72': { lat: -15.7800, lng: -47.8000 },
+    '73': { lat: -15.7500, lng: -47.7500 },
+    
+    // Goiás
+    '74': { lat: -16.6869, lng: -49.2648 }, // Goiânia
+    '75': { lat: -16.3300, lng: -48.9500 }, // Anápolis
+    '76': { lat: -10.1800, lng: -48.3300 }, // Palmas
+    
+    // Mato Grosso
+    '78': { lat: -15.6010, lng: -56.0974 },
+    
+    // Mato Grosso do Sul
+    '79': { lat: -20.4697, lng: -54.6201 },
+    
+    // Paraná
+    '80': { lat: -25.4284, lng: -49.2733 }, // Curitiba
+    '81': { lat: -25.4500, lng: -49.2300 },
+    '82': { lat: -25.4100, lng: -49.3200 },
+    '83': { lat: -25.5200, lng: -49.2000 },
+    '84': { lat: -25.0900, lng: -50.1600 }, // Ponta Grossa
+    '85': { lat: -25.4200, lng: -49.2700 },
+    '86': { lat: -23.3100, lng: -51.1600 }, // Londrina
+    '87': { lat: -23.4200, lng: -51.9400 }, // Maringá
+    
+    // Santa Catarina
+    '88': { lat: -27.5954, lng: -48.5480 }, // Florianópolis
+    '89': { lat: -26.3000, lng: -48.8500 }, // Joinville
+    
+    // Rio Grande do Sul
+    '90': { lat: -30.0346, lng: -51.2177 }, // Porto Alegre
+    '91': { lat: -30.0500, lng: -51.1800 },
+    '92': { lat: -29.9400, lng: -51.0800 }, // Canoas
+    '93': { lat: -29.7900, lng: -51.1500 }, // São Leopoldo
+    '94': { lat: -29.6800, lng: -51.0900 }, // Gravataí
+    '95': { lat: -29.1700, lng: -51.1800 }, // Caxias do Sul
+    '96': { lat: -31.7700, lng: -52.3400 }, // Pelotas
+    '97': { lat: -29.6900, lng: -53.8100 }, // Santa Maria
+    '98': { lat: -28.2600, lng: -54.2300 }, // Cruz Alta
+    '99': { lat: -28.6600, lng: -56.0000 }, // Uruguaiana
+  };
+  
+  // Pegar os 2 primeiros dígitos do CEP
+  const prefixo2 = cepPrefixo.substring(0, 2);
+  
+  if (regioes[prefixo2]) {
+    // Se temos mais dígitos, adicionar pequena variação para não sobrepor pontos
+    if (cepPrefixo.length > 2) {
+      const variacao = parseInt(cepPrefixo.substring(2, 5) || '0', 10) / 100000;
+      return {
+        lat: regioes[prefixo2].lat + (variacao - 0.005),
+        lng: regioes[prefixo2].lng + (variacao - 0.005)
+      };
+    }
+    return regioes[prefixo2];
+  }
+  
+  return null;
+}

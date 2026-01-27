@@ -3472,3 +3472,25 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Adicionar campo "Número" do endereço - Coluna endereco_numero adicionada
 - [x] Adicionar campo "Complemento" do endereço - Coluna endereco_complemento adicionada
 - [x] Reorganizar campos de endereço na ordem: CEP → Endereço → Número → Complemento → Bairro → Cidade → UF → País
+
+
+---
+
+## 🚀 GORGEN 3.9.47 - Melhorias de UX e Dashboard (27/01/2026)
+
+### Validações
+- [x] Validação de formato de email antes de salvar no frontend - Função validarEmail() adicionada em validacoes.ts
+
+### Botão WhatsApp
+- [x] Adicionar botão WhatsApp junto ao telefone do paciente no prontuário - Já estava implementado
+- [x] Link deve abrir conversa direta com o número do paciente - Função gerarLinkWhatsApp() adicionada
+
+### Mapa de Calor de CEPs
+- [x] Criar mapa de calor na Dashboard baseado nos CEPs dos pacientes - Componente MapaCalorCeps criado
+- [x] Tons de vermelho para maior concentração de pacientes - Implementado com gradiente azul-amarelo-vermelho
+- [x] Tons de azul claro para menor concentração - Implementado
+- [x] Controle de zoom ajustável pelo usuário - Slider de zoom e botões de região adicionados
+
+### Histórico de Endereços (Backend)
+- [ ] Criar tabela de histórico de endereços no backend (sem UI)
+- [ ] Registrar alterações de endereço automaticamente

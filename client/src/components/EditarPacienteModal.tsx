@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { OPERADORAS } from "@/lib/operadoras";
-import { validarCPF } from "@/lib/validacoes";
+import { validarCPF, validarEmail } from "@/lib/validacoes";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { History, Clock, User, FileSpreadsheet, FileText } from "lucide-react";
@@ -308,6 +308,14 @@ export function EditarPacienteModal({ paciente, open, onOpenChange, initialTab =
       if (!validarCPF(formData.cpf)) {
         setErroCpf("CPF inválido - dígitos verificadores incorretos");
         toast.error("CPF inválido. Verifique os dígitos.");
+        return;
+      }
+    }
+
+    // Validar email se preenchido
+    if (formData.email && formData.email.trim() !== '') {
+      if (!validarEmail(formData.email)) {
+        toast.error("Email inválido. Verifique o formato (exemplo: usuario@dominio.com).");
         return;
       }
     }
