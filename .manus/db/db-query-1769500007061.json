@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS prontuario_acessos (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  tenant_id INT NOT NULL,\n  user_id VARCHAR(255) NOT NULL,\n  user_name VARCHAR(255),\n  paciente_id INT NOT NULL,\n  acessado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  ip_origem VARCHAR(45),\n  user_agent VARCHAR(500),\n  FOREIGN KEY (tenant_id) REFERENCES tenants(id),\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),\n  INDEX idx_prontuario_acessos_user (user_id, acessado_em),\n  INDEX idx_prontuario_acessos_paciente (paciente_id)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute CREATE TABLE IF NOT EXISTS prontuario_acessos (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  tenant_id INT NOT NULL,\n  user_id VARCHAR(255) NOT NULL,\n  user_name VARCHAR(255),\n  paciente_id INT NOT NULL,\n  acessado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  ip_origem VARCHAR(45),\n  user_agent VARCHAR(500),\n  FOREIGN KEY (tenant_id) REFERENCES tenants(id),\n  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),\n  INDEX idx_prontuario_acessos_user (user_id, acessado_em),\n  INDEX idx_prontuario_acessos_paciente (paciente_id)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 818
+}

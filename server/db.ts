@@ -1,6 +1,6 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne, isNull, isNotNull } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs, enderecoHistorico, InsertEnderecoHistorico } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs, enderecoHistorico, InsertEnderecoHistorico, prontuarioAcessos, InsertProntuarioAcesso } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 /**
@@ -4816,4 +4816,106 @@ export async function searchPacientesRapido(termo: string, limit: number = 20) {
     .limit(limit);
   
   return byNome;
+}
+
+
+// ===== HISTÓRICO DE ACESSOS A PRONTUÁRIOS =====
+
+/**
+ * Registra acesso a um prontuário
+ * Atualiza o registro se já existir acesso recente ao mesmo paciente
+ */
+export async function registrarAcessoProntuario(
+  tenantId: number,
+  userId: string,
+  userName: string | null,
+  pacienteId: number,
+  ipOrigem?: string,
+  userAgent?: string
+) {
+  const db = await getDb();
+  if (!db) return;
+  
+  try {
+    // Verificar se já existe um acesso recente (últimas 24h) ao mesmo paciente pelo mesmo usuário
+    const acessoExistente = await db.select()
+      .from(prontuarioAcessos)
+      .where(
+        and(
+          eq(prontuarioAcessos.tenantId, tenantId),
+          eq(prontuarioAcessos.userId, userId),
+          eq(prontuarioAcessos.pacienteId, pacienteId),
+          gte(prontuarioAcessos.acessadoEm, sql`DATE_SUB(NOW(), INTERVAL 24 HOUR)`)
+        )
+      )
+      .limit(1);
+    
+    if (acessoExistente.length > 0) {
+      // Atualizar timestamp do acesso existente
+      await db.update(prontuarioAcessos)
+        .set({ 
+          acessadoEm: sql`NOW()`,
+          userName: userName,
+          ipOrigem: ipOrigem || null,
+          userAgent: userAgent || null
+        })
+        .where(eq(prontuarioAcessos.id, acessoExistente[0].id));
+    } else {
+      // Inserir novo registro de acesso
+      await db.insert(prontuarioAcessos).values({
+        tenantId,
+        userId,
+        userName: userName || null,
+        pacienteId,
+        ipOrigem: ipOrigem || null,
+        userAgent: userAgent || null,
+      });
+    }
+  } catch (error) {
+    console.error("[DB] Erro ao registrar acesso ao prontuário:", error);
+  }
+}
+
+/**
+ * Obtém os últimos prontuários acessados pelo usuário
+ * Retorna informações básicas do paciente para exibição rápida
+ */
+export async function getUltimosProntuariosAcessados(
+  tenantId: number,
+  userId: string,
+  limit: number = 10
+) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    const acessos = await db.select({
+      id: prontuarioAcessos.id,
+      pacienteId: prontuarioAcessos.pacienteId,
+      acessadoEm: prontuarioAcessos.acessadoEm,
+      // Dados do paciente
+      pacienteNome: pacientes.nome,
+      pacienteIdPaciente: pacientes.idPaciente,
+      pacienteCpf: pacientes.cpf,
+      pacienteDataNascimento: pacientes.dataNascimento,
+      pacienteTelefone: pacientes.telefone,
+      pacienteEmail: pacientes.email,
+      pacienteConvenio: pacientes.operadora1,
+    })
+      .from(prontuarioAcessos)
+      .innerJoin(pacientes, eq(prontuarioAcessos.pacienteId, pacientes.id))
+      .where(
+        and(
+          eq(prontuarioAcessos.tenantId, tenantId),
+          eq(prontuarioAcessos.userId, userId)
+        )
+      )
+      .orderBy(desc(prontuarioAcessos.acessadoEm))
+      .limit(limit);
+    
+    return acessos;
+  } catch (error) {
+    console.error("[DB] Erro ao buscar últimos prontuários acessados:", error);
+    return [];
+  }
 }

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList, Loader2, AlertTriangle, Users, Download, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
+import { Plus, Search, X, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, ClipboardList, Loader2, AlertTriangle, Users, Download, FileSpreadsheet, FileText, ChevronDown, Clock, History } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link, useLocation, useSearch } from "wouter";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
@@ -28,6 +28,114 @@ const metricasCache = new Map<number, {
 }>();
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+// Componente de Últimos Prontuários Acessados
+function UltimosProntuariosAcessados() {
+  const [, setLocation] = useLocation();
+  const { data: ultimosAcessados, isLoading } = trpc.pacientes.ultimosAcessados.useQuery({ limit: 10 });
+
+  // Formatar data relativa
+  const formatarDataRelativa = (data: Date | string) => {
+    const agora = new Date();
+    const dataAcesso = new Date(data);
+    const diffMs = agora.getTime() - dataAcesso.getTime();
+    const diffMinutos = Math.floor(diffMs / (1000 * 60));
+    const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMinutos < 1) return "Agora mesmo";
+    if (diffMinutos < 60) return `Há ${diffMinutos} min`;
+    if (diffHoras < 24) return `Há ${diffHoras}h`;
+    if (diffDias === 1) return "Ontem";
+    if (diffDias < 7) return `Há ${diffDias} dias`;
+    return dataAcesso.toLocaleDateString('pt-BR');
+  };
+
+  // Calcular idade
+  const calcularIdade = (dataNascimento: string | Date | null) => {
+    if (!dataNascimento) return null;
+    const hoje = new Date();
+    const nascimento = new Date(dataNascimento);
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const m = hoje.getMonth() - nascimento.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade--;
+    }
+    return idade;
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Últimos Prontuários Acessados</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!ultimosAcessados || ultimosAcessados.length === 0) {
+    return null; // Não exibe nada se não houver acessos
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <History className="h-5 w-5 text-primary" />
+          <CardTitle className="text-lg">Últimos Prontuários Acessados</CardTitle>
+        </div>
+        <CardDescription>Acesso rápido aos prontuários consultados recentemente</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          {ultimosAcessados.map((acesso) => {
+            const idade = calcularIdade(acesso.pacienteDataNascimento);
+            return (
+              <div
+                key={acesso.id}
+                onClick={() => setLocation(`/prontuario/${acesso.pacienteId}`)}
+                className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 hover:border-primary/30 cursor-pointer transition-all group"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-primary">
+                    {acesso.pacienteNome?.charAt(0).toUpperCase() || '?'}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                    {acesso.pacienteNome}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {idade !== null && <span>{idade} anos</span>}
+                    {acesso.pacienteConvenio && (
+                      <>
+                        <span>•</span>
+                        <span className="truncate">{acesso.pacienteConvenio}</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                    <Clock className="h-3 w-3" />
+                    <span>{formatarDataRelativa(acesso.acessadoEm)}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Pacientes() {
   const [, setLocation] = useLocation();
@@ -481,6 +589,9 @@ export default function Pacientes() {
           </CardContent>
         </Card>
       )}
+
+      {/* Últimos Prontuários Acessados */}
+      <UltimosProntuariosAcessados />
 
       {/* Aviso quando excedeu limite de 1000 */}
       {excedeuLimite && (

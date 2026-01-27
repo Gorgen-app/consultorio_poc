@@ -681,6 +681,34 @@ export const appRouter = router({
         return await db.searchPacientesRapido(input.termo, input.limit);
       }),
 
+    // Registrar acesso a um prontuário
+    registrarAcesso: tenantProcedure
+      .input(z.object({
+        pacienteId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await db.registrarAcessoProntuario(
+          ctx.tenant.tenantId,
+          ctx.user?.id?.toString() || '',
+          ctx.user?.name || null,
+          input.pacienteId
+        );
+        return { success: true };
+      }),
+
+    // Obter últimos prontuários acessados pelo usuário
+    ultimosAcessados: tenantProcedure
+      .input(z.object({
+        limit: z.number().optional().default(10),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        return await db.getUltimosProntuariosAcessados(
+          ctx.tenant.tenantId,
+          ctx.user?.id?.toString() || '',
+          input?.limit || 10
+        );
+      }),
+
     // Buscar pacientes ativos com 360+ dias sem atendimento (para notificação)
     buscarPacientesInativos: tenantProcedure
       .query(async ({ ctx }) => {

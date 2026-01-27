@@ -1648,3 +1648,40 @@ export const cepCoordenadas = mysqlTable("cep_coordenadas", {
 
 export type CepCoordenadas = typeof cepCoordenadas.$inferSelect;
 export type InsertCepCoordenadas = typeof cepCoordenadas.$inferInsert;
+
+
+// ==========================================
+// HISTÓRICO DE ACESSOS A PRONTUÁRIOS
+// Para exibir últimos prontuários acessados pelo usuário
+// ==========================================
+
+/**
+ * Histórico de Acessos a Prontuários
+ * Registra quando um usuário acessa o prontuário de um paciente
+ * Permite exibir lista de "últimos prontuários acessados"
+ */
+export const prontuarioAcessos = mysqlTable("prontuario_acessos", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
+  
+  // Usuário que acessou
+  userId: varchar("user_id", { length: 255 }).notNull(),
+  userName: varchar("user_name", { length: 255 }),
+  
+  // Paciente acessado
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  // Timestamp do acesso
+  acessadoEm: timestamp("acessado_em").defaultNow().notNull(),
+  
+  // Metadados opcionais
+  ipOrigem: varchar("ip_origem", { length: 45 }),
+  userAgent: varchar("user_agent", { length: 500 }),
+}, (table) => ({
+  // Índices para busca rápida dos últimos acessos por usuário
+  userAcessoIdx: index("idx_prontuario_acessos_user").on(table.userId, table.acessadoEm),
+  pacienteIdx: index("idx_prontuario_acessos_paciente").on(table.pacienteId),
+}));
+
+export type ProntuarioAcesso = typeof prontuarioAcessos.$inferSelect;
+export type InsertProntuarioAcesso = typeof prontuarioAcessos.$inferInsert;

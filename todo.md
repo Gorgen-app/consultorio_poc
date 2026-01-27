@@ -3616,3 +3616,18 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 ### Bug Corrigido
 - [x] Botões "Pacientes" e "Atendimentos" ficam vermelhos ao passar o mouse - Alterado hover:bg-accent para hover:bg-sidebar-accent
 - [x] Uniformizar cor de hover de todos os botões da barra lateral - Agora todos usam sidebar-accent (azul)
+
+
+---
+
+## 📋 GORGEN 3.9.56 - Últimos Prontuários Acessados (27/01/2026)
+
+### Backend
+- [x] Criar tabela prontuario_acessos para registrar acessos
+- [x] Implementar função para registrar acesso ao prontuário - registrarAcessoProntuario()
+- [x] Criar endpoint para obter últimos 10 prontuários acessados pelo usuário - ultimosAcessados
+
+### Frontend
+- [x] Adicionar componente de últimos prontuários na página de pacientes - UltimosProntuariosAcessados
+- [x] Exibir abaixo do quadro "Busque paciente" - Grid com 5 colunas
+- [x] Mostrar nome do paciente, data do último acesso e link para o prontuário - Com idade e convênio

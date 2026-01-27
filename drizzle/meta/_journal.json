@@ -239,6 +239,13 @@
       "when": 1769494823001,
       "tag": "0033_vengeful_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "5",
+      "when": 1769500281378,
+      "tag": "0034_shiny_killer_shrike",
+      "breakpoints": true
     }
   ]
 }

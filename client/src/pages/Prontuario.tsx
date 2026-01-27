@@ -200,6 +200,16 @@ export default function Prontuario() {
     { enabled: pacienteId > 0 }
   );
   
+  // Mutation para registrar acesso ao prontuário
+  const registrarAcesso = trpc.pacientes.registrarAcesso.useMutation();
+  
+  // Registrar acesso ao prontuário quando a página carregar
+  useEffect(() => {
+    if (pacienteId > 0) {
+      registrarAcesso.mutate({ pacienteId });
+    }
+  }, [pacienteId]); // eslint-disable-line react-hooks/exhaustive-deps
+  
   // Query para histórico de medidas (para o gráfico) - DEVE estar antes dos early returns
   const { data: historicoMedidas } = trpc.prontuario.historicoMedidas.listar.useQuery(
     { pacienteId, limit: 50 },
