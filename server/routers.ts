@@ -1242,12 +1242,23 @@ export const appRouter = router({
           peso: z.string().optional().nullable(),
           altura: z.string().optional().nullable(),
           profissionalNome: z.string().optional().nullable(),
+          // Campos de assinatura
+          statusAssinatura: z.enum(["rascunho", "pendente_assinatura", "assinado"]).default("rascunho"),
+          assinado: z.boolean().default(false),
+          atendimentoEncerrado: z.boolean().default(false),
         }))
         .mutation(async ({ input, ctx }) => {
+          const now = new Date();
           return await db.createEvolucao({
             ...input,
             profissionalId: ctx.user?.id,
             profissionalNome: input.profissionalNome || ctx.user?.name,
+            // Se assinado, registrar dados da assinatura
+            dataAssinatura: input.assinado ? now : null,
+            assinadoPorId: input.assinado ? ctx.user?.id : null,
+            assinadoPorNome: input.assinado ? ctx.user?.name : null,
+            // Se encerrar atendimento, registrar data
+            dataEncerramentoAtendimento: input.atendimentoEncerrado ? now : null,
           } as any);
         }),
       

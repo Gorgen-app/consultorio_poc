@@ -465,8 +465,17 @@ export const evolucoes = mysqlTable("evolucoes", {
   // Metadados
   profissionalId: int("profissional_id").references(() => users.id),
   profissionalNome: varchar("profissional_nome", { length: 255 }),
+  
+  // Status de assinatura
+  statusAssinatura: mysqlEnum("status_assinatura", ["rascunho", "pendente_assinatura", "assinado"]).default("rascunho"),
   assinado: boolean("assinado").default(false),
   dataAssinatura: timestamp("data_assinatura"),
+  assinadoPorId: int("assinado_por_id").references(() => users.id),
+  assinadoPorNome: varchar("assinado_por_nome", { length: 255 }),
+  
+  // Encerramento do atendimento
+  atendimentoEncerrado: boolean("atendimento_encerrado").default(false),
+  dataEncerramentoAtendimento: timestamp("data_encerramento_atendimento"),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),

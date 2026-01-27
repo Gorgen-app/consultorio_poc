@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2, FileOutput, Pill, FileCheck, Scissors, ClipboardList, File } from "lucide-react";
+import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2, FileOutput, Pill, FileCheck, Scissors, ClipboardList, File, Save, Clock, PenLine, CheckCircle } from "lucide-react";
 import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
 
 interface Props {
@@ -127,10 +127,11 @@ export default function ProntuarioEvolucoes({
     });
   };
 
-  const handleSalvarEvolucao = () => {
+  // Função base para criar evolução com diferentes status
+  const criarEvolucaoComStatus = (statusAssinatura: "rascunho" | "pendente_assinatura" | "assinado", encerrarAtendimento: boolean = false) => {
     createEvolucao.mutate({
       pacienteId,
-      agendamentoId: agendamentoId, // Vínculo com agendamento
+      agendamentoId: agendamentoId,
       dataEvolucao: new Date(form.dataEvolucao),
       tipo: form.tipo,
       subjetivo: form.subjetivo || null,
@@ -142,7 +143,30 @@ export default function ProntuarioEvolucoes({
       temperatura: form.temperatura || null,
       peso: form.peso || null,
       altura: form.altura || null,
+      statusAssinatura,
+      assinado: statusAssinatura === "assinado",
+      atendimentoEncerrado: encerrarAtendimento,
     });
+  };
+
+  // Salvar Evolução (rascunho)
+  const handleSalvarEvolucao = () => {
+    criarEvolucaoComStatus("rascunho");
+  };
+
+  // Salvar e deixar pendente de assinatura
+  const handleSalvarPendenteAssinatura = () => {
+    criarEvolucaoComStatus("pendente_assinatura");
+  };
+
+  // Assinar evolução
+  const handleAssinarEvolucao = () => {
+    criarEvolucaoComStatus("assinado");
+  };
+
+  // Assinar evolução e encerrar atendimento
+  const handleAssinarEEncerrar = () => {
+    criarEvolucaoComStatus("assinado", true);
   };
 
   const handleFecharModal = () => {
@@ -443,14 +467,48 @@ export default function ProntuarioEvolucoes({
                 </div>
               </TabsContent>
             </Tabs>
-            <DialogFooter>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={handleFecharModal}>Cancelar</Button>
-              <Button 
-                onClick={handleSalvarEvolucao}
-                disabled={createEvolucao.isPending}
-              >
-                {createEvolucao.isPending ? "Salvando..." : "Salvar Evolução"}
-              </Button>
+              <div className="flex flex-wrap gap-2 justify-end">
+                <Button 
+                  variant="outline"
+                  onClick={handleSalvarEvolucao}
+                  disabled={createEvolucao.isPending}
+                  title="Salva a evolução como rascunho para edição posterior"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Evolução
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={handleSalvarPendenteAssinatura}
+                  disabled={createEvolucao.isPending}
+                  className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                  title="Salva e marca como pendente de assinatura"
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Pendente de Assinatura
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={handleAssinarEvolucao}
+                  disabled={createEvolucao.isPending}
+                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  title="Assina digitalmente a evolução"
+                >
+                  <PenLine className="h-4 w-4 mr-2" />
+                  Assinar Evolução
+                </Button>
+                <Button 
+                  onClick={handleAssinarEEncerrar}
+                  disabled={createEvolucao.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                  title="Assina a evolução e encerra o atendimento"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Assinar e Encerrar
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>

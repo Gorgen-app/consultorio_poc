@@ -3872,3 +3872,44 @@ Facilitar a vida do usuário eliminando redundância. Tudo que puder vir pré-pr
 ### Problemas Identificados
 - [x] Modal de Novo Agendamento saindo da configuração da janela (overflow) - adicionado max-h-[90vh] overflow-y-auto
 - [x] CPF e Telefone não descriptografados na lista de sugestões de pacientes (adicionado decryptPacientesList em searchPacientesRapido)
+
+
+---
+
+## 🔘 Botões de Ação na Evolução (27/01/2026)
+
+### Requisitos
+Adicionar os seguintes botões ao final da janela de evolução:
+- [ ] "Salvar Evolução" - Salva sem assinar
+- [ ] "Salvar e deixar pendente de assinatura" - Salva marcando como pendente
+- [ ] "Assinar evolução" - Assina digitalmente a evolução
+- [ ] "Assinar evolução e encerrar atendimento" - Assina e finaliza o atendimento
+
+### Implementação
+- [ ] Adicionar campo de status de assinatura no schema de evoluções
+- [ ] Implementar botões na interface ProntuarioEvolucoes
+- [ ] Implementar lógica de backend para cada ação
+- [ ] Garantir funcionamento via prontuário e via agenda
+
+
+---
+
+## 🔘 Botões de Ação na Evolução (27/01/2026)
+
+### Implementado
+- [x] Salvar Evolução (rascunho)
+- [x] Salvar e deixar pendente de assinatura
+- [x] Assinar evolução
+- [x] Assinar evolução e encerrar atendimento
+
+### Campos Adicionados no Schema
+- [x] status_assinatura (enum: rascunho, pendente_assinatura, assinado)
+- [x] assinado_por_id (referência ao usuário que assinou)
+- [x] assinado_por_nome (nome do usuário que assinou)
+- [x] atendimento_encerrado (boolean)
+- [x] data_encerramento_atendimento (timestamp)
+
+### Backend
+- [x] Atualizado router evolucoes.create com novos campos
+- [x] Registro automático de data/usuário ao assinar
+
