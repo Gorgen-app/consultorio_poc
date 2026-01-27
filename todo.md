@@ -3591,3 +3591,19 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 ### Cookies
 - [x] Implementar banner de aviso de cookies
 - [x] Salvar preferência do usuário no localStorage
+
+
+---
+
+## 📝 GORGEN 3.9.54 - Página de Registro e Páginas Institucionais (27/01/2026)
+
+### Página de Registro
+- [x] Formulário de cadastro já existe com campos: nome, email, senha
+- [ ] Preparar estrutura para integração com sistema de pagamento (Stripe)
+- [ ] Adicionar seleção de plano (mensal/anual)
+- [x] Validação de campos no frontend (já impleme### Páginas Institucionais
+- [x] Criar página de Termos de Uso usando documento aprovado do repositório - TermosDeUso.tsx
+- [x] Criar página de Política de Privacidade usando documento aprovado do repositório - PoliticaDePrivacidade.tsx
+- [x] Atualizar página Quem Somos (já existe) - QuemSomos.tsx
+- [x] Adicionar rotas no App.tsx - /termos-de-uso e /politica-de-privacidade
+- [ ] Atualizar links no rodapé para apontar para as novas páginas

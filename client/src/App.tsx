@@ -33,7 +33,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ChangePassword from "./pages/ChangePassword";
 import QuemSomos from "./pages/QuemSomos";
-// LoaderDemo removido - animação do farol não será usada
+import TermosDeUso from "./pages/TermosDeUso";
+import PoliticaDePrivacidade from "./pages/PoliticaDePrivacidade";
 
 // Rotas de autenticação (públicas, sem DashboardLayout)
 function PublicRouter() {
@@ -47,7 +48,8 @@ function PublicRouter() {
       <Route path="/reset-password/:token" component={ResetPassword} />
       <Route path="/change-password" component={ChangePassword} />
       <Route path="/quem-somos" component={QuemSomos} />
-      {/* LoaderDemo removido */}
+      <Route path="/termos-de-uso" component={TermosDeUso} />
+      <Route path="/politica-de-privacidade" component={PoliticaDePrivacidade} />
     </Switch>
   );
 }
