@@ -10,6 +10,8 @@ import * as performance from "./performance";
 import * as dashboardMetricas from "./dashboardMetricas";
 import * as backup from "./backup";
 import * as autoHealer from "./auto-healer";
+import * as geocodificacao from "./geocodificacao";
+import * as geocodificacaoJob from "./geocodificacao-job";
 import { authRouter } from "./auth-router";
 
 // Schema de validação para Paciente
@@ -334,6 +336,37 @@ export const appRouter = router({
       .input(z.object({ cep: z.string() }))
       .query(async ({ input }) => {
         return dashboardMetricas.getCoordenadaCep(input.cep);
+      }),
+    
+    // Coordenadas para mapa de calor com Google Maps
+    getCoordenadasMapaCalor: tenantProcedure
+      .query(async ({ ctx }) => {
+        return geocodificacao.obterCoordenadasParaMapaCalor(ctx.tenant.tenantId);
+      }),
+    
+    // Estatísticas do cache de geocodificação
+    getEstatisticasGeocodificacao: tenantProcedure
+      .query(async () => {
+        return geocodificacao.obterEstatisticasCache();
+      }),
+    
+    // Job de pré-carregamento de coordenadas
+    iniciarJobGeocodificacao: tenantProcedure
+      .mutation(async () => {
+        // Executar em background (não aguardar conclusão)
+        geocodificacaoJob.executarJobGeocodificacao();
+        return { iniciado: true, mensagem: 'Job de geocodificação iniciado em background' };
+      }),
+    
+    statusJobGeocodificacao: tenantProcedure
+      .query(async () => {
+        return geocodificacaoJob.obterStatusJob();
+      }),
+    
+    cancelarJobGeocodificacao: tenantProcedure
+      .mutation(async () => {
+        const cancelado = geocodificacaoJob.cancelarJob();
+        return { cancelado, mensagem: cancelado ? 'Job cancelado' : 'Nenhum job em execução' };
       }),
     
     pacTaxaRetencao: tenantProcedure

@@ -232,6 +232,13 @@
       "when": 1769491480425,
       "tag": "0032_cold_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1769494823001,
+      "tag": "0033_vengeful_puff_adder",
+      "breakpoints": true
     }
   ]
 }
