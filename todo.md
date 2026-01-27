@@ -3458,3 +3458,17 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Criar teste automatizado para atualização de contato (12 testes)
 - [x] Criar teste automatizado para convênio e dados clínicos (incluído no mesmo arquivo)
 - [x] Todos os 535 testes passando (39 arquivos)
+
+
+---
+
+## 🐛 GORGEN 3.9.46 - Correções na Aba Contato (27/01/2026)
+
+### Bugs Corrigidos
+- [x] Erro ao inserir email e/ou telefone na aba Contato - Corrigido encryptPacienteData para não criptografar dados já criptografados
+- [x] Botão de lápis da seção Contato abre na aba Identificação - Adicionado prop initialTab e estado modalEditarPacienteAbaInicial
+
+### Melhorias Implementadas
+- [x] Adicionar campo "Número" do endereço - Coluna endereco_numero adicionada
+- [x] Adicionar campo "Complemento" do endereço - Coluna endereco_complemento adicionada
+- [x] Reorganizar campos de endereço na ordem: CEP → Endereço → Número → Complemento → Bairro → Cidade → UF → País

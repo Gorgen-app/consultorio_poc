@@ -184,6 +184,8 @@ export const pacientes = mysqlTable("pacientes", {
   telefone: text("telefone"), // Criptografado AES-256-GCM
   telefoneHash: varchar("telefone_hash", { length: 64 }), // HMAC-SHA256 para busca
   endereco: varchar("endereco", { length: 500 }),
+  enderecoNumero: varchar("endereco_numero", { length: 20 }),
+  enderecoComplemento: varchar("endereco_complemento", { length: 100 }),
   bairro: varchar("bairro", { length: 100 }),
   cep: varchar("cep", { length: 10 }),
   cidade: varchar("cidade", { length: 100 }),

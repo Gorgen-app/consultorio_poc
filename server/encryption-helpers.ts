@@ -70,22 +70,39 @@ export function encryptPacienteData<T extends Partial<InsertPaciente>>(
 
   const result = { ...data } as T & { cpfHash?: string; emailHash?: string; telefoneHash?: string };
 
-  // Criptografar CPF e gerar hash
+  // Criptografar CPF e gerar hash (apenas se não estiver já criptografado)
   if (data.cpf && typeof data.cpf === "string" && data.cpf.trim() !== "") {
-    result.cpfHash = hashingService.createHash(data.cpf, tenantId);
-    result.cpf = encryptionService.encrypt(data.cpf);
+    // Se já está criptografado, não criptografar novamente
+    if (data.cpf.startsWith("enc:v1:")) {
+      // Manter valor criptografado como está
+      result.cpf = data.cpf;
+      // Não atualizar hash pois não temos o valor original
+    } else {
+      result.cpfHash = hashingService.createHash(data.cpf, tenantId);
+      result.cpf = encryptionService.encrypt(data.cpf);
+    }
   }
 
-  // Criptografar email e gerar hash
+  // Criptografar email e gerar hash (apenas se não estiver já criptografado)
   if (data.email && typeof data.email === "string" && data.email.trim() !== "") {
-    result.emailHash = hashingService.createHash(data.email, tenantId);
-    result.email = encryptionService.encrypt(data.email);
+    // Se já está criptografado, não criptografar novamente
+    if (data.email.startsWith("enc:v1:")) {
+      result.email = data.email;
+    } else {
+      result.emailHash = hashingService.createHash(data.email, tenantId);
+      result.email = encryptionService.encrypt(data.email);
+    }
   }
 
-  // Criptografar telefone e gerar hash
+  // Criptografar telefone e gerar hash (apenas se não estiver já criptografado)
   if (data.telefone && typeof data.telefone === "string" && data.telefone.trim() !== "") {
-    result.telefoneHash = hashingService.createHash(data.telefone, tenantId);
-    result.telefone = encryptionService.encrypt(data.telefone);
+    // Se já está criptografado, não criptografar novamente
+    if (data.telefone.startsWith("enc:v1:")) {
+      result.telefone = data.telefone;
+    } else {
+      result.telefoneHash = hashingService.createHash(data.telefone, tenantId);
+      result.telefone = encryptionService.encrypt(data.telefone);
+    }
   }
 
   return result;

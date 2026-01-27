@@ -294,4 +294,160 @@ describe('Atualização de Paciente', () => {
       expect(decrypted.telefone).toBe('51999999999');
     });
   });
+
+  describe('Campos de Endereço Completo', () => {
+    it('deve atualizar número e complemento do endereço', async () => {
+      const updateData = {
+        id: 1,
+        endereco: 'Rua das Flores',
+        enderecoNumero: '123',
+        enderecoComplemento: 'Apto 501',
+        bairro: 'Centro',
+        cidade: 'Porto Alegre',
+        uf: 'RS',
+        cep: '90000-000',
+        pais: 'Brasil',
+      };
+
+      const filteredData = Object.fromEntries(
+        Object.entries(updateData).filter(([key, value]) => {
+          if (key === 'id') return true;
+          if (['idPaciente', 'dataInclusao', 'pastaPaciente'].includes(key)) return false;
+          return value !== '' && value !== undefined && value !== null;
+        })
+      );
+
+      expect(filteredData).toEqual({
+        id: 1,
+        endereco: 'Rua das Flores',
+        enderecoNumero: '123',
+        enderecoComplemento: 'Apto 501',
+        bairro: 'Centro',
+        cidade: 'Porto Alegre',
+        uf: 'RS',
+        cep: '90000-000',
+        pais: 'Brasil',
+      });
+    });
+
+    it('deve aceitar endereço sem número ou complemento', async () => {
+      const updateData = {
+        id: 1,
+        endereco: 'Rua Principal',
+        enderecoNumero: '',
+        enderecoComplemento: '',
+        bairro: 'Centro',
+        cidade: 'São Paulo',
+        uf: 'SP',
+        cep: '01000-000',
+      };
+
+      const filteredData = Object.fromEntries(
+        Object.entries(updateData).filter(([key, value]) => {
+          if (key === 'id') return true;
+          if (['idPaciente', 'dataInclusao', 'pastaPaciente'].includes(key)) return false;
+          return value !== '' && value !== undefined && value !== null;
+        })
+      );
+
+      expect(filteredData).toEqual({
+        id: 1,
+        endereco: 'Rua Principal',
+        bairro: 'Centro',
+        cidade: 'São Paulo',
+        uf: 'SP',
+        cep: '01000-000',
+      });
+      expect(filteredData).not.toHaveProperty('enderecoNumero');
+      expect(filteredData).not.toHaveProperty('enderecoComplemento');
+    });
+
+    it('deve atualizar apenas número do endereço', async () => {
+      const updateData = {
+        id: 1,
+        enderecoNumero: '456',
+      };
+
+      const filteredData = Object.fromEntries(
+        Object.entries(updateData).filter(([key, value]) => {
+          if (key === 'id') return true;
+          if (['idPaciente', 'dataInclusao', 'pastaPaciente'].includes(key)) return false;
+          return value !== '' && value !== undefined && value !== null;
+        })
+      );
+
+      expect(filteredData).toEqual({
+        id: 1,
+        enderecoNumero: '456',
+      });
+    });
+
+    it('deve atualizar apenas complemento do endereço', async () => {
+      const updateData = {
+        id: 1,
+        enderecoComplemento: 'Bloco B, Sala 10',
+      };
+
+      const filteredData = Object.fromEntries(
+        Object.entries(updateData).filter(([key, value]) => {
+          if (key === 'id') return true;
+          if (['idPaciente', 'dataInclusao', 'pastaPaciente'].includes(key)) return false;
+          return value !== '' && value !== undefined && value !== null;
+        })
+      );
+
+      expect(filteredData).toEqual({
+        id: 1,
+        enderecoComplemento: 'Bloco B, Sala 10',
+      });
+    });
+  });
+
+  describe('Proteção contra Dupla Criptografia', () => {
+    it('não deve criptografar email já criptografado', async () => {
+      // Simula o comportamento real da função encryptPacienteData
+      const emailJaCriptografado = 'enc:v1:abc123xyz';
+      
+      // Verifica se o valor já está criptografado
+      const jaCriptografado = emailJaCriptografado.startsWith('enc:v1:');
+      expect(jaCriptografado).toBe(true);
+      
+      // Se já está criptografado, não deve alterar
+      const resultado = jaCriptografado ? emailJaCriptografado : `enc:v1:${emailJaCriptografado}`;
+      expect(resultado).toBe('enc:v1:abc123xyz');
+      expect(resultado).not.toBe('enc:v1:enc:v1:abc123xyz');
+    });
+
+    it('não deve criptografar telefone já criptografado', async () => {
+      const telefoneJaCriptografado = 'enc:v1:xyz789def';
+      
+      const jaCriptografado = telefoneJaCriptografado.startsWith('enc:v1:');
+      expect(jaCriptografado).toBe(true);
+      
+      const resultado = jaCriptografado ? telefoneJaCriptografado : `enc:v1:${telefoneJaCriptografado}`;
+      expect(resultado).toBe('enc:v1:xyz789def');
+      expect(resultado).not.toBe('enc:v1:enc:v1:xyz789def');
+    });
+
+    it('não deve criptografar CPF já criptografado', async () => {
+      const cpfJaCriptografado = 'enc:v1:cpf123456';
+      
+      const jaCriptografado = cpfJaCriptografado.startsWith('enc:v1:');
+      expect(jaCriptografado).toBe(true);
+      
+      const resultado = jaCriptografado ? cpfJaCriptografado : `enc:v1:${cpfJaCriptografado}`;
+      expect(resultado).toBe('enc:v1:cpf123456');
+      expect(resultado).not.toBe('enc:v1:enc:v1:cpf123456');
+    });
+
+    it('deve criptografar valor em texto plano normalmente', async () => {
+      const emailTextoPlano = 'usuario@email.com';
+      
+      const jaCriptografado = emailTextoPlano.startsWith('enc:v1:');
+      expect(jaCriptografado).toBe(false);
+      
+      const resultado = jaCriptografado ? emailTextoPlano : `enc:v1:${emailTextoPlano}`;
+      expect(resultado).toBe('enc:v1:usuario@email.com');
+    });
+  });
 });

@@ -26,6 +26,8 @@ interface Paciente {
   telefone: string | null;
   email: string | null;
   endereco: string | null;
+  enderecoNumero: string | null;
+  enderecoComplemento: string | null;
   bairro: string | null;
   cep: string | null;
   cidade: string | null;
@@ -56,6 +58,7 @@ interface EditarPacienteModalProps {
   paciente: Paciente | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialTab?: "dados-basicos" | "contato" | "convenios" | "clinico" | "historico";
 }
 
 // Componente de Histórico de Alterações (LGPD)
@@ -230,7 +233,7 @@ function HistoricoAlteracoes({ pacienteId }: { pacienteId: number }) {
   );
 }
 
-export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPacienteModalProps) {
+export function EditarPacienteModal({ paciente, open, onOpenChange, initialTab = "dados-basicos" }: EditarPacienteModalProps) {
   const utils = trpc.useUtils();
   const [formData, setFormData] = useState<Partial<Paciente>>({});
   const [outroOperadora1, setOutroOperadora1] = useState("");
@@ -362,7 +365,7 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
 
         <form onSubmit={handleSubmit}>
           <ScrollArea className="h-[calc(90vh-200px)] pr-4">
-            <Tabs defaultValue="dados-basicos" className="w-full">
+            <Tabs defaultValue={initialTab} className="w-full">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="dados-basicos">Dados Básicos</TabsTrigger>
                 <TabsTrigger value="contato">Contato</TabsTrigger>
@@ -451,6 +454,7 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
 
               <TabsContent value="contato" className="space-y-4 mt-4">
                 <div className="grid grid-cols-2 gap-4">
+                  {/* Telefone e Email */}
                   <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone</Label>
                     <MaskedInput
@@ -472,25 +476,8 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                     />
                   </div>
 
+                  {/* CEP - primeiro campo de endereço */}
                   <div className="space-y-2 col-span-2">
-                    <Label htmlFor="endereco">Endereço</Label>
-                    <Input
-                      id="endereco"
-                      value={formData.endereco || ""}
-                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="bairro">Bairro</Label>
-                    <Input
-                      id="bairro"
-                      value={formData.bairro || ""}
-                      onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="cep">CEP {buscandoCep && <span className="text-xs text-[#0056A4] ml-2">Buscando...</span>}</Label>
                     <MaskedInput
                       mask="cep"
@@ -499,9 +486,54 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                       onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
                       onBlur={(e) => buscarEnderecoPorCep(e.target.value)}
                       placeholder="99999-999"
+                      className="max-w-[200px]"
                     />
                   </div>
 
+                  {/* Endereço */}
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="endereco">Endereço</Label>
+                    <Input
+                      id="endereco"
+                      value={formData.endereco || ""}
+                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                      placeholder="Rua, Avenida, etc."
+                    />
+                  </div>
+
+                  {/* Número e Complemento */}
+                  <div className="space-y-2">
+                    <Label htmlFor="enderecoNumero">Número</Label>
+                    <Input
+                      id="enderecoNumero"
+                      value={formData.enderecoNumero || ""}
+                      onChange={(e) => setFormData({ ...formData, enderecoNumero: e.target.value })}
+                      placeholder="123"
+                      className="max-w-[150px]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="enderecoComplemento">Complemento</Label>
+                    <Input
+                      id="enderecoComplemento"
+                      value={formData.enderecoComplemento || ""}
+                      onChange={(e) => setFormData({ ...formData, enderecoComplemento: e.target.value })}
+                      placeholder="Apto, Sala, Bloco, etc."
+                    />
+                  </div>
+
+                  {/* Bairro */}
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="bairro">Bairro</Label>
+                    <Input
+                      id="bairro"
+                      value={formData.bairro || ""}
+                      onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
+                    />
+                  </div>
+
+                  {/* Cidade, UF, País */}
                   <div className="space-y-2">
                     <Label htmlFor="cidade">Cidade</Label>
                     <Input
@@ -518,6 +550,17 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
                       value={formData.uf || ""}
                       onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
                       maxLength={2}
+                      className="max-w-[80px]"
+                    />
+                  </div>
+
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="pais">País</Label>
+                    <Input
+                      id="pais"
+                      value={formData.pais || "Brasil"}
+                      onChange={(e) => setFormData({ ...formData, pais: e.target.value })}
+                      className="max-w-[200px]"
                     />
                   </div>
                 </div>

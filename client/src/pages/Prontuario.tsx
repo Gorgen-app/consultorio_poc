@@ -165,6 +165,7 @@ export default function Prontuario() {
   
   // Estado para modal de edição de cadastro do paciente
   const [modalEditarPacienteAberto, setModalEditarPacienteAberto] = useState(false);
+  const [modalEditarPacienteAbaInicial, setModalEditarPacienteAbaInicial] = useState<"dados-basicos" | "contato" | "convenios" | "clinico" | "historico">("dados-basicos");
   
   // Estados para modais de Alergias
   const [modalNovaAlergia, setModalNovaAlergia] = useState(false);
@@ -486,6 +487,7 @@ export default function Prontuario() {
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => {
+                      setModalEditarPacienteAbaInicial("contato");
                       setModalEditarPacienteAberto(true);
                     }}
                     title="Editar dados de contato"
@@ -1490,8 +1492,10 @@ export default function Prontuario() {
           setModalEditarPacienteAberto(open);
           if (!open) {
             refetch(); // Recarrega os dados do prontuário após fechar o modal
+            setModalEditarPacienteAbaInicial("dados-basicos"); // Reset para aba padrão
           }
         }}
+        initialTab={modalEditarPacienteAbaInicial}
       />
     </div>
   );
