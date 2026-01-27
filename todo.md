@@ -3796,3 +3796,16 @@ Invalid option: expected one of "M"|"F"|"Outro"
 - [x] ALTER TABLE pacientes MODIFY COLUMN email TEXT
 - [x] ALTER TABLE pacientes MODIFY COLUMN telefone TEXT
 - [x] Testar inserção de novo paciente - RESOLVIDO
+
+
+---
+
+## 🎨 Melhorias de UX - Novo Atendimento (27/01/2026)
+
+### Correções Solicitadas
+- [x] Corrigir cor do botão "Novo Atendimento" para mesmo tom de azul do "Editar Resumo" (removido bg-blue-600, usa primary)
+- [x] Pré-preencher formulário de novo atendimento com dados do paciente quando acessado do prontuário
+  - [x] Nome do paciente (via pacienteNome param)
+  - [x] Convênio (operadora_1 via convenio param)
+  - [x] Plano/Modalidade (plano_modalidade_1 via planoModalidade param)
+  - [x] Matrícula (matricula_convenio_1 via matriculaConvenio param)

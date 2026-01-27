@@ -15,12 +15,17 @@ export default function NovoAtendimento() {
   const [, setLocation] = useLocation();
   const createMutation = trpc.atendimentos.create.useMutation();
   
-  // Extrair pacienteId da URL para carregamento rápido na duplicação
+  // Extrair parâmetros da URL para carregamento rápido
   const params = new URLSearchParams(window.location.search);
   const pacienteIdFromUrl = parseInt(params.get('pacienteId') || '0');
+  const pacienteNomeFromUrl = params.get('pacienteNome') || '';
+  const convenioFromUrl = params.get('convenio') || '';
+  const planoModalidadeFromUrl = params.get('planoModalidade') || '';
+  const matriculaConvenioFromUrl = params.get('matriculaConvenio') || '';
   const isDuplicacaoMode = params.get('duplicar') === 'true';
+  const isFromProntuario = pacienteIdFromUrl > 0 && pacienteNomeFromUrl !== '';
   
-  // Buscar paciente específico rapidamente se vier de duplicação
+  // Buscar paciente específico rapidamente se vier de duplicação ou prontuário
   const { data: pacienteRapido, isLoading: loadingPacienteRapido } = trpc.pacientes.getById.useQuery(
     { id: pacienteIdFromUrl },
     { enabled: pacienteIdFromUrl > 0 }
@@ -29,7 +34,7 @@ export default function NovoAtendimento() {
   // Buscar lista completa apenas para busca (lazy loading)
   const { data: pacientes } = trpc.pacientes.list.useQuery(
     { limit: 50000 },
-    { enabled: !isDuplicacaoMode } // Só carrega lista se NÃO for duplicação
+    { enabled: !isDuplicacaoMode && !isFromProntuario } // Só carrega lista se NÃO for duplicação ou prontuário
   );
 
   const [searchPaciente, setSearchPaciente] = useState("");
@@ -73,32 +78,50 @@ export default function NovoAtendimento() {
   // Pré-selecionar paciente e preencher dados se vier de duplicação
   const [isDuplicacao, setIsDuplicacao] = useState(isDuplicacaoMode);
   
-  // Efeito rápido: usar pacienteRapido quando disponível (duplicação)
+  // Efeito rápido: usar pacienteRapido quando disponível (duplicação ou prontuário)
   useEffect(() => {
-    if (pacienteRapido && isDuplicacaoMode && !pacienteSelecionado) {
+    if (pacienteRapido && (isDuplicacaoMode || isFromProntuario) && !pacienteSelecionado) {
       // Selecionar paciente imediatamente
       setPacienteSelecionado(pacienteRapido);
       
-      // Preencher formulário com dados do paciente e URL params
-      const urlParams = new URLSearchParams(window.location.search);
-      setFormData(prev => ({
-        ...prev,
-        pacienteId: pacienteRapido.id,
-        tipoAtendimento: urlParams.get('tipoAtendimento') || '',
-        local: urlParams.get('local') || '',
-        convenio: urlParams.get('convenio') || pacienteRapido.operadora1 || '',
-        plano: pacienteRapido.planoModalidade1 || '',
-        faturamentoPrevistoInicial: urlParams.get('faturamentoPrevisto') || '',
-        faturamentoPrevistoFinal: urlParams.get('faturamentoPrevisto') || '',
-        observacoes: urlParams.get('observacoes') || '',
-        dataAtendimento: '', // Data em branco para preencher
-      }));
+      if (isDuplicacaoMode) {
+        // Modo duplicação: preencher com dados da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        setFormData(prev => ({
+          ...prev,
+          pacienteId: pacienteRapido.id,
+          tipoAtendimento: urlParams.get('tipoAtendimento') || '',
+          local: urlParams.get('local') || '',
+          convenio: urlParams.get('convenio') || pacienteRapido.operadora1 || '',
+          plano: pacienteRapido.planoModalidade1 || '',
+          faturamentoPrevistoInicial: urlParams.get('faturamentoPrevisto') || '',
+          faturamentoPrevistoFinal: urlParams.get('faturamentoPrevisto') || '',
+          observacoes: urlParams.get('observacoes') || '',
+          dataAtendimento: '', // Data em branco para preencher
+        }));
+      } else if (isFromProntuario) {
+        // Modo prontuário: pré-preencher com dados do paciente
+        setFormData(prev => ({
+          ...prev,
+          pacienteId: pacienteRapido.id,
+          convenio: convenioFromUrl || pacienteRapido.operadora1 || '',
+          plano: planoModalidadeFromUrl || pacienteRapido.planoModalidade1 || '',
+          // Data de hoje como padrão
+          dataAtendimento: new Date().toISOString().split('T')[0],
+        }));
+        
+        // Notificar usuário sobre o pré-preenchimento
+        const convenioPreenchido = convenioFromUrl || pacienteRapido.operadora1;
+        if (convenioPreenchido) {
+          toast.info(`Dados do paciente carregados: ${pacienteNomeFromUrl}`);
+        }
+      }
     }
-  }, [pacienteRapido, isDuplicacaoMode, pacienteSelecionado]);
+  }, [pacienteRapido, isDuplicacaoMode, isFromProntuario, pacienteSelecionado, convenioFromUrl, planoModalidadeFromUrl, pacienteNomeFromUrl]);
   
-  // Efeito para fluxo normal (sem duplicação) - usa lista de pacientes
+  // Efeito para fluxo normal (sem duplicação e sem prontuário) - usa lista de pacientes
   useEffect(() => {
-    if (isDuplicacaoMode) return; // Ignora se for duplicação
+    if (isDuplicacaoMode || isFromProntuario) return; // Ignora se for duplicação ou prontuário
     
     const urlParams = new URLSearchParams(window.location.search);
     const pacienteIdParam = urlParams.get('pacienteId');
@@ -112,8 +135,8 @@ export default function NovoAtendimento() {
     }
   }, [pacientes, isDuplicacaoMode]);
 
-  // No modo duplicação, usar pacienteRapido; senão, filtrar da lista
-  const filteredPacientes = isDuplicacaoMode 
+  // No modo duplicação ou prontuário, usar pacienteRapido; senão, filtrar da lista
+  const filteredPacientes = (isDuplicacaoMode || isFromProntuario)
     ? (pacienteRapido ? [pacienteRapido] : [])
     : pacientes?.filter((p) =>
         p.nome?.toLowerCase().includes(searchPaciente.toLowerCase()) ||

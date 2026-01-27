@@ -420,8 +420,17 @@ export default function Prontuario() {
             </div>
             {/* Botão Novo Atendimento */}
             <Button 
-              onClick={() => setLocation(`/atendimentos/novo?pacienteId=${paciente.id}`)}
-              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                // Passar dados do paciente via query params para pré-preenchimento
+                const params = new URLSearchParams({
+                  pacienteId: paciente.id.toString(),
+                  pacienteNome: paciente.nome,
+                  ...(paciente.operadora1 && { convenio: paciente.operadora1 }),
+                  ...(paciente.planoModalidade1 && { planoModalidade: paciente.planoModalidade1 }),
+                  ...(paciente.matriculaConvenio1 && { matriculaConvenio: paciente.matriculaConvenio1 }),
+                });
+                setLocation(`/atendimentos/novo?${params.toString()}`);
+              }}
             >
               <Plus className="h-4 w-4 mr-2" />
               Novo Atendimento
