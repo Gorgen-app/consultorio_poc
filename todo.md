@@ -3548,3 +3548,15 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Testar geocodificação de CEPs - Compilação TypeScript OK
 - [x] Testar renderização do mapa de calor - Componente integrado
 - [x] Validar performance com 5.409 CEPs únicos - 561 testes passando
+
+
+---
+
+## 🔄 GORGEN 3.9.51 - Job de Pré-carregamento de Coordenadas (27/01/2026)
+
+### Job de Geocodificação em Background
+- [x] Criar serviço de job de geocodificação (geocodificacao-job.ts)
+- [x] Implementar controle de progresso e estatísticas - JobStatus com tempo restante
+- [x] Adicionar endpoint para iniciar o job - iniciarJobGeocodificacao
+- [x] Adicionar endpoint para monitorar status do job - statusJobGeocodificacao
+- [x] Implementar controle de rate limiting (200 req/período) - MAX_REQUESTS_PER_RUN = 180
