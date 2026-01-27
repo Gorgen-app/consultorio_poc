@@ -1,0 +1,160 @@
+{
+  "query": "SELECT id, nome, cpf, email, telefone, cpf_hash, email_hash, telefone_hash \nFROM pacientes \nWHERE id IN (60001, 131109, 132580, 132768, 133668, 133885, 139003, 140137, 210001, 240001, 240002, 270001, 270002, 300001, 330001)\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, nome, cpf, email, telefone, cpf_hash, email_hash, telefone_hash \nFROM pacientes \nWHERE id IN (60001, 131109, 132580, 132768, 133668, 133885, 139003, 140137, 210001, 240001, 240002, 270001, 270002, 300001, 330001)\nLIMIT 20;",
+  "rows": [
+    {
+      "id": "60001",
+      "nome": "Leticia Uzeika",
+      "cpf": "817.683.540-49",
+      "email": "leticiauzeika@gmail.com",
+      "telefone": "(51) 98015-8282",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "131109",
+      "nome": "Gisele Dos Santos Louceiro Rocha",
+      "cpf": "025.245.950-48",
+      "email": "gilouceiro@gmail.com",
+      "telefone": "(51) 99216-6066",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "132580",
+      "nome": "Jaqueline Nunes Pereira",
+      "cpf": "528.037.160-00",
+      "email": "NULL",
+      "telefone": "(51) 99760-0286",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "132768",
+      "nome": "Jessica Marafiga Schmidt",
+      "cpf": "025.422.960-30",
+      "email": "jessica_marafiga@yahoo.com.br",
+      "telefone": "(51) 99411-1297",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "133668",
+      "nome": "Juliane Souza Santos",
+      "cpf": "809.503.020-15",
+      "email": "julianne.blue@hotmail.com",
+      "telefone": "(51) 99507-1881",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "133885",
+      "nome": "Karen Fontana Pinto da Silva",
+      "cpf": "997.743.800-53",
+      "email": "karen.fontana@yahoo.com.br",
+      "telefone": "(51) 99388-5464",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "139003",
+      "nome": "Natália Salvadori Frizon",
+      "cpf": "037.068.130-41",
+      "email": "natalia.s.frizon@gmail.com",
+      "telefone": "(51) 93359-285",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "140137",
+      "nome": "Pietro Eggert Goetz",
+      "cpf": "059.470.510-01",
+      "email": "NULL",
+      "telefone": "51 985291697",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "210001",
+      "nome": "Priscila Cezar Teixeira",
+      "cpf": "009.054.260-61",
+      "email": "Tmtrasportes77@gmail.com",
+      "telefone": "(51) 98923-2150",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "240001",
+      "nome": "Rodinei de Fraga Pedroso",
+      "cpf": "434.279.100-59",
+      "email": "rh@estecopal.com.br",
+      "telefone": "(51) 99500-6227",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "240002",
+      "nome": "Vitória de Lima Rabello",
+      "cpf": "039.687.110-09",
+      "email": "vitorialrabello@hotmail.com",
+      "telefone": "(51) 99990-3300",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "270001",
+      "nome": "Ros Mari Guerini Atolini",
+      "cpf": "313.371.200-49",
+      "email": "rosiguerini@gmail.com",
+      "telefone": "(51) 99354-6142",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "270002",
+      "nome": "Gustavo Da Silva Luiz",
+      "cpf": "019.390.540-01",
+      "email": "gustavos.luiz@hotmail.com",
+      "telefone": "(51) 98977-1880",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "300001",
+      "nome": "Luis Henrique Branco Martins",
+      "cpf": "026.573.950-07",
+      "email": "luis.branco@nipdobrasil.com.br",
+      "telefone": "(98) 98549-2002",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    },
+    {
+      "id": "330001",
+      "nome": "André Gorgen",
+      "cpf": "005.717.430-05",
+      "email": "andregorgen@proton.me",
+      "telefone": "(51) 99697-6920",
+      "cpf_hash": "NULL",
+      "email_hash": "NULL",
+      "telefone_hash": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tcpf\temail\ttelefone\tcpf_hash\temail_hash\ttelefone_hash\n60001\tLeticia Uzeika\t817.683.540-49\tleticiauzeika@gmail.com\t(51) 98015-8282\tNULL\tNULL\tNULL\n131109\tGisele Dos Santos Louceiro Rocha\t025.245.950-48\tgilouceiro@gmail.com\t(51) 99216-6066\tNULL\tNULL\tNULL\n132580\tJaqueline Nunes Pereira\t528.037.160-00\tNULL\t(51) 99760-0286\tNULL\tNULL\tNULL\n132768\tJessica Marafiga Schmidt\t025.422.960-30\tjessica_marafiga@yahoo.com.br\t(51) 99411-1297\tNULL\tNULL\tNULL\n133668\tJuliane Souza Santos\t809.503.020-15\tjulianne.blue@hotmail.com\t(51) 99507-1881\tNULL\tNULL\tNULL\n133885\tKaren Fontana Pinto da Silva\t997.743.800-53\tkaren.fontana@yahoo.com.br\t(51) 99388-5464\tNULL\tNULL\tNULL\n139003\tNatália Salvadori Frizon\t037.068.130-41\tnatalia.s.frizon@gmail.com\t(51) 93359-285\tNULL\tNULL\tNULL\n140137\tPietro Eggert Goetz\t059.470.510-01\tNULL\t51 985291697\tNULL\tNULL\tNULL\n210001\tPriscila Cezar Teixeira\t009.054.260-61\tTmtrasportes77@gmail.com\t(51) 98923-2150\tNULL\tNULL\tNULL\n240001\tRodinei de Fraga Pedroso\t434.279.100-59\trh@estecopal.com.br\t(51) 99500-6227\tNULL\tNULL\tNULL\n240002\tVitória de Lima Rabello\t039.687.110-09\tvitorialrabello@hotmail.com\t(51) 99990-3300\tNULL\tNULL\tNULL\n270001\tRos Mari Guerini Atolini\t313.371.200-49\trosiguerini@gmail.com\t(51) 99354-6142\tNULL\tNULL\tNULL\n270002\tGustavo Da Silva Luiz\t019.390.540-01\tgustavos.luiz@hotmail.com\t(51) 98977-1880\tNULL\tNULL\tNULL\n300001\tLuis Henrique Branco Martins\t026.573.950-07\tluis.branco@nipdobrasil.com.br\t(98) 98549-2002\tNULL\tNULL\tNULL\n330001\tAndré Gorgen\t005.717.430-05\tandregorgen@proton.me\t(51) 99697-6920\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 347
+}

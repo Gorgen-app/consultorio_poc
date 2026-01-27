@@ -1,0 +1,90 @@
+{
+  "query": "SELECT id, nome, \n  LEFT(cpf, 50) as cpf_preview, \n  LEFT(email, 50) as email_preview,\n  LEFT(telefone, 50) as telefone_preview,\n  CASE WHEN cpf LIKE 'enc:v1:%' THEN 'ENCRYPTED' ELSE 'PLAIN' END as cpf_status,\n  CASE WHEN email LIKE 'enc:v1:%' THEN 'ENCRYPTED' ELSE 'PLAIN' END as email_status,\n  CASE WHEN telefone LIKE 'enc:v1:%' THEN 'ENCRYPTED' ELSE 'PLAIN' END as telefone_status\nFROM pacientes \nWHERE id IN (60001, 131109, 132580, 132768, 133668, 133885, 139003, 140137);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, nome, \n  LEFT(cpf, 50) as cpf_preview, \n  LEFT(email, 50) as email_preview,\n  LEFT(telefone, 50) as telefone_preview,\n  CASE WHEN cpf LIKE 'enc:v1:%' THEN 'ENCRYPTED' ELSE 'PLAIN' END as cpf_status,\n  CASE WHEN email LIKE 'enc:v1:%' THEN 'ENCRYPTED' ELSE 'PLAIN' END as email_status,\n  CASE WHEN telefone LIKE 'enc:v1:%' THEN 'ENCRYPTED' ELSE 'PLAIN' END as telefone_status\nFROM pacientes \nWHERE id IN (60001, 131109, 132580, 132768, 133668, 133885, 139003, 140137);",
+  "rows": [
+    {
+      "id": "60001",
+      "nome": "Leticia Uzeika",
+      "cpf_preview": "817.683.540-49",
+      "email_preview": "leticiauzeika@gmail.com",
+      "telefone_preview": "(51) 98015-8282",
+      "cpf_status": "PLAIN",
+      "email_status": "PLAIN",
+      "telefone_status": "PLAIN"
+    },
+    {
+      "id": "131109",
+      "nome": "Gisele Dos Santos Louceiro Rocha",
+      "cpf_preview": "025.245.950-48",
+      "email_preview": "gilouceiro@gmail.com",
+      "telefone_preview": "(51) 99216-6066",
+      "cpf_status": "PLAIN",
+      "email_status": "PLAIN",
+      "telefone_status": "PLAIN"
+    },
+    {
+      "id": "132580",
+      "nome": "Jaqueline Nunes Pereira",
+      "cpf_preview": "528.037.160-00",
+      "email_preview": "NULL",
+      "telefone_preview": "(51) 99760-0286",
+      "cpf_status": "PLAIN",
+      "email_status": "PLAIN",
+      "telefone_status": "PLAIN"
+    },
+    {
+      "id": "132768",
+      "nome": "Jessica Marafiga Schmidt",
+      "cpf_preview": "025.422.960-30",
+      "email_preview": "jessica_marafiga@yahoo.com.br",
+      "telefone_preview": "(51) 99411-1297",
+      "cpf_status": "PLAIN",
+      "email_status": "PLAIN",
+      "telefone_status": "PLAIN"
+    },
+    {
+      "id": "133668",
+      "nome": "Juliane Souza Santos",
+      "cpf_preview": "809.503.020-15",
+      "email_preview": "julianne.blue@hotmail.com",
+      "telefone_preview": "(51) 99507-1881",
+      "cpf_status": "PLAIN",
+      "email_status": "PLAIN",
+      "telefone_status": "PLAIN"
+    },
+    {
+      "id": "133885",
+      "nome": "Karen Fontana Pinto da Silva",
+      "cpf_preview": "997.743.800-53",
+      "email_preview": "karen.fontana@yahoo.com.br",
+      "telefone_preview": "(51) 99388-5464",
+      "cpf_status": "PLAIN",
+      "email_status": "PLAIN",
+      "telefone_status": "PLAIN"
+    },
+    {
+      "id": "139003",
+      "nome": "Natália Salvadori Frizon",
+      "cpf_preview": "037.068.130-41",
+      "email_preview": "natalia.s.frizon@gmail.com",
+      "telefone_preview": "(51) 93359-285",
+      "cpf_status": "PLAIN",
+      "email_status": "PLAIN",
+      "telefone_status": "PLAIN"
+    },
+    {
+      "id": "140137",
+      "nome": "Pietro Eggert Goetz",
+      "cpf_preview": "059.470.510-01",
+      "email_preview": "NULL",
+      "telefone_preview": "51 985291697",
+      "cpf_status": "PLAIN",
+      "email_status": "PLAIN",
+      "telefone_status": "PLAIN"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tcpf_preview\temail_preview\ttelefone_preview\tcpf_status\temail_status\ttelefone_status\n60001\tLeticia Uzeika\t817.683.540-49\tleticiauzeika@gmail.com\t(51) 98015-8282\tPLAIN\tPLAIN\tPLAIN\n131109\tGisele Dos Santos Louceiro Rocha\t025.245.950-48\tgilouceiro@gmail.com\t(51) 99216-6066\tPLAIN\tPLAIN\tPLAIN\n132580\tJaqueline Nunes Pereira\t528.037.160-00\tNULL\t(51) 99760-0286\tPLAIN\tPLAIN\tPLAIN\n132768\tJessica Marafiga Schmidt\t025.422.960-30\tjessica_marafiga@yahoo.com.br\t(51) 99411-1297\tPLAIN\tPLAIN\tPLAIN\n133668\tJuliane Souza Santos\t809.503.020-15\tjulianne.blue@hotmail.com\t(51) 99507-1881\tPLAIN\tPLAIN\tPLAIN\n133885\tKaren Fontana Pinto da Silva\t997.743.800-53\tkaren.fontana@yahoo.com.br\t(51) 99388-5464\tPLAIN\tPLAIN\tPLAIN\n139003\tNatália Salvadori Frizon\t037.068.130-41\tnatalia.s.frizon@gmail.com\t(51) 93359-285\tPLAIN\tPLAIN\tPLAIN\n140137\tPietro Eggert Goetz\t059.470.510-01\tNULL\t51 985291697\tPLAIN\tPLAIN\tPLAIN\n",
+  "stderr": "",
+  "execution_time_ms": 361
+}

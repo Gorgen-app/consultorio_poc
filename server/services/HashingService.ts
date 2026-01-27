@@ -113,7 +113,7 @@ class HashingService {
     const hmac = crypto.createHmac(ALGORITHM, this.secretKey!);
     hmac.update(dataToHash, "utf8");
 
-    return hmac.digest(OUTPUT_ENCODING);
+    return hmac.digest("hex");
   }
 
   /**
@@ -137,7 +137,7 @@ class HashingService {
     const hmac = crypto.createHmac(ALGORITHM, this.secretKey!);
     hmac.update(normalizedValue, "utf8");
 
-    return hmac.digest(OUTPUT_ENCODING);
+    return hmac.digest("hex");
   }
 
   /**

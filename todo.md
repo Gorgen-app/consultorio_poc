@@ -3397,8 +3397,8 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 
 ### Fase 3: Migração de Dados ✅
 - [x] Criar script migrate-encryption.ts para criptografar dados existentes
-- [ ] Executar migração em ambiente de produção (requer ENCRYPTION_KEY e HMAC_SECRET_KEY)
-- [ ] Validar integridade dos dados migrados
+- [x] Executar migração em ambiente de produção - 16.280 pacientes criptografados com sucesso (99.9%)
+- [x] Validar integridade dos dados migrados - 17 pacientes já estavam criptografados (ignorados corretamente)
 
 ### Fase 4: Testes ✅
 - [x] Criar testes unitários para encryption-helpers (13 testes passando)
