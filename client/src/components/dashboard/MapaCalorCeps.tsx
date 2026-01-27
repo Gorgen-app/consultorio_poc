@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
-import { MapPin, ZoomIn, ZoomOut, Layers } from "lucide-react";
+import { MapPin, ZoomIn, ZoomOut, Layers, Crosshair, Ruler } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Mapeamento de coordenadas aproximadas para CEPs brasileiros
@@ -86,9 +86,9 @@ function getCorIntensidade(intensidade: number): string {
   }
 }
 
-// Dimensões do mapa SVG do Brasil
+// Dimensões do mapa SVG
 const MAPA_WIDTH = 600;
-const MAPA_HEIGHT = 600;
+const MAPA_HEIGHT = 500;
 
 // Limites geográficos do Brasil
 const BRASIL_BOUNDS = {
@@ -97,6 +97,13 @@ const BRASIL_BOUNDS = {
   minLng: -73.99,
   maxLng: -34.79
 };
+
+// Zoom padrão para escala 1cm:5km (aproximadamente)
+// Em um monitor típico, 1cm ≈ 38px, e 5km em coordenadas ≈ 0.045 graus
+// Zoom 3.5 dá uma boa aproximação dessa escala
+const ZOOM_PADRAO = 3.5;
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 10;
 
 // Converter coordenadas geográficas para posição no SVG
 function geoToSvg(lat: number, lng: number, zoom: number, centerLat: number, centerLng: number): { x: number; y: number } {
@@ -116,15 +123,44 @@ function geoToSvg(lat: number, lng: number, zoom: number, centerLat: number, cen
   return { x, y };
 }
 
+// Calcular escala em km baseada no zoom
+function calcularEscalaKm(zoom: number): number {
+  // Em zoom 1, a largura do mapa representa aproximadamente 4000km
+  // A barra de escala tem 100px de largura
+  const kmPorPixelBase = 4000 / MAPA_WIDTH;
+  const kmPorPixel = kmPorPixelBase / zoom;
+  return Math.round(kmPorPixel * 100); // 100px de barra
+}
+
 interface MapaCalorCepsProps {
   className?: string;
 }
 
 export function MapaCalorCeps({ className }: MapaCalorCepsProps) {
   const [nivelAgrupamento, setNivelAgrupamento] = useState<'regiao' | 'subregiao' | 'completo'>('regiao');
-  const [zoom, setZoom] = useState(1);
-  const [centerLat, setCenterLat] = useState(-15.0);
-  const [centerLng, setCenterLng] = useState(-55.0);
+  const [zoom, setZoom] = useState(ZOOM_PADRAO);
+  const [centerLat, setCenterLat] = useState(-30.0346); // Porto Alegre como padrão
+  const [centerLng, setCenterLng] = useState(-51.2177);
+  const [geolocalizacaoObtida, setGeolocalizacaoObtida] = useState(false);
+  
+  // Obter geolocalização do usuário ao montar o componente
+  useEffect(() => {
+    if (navigator.geolocation && !geolocalizacaoObtida) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCenterLat(position.coords.latitude);
+          setCenterLng(position.coords.longitude);
+          setGeolocalizacaoObtida(true);
+        },
+        (error) => {
+          console.log('Geolocalização não disponível:', error.message);
+          // Manter Porto Alegre como padrão
+          setGeolocalizacaoObtida(true);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    }
+  }, [geolocalizacaoObtida]);
   
   const { data, isLoading } = trpc.dashboardMetricas.pacDistribuicaoCep.useQuery({
     nivelAgrupamento
@@ -158,50 +194,47 @@ export function MapaCalorCeps({ className }: MapaCalorCepsProps) {
           x: pos.x,
           y: pos.y,
           cor: getCorIntensidade(item.intensidade),
-          raio: Math.max(8, Math.min(30, 8 + item.intensidade * 22)),
+          raio: Math.max(6, Math.min(25, 6 + item.intensidade * 19)),
           regiao: coords.nome
         };
       })
       .filter(Boolean);
   }, [data, zoom, centerLat, centerLng]);
   
-  const handleZoomIn = () => setZoom(prev => Math.min(prev * 1.5, 5));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev / 1.5, 0.5));
+  const handleZoomIn = () => setZoom(prev => Math.min(prev * 1.3, ZOOM_MAX));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev / 1.3, ZOOM_MIN));
   
-  // Centralizar em uma região específica
-  const centralizarRegiao = (regiao: string) => {
-    const regioes: Record<string, { lat: number; lng: number }> = {
-      'brasil': { lat: -15.0, lng: -55.0 },
-      'sul': { lat: -28.0, lng: -51.5 },
-      'sudeste': { lat: -22.5, lng: -45.0 },
-      'nordeste': { lat: -10.0, lng: -38.0 },
-      'norte': { lat: -3.0, lng: -55.0 },
-      'centro-oeste': { lat: -15.5, lng: -50.0 },
-    };
-    
-    if (regioes[regiao]) {
-      setCenterLat(regioes[regiao].lat);
-      setCenterLng(regioes[regiao].lng);
-      if (regiao !== 'brasil') {
-        setZoom(2);
-      } else {
-        setZoom(1);
-      }
+  // Centralizar na localização do usuário
+  const centralizarNaLocalizacao = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCenterLat(position.coords.latitude);
+          setCenterLng(position.coords.longitude);
+          setZoom(ZOOM_PADRAO);
+        },
+        () => {
+          // Se falhar, manter posição atual
+        }
+      );
     }
   };
+  
+  // Escala atual em km
+  const escalaKm = calcularEscalaKm(zoom);
   
   if (isLoading) {
     return (
       <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <MapPin className="h-4 w-4" />
             Mapa de Calor - Distribuição por CEP
           </CardTitle>
-          <CardDescription>Carregando dados...</CardDescription>
+          <CardDescription className="text-xs">Carregando dados...</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[400px] w-full" />
+        <CardContent className="pt-0">
+          <Skeleton className="h-[350px] w-full rounded-lg" />
         </CardContent>
       </Card>
     );
@@ -209,80 +242,46 @@ export function MapaCalorCeps({ className }: MapaCalorCepsProps) {
   
   return (
     <Card className={className}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+      <CardHeader className="pb-2 space-y-1">
+        <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MapPin className="h-4 w-4 text-primary" />
               Mapa de Calor - Distribuição por CEP
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs">
               {data?.total || 0} pacientes com CEP cadastrado
             </CardDescription>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Select value={nivelAgrupamento} onValueChange={(v: any) => setNivelAgrupamento(v)}>
-              <SelectTrigger className="w-[140px]">
-                <Layers className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="regiao">Por Região</SelectItem>
-                <SelectItem value="subregiao">Por Sub-região</SelectItem>
-                <SelectItem value="completo">CEP Completo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={nivelAgrupamento} onValueChange={(v: any) => setNivelAgrupamento(v)}>
+            <SelectTrigger className="w-[130px] h-8 text-xs">
+              <Layers className="h-3 w-3 mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="regiao">Por Região</SelectItem>
+              <SelectItem value="subregiao">Por Sub-região</SelectItem>
+              <SelectItem value="completo">CEP Completo</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
       
-      <CardContent>
-        {/* Controles de zoom e navegação */}
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={handleZoomOut} title="Diminuir zoom">
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <div className="w-32">
-              <Slider
-                value={[zoom]}
-                onValueChange={([v]) => setZoom(v)}
-                min={0.5}
-                max={5}
-                step={0.1}
-              />
-            </div>
-            <Button variant="outline" size="icon" onClick={handleZoomIn} title="Aumentar zoom">
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-muted-foreground ml-2">{(zoom * 100).toFixed(0)}%</span>
-          </div>
-          
-          <div className="flex items-center gap-1 flex-wrap">
-            <Button variant="ghost" size="sm" onClick={() => centralizarRegiao('brasil')}>Brasil</Button>
-            <Button variant="ghost" size="sm" onClick={() => centralizarRegiao('sul')}>Sul</Button>
-            <Button variant="ghost" size="sm" onClick={() => centralizarRegiao('sudeste')}>Sudeste</Button>
-            <Button variant="ghost" size="sm" onClick={() => centralizarRegiao('nordeste')}>Nordeste</Button>
-            <Button variant="ghost" size="sm" onClick={() => centralizarRegiao('norte')}>Norte</Button>
-            <Button variant="ghost" size="sm" onClick={() => centralizarRegiao('centro-oeste')}>Centro-Oeste</Button>
-          </div>
-        </div>
-        
+      <CardContent className="pt-0">
         {/* Mapa SVG */}
-        <div className="relative border rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-900">
+        <div className="relative border rounded-lg overflow-hidden bg-gradient-to-b from-sky-50 to-sky-100 dark:from-slate-800 dark:to-slate-900">
           <svg 
             viewBox={`0 0 ${MAPA_WIDTH} ${MAPA_HEIGHT}`} 
-            className="w-full h-[400px]"
-            style={{ background: 'linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%)' }}
+            className="w-full h-[320px]"
           >
             {/* Contorno simplificado do Brasil */}
             <path
               d="M180,50 L280,30 L380,40 L450,80 L500,150 L520,250 L510,350 L480,420 L420,480 L350,520 L280,540 L200,530 L140,480 L100,400 L80,300 L90,200 L120,120 Z"
               fill="#d1fae5"
               stroke="#10b981"
-              strokeWidth="2"
-              opacity="0.5"
+              strokeWidth="1.5"
+              opacity="0.4"
             />
             
             {/* Pontos do mapa de calor */}
@@ -295,31 +294,31 @@ export function MapaCalorCeps({ className }: MapaCalorCepsProps) {
                       <circle
                         cx={ponto?.x}
                         cy={ponto?.y}
-                        r={ponto?.raio ? ponto.raio * 1.5 : 12}
+                        r={ponto?.raio ? ponto.raio * 1.8 : 10}
                         fill={ponto?.cor}
-                        opacity="0.3"
+                        opacity="0.25"
                         filter="url(#blur)"
                       />
                       {/* Círculo principal */}
                       <circle
                         cx={ponto?.x}
                         cy={ponto?.y}
-                        r={ponto?.raio || 8}
+                        r={ponto?.raio || 6}
                         fill={ponto?.cor}
                         stroke="white"
-                        strokeWidth="2"
-                        opacity="0.85"
+                        strokeWidth="1.5"
+                        opacity="0.9"
                         className="cursor-pointer hover:opacity-100 transition-opacity"
                       />
                       {/* Número de pacientes */}
-                      {zoom >= 1.5 && ponto?.quantidade && ponto.quantidade >= 5 && (
+                      {zoom >= 2.5 && ponto?.quantidade && ponto.quantidade >= 3 && (
                         <text
                           x={ponto?.x}
                           y={ponto?.y}
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill="white"
-                          fontSize="10"
+                          fontSize="9"
                           fontWeight="bold"
                         >
                           {ponto.quantidade}
@@ -342,33 +341,94 @@ export function MapaCalorCeps({ className }: MapaCalorCepsProps) {
             {/* Filtro de blur para efeito de calor */}
             <defs>
               <filter id="blur">
-                <feGaussianBlur stdDeviation="5" />
+                <feGaussianBlur stdDeviation="6" />
               </filter>
             </defs>
           </svg>
+          
+          {/* Controles de zoom - posicionados sobre o mapa */}
+          <div className="absolute top-3 right-3 flex flex-col gap-1 bg-white/90 dark:bg-slate-800/90 rounded-lg p-1.5 shadow-md">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7" 
+              onClick={handleZoomIn} 
+              title="Aumentar zoom"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <div className="h-24 flex items-center justify-center px-1">
+              <Slider
+                value={[zoom]}
+                onValueChange={([v]) => setZoom(v)}
+                min={ZOOM_MIN}
+                max={ZOOM_MAX}
+                step={0.2}
+                orientation="vertical"
+                className="h-full"
+              />
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7" 
+              onClick={handleZoomOut} 
+              title="Diminuir zoom"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Botão de centralizar na localização */}
+          <div className="absolute top-3 left-3">
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="h-7 text-xs gap-1 shadow-md"
+              onClick={centralizarNaLocalizacao}
+              title="Centralizar na minha localização"
+            >
+              <Crosshair className="h-3 w-3" />
+              Minha localização
+            </Button>
+          </div>
+          
+          {/* Régua de escala */}
+          <div className="absolute bottom-3 left-3 bg-white/90 dark:bg-slate-800/90 rounded px-2 py-1 shadow-md">
+            <div className="flex items-center gap-2">
+              <Ruler className="h-3 w-3 text-muted-foreground" />
+              <div className="flex flex-col items-center">
+                <div className="w-[60px] h-1 bg-slate-700 dark:bg-slate-300 rounded-full relative">
+                  <div className="absolute -left-0.5 -top-0.5 w-0.5 h-2 bg-slate-700 dark:bg-slate-300" />
+                  <div className="absolute -right-0.5 -top-0.5 w-0.5 h-2 bg-slate-700 dark:bg-slate-300" />
+                </div>
+                <span className="text-[10px] text-muted-foreground mt-0.5">{escalaKm} km</span>
+              </div>
+            </div>
+          </div>
         </div>
         
-        {/* Legenda */}
-        <div className="flex items-center justify-between mt-4 text-sm">
-          <div className="flex items-center gap-2">
+        {/* Legenda compacta */}
+        <div className="flex items-center justify-between mt-2 text-xs">
+          <div className="flex items-center gap-3">
             <span className="text-muted-foreground">Concentração:</span>
-            <div className="flex items-center gap-1">
-              <div className="w-4 h-4 rounded-full" style={{ background: getCorIntensidade(0) }} />
-              <span className="text-xs">Baixa</span>
+            <div className="flex items-center gap-0.5">
+              <div className="w-3 h-3 rounded-full" style={{ background: getCorIntensidade(0) }} />
+              <span className="text-[10px] text-muted-foreground">Baixa</span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-4 h-4 rounded-full" style={{ background: getCorIntensidade(0.5) }} />
-              <span className="text-xs">Média</span>
+            <div className="flex items-center gap-0.5">
+              <div className="w-3 h-3 rounded-full" style={{ background: getCorIntensidade(0.5) }} />
+              <span className="text-[10px] text-muted-foreground">Média</span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-4 h-4 rounded-full" style={{ background: getCorIntensidade(1) }} />
-              <span className="text-xs">Alta</span>
+            <div className="flex items-center gap-0.5">
+              <div className="w-3 h-3 rounded-full" style={{ background: getCorIntensidade(1) }} />
+              <span className="text-[10px] text-muted-foreground">Alta</span>
             </div>
           </div>
           
-          <div className="text-muted-foreground">
-            {pontosNoMapa.length} regiões com pacientes
-          </div>
+          <span className="text-muted-foreground">
+            {pontosNoMapa.length} regiões
+          </span>
         </div>
       </CardContent>
     </Card>

@@ -3512,3 +3512,15 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Criar tabela endereco_historico no schema - 18 campos incluindo rastreabilidade
 - [x] Registrar alterações de endereço automaticamente ao atualizar paciente - Função registrarHistoricoEndereco() integrada
 - [x] Manter histórico completo conforme pilar de imutabilidade - Função getHistoricoEndereco() para consulta
+
+
+---
+
+## 🗺️ GORGEN 3.9.49 - Ajustes no Mapa de Calor (27/01/2026)
+
+### Melhorias de UX
+- [x] Remover filtro por região (botões Brasil, Sul, Sudeste, etc.) - Removido completamente
+- [x] Centralizar mapa por geolocalização do usuário - Usa navigator.geolocation ao carregar
+- [x] Configurar zoom padrão 1cm:5km - Zoom padrão 3.5 (aproximadamente 1cm:5km)
+- [x] Manter régua de zoom visível e acessível - Slider vertical + botões + régua de escala em km
+- [x] Melhorar layout visual do componente - Layout compacto e profissional
