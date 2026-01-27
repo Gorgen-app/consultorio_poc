@@ -22,7 +22,10 @@ const pacienteSchema = z.object({
   sexo: z.enum(["M", "F", "Outro"]).optional().nullable(),
   cpf: z.string().optional().nullable(),
   nomeMae: z.string().optional().nullable(),
-  email: z.string().email().optional().nullable().or(z.literal("")),
+  email: z.string().optional().nullable().refine(
+    (val) => !val || val === "" || val.startsWith("enc:v1:") || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+    { message: "Email inválido" }
+  ),
   telefone: z.string().optional().nullable(),
   endereco: z.string().optional().nullable(),
   bairro: z.string().optional().nullable(),

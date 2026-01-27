@@ -1930,7 +1930,8 @@ export async function getProntuarioCompleto(tenantId: number, pacienteId: number
   
   if (pacienteResult.length === 0) return null;
   
-  const paciente = pacienteResult[0];
+  // Descriptografar dados sensíveis do paciente
+  const paciente = decryptPacienteData(pacienteResult[0]);
   
   // Buscar todos os dados do prontuário em paralelo
   const [

@@ -3406,3 +3406,12 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Testar geração de hash para busca
 - [x] Testar isolamento de hash entre tenants
 - [x] Todos os 539 testes passando
+
+
+---
+
+## 🐛 GORGEN 3.9.41 - Correção de Bugs de Criptografia (27/01/2026)
+
+### Bugs Corrigidos
+- [x] Email aparece criptografado na tela de prontuário - Adicionado decryptPacienteData em getProntuarioCompleto
+- [x] Erro ao atualizar paciente: validação de email - Atualizado pacienteSchema para aceitar formato criptografado
