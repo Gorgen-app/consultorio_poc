@@ -3570,3 +3570,24 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Configurar cron job para executar diariamente às 03:30 BRT
 - [x] Processar apenas CEPs novos (não processados anteriormente) - buscarCepsPendentes() já filtra
 - [x] Registrar log de execução do job agendado - logScheduler() com estatísticas
+
+
+---
+
+## 🎨 GORGEN 3.9.53 - Ajustes na Landing Page (27/01/2026)
+
+### Cabeçalho
+- [x] Adicionar botão "Crie sua conta" ao lado de "Entrar"
+- [x] Estilizar com cores invertidas (fundo branco, texto azul)
+
+### Rodapé
+- [x] Criar estrutura de 5 colunas com links
+- [x] Coluna "Nossos Produtos": Para pacientes, Para Médicos, Para Empresas
+- [x] Coluna "A Empresa": Quem somos, Carreiras, Imprensa, Relação com Investidores, Termos de uso, Privacidade, Segurança de dados, Sustentabilidade
+- [x] Coluna "Ajuda": Central de ajuda, SAC 0800, Denúncia
+- [x] Coluna "Fale Conosco": Telefone, E-mail, WhatsApp
+- [x] Coluna "Acompanhe": Instagram, YouTube, Facebook, X
+
+### Cookies
+- [x] Implementar banner de aviso de cookies
+- [x] Salvar preferência do usuário no localStorage
