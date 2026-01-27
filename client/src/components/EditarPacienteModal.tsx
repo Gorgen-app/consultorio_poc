@@ -338,7 +338,14 @@ export function EditarPacienteModal({ paciente, open, onOpenChange, initialTab =
 
     // Filtrar campos vazios ou undefined para não sobrescrever dados existentes
     // Campos que nunca devem ser enviados na atualização
-    const fieldsToExclude = ['id', 'tenantId', 'idPaciente', 'dataInclusao', 'pastaPaciente'];
+    // IMPORTANTE: Campos de hash são gerenciados automaticamente pelo backend
+    // Não devem ser enviados pelo frontend para evitar inconsistências
+    const fieldsToExclude = [
+      'id', 'tenantId', 'idPaciente', 'dataInclusao', 'pastaPaciente',
+      'cpfHash', 'emailHash', 'telefoneHash', // Hashes gerenciados pelo backend
+      'createdAt', 'updatedAt', 'deletedAt', 'deletedBy', // Campos de auditoria
+      'codigoLegado', // Campo de migração
+    ];
     
     const cleanedData = Object.fromEntries(
       Object.entries(dataToSubmit).filter(([key, value]) => {

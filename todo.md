@@ -3697,3 +3697,31 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Atualizar função updatePaciente no db.ts para usar nova função
 - [x] Criar testes automatizados para validar a solução (11 testes passando)
 - [x] Testar e validar correção (572 testes passando no total)
+
+
+---
+
+## 🔴 ERRO CRÍTICO - Atualização de Prontuário (27/01/2026 - 2ª Investigação)
+
+### Erro Reportado
+- Erro persiste mesmo após implementação de normalizeAndEncryptPacienteData
+- Mensagem: "Failed query: update `pacientes` set `nome` = ?, `data_nascimento` = ?, `sexo` = ?, `cpf` = ?, `cpf_hash` = ?, ..."
+- Paciente: Yasmin Fontella Leguiça (ID: 144585)
+- Dados visíveis no erro: valores criptografados sendo passados diretamente na query
+
+### Análise do Erro
+- [x] Verificar se normalizeAndEncryptPacienteData está sendo chamada corretamente - SIM
+- [x] Analisar fluxo completo de dados do frontend ao backend - CONCLUÍDO
+- [x] Verificar se o problema está no router ou no db.ts - Problema no frontend
+- [x] Identificar causa raiz real do problema - Frontend enviando campos de hash
+
+### Causa Raiz Identificada
+O frontend estava enviando campos de hash (cpfHash, emailHash, telefoneHash) junto com os dados.
+Esses campos não devem ser enviados pelo frontend pois são gerenciados automaticamente pelo backend.
+
+### Implementação da Correção
+- [x] Adicionar campos de hash à lista de exclusão no EditarPacienteModal.tsx
+- [x] Adicionar remoção de campos de hash no updatePaciente (db.ts)
+- [x] Adicionar logs de warning para dados já criptografados
+- [ ] Testar correção em produção
+- [ ] Validar que o erro não ocorre mais

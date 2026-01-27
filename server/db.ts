@@ -560,10 +560,25 @@ export async function updatePaciente(
     await registrarHistoricoEndereco(tenantId, id, existing, 'atualizacao', options);
   }
 
+  // Remover campos de hash que podem ter sido enviados pelo frontend
+  // Esses campos são gerenciados automaticamente pelo backend
+  const { cpfHash, emailHash, telefoneHash, ...dataWithoutHashes } = data as any;
+  
+  // Log para debug
+  if (dataWithoutHashes.cpf?.startsWith?.('enc:v1:')) {
+    console.warn('[updatePaciente] ATENÇÃO: CPF já criptografado recebido do frontend');
+  }
+  if (dataWithoutHashes.email?.startsWith?.('enc:v1:')) {
+    console.warn('[updatePaciente] ATENÇÃO: Email já criptografado recebido do frontend');
+  }
+  if (dataWithoutHashes.telefone?.startsWith?.('enc:v1:')) {
+    console.warn('[updatePaciente] ATENÇÃO: Telefone já criptografado recebido do frontend');
+  }
+  
   // Normalizar e criptografar dados sensíveis antes de atualizar
   // Usa normalizeAndEncryptPacienteData para garantir consistência de hash
   // mesmo quando dados já criptografados são enviados para atualização
-  const encryptedData = normalizeAndEncryptPacienteData(tenantId, data);
+  const encryptedData = normalizeAndEncryptPacienteData(tenantId, dataWithoutHashes);
 
   await db.update(pacientes).set(encryptedData).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   return getPacienteById(tenantId, id);
