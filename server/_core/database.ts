@@ -51,6 +51,7 @@ export async function initializePool(): Promise<Pool | null> {
       user: url.username,
       password: url.password,
       database: url.pathname.slice(1), // Remove a barra inicial
+      charset: "utf8mb4", // Suporte completo a caracteres Unicode (incluindo acentos)
       ...POOL_CONFIG,
     };
 

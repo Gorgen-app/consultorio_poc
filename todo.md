@@ -3742,3 +3742,24 @@ Esses campos não devem ser enviados pelo frontend pois são gerenciados automat
 ### TODO Futuro
 - [ ] Implementar mocks para funções do banco de dados
 - [ ] OU criar seed de dados para ambiente de teste
+
+
+---
+
+## 🔴 ERRO - Inserção de Novo Paciente (27/01/2026)
+
+### Erro Reportado
+Query SQL falha ao inserir novo paciente. O erro mostra valor truncado no final: "Nã" em vez de "Não".
+
+### Análise
+- [x] Verificar função createPaciente no db.ts - OK
+- [x] Verificar se há problema com campos booleanos ou enum - Não
+- [x] Identificar qual campo está causando o truncamento - Problema de charset
+
+### Causa Raiz
+A conexão MySQL não tinha charset utf8mb4 configurado, causando truncamento
+de caracteres acentuados como "ã" em "Não".
+
+### Correção Implementada
+- [x] Adicionar charset: "utf8mb4" na configuração do pool MySQL
+- [ ] Testar inserção de novo paciente
