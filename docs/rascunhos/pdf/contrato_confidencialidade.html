@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>contrato_confidencialidade.md</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/contrib/auto-render.min.js"></script>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+             
+            font-family: "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Meiryo", "Yu Gothic",
+                         "Noto Sans CJK SC", "WenQuanYi Zen Hei", "SimSun", "Microsoft YaHei",
+                         "Arial Unicode MS", "Arial", sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background: white;
+            color: #333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: #333;
+            page-break-after: avoid;
+        }
+        h1 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 0.3em;
+        }
+        h2 {
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 0.2em;
+        }
+        p {
+            margin-bottom: 1em;
+            text-align: justify;
+            orphans: 2;
+            widows: 2;
+        }
+        pre {
+            padding: 1em;
+            background-color: #f8f8f8;
+            border: 1px solid #e1e1e1;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            page-break-inside: avoid;
+            font-size: 0.9em;
+        }
+        code {
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            background-color: #f8f8f8;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+            page-break-inside: avoid;
+            font-size: 0.9em;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        img {
+            max-width: 100%;
+            max-height: 70vh;
+            height: auto;
+            width: auto;
+            page-break-inside: avoid;
+            page-break-before: auto;
+            page-break-after: auto;
+            display: block;
+            margin: 1em auto;
+            object-fit: contain;
+        }
+        blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 1em;
+            color: #666;
+            margin-left: 0;
+            margin-right: 0;
+            font-style: italic;
+        }
+         
+        .katex {
+            font-size: 1.1em;
+        }
+        .katex-display {
+            margin: 1em 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+         
+        .math-inline {
+            font-style: italic;
+            font-family: serif;
+        }
+        .math-display {
+            display: block;
+            text-align: center;
+            margin: 1em 0;
+            font-style: italic;
+            font-family: serif;
+            page-break-inside: avoid;
+        }
+         
+        .mermaid {
+            text-align: center;
+            margin: 1.5em 0;
+            page-break-inside: avoid;
+            background-color: transparent;
+        }
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+         
+        ul, ol {
+            margin-bottom: 1em;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+         
+        .task-list-item {
+            list-style-type: none;
+        }
+        .task-list-item input[type="checkbox"] {
+            margin-right: 0.5em;
+        }
+         
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <hr>
+
+<p>title: &ldquo;Contrato de Confidencialidade e Sigilo (NDA)&rdquo;
+document_type: &ldquo;Documentação Legal&rdquo;
+system: &ldquo;Gorgen - Aplicativo de Gestão em Saúde&rdquo;
+version: &ldquo;1.1&rdquo;
+status: &ldquo;Rascunho&rdquo;
+last_updated: &ldquo;27/01/2026&rdquo;</p>
+
+<h2 id="updated-by-manus-ai">updated_by: &ldquo;Manus AI&rdquo;</h2>
+
+<blockquote>
+<p><strong>Controle de Versão</strong></p>
+
+<table>
+<thead>
+<tr>
+<th align="left">Campo</th>
+<th align="left">Valor</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td align="left"><strong>Versão</strong></td>
+<td align="left">1.1</td>
+</tr>
+
+<tr>
+<td align="left"><strong>Status</strong></td>
+<td align="left">Rascunho</td>
+</tr>
+
+<tr>
+<td align="left"><strong>Última Atualização</strong></td>
+<td align="left">27/01/2026</td>
+</tr>
+
+<tr>
+<td align="left"><strong>Atualizado por</strong></td>
+<td align="left">Manus AI</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+
+<h1 id="contrato-de-confidencialidade-e-sigilo-non-disclosure-agreement-nda"><strong>CONTRATO DE CONFIDENCIALIDADE E SIGILO (NON-DISCLOSURE AGREEMENT - NDA)</strong></h1>
+
+<h2 id="das-partes"><strong>DAS PARTES</strong></h2>
+
+<p><strong>PARTE REVELADORA:</strong> Dr. André Gorgen, (qualificação completa), doravante denominado <strong>PROPRIETÁRIO</strong>, na qualidade de titular e administrador do Sistema Gorgen.</p>
+
+<p><strong>PARTE RECEPTORA:</strong> [Nome Completo do Usuário], [Nacionalidade], [Estado Civil], [Profissão], portador(a) do RG nº [Número do RG] e inscrito(a) no CPF sob o nº [Número do CPF], residente e domiciliado(a) em [Endereço Completo], doravante denominado(a) <strong>USUÁRIO</strong>.</p>
+
+<h2 id="cláusula-primeira-do-objeto-e-aceitação"><strong>CLÁUSULA PRIMEIRA – DO OBJETO E ACEITAÇÃO</strong></h2>
+
+<p>1.1. O objeto deste contrato é estabelecer os termos e condições sob os quais o <strong>USUÁRIO</strong> se obriga a manter o mais absoluto e perpétuo sigilo sobre todas as &ldquo;Informações Confidenciais&rdquo; a que tenha acesso em virtude de sua utilização do <strong>Sistema Gorgen</strong>.</p>
+
+<p>1.2. Este contrato é parte indissociável dos Termos de Uso da plataforma. O aceite dos Termos de Uso implica a aceitação integral e irrestrita deste NDA.</p>
+
+<h2 id="cláusula-segunda-definição-de-informações-confidenciais"><strong>CLÁUSULA SEGUNDA – DEFINIÇÃO DE INFORMAÇÕES CONFIDENCIAIS</strong></h2>
+
+<p>2.1. Para os fins deste contrato, &ldquo;Informação Confidencial&rdquo; abrange, de forma irrestrita, toda e qualquer informação que não seja de domínio público, revelada pela <strong>PARTE REVELADORA</strong> à <strong>PARTE RECEPTORA</strong>, em qualquer formato (escrito, oral, digital, etc.), incluindo, mas não se limitando a:</p>
+
+<p>a) <strong>DADOS DE PACIENTES (PRIORIDADE MÁXIMA):</strong> Qualquer dado pessoal ou dado pessoal sensível, conforme definido pela Lei Geral de Proteção de Dados (LGPD), incluindo prontuários médicos, históricos clínicos, diagnósticos, tratamentos, exames, imagens, dados genéticos, e qualquer outra informação relacionada à saúde, à vida sexual, à origem racial ou étnica, e à identidade dos pacientes cadastrados no Sistema Gorgen.</p>
+
+<p>b) <strong>PROPRIEDADE INTELECTUAL DA PLATAFORMA:</strong> A lógica de programação, scripts, código-fonte e código-objeto, design (UI/UX), identidade visual, arquitetura de software, fluxos de trabalho, estrutura de banco de dados, segredos de negócio (trade secrets), know-how, técnicas, algoritmos, e toda a documentação técnica e funcional do Sistema Gorgen.</p>
+
+<p>c) <strong>INFORMAÇÕES DE NEGÓCIO:</strong> Dados financeiros, estratégias de marketing, listas de pacientes, modelos de precificação, planos de desenvolvimento, relatórios de performance, e qualquer outra informação comercial ou estratégica relacionada ao consultório e ao Sistema Gorgen.</p>
+
+<p>d) <strong>CREDENCIAS DE ACESSO:</strong> Nomes de usuário, senhas, tokens de acesso, chaves de API e qualquer outro meio de autenticação para acesso ao Sistema.</p>
+
+<h2 id="cláusula-terceira-obrigações-do-usuário"><strong>CLÁUSULA TERCEIRA – OBRIGAÇÕES DO USUÁRIO</strong></h2>
+
+<p>3.1. O <strong>USUÁRIO</strong> obriga-se a:</p>
+
+<p>a) <strong>Finalidade Restrita:</strong> Utilizar as Informações Confidenciais única e exclusivamente para o desempenho de suas atribuições profissionais autorizadas no âmbito do Sistema Gorgen, conforme seu perfil de acesso.</p>
+
+<p>b) <strong>Proibição de Divulgação:</strong> Manter em absoluto sigilo todas as Informações Confidenciais, não as divulgando, revelando, reproduzindo, distribuindo, ou de qualquer forma dando conhecimento a terceiros, sob qualquer pretexto, salvo mediante ordem judicial expressa.</p>
+
+<p>c) <strong>Dever de Cuidado:</strong> Tomar todas as precauções necessárias para proteger as Informações Confidenciais contra perda, roubo, ou acesso não autorizado, aplicando o mesmo grau de cuidado que utiliza para proteger suas próprias informações de natureza similar, conforme a Política de Segurança do Usuário.</p>
+
+<p>d) <strong>Proibição de Cópia:</strong> Não fazer cópias, downloads, backups, screenshots, ou qualquer forma de extração das Informações Confidenciais, exceto pelas funcionalidades expressamente permitidas na plataforma (ex: gerar PDF de um documento específico).</p>
+
+<p>e) <strong>Comunicação Imediata:</strong> Comunicar imediatamente ao <strong>PROPRIETÁRIO</strong> qualquer suspeita ou ocorrência de quebra de sigilo, acesso não autorizado, ou perda de Informações Confidenciais.</p>
+
+<h2 id="cláusula-quarta-vigência-e-perpetuidade"><strong>CLÁUSULA QUARTA – VIGÊNCIA E PERPETUIDADE</strong></h2>
+
+<p>4.1. A obrigação de confidencialidade estabelecida neste contrato tem caráter <strong>perpétuo e irrevogável</strong>, mantendo-se em pleno vigor e efeito mesmo após o término de qualquer vínculo profissional, contratual ou de qualquer outra natureza entre o <strong>USUÁRIO</strong> e o <strong>PROPRIETÁRIO</strong>.</p>
+
+<h2 id="cláusula-quinta-penalidades-e-responsabilização"><strong>CLÁUSULA QUINTA – PENALIDADES E RESPONSABILIZAÇÃO</strong></h2>
+
+<p>5.1. A quebra da obrigação de sigilo, por ação ou omissão, dolosa ou culposa, por parte do <strong>USUÁRIO</strong>, constituirá violação grave deste contrato e da legislação aplicável (incluindo o Código Penal, a Lei Geral de Proteção de Dados e o Código de Ética Médica).</p>
+
+<p>5.2. Em caso de violação, o <strong>USUÁRIO</strong> estará sujeito a:</p>
+
+<p>a) <strong>Sanções Administrativas:</strong> Aplicação imediata das sanções previstas nos Termos de Uso, incluindo a suspensão ou exclusão permanente de seu acesso ao Sistema Gorgen.</p>
+
+<p>b) <strong>Responsabilização Civil:</strong> O <strong>USUÁRIO</strong> responderá civilmente pelos danos materiais e morais, diretos e indiretos, incluindo lucros cessantes, causados ao <strong>PROPRIETÁRIO</strong>, aos pacientes e a terceiros, sem prejuízo da aplicação de multa contratual não compensatória no valor de <strong>R$ [Valor da Multa, ex: 50.000,00]</strong>, a ser paga por cada violação constatada.</p>
+
+<p>c) <strong>Responsabilização Criminal:</strong> O <strong>PROPRIETÁRIO</strong> tomará as medidas legais cabíveis para a apuração da responsabilidade criminal do <strong>USUÁRIO</strong>, nos termos da legislação penal vigente.</p>
+
+<h2 id="cláusula-sexta-foro"><strong>CLÁUSULA SEXTA – FORO</strong></h2>
+
+<p>6.1. Fica eleito o Foro da Comarca de Porto Alegre/RS para dirimir quaisquer controvérsias oriundas do presente contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.</p>
+
+<p>Ao aceitar os Termos de Uso do Sistema Gorgen, o <strong>USUÁRIO</strong> manifesta sua concordância plena com todos os termos e condições deste Contrato de Confidencialidade.</p>
+
+<p>[Local], [Data].</p>
+
+<hr>
+
+<p><strong>Dr. André Gorgen</strong></p>
+
+<p>(Parte Reveladora)</p>
+
+<hr>
+
+<p><strong>[Nome Completo do Usuário]</strong></p>
+
+<p>(Parte Receptora)</p>
+
+    <script>
+        
+        if (typeof mermaid !== 'undefined') {
+            mermaid.initialize({
+                startOnLoad: false,  
+                theme: 'default',
+                securityLevel: 'loose'
+            });
+        }
+
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof hljs !== 'undefined') {
+                hljs.highlightAll();
+            }
+        });
+
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof renderMathInElement !== 'undefined') {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$`', right: '`$', display: false},
+                        {left: '\\[', right: '\\]', display: true},
+                        {left: '\\(', right: '\\)', display: false}
+                    ],
+                    throwOnError: false
+                });
+            }
+        });
+
+        
+        document.addEventListener("DOMContentLoaded", async function() {
+            if (typeof mermaid === 'undefined') {
+                return;
+            }
+
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            let hasError = false;
+
+            for (let i = 0; i < mermaidElements.length; i++) {
+                const element = mermaidElements[i];
+                const mermaidCode = element.textContent.trim();
+
+                try {
+                    const { svg } = await mermaid.render('mermaid-diagram-' + i, mermaidCode);
+                    element.innerHTML = svg;
+                    console.log('Mermaid diagram ' + (i + 1) + ' rendered successfully');
+                } catch (error) {
+                    hasError = true;
+                    console.error('Mermaid rendering error for diagram ' + (i + 1) + ':', error);
+
+                    
+                    element.innerHTML = '<div class="mermaid-error" style="color: red; border: 2px solid red; padding: 10px; border-radius: 5px; background: #ffeeee;">' +
+                        '<strong>Mermaid Rendering Error (Diagram ' + (i + 1) + '):</strong><br>' +
+                        '<code>' + error.message + '</code>' +
+                        '</div>';
+
+                    
+                    document.body.classList.add('mermaid-render-failed');
+                }
+            }
+
+            
+            window.mermaidRenderComplete = true;
+            window.mermaidHasError = hasError;
+        });
+    </script>
+</body>
+</html>
