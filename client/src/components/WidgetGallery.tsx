@@ -79,7 +79,7 @@ interface MetricaDefinicao {
   nome: string;
   descricao: string;
   categoria: CategoriaMetrica;
-  tipoGrafico: 'linha' | 'barra' | 'pizza' | 'area' | 'numero' | 'tabela' | 'gauge';
+  tipoGrafico: 'linha' | 'barra' | 'pizza' | 'area' | 'numero' | 'tabela' | 'gauge' | 'mapa';
   unidade?: string;
   corPrimaria: string;
   icone: string;
@@ -148,6 +148,9 @@ const tamanhosPermitidos: Record<string, TamanhoWidget[]> = {
   'fin_glosas': ['pequeno', 'medio', 'grande'],
   'fin_projecao': ['pequeno', 'medio', 'grande'],
   'qua_reclamacoes': ['pequeno', 'medio', 'grande'],
+  
+  // Mapa de calor - médio e grande
+  'pac_mapa_calor_cep': ['medio', 'grande'],
   
   // Tabelas - médio e grande apenas
   'div_proximos_atendimentos': ['medio', 'grande'],
@@ -228,6 +231,9 @@ const todasMetricas: MetricaDefinicao[] = [
   { id: 'div_prescricoes_vencendo', nome: 'Prescrições Vencendo', descricao: 'Receitas próximas do vencimento', categoria: 'diversas', tipoGrafico: 'tabela', icone: 'Pill', corPrimaria: '#84CC16' },
   { id: 'div_retornos_agendados', nome: 'Retornos Agendados', descricao: 'Retornos programados', categoria: 'diversas', tipoGrafico: 'numero', icone: 'CalendarCheck', corPrimaria: '#EC4899' },
   { id: 'div_ocupacao_agenda', nome: 'Ocupação da Agenda', descricao: 'Percentual de ocupação', categoria: 'diversas', tipoGrafico: 'gauge', unidade: '%', icone: 'CalendarDays', corPrimaria: '#14B8A6' },
+  
+  // MAPA DE CALOR
+  { id: 'pac_mapa_calor_cep', nome: 'Mapa de Calor por CEP', descricao: 'Distribuição geográfica dos pacientes por CEP', categoria: 'populacao_pacientes', tipoGrafico: 'mapa', icone: 'MapPin', corPrimaria: '#EF4444' },
 ];
 
 // Gorgen Design System - Cores das Categorias

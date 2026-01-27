@@ -3494,3 +3494,21 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 ### Histórico de Endereços (Backend)
 - [ ] Criar tabela de histórico de endereços no backend (sem UI)
 - [ ] Registrar alterações de endereço automaticamente
+
+
+---
+
+## 🚀 GORGEN 3.9.48 - Correções de UX e Histórico de Endereços (27/01/2026)
+
+### Mapa de Calor na Dashboard
+- [x] Adicionar mapa de calor como widget selecionável na Dashboard - Métrica pac_mapa_calor_cep adicionada ao WidgetGallery
+- [x] Integrar com sistema de widgets existente - Tipo 'mapa' adicionado ao tipoGrafico, tamanhos médio e grande permitidos
+
+### Menu Lateral - Unificação de Hover
+- [x] Unificar hover do botão e seta do menu sanfona - Implementado com group/menu-item
+- [x] Botão e seta devem se comportar como uma única entidade - Hover unificado no container pai
+
+### Histórico de Endereços (Backend)
+- [x] Criar tabela endereco_historico no schema - 18 campos incluindo rastreabilidade
+- [x] Registrar alterações de endereço automaticamente ao atualizar paciente - Função registrarHistoricoEndereco() integrada
+- [x] Manter histórico completo conforme pilar de imutabilidade - Função getHistoricoEndereco() para consulta

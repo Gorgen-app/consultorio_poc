@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -1041,6 +1041,18 @@ function MetricaConteudo({
           />
         </LineChart>
       </ResponsiveContainer>
+    );
+  }
+  
+  // Mapa de Calor de CEPs
+  if (metrica.tipoGrafico === 'mapa') {
+    // Importar dinamicamente o componente MapaCalorCeps
+    const MapaCalorCeps = React.lazy(() => import('@/components/dashboard/MapaCalorCeps').then(m => ({ default: m.MapaCalorCeps })));
+    
+    return (
+      <React.Suspense fallback={<div className="flex items-center justify-center h-full text-muted-foreground text-sm">Carregando mapa...</div>}>
+        <MapaCalorCeps className="h-full border-0 shadow-none" />
+      </React.Suspense>
     );
   }
   

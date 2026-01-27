@@ -340,12 +340,20 @@ function DashboardLayoutContent({
                       open={isOpen && !isCollapsed}
                     >
                       <SidebarMenuItem>
-                        <div className="flex items-center w-full">
+                        <div 
+                          className="flex items-center w-full group/menu-item rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                          onClick={() => {
+                            if (hasVisibleSubitems && !isCollapsed) {
+                              toggleMenu(item.path);
+                            } else {
+                              setLocation(item.path);
+                            }
+                          }}
+                        >
                           <SidebarMenuButton
                             isActive={location === item.path}
-                            onClick={() => setLocation(item.path)}
                             tooltip={item.label}
-                            className={`h-10 transition-all font-normal flex-1`}
+                            className={`h-10 transition-all font-normal flex-1 hover:bg-transparent`}
                           >
                             <item.icon
                               className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
@@ -354,17 +362,13 @@ function DashboardLayoutContent({
                           </SidebarMenuButton>
                           {hasVisibleSubitems && !isCollapsed && (
                             <CollapsibleTrigger asChild>
-                              <button
-                                className="h-10 w-8 flex items-center justify-center hover:bg-accent rounded-r-lg transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleMenu(item.path);
-                                }}
+                              <div
+                                className="h-10 w-8 flex items-center justify-center rounded-r-lg transition-colors"
                               >
                                 <ChevronDown
                                   className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
                                 />
-                              </button>
+                              </div>
                             </CollapsibleTrigger>
                           )}
                         </div>

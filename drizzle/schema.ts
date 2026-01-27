@@ -1555,3 +1555,41 @@ export const textosPadraoEvolucao = mysqlTable("textos_padrao_evolucao", {
 
 export type TextoPadraoEvolucao = typeof textosPadraoEvolucao.$inferSelect;
 export type InsertTextoPadraoEvolucao = typeof textosPadraoEvolucao.$inferInsert;
+
+
+/**
+ * Histórico de Endereços - Pilar de Imutabilidade
+ * Registra automaticamente todas as alterações de endereço dos pacientes
+ * Conforme o pilar de imutabilidade: "Todo dado inserido é perpétuo"
+ */
+export const enderecoHistorico = mysqlTable("endereco_historico", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
+  pacienteId: int("paciente_id").notNull().references(() => pacientes.id),
+  
+  // Dados do endereço no momento da alteração
+  endereco: varchar("endereco", { length: 500 }),
+  enderecoNumero: varchar("endereco_numero", { length: 20 }),
+  enderecoComplemento: varchar("endereco_complemento", { length: 100 }),
+  bairro: varchar("bairro", { length: 100 }),
+  cep: varchar("cep", { length: 10 }),
+  cidade: varchar("cidade", { length: 100 }),
+  uf: varchar("uf", { length: 2 }),
+  pais: varchar("pais", { length: 100 }),
+  
+  // Metadados da alteração
+  tipoAlteracao: mysqlEnum("tipo_alteracao", ["criacao", "atualizacao"]).notNull().default("atualizacao"),
+  motivoAlteracao: text("motivo_alteracao"),
+  
+  // Rastreabilidade
+  alteradoPorUserId: int("alterado_por_user_id"),
+  alteradoPorNome: varchar("alterado_por_nome", { length: 255 }),
+  ipOrigem: varchar("ip_origem", { length: 45 }),
+  
+  // Timestamps
+  dataAlteracao: timestamp("data_alteracao").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type EnderecoHistorico = typeof enderecoHistorico.$inferSelect;
+export type InsertEnderecoHistorico = typeof enderecoHistorico.$inferInsert;

@@ -1,6 +1,6 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne, isNull, isNotNull } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs, enderecoHistorico, InsertEnderecoHistorico } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 /**
@@ -534,7 +534,12 @@ export async function buscarPacientesInativosPendentes(tenantId: number): Promis
   });
 }
 
-export async function updatePaciente(tenantId: number, id: number, data: Partial<Omit<InsertPaciente, 'tenantId'>>): Promise<Paciente | undefined> {
+export async function updatePaciente(
+  tenantId: number, 
+  id: number, 
+  data: Partial<Omit<InsertPaciente, 'tenantId'>>,
+  options?: { userId?: number; userName?: string; ipOrigem?: string }
+): Promise<Paciente | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
@@ -542,11 +547,77 @@ export async function updatePaciente(tenantId: number, id: number, data: Partial
   const existing = await getPacienteById(tenantId, id);
   if (!existing) return undefined;
 
+  // Verificar se houve alteração de endereço e registrar histórico
+  const camposEndereco = ['endereco', 'enderecoNumero', 'enderecoComplemento', 'bairro', 'cep', 'cidade', 'uf', 'pais'] as const;
+  const houveAlteracaoEndereco = camposEndereco.some(campo => {
+    const novoValor = data[campo];
+    const valorAtual = existing[campo];
+    return novoValor !== undefined && novoValor !== valorAtual;
+  });
+
+  if (houveAlteracaoEndereco) {
+    // Registrar histórico do endereço anterior (pilar de imutabilidade)
+    await registrarHistoricoEndereco(tenantId, id, existing, 'atualizacao', options);
+  }
+
   // Criptografar dados sensíveis antes de atualizar
   const encryptedData = encryptPacienteData(tenantId, data);
 
   await db.update(pacientes).set(encryptedData).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   return getPacienteById(tenantId, id);
+}
+
+/**
+ * Registra histórico de endereço - Pilar de Imutabilidade
+ * Mantém registro de todas as alterações de endereço dos pacientes
+ */
+export async function registrarHistoricoEndereco(
+  tenantId: number,
+  pacienteId: number,
+  dadosEndereco: Partial<Paciente>,
+  tipoAlteracao: 'criacao' | 'atualizacao' = 'atualizacao',
+  options?: { userId?: number; userName?: string; ipOrigem?: string; motivoAlteracao?: string }
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  const registro: InsertEnderecoHistorico = {
+    tenantId,
+    pacienteId,
+    endereco: dadosEndereco.endereco || null,
+    enderecoNumero: dadosEndereco.enderecoNumero || null,
+    enderecoComplemento: dadosEndereco.enderecoComplemento || null,
+    bairro: dadosEndereco.bairro || null,
+    cep: dadosEndereco.cep || null,
+    cidade: dadosEndereco.cidade || null,
+    uf: dadosEndereco.uf || null,
+    pais: dadosEndereco.pais || null,
+    tipoAlteracao,
+    motivoAlteracao: options?.motivoAlteracao || null,
+    alteradoPorUserId: options?.userId || null,
+    alteradoPorNome: options?.userName || null,
+    ipOrigem: options?.ipOrigem || null,
+  };
+
+  await db.insert(enderecoHistorico).values(registro);
+}
+
+/**
+ * Busca histórico de endereços de um paciente
+ */
+export async function getHistoricoEndereco(tenantId: number, pacienteId: number): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.select()
+    .from(enderecoHistorico)
+    .where(and(
+      eq(enderecoHistorico.tenantId, tenantId),
+      eq(enderecoHistorico.pacienteId, pacienteId)
+    ))
+    .orderBy(desc(enderecoHistorico.dataAlteracao));
+
+  return result;
 }
 
 export async function deletePaciente(tenantId: number, id: number): Promise<boolean> {
