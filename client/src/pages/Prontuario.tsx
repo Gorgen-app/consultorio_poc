@@ -476,10 +476,23 @@ export default function Prontuario() {
             {/* Coluna 2: Contato */}
             <Card className="lg:col-span-1">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Contato
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Contato
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => {
+                      setEditarPacienteOpen(true);
+                    }}
+                    title="Editar dados de contato"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">

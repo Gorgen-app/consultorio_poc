@@ -326,13 +326,17 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
     };
 
     // Filtrar campos vazios ou undefined para não sobrescrever dados existentes
-    // Manter null explícito para permitir limpar campos
+    // Campos que nunca devem ser enviados na atualização
+    const fieldsToExclude = ['id', 'tenantId', 'idPaciente', 'dataInclusao', 'pastaPaciente'];
+    
     const cleanedData = Object.fromEntries(
       Object.entries(dataToSubmit).filter(([key, value]) => {
         // Remover campos que não devem ser atualizados
-        if (key === 'id' || key === 'tenantId') return false;
-        // Manter valores que não são string vazia
+        if (fieldsToExclude.includes(key)) return false;
+        // Remover strings vazias
         if (value === '') return false;
+        // Remover undefined
+        if (value === undefined) return false;
         // Manter todos os outros valores (incluindo null, 0, false)
         return true;
       })

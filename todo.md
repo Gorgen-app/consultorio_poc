@@ -3437,3 +3437,12 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Query mostra campos vazios sendo enviados (pasta_paciente, data_inclusao)
 - [x] Causa: handleSubmit enviava todos os campos do formData, incluindo strings vazias
 - [x] Solução: Filtrar campos vazios antes de enviar (manter apenas valores válidos)
+
+
+---
+
+## 🐛 GORGEN 3.9.44 - Erro na Aba Contato e Botão Lápis (27/01/2026)
+
+### Bugs Corrigidos
+- [x] Erro "Failed query" ao atualizar dados na aba Contato - Adicionado filtro para excluir campos idPaciente, dataInclusao, pastaPaciente
+- [x] Falta botão de lápis na seção Contato do prontuário - Botão adicionado
