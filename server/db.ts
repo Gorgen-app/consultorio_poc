@@ -84,7 +84,7 @@ export async function getUserByOpenId(openId: string) {
 
 // ===== PACIENTES =====
 
-import { encryptPacienteData, decryptPacienteData, decryptPacientesList, hashCPFForSearch, isEncryptionEnabled } from './encryption-helpers';
+import { encryptPacienteData, decryptPacienteData, decryptPacientesList, hashCPFForSearch, isEncryptionEnabled, normalizeAndEncryptPacienteData } from './encryption-helpers';
 
 export async function createPaciente(tenantId: number, data: Omit<InsertPaciente, 'tenantId'>): Promise<Paciente> {
   const db = await getDb();
@@ -560,8 +560,10 @@ export async function updatePaciente(
     await registrarHistoricoEndereco(tenantId, id, existing, 'atualizacao', options);
   }
 
-  // Criptografar dados sensíveis antes de atualizar
-  const encryptedData = encryptPacienteData(tenantId, data);
+  // Normalizar e criptografar dados sensíveis antes de atualizar
+  // Usa normalizeAndEncryptPacienteData para garantir consistência de hash
+  // mesmo quando dados já criptografados são enviados para atualização
+  const encryptedData = normalizeAndEncryptPacienteData(tenantId, data);
 
   await db.update(pacientes).set(encryptedData).where(and(eq(pacientes.tenantId, tenantId), eq(pacientes.id, id)));
   return getPacienteById(tenantId, id);

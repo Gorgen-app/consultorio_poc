@@ -109,6 +109,100 @@ export function encryptPacienteData<T extends Partial<InsertPaciente>>(
 }
 
 /**
+ * Normaliza e criptografa os campos sensíveis de um paciente para atualização.
+ * 
+ * Esta função resolve o problema de inconsistência de hash quando dados
+ * já criptografados são enviados para atualização. Ela:
+ * 1. Normaliza todos os dados (descriptografa se necessário)
+ * 2. Recalcula os hashes com os valores em texto plano
+ * 3. Criptografa novamente de forma consistente
+ * 
+ * @param tenantId - ID do tenant para isolamento de hash
+ * @param data - Dados do paciente a serem normalizados e criptografados
+ * @returns Dados com campos criptografados e hashes atualizados
+ */
+export function normalizeAndEncryptPacienteData<T extends Partial<InsertPaciente>>(
+  tenantId: number,
+  data: T
+): T & { cpfHash?: string; emailHash?: string; telefoneHash?: string } {
+  // Se criptografia não estiver habilitada, retorna dados originais
+  if (!isEncryptionEnabled()) {
+    console.warn("[Encryption] Criptografia não habilitada. Dados serão salvos em texto plano.");
+    return data as T & { cpfHash?: string; emailHash?: string; telefoneHash?: string };
+  }
+
+  const result = { ...data } as T & { cpfHash?: string; emailHash?: string; telefoneHash?: string };
+
+  // PASSO 1: Normalizar CPF (descriptografar se necessário)
+  if (result.cpf && typeof result.cpf === "string" && result.cpf.trim() !== "") {
+    let cpfPlainText = result.cpf;
+    
+    // Se já está criptografado, descriptografar primeiro
+    if (result.cpf.startsWith("enc:v1:")) {
+      try {
+        cpfPlainText = encryptionService.decrypt(result.cpf);
+        console.log("[Encryption] CPF normalizado (descriptografado para recriptografar)");
+      } catch (error) {
+        console.warn("[Encryption] Falha ao normalizar CPF, mantendo valor original:", error);
+        cpfPlainText = result.cpf; // Mantém criptografado se falhar
+      }
+    }
+    
+    // Agora criptografar e gerar hash (se não estiver criptografado)
+    if (!cpfPlainText.startsWith("enc:v1:")) {
+      result.cpfHash = hashingService.createHash(cpfPlainText, tenantId);
+      result.cpf = encryptionService.encrypt(cpfPlainText);
+    }
+  }
+
+  // PASSO 2: Normalizar email (descriptografar se necessário)
+  if (result.email && typeof result.email === "string" && result.email.trim() !== "") {
+    let emailPlainText = result.email;
+    
+    // Se já está criptografado, descriptografar primeiro
+    if (result.email.startsWith("enc:v1:")) {
+      try {
+        emailPlainText = encryptionService.decrypt(result.email);
+        console.log("[Encryption] Email normalizado (descriptografado para recriptografar)");
+      } catch (error) {
+        console.warn("[Encryption] Falha ao normalizar email, mantendo valor original:", error);
+        emailPlainText = result.email;
+      }
+    }
+    
+    // Agora criptografar e gerar hash (se não estiver criptografado)
+    if (!emailPlainText.startsWith("enc:v1:")) {
+      result.emailHash = hashingService.createHash(emailPlainText, tenantId);
+      result.email = encryptionService.encrypt(emailPlainText);
+    }
+  }
+
+  // PASSO 3: Normalizar telefone (descriptografar se necessário)
+  if (result.telefone && typeof result.telefone === "string" && result.telefone.trim() !== "") {
+    let telefonePlainText = result.telefone;
+    
+    // Se já está criptografado, descriptografar primeiro
+    if (result.telefone.startsWith("enc:v1:")) {
+      try {
+        telefonePlainText = encryptionService.decrypt(result.telefone);
+        console.log("[Encryption] Telefone normalizado (descriptografado para recriptografar)");
+      } catch (error) {
+        console.warn("[Encryption] Falha ao normalizar telefone, mantendo valor original:", error);
+        telefonePlainText = result.telefone;
+      }
+    }
+    
+    // Agora criptografar e gerar hash (se não estiver criptografado)
+    if (!telefonePlainText.startsWith("enc:v1:")) {
+      result.telefoneHash = hashingService.createHash(telefonePlainText, tenantId);
+      result.telefone = encryptionService.encrypt(telefonePlainText);
+    }
+  }
+
+  return result;
+}
+
+/**
  * Descriptografa os campos sensíveis de um paciente após ler do banco.
  * 
  * @param paciente - Paciente com dados criptografados

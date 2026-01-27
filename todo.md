@@ -3673,3 +3673,27 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 - [x] Adicionar botão "Exportar PDF" no componente ProntuarioExamesLab - Botão com ícone FileDown
 - [x] Mostrar loading durante geração do PDF - Loader2 com animação spin
 - [x] Download automático do arquivo gerado - Blob + createObjectURL
+
+
+---
+
+## 🐛 GORGEN 3.9.59 - Investigação de Erro de Atualização de Prontuários (27/01/2026)
+
+### Bug Reportado
+- [ ] Erro ao atualizar dados nos prontuários (recorrente)
+
+### Investigação
+- [x] Verificar logs de erro do servidor - Sem erros específicos nos logs
+- [x] Analisar função encryptPacienteData - Proteção contra dupla criptografia existe
+- [x] Verificar função updatePaciente - Fluxo de dados analisado
+- [x] Identificar causa raiz do problema - Inconsistência de hash em dados já criptografados
+
+### Solução
+- [x] Propor solução definitiva - Função normalizeAndEncryptPacienteData
+- [x] Produzir relatório interno de ocorrência - Documento gerado
+
+### Implementação
+- [x] Criar função normalizeAndEncryptPacienteData no encryption-helpers.ts
+- [x] Atualizar função updatePaciente no db.ts para usar nova função
+- [x] Criar testes automatizados para validar a solução (11 testes passando)
+- [x] Testar e validar correção (572 testes passando no total)
