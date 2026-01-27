@@ -285,7 +285,10 @@ export function EditarPacienteModal({ paciente, open, onOpenChange }: EditarPaci
   const updateMutation = trpc.pacientes.update.useMutation({
     onSuccess: () => {
       toast.success("Paciente atualizado com sucesso!");
+      // Invalidar todos os caches relacionados ao paciente
       utils.pacientes.list.invalidate();
+      utils.pacientes.getById.invalidate();
+      utils.prontuario.completo.invalidate();
       onOpenChange(false);
     },
     onError: (error) => {

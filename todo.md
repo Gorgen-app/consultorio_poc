@@ -3415,3 +3415,14 @@ A cor #0056A4 é usada APENAS para texto azul de alto contraste (links, nomes de
 ### Bugs Corrigidos
 - [x] Email aparece criptografado na tela de prontuário - Adicionado decryptPacienteData em getProntuarioCompleto
 - [x] Erro ao atualizar paciente: validação de email - Atualizado pacienteSchema para aceitar formato criptografado
+
+
+---
+
+## 🐛 GORGEN 3.9.42 - Bug de Atualização de Prontuário (27/01/2026)
+
+### Bug Corrigido
+- [x] Dados atualizados no prontuário não aparecem após salvar
+- [x] Sistema confirma que salvou mas campo fica em branco
+- [x] Causa: EditarPacienteModal só invalidava pacientes.list, não prontuario.completo
+- [x] Solução: Adicionado invalidate para pacientes.getById e prontuario.completo
