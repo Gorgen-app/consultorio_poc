@@ -805,14 +805,45 @@ export default function Prontuario() {
             />
           )}
           {secaoAtiva === "evolucoes" && (
-            <ProntuarioEvolucoes 
-              pacienteId={pacienteId} 
-              evolucoes={prontuario.evolucoes}
-              onUpdate={refetch}
-              abrirNovaEvolucao={abrirNovaEvolucao}
-              agendamentoIdVinculado={agendamentoIdVinculado}
-              onEvolucaoCriada={handleEvolucaoCriada}
-            />
+            <div className="space-y-4">
+              {/* Cabeçalho com dados do paciente para consulta rápida */}
+              <Card className="bg-[#0056A4]/5 border-[#0056A4]/20">
+                <CardContent className="py-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <User className="h-5 w-5 text-[#0056A4]" />
+                        <span className="font-semibold text-lg">{paciente.nome}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <span><strong>CPF:</strong> {paciente.cpf || "-"}</span>
+                        <span><strong>ID:</strong> {paciente.idPaciente}</span>
+                        <span><strong>Idade:</strong> {idade ? `${idade} anos` : "-"}</span>
+                        <span><strong>Convênio:</strong> {paciente.operadora1 || "Particular"}</span>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setSecaoAtiva("resumo")}
+                      className="border-[#0056A4] text-[#0056A4] hover:bg-[#0056A4]/10"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Abrir Prontuário Completo
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              <ProntuarioEvolucoes 
+                pacienteId={pacienteId} 
+                evolucoes={prontuario.evolucoes}
+                onUpdate={refetch}
+                abrirNovaEvolucao={abrirNovaEvolucao}
+                agendamentoIdVinculado={agendamentoIdVinculado}
+                onEvolucaoCriada={handleEvolucaoCriada}
+                onAtendimentoEncerrado={() => setLocation("/agenda")}
+              />
+            </div>
           )}
           {secaoAtiva === "internacoes" && (
             <ProntuarioInternacoes 

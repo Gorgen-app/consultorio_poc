@@ -151,25 +151,25 @@ const CORES_STATUS: Record<string, string> = {
   "Autorizada": "border-l-4 border-l-teal-500",
 };
 
-// Ícones de status para consultas
-const ICONES_STATUS_CONSULTA: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  "Agendado": { icon: CalendarCheck, color: "text-blue-500", label: "Agendada" },
-  "Confirmado": { icon: UserCheck, color: "text-green-500", label: "Confirmada" },
-  "Aguardando": { icon: CalendarClock, color: "text-yellow-500", label: "Aguardando" },
-  "Em atendimento": { icon: Stethoscope, color: "text-purple-500", label: "Em Consulta" },
-  "Realizado": { icon: CheckCircle2, color: "text-gray-500", label: "Finalizada" },
-  "Cancelado": { icon: XCircle, color: "text-red-400", label: "Cancelada" },
-  "Reagendado": { icon: RefreshCw, color: "text-amber-500", label: "Reagendada" },
-  "Faltou": { icon: Ban, color: "text-orange-500", label: "Faltou" },
+// Ícones de status para consultas com cores de fundo
+const ICONES_STATUS_CONSULTA: Record<string, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
+  "Agendado": { icon: CalendarCheck, color: "text-blue-600", bgColor: "bg-blue-100", label: "Agendada" },
+  "Confirmado": { icon: UserCheck, color: "text-green-600", bgColor: "bg-green-100", label: "Confirmada" },
+  "Aguardando": { icon: CalendarClock, color: "text-yellow-600", bgColor: "bg-yellow-100", label: "Aguardando" },
+  "Em atendimento": { icon: Stethoscope, color: "text-purple-600", bgColor: "bg-purple-100", label: "Em Consulta" },
+  "Realizado": { icon: CheckCircle2, color: "text-gray-600", bgColor: "bg-gray-200", label: "Finalizada" },
+  "Cancelado": { icon: XCircle, color: "text-red-600", bgColor: "bg-red-100", label: "Cancelada" },
+  "Reagendado": { icon: RefreshCw, color: "text-amber-600", bgColor: "bg-amber-100", label: "Reagendada" },
+  "Faltou": { icon: Ban, color: "text-orange-600", bgColor: "bg-orange-100", label: "Faltou" },
 };
 
-// Ícones de status para cirurgias
-const ICONES_STATUS_CIRURGIA: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  "Agendado": { icon: CalendarCheck, color: "text-blue-500", label: "Agendada" },
-  "Autorizada": { icon: FileCheck, color: "text-teal-500", label: "Autorizada" },
-  "Confirmado": { icon: ClipboardCheck, color: "text-green-500", label: "Confirmada" },
-  "Realizado": { icon: Scissors, color: "text-gray-500", label: "Realizada" },
-  "Cancelado": { icon: XCircle, color: "text-red-400", label: "Cancelada" },
+// Ícones de status para cirurgias com cores de fundo
+const ICONES_STATUS_CIRURGIA: Record<string, { icon: React.ElementType; color: string; bgColor: string; label: string }> = {
+  "Agendado": { icon: CalendarCheck, color: "text-blue-600", bgColor: "bg-blue-100", label: "Agendada" },
+  "Autorizada": { icon: FileCheck, color: "text-teal-600", bgColor: "bg-teal-100", label: "Autorizada" },
+  "Confirmado": { icon: ClipboardCheck, color: "text-green-600", bgColor: "bg-green-100", label: "Confirmada" },
+  "Realizado": { icon: Scissors, color: "text-gray-600", bgColor: "bg-gray-200", label: "Realizada" },
+  "Cancelado": { icon: XCircle, color: "text-red-600", bgColor: "bg-red-100", label: "Cancelada" },
 };
 
 // Função para obter ícone de status
@@ -206,7 +206,7 @@ export default function Agenda() {
     data: "",
     horaInicio: "",
     horaFim: "",
-    local: "",
+    local: "Consultório", // Padrão para Consulta
     titulo: "",
     descricao: "",
   });
@@ -375,7 +375,7 @@ export default function Agenda() {
       data: "",
       horaInicio: "",
       horaFim: "",
-      local: "",
+      local: "Consultório", // Padrão para Consulta
       titulo: "",
       descricao: "",
     });
@@ -633,7 +633,11 @@ export default function Agenda() {
         title={statusInfo?.label || ag.status}
       >
         <div className="font-medium truncate flex items-center gap-0.5">
-          {StatusIcon && <StatusIcon className="w-3 h-3 flex-shrink-0" />}
+          {StatusIcon && statusInfo && (
+            <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full ${statusInfo.bgColor} flex-shrink-0`}>
+              <StatusIcon className={`w-2.5 h-2.5 ${statusInfo.color}`} />
+            </span>
+          )}
           <span>{formatarHora(ag.dataHoraInicio)} - {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}</span>
         </div>
         {duracaoMinutos >= 30 && ag.local && <div className="text-[9px] opacity-80 truncate">{ag.local}</div>}
@@ -794,10 +798,15 @@ export default function Agenda() {
                         onClick={(e) => {
                           // Só abre modal se clicar no slot vazio (não em um agendamento existente)
                           if (e.target === e.currentTarget || (e.target as HTMLElement).closest('[data-slot-empty]')) {
-                            abrirNovoAgendamentoComHorario(dia, hora);
+                            // Determinar se clicou na metade superior (xx:00) ou inferior (xx:30)
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            const clickY = e.clientY - rect.top;
+                            const metadeInferior = clickY > rect.height / 2;
+                            const minuto = metadeInferior ? 30 : 0;
+                            abrirNovoAgendamentoComHorario(dia, hora, minuto);
                           }
                         }}
-                        title={`Clique para agendar às ${hora.toString().padStart(2, '0')}:00`}
+                        title={`Clique para agendar (metade superior: ${hora.toString().padStart(2, '0')}:00, metade inferior: ${hora.toString().padStart(2, '0')}:30)`}
                       >
                         {agendamentosHora.length === 0 && (
                           <div data-slot-empty className="h-full w-full" />
@@ -833,10 +842,15 @@ export default function Agenda() {
                     onClick={(e) => {
                       // Só abre modal se clicar no slot vazio (não em um agendamento existente)
                       if (e.target === e.currentTarget || agendamentosHora.length === 0) {
-                        abrirNovoAgendamentoComHorario(dataAtual, hora);
+                        // Determinar se clicou na metade superior (xx:00) ou inferior (xx:30)
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                        const clickY = e.clientY - rect.top;
+                        const metadeInferior = clickY > rect.height / 2;
+                        const minuto = metadeInferior ? 30 : 0;
+                        abrirNovoAgendamentoComHorario(dataAtual, hora, minuto);
                       }
                     }}
-                    title={`Clique para agendar às ${hora.toString().padStart(2, '0')}:00`}
+                    title={`Clique para agendar (metade superior: ${hora.toString().padStart(2, '0')}:00, metade inferior: ${hora.toString().padStart(2, '0')}:30)`}
                   >
                     <div className="w-16 text-sm text-muted-foreground font-medium">
                       {hora.toString().padStart(2, "0")}:00
@@ -1116,7 +1130,24 @@ export default function Agenda() {
                 <Input
                   type="time"
                   value={novoAgendamento.horaInicio}
-                  onChange={(e) => setNovoAgendamento({...novoAgendamento, horaInicio: e.target.value})}
+                  onChange={(e) => {
+                    const horaInicio = e.target.value;
+                    // Calcular hora de fim automaticamente (+30 minutos)
+                    if (horaInicio) {
+                      const [h, m] = horaInicio.split(':').map(Number);
+                      let horaFim = h;
+                      let minutoFim = m + 30;
+                      if (minutoFim >= 60) {
+                        horaFim += 1;
+                        minutoFim -= 60;
+                      }
+                      if (horaFim >= 24) horaFim = 23;
+                      const horaFimFormatada = `${String(horaFim).padStart(2, '0')}:${String(minutoFim).padStart(2, '0')}`;
+                      setNovoAgendamento({...novoAgendamento, horaInicio, horaFim: horaFimFormatada});
+                    } else {
+                      setNovoAgendamento({...novoAgendamento, horaInicio});
+                    }
+                  }}
                 />
               </div>
               <div>

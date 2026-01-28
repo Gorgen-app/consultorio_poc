@@ -3969,3 +3969,28 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Criar endpoint para retornar histórico de métricas de memória
 - [x] Adicionar gráfico de linha com Recharts no painel de Performance
 - [x] Exibir tendências de uso de memória ao longo do tempo
+
+---
+
+## 🐛 Correções Reportadas pelo Usuário (28/01/2026)
+
+### Agenda
+- [x] Clique na metade inferior do slot deve abrir horário xx:30 (não xx:00)
+- [x] Adicionar cores/círculos coloridos aos ícones de status do agendamento
+- [x] Horário de término deve atualizar automaticamente (+30min) ao definir início
+- [ ] Dropdown de minutos deve usar múltiplos de 5 (0, 5, 10, 15...) - NÃO APLICÁVEL (input type=time nativo)
+- [x] Local padrão "Consultório" para tipo Consulta
+
+### Tela de Evolução de Consulta
+- [x] Aumentar largura da janela de evolução em 100% (1400px)
+- [x] Adicionar cabeçalho com nome, CPF, ID do paciente e botão abrir prontuário
+- [x] Implementar upload de documentos diretamente na consulta (já existia)
+- [x] Após encerrar atendimento, voltar automaticamente para agenda
+- [ ] Sincronizar status "assinado" em todas as instâncias do sistema (requer WebSocket - futuro)
+- [x] Criar menu dropdown de documentos com estrutura hierárquica:
+  - Receita (Simples / Especial)
+  - Pedido de Exames
+  - Atestado (Comparecimento / Afastamento)
+  - Encaminhamento
+  - Protocolo Cirurgia/Procedimento
+  - Outros (LME, Laudos INSS)

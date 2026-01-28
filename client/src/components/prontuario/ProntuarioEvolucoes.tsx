@@ -24,6 +24,8 @@ interface Props {
   abrirNovaEvolucao?: boolean;
   agendamentoIdVinculado?: number | null;
   onEvolucaoCriada?: () => void;
+  // Callback para redirecionar após encerrar atendimento
+  onAtendimentoEncerrado?: () => void;
 }
 
 export default function ProntuarioEvolucoes({ 
@@ -32,7 +34,8 @@ export default function ProntuarioEvolucoes({
   onUpdate,
   abrirNovaEvolucao = false,
   agendamentoIdVinculado = null,
-  onEvolucaoCriada
+  onEvolucaoCriada,
+  onAtendimentoEncerrado
 }: Props) {
   
   const [novaEvolucao, setNovaEvolucao] = useState(false);
@@ -106,8 +109,11 @@ export default function ProntuarioEvolucoes({
     },
   });
 
+  // Estado para rastrear se o atendimento foi encerrado
+  const [atendimentoFoiEncerrado, setAtendimentoFoiEncerrado] = useState(false);
+  
   const createEvolucao = trpc.prontuario.evolucoes.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("Evolução registrada com sucesso!");
       setNovaEvolucao(false);
       setAgendamentoId(null);
@@ -128,6 +134,13 @@ export default function ProntuarioEvolucoes({
       // Callback para notificar que a evolução foi criada (útil para atualizar status do agendamento)
       if (onEvolucaoCriada) {
         onEvolucaoCriada();
+      }
+      // Se o atendimento foi encerrado, redirecionar para a agenda
+      if (variables.atendimentoEncerrado && onAtendimentoEncerrado) {
+        toast.success("Atendimento encerrado. Redirecionando para a agenda...");
+        setTimeout(() => {
+          onAtendimentoEncerrado();
+        }, 1000);
       }
     },
     onError: (error) => {
@@ -227,14 +240,39 @@ export default function ProntuarioEvolucoes({
     // TODO: Abrir modal de emissão de documento do tipo selecionado
   };
 
-  // Tipos de documentos disponíveis
+  // Tipos de documentos disponíveis - estrutura hierárquica
   const tiposDocumento = [
-    { id: "receita", label: "Receita Médica", icon: Pill },
-    { id: "atestado", label: "Atestado Médico", icon: FileCheck },
-    { id: "solicitacao_exames", label: "Solicitação de Exames", icon: ClipboardList },
-    { id: "cirurgia", label: "Solicitação de Cirurgia", icon: Scissors },
-    { id: "procedimentos", label: "Solicitação de Procedimentos", icon: FileOutput },
-    { id: "geral", label: "Documento Geral", icon: File },
+    { 
+      id: "receita", 
+      label: "Receita", 
+      icon: Pill,
+      submenu: [
+        { id: "receita_simples", label: "Receita Simples" },
+        { id: "receita_especial", label: "Receita Especial (Controlada)" },
+      ]
+    },
+    { id: "pedido_exames", label: "Pedido de Exames", icon: ClipboardList },
+    { 
+      id: "atestado", 
+      label: "Atestado", 
+      icon: FileCheck,
+      submenu: [
+        { id: "atestado_comparecimento", label: "Atestado de Comparecimento" },
+        { id: "atestado_afastamento", label: "Atestado de Afastamento" },
+      ]
+    },
+    { id: "encaminhamento", label: "Encaminhamento", icon: FileOutput },
+    { id: "protocolo_cirurgia", label: "Protocolo para Cirurgia/Procedimento", icon: Scissors },
+    { 
+      id: "outros", 
+      label: "Outros Documentos", 
+      icon: File,
+      submenu: [
+        { id: "lme", label: "LME (Laudo de Medicamento Especial)" },
+        { id: "laudo_inss", label: "Laudo INSS" },
+        { id: "documento_geral", label: "Documento Geral" },
+      ]
+    },
   ];
   
   return (
@@ -259,7 +297,7 @@ export default function ProntuarioEvolucoes({
                 Nova Evolução
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[95vw] w-[1400px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 Nova Evolução
@@ -425,14 +463,40 @@ export default function ProntuarioEvolucoes({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-full min-w-[300px]">
                       {tiposDocumento.map((doc) => (
-                        <DropdownMenuItem 
-                          key={doc.id}
-                          onClick={() => handleEmitirDocumento(doc.label)}
-                          className="cursor-pointer"
-                        >
-                          <doc.icon className="h-4 w-4 mr-2" />
-                          {doc.label}
-                        </DropdownMenuItem>
+                        doc.submenu ? (
+                          <div key={doc.id} className="relative group">
+                            <DropdownMenuItem 
+                              className="cursor-pointer flex items-center justify-between"
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <div className="flex items-center">
+                                <doc.icon className="h-4 w-4 mr-2" />
+                                {doc.label}
+                              </div>
+                              <ChevronDown className="h-3 w-3 ml-2" />
+                            </DropdownMenuItem>
+                            <div className="pl-6 border-l-2 border-gray-200 ml-2">
+                              {doc.submenu.map((sub) => (
+                                <DropdownMenuItem 
+                                  key={sub.id}
+                                  onClick={() => handleEmitirDocumento(sub.label)}
+                                  className="cursor-pointer text-sm"
+                                >
+                                  {sub.label}
+                                </DropdownMenuItem>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <DropdownMenuItem 
+                            key={doc.id}
+                            onClick={() => handleEmitirDocumento(doc.label)}
+                            className="cursor-pointer"
+                          >
+                            <doc.icon className="h-4 w-4 mr-2" />
+                            {doc.label}
+                          </DropdownMenuItem>
+                        )
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
