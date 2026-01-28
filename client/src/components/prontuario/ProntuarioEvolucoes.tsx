@@ -447,7 +447,7 @@ export default function ProntuarioEvolucoes({
                 Nova Evolução
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-[98vw] w-[1600px] max-h-[95vh] overflow-hidden p-0">
+          <DialogContent className="max-w-[98vw] w-[1600px] h-[90vh] p-0 flex flex-col">
             {/* Cabeçalho do Paciente */}
             <div className="bg-[#F5F7FA] border-b border-[#D1DBEA] px-6 py-3">
               <div className="flex items-center justify-between">
@@ -499,9 +499,9 @@ export default function ProntuarioEvolucoes({
             </div>
             
             {/* Conteúdo Principal - 3 colunas */}
-            <div className="flex h-[calc(95vh-180px)] overflow-hidden">
-              {/* Coluna 1: Formulário Principal */}
-              <div className="flex-1 overflow-y-auto p-6 border-r border-[#E8EDF5]">
+            <div className="flex-1 flex overflow-hidden">
+              {/* Coluna 1: Formulário Principal (58%) */}
+              <div className="flex-[7] overflow-y-auto p-6 border-r border-[#E8EDF5]">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "soap" | "livre")} className="w-full">
                   <TabsList className="grid w-full grid-cols-2 bg-[#E8EDF5]">
                     <TabsTrigger value="soap" className="data-[state=active]:bg-[#6B8CBE] data-[state=active]:text-white">SOAP</TabsTrigger>
@@ -828,8 +828,8 @@ export default function ProntuarioEvolucoes({
                 </Tabs>
               </div>
               
-              {/* Coluna 2: Upload de Documentos */}
-              <div className="w-[280px] p-4 border-r border-[#E8EDF5] bg-[#FAFBFC] overflow-y-auto">
+              {/* Coluna 2: Upload de Documentos (25%) */}
+              <div className="flex-[3] min-w-[240px] max-w-[300px] p-4 border-r border-[#E8EDF5] bg-[#FAFBFC] overflow-y-auto">
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Documentos</h3>
                 
                 {/* Área de Drop */}
@@ -876,8 +876,8 @@ export default function ProntuarioEvolucoes({
                 )}
               </div>
               
-              {/* Coluna 3: Histórico Rápido */}
-              <div className="w-[280px] p-4 bg-[#FAFBFC] overflow-y-auto">
+              {/* Coluna 3: Histórico Rápido (17%) */}
+              <div className="flex-[2] min-w-[200px] max-w-[260px] p-4 bg-[#F5F7FA] overflow-y-auto">
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Histórico Recente</h3>
                 
                 {ultimasEvolucoes.length === 0 ? (
@@ -919,55 +919,45 @@ export default function ProntuarioEvolucoes({
               </div>
             </div>
             
-            {/* Footer com botões */}
-            <div className="border-t border-[#D1DBEA] bg-[#F5F7FA] px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+            {/* Footer com botões - alinhados horizontalmente e equidistantes */}
+            <div className="border-t border-[#D1DBEA] bg-[#F5F7FA] px-6 py-4 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                {/* Atalhos discretos */}
+                <div className="flex items-center gap-3 mr-auto">
                   <span className="text-[9px] text-gray-300">Ctrl+S salvar</span>
-                  <span className="text-[9px] text-gray-300">Ctrl+Enter assinar e encerrar</span>
+                  <span className="text-[9px] text-gray-300">Ctrl+↵ encerrar</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleFecharModal}
-                    className="border-gray-300 text-gray-600 hover:bg-gray-100"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={handleSalvarEvolucao}
-                    disabled={createEvolucao.isPending}
-                    className="border-[#6B8CBE] text-[#6B8CBE] hover:bg-[#6B8CBE]/10"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    Salvar
-                  </Button>
-                  <Button 
-                    onClick={handleSalvarPendenteAssinatura}
-                    disabled={createEvolucao.isPending}
-                    className="bg-amber-500 hover:bg-amber-600 text-white"
-                  >
-                    <Clock className="h-4 w-4 mr-2" />
-                    Pendente
-                  </Button>
-                  <Button 
-                    onClick={handleAssinarEvolucao}
-                    disabled={createEvolucao.isPending}
-                    className="bg-[#6B8CBE] hover:bg-[#5A7BAD] text-white"
-                  >
-                    <PenLine className="h-4 w-4 mr-2" />
-                    Assinar
-                  </Button>
-                  <Button 
-                    onClick={handleAssinarEEncerrar}
-                    disabled={createEvolucao.isPending}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Assinar e Encerrar
-                  </Button>
-                </div>
+                {/* Botões equidistantes */}
+                <Button 
+                  onClick={handleFecharModal}
+                  className="flex-1 max-w-[160px] bg-gray-400 hover:bg-gray-500 text-white"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleSalvarEvolucao}
+                  disabled={createEvolucao.isPending}
+                  className="flex-1 max-w-[160px] bg-[#6B8CBE] hover:bg-[#5A7BAD] text-white"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar
+                </Button>
+                <Button 
+                  onClick={handleAssinarEvolucao}
+                  disabled={createEvolucao.isPending}
+                  className="flex-1 max-w-[180px] bg-[#4A6A9A] hover:bg-[#3B5580] text-white"
+                >
+                  <PenLine className="h-4 w-4 mr-2" />
+                  Assinar Evolução
+                </Button>
+                <Button 
+                  onClick={handleAssinarEEncerrar}
+                  disabled={createEvolucao.isPending}
+                  className="flex-1 max-w-[200px] bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Assinar e Encerrar
+                </Button>
               </div>
             </div>
           </DialogContent>

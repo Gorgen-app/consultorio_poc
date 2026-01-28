@@ -4050,3 +4050,29 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Botões "Inserir Padrão" em cinza/preto
 - [x] Botões finais alinhados horizontalmente com cores da paleta Gorgen
 - [x] Botão "Copiar da última consulta"
+
+---
+
+## 🐛 Bug Crítico: Layout Modal de Evolução Quebrado
+
+### Problema
+- Modal de evolução está completamente desformatado
+- Elementos sobrepostos e fora de posição
+- Não corresponde ao protótipo aprovado
+
+### A Corrigir
+- [ ] Corrigir layout do modal de evolução para corresponder ao protótipo 3
+- [ ] Layout em 3 colunas: SOAP/Texto Livre | Documentos | Histórico
+- [ ] Cabeçalho com dados do paciente alinhado
+- [ ] Botões finais alinhados horizontalmente
+
+---
+
+## 🎨 Redesign Modal de Agendamento
+
+### A Implementar
+- [ ] Redesenhar modal de agendamento com layout consistente com modal de evolução
+- [ ] Aplicar mesma paleta de cores Gorgen
+- [ ] Mesma tipografia e espaçamento
+- [ ] Cabeçalho com dados do paciente similar
+- [ ] Botões com mesmo estilo visual
