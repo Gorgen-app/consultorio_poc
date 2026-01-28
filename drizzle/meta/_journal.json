@@ -253,6 +253,13 @@
       "when": 1769545086819,
       "tag": "0035_panoramic_titanium_man",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1769624345329,
+      "tag": "0036_faithful_rafael_vega",
+      "breakpoints": true
     }
   ]
 }

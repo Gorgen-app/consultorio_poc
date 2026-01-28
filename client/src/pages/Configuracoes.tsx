@@ -38,6 +38,7 @@ import { ESPECIALIDADES_MEDICAS, AREAS_ATUACAO } from "../../../shared/especiali
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { HelpSupport } from "@/components/settings/HelpSupport";
 import { TextosPadraoSettings } from "@/components/settings/TextosPadraoSettings";
+import { AgendaSettings } from "@/components/settings/AgendaSettings";
 
 // Mapeamento de perfis para labels e ícones
 const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -449,6 +450,19 @@ export default function Configuracoes() {
                 <span className="hidden sm:inline">Backup</span>
               </Button>
             </Link>
+          )}
+          
+          {/* Aba de Agenda - Configurações de duração */}
+          {(currentPerfil === "admin_master" || currentPerfil === "medico") && (
+            <Button
+              variant={activeTab === "agenda" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("agenda")}
+              className="flex items-center gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Agenda</span>
+            </Button>
           )}
           
           {/* Aba de Segurança */}
@@ -1103,6 +1117,11 @@ export default function Configuracoes() {
         {/* Tab: Textos Padrão */}
         {activeTab === "textosPadrao" && (
           <TextosPadraoSettings />
+        )}
+
+        {/* Tab: Agenda - Configurações de Duração */}
+        {activeTab === "agenda" && (
+          <AgendaSettings />
         )}
 
         {/* Tab: Segurança */}

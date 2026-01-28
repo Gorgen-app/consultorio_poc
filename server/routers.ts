@@ -1718,6 +1718,44 @@ export const appRouter = router({
         return await db.getNextAgendamentoId();
       }),
 
+    // Configurações de duração por tipo de compromisso
+    getConfiguracoesDuracao: protectedProcedure
+      .query(async () => {
+        return await db.getConfiguracoesDuracao(1); // tenantId padrão
+      }),
+
+    getDuracaoPadrao: protectedProcedure
+      .input(z.object({
+        tipoCompromisso: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const config = await db.getConfiguracaoTipo(1, input.tipoCompromisso);
+        return config || {
+          tipoCompromisso: input.tipoCompromisso,
+          duracaoMinutos: 30,
+          localPadrao: null,
+          cor: null,
+        };
+      }),
+
+    updateConfiguracoesDuracao: protectedProcedure
+      .input(z.array(z.object({
+        tipoCompromisso: z.string(),
+        duracaoMinutos: z.number().min(5).max(480),
+        localPadrao: z.string().optional().nullable(),
+        cor: z.string().optional().nullable(),
+      })))
+      .mutation(async ({ input }) => {
+        const success = await db.updateConfiguracoesDuracaoBatch(1, input);
+        if (!success) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Erro ao salvar configurações de duração',
+          });
+        }
+        return { success: true };
+      }),
+
     create: protectedProcedure
       .input(z.object({
         idAgendamento: z.string(),

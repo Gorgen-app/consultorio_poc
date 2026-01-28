@@ -1694,3 +1694,41 @@ export const prontuarioAcessos = mysqlTable("prontuario_acessos", {
 
 export type ProntuarioAcesso = typeof prontuarioAcessos.$inferSelect;
 export type InsertProntuarioAcesso = typeof prontuarioAcessos.$inferInsert;
+
+
+// ==========================================
+// CONFIGURAÇÕES DE DURAÇÃO POR TIPO DE COMPROMISSO
+// ==========================================
+
+/**
+ * Configurações de Duração por Tipo de Compromisso
+ * Permite configurar a duração padrão para cada tipo de agendamento
+ */
+export const configuracoesDuracao = mysqlTable("configuracoes_duracao", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenant_id").notNull().references(() => tenants.id),
+  
+  // Tipo de compromisso (Consulta, Cirurgia, etc.)
+  tipoCompromisso: varchar("tipo_compromisso", { length: 100 }).notNull(),
+  
+  // Duração padrão em minutos
+  duracaoMinutos: int("duracao_minutos").notNull().default(30),
+  
+  // Local padrão para este tipo (opcional)
+  localPadrao: varchar("local_padrao", { length: 100 }),
+  
+  // Cor do tipo no calendário (opcional, para personalização futura)
+  cor: varchar("cor", { length: 20 }),
+  
+  // Ativo/Inativo
+  ativo: boolean("ativo").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  // Índice único por tenant + tipo
+  tenantTipoIdx: index("idx_config_duracao_tenant_tipo").on(table.tenantId, table.tipoCompromisso),
+}));
+
+export type ConfiguracaoDuracao = typeof configuracoesDuracao.$inferSelect;
+export type InsertConfiguracaoDuracao = typeof configuracoesDuracao.$inferInsert;

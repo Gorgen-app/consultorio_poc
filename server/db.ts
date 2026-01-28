@@ -1,6 +1,6 @@
 import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne, isNull, isNotNull } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
-import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs, enderecoHistorico, InsertEnderecoHistorico, prontuarioAcessos, InsertProntuarioAcesso } from "../drizzle/schema";
+import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs, enderecoHistorico, InsertEnderecoHistorico, prontuarioAcessos, InsertProntuarioAcesso, configuracoesDuracao, ConfiguracaoDuracao, InsertConfiguracaoDuracao } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 /**
@@ -4968,5 +4968,176 @@ export async function getUltimosProntuariosAcessados(
   } catch (error) {
     console.error("[DB] Erro ao buscar últimos prontuários acessados:", error);
     return [];
+  }
+}
+
+
+// ==========================================
+// CONFIGURAÇÕES DE DURAÇÃO POR TIPO DE COMPROMISSO
+// ==========================================
+
+/**
+ * Obtém todas as configurações de duração para um tenant
+ */
+export async function getConfiguracoesDuracao(tenantId: number): Promise<ConfiguracaoDuracao[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  try {
+    const configs = await db.select()
+      .from(configuracoesDuracao)
+      .where(
+        and(
+          eq(configuracoesDuracao.tenantId, tenantId),
+          eq(configuracoesDuracao.ativo, true)
+        )
+      )
+      .orderBy(asc(configuracoesDuracao.tipoCompromisso));
+    
+    return configs;
+  } catch (error) {
+    console.error("[DB] Erro ao buscar configurações de duração:", error);
+    return [];
+  }
+}
+
+/**
+ * Obtém a duração padrão para um tipo de compromisso específico
+ */
+export async function getDuracaoPadrao(tenantId: number, tipoCompromisso: string): Promise<number> {
+  const db = await getDb();
+  if (!db) return 30; // Padrão: 30 minutos
+  
+  try {
+    const config = await db.select()
+      .from(configuracoesDuracao)
+      .where(
+        and(
+          eq(configuracoesDuracao.tenantId, tenantId),
+          eq(configuracoesDuracao.tipoCompromisso, tipoCompromisso),
+          eq(configuracoesDuracao.ativo, true)
+        )
+      )
+      .limit(1);
+    
+    return config.length > 0 ? config[0].duracaoMinutos : 30;
+  } catch (error) {
+    console.error("[DB] Erro ao buscar duração padrão:", error);
+    return 30;
+  }
+}
+
+/**
+ * Obtém a configuração completa para um tipo de compromisso
+ */
+export async function getConfiguracaoTipo(tenantId: number, tipoCompromisso: string): Promise<ConfiguracaoDuracao | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  try {
+    const config = await db.select()
+      .from(configuracoesDuracao)
+      .where(
+        and(
+          eq(configuracoesDuracao.tenantId, tenantId),
+          eq(configuracoesDuracao.tipoCompromisso, tipoCompromisso),
+          eq(configuracoesDuracao.ativo, true)
+        )
+      )
+      .limit(1);
+    
+    return config.length > 0 ? config[0] : null;
+  } catch (error) {
+    console.error("[DB] Erro ao buscar configuração do tipo:", error);
+    return null;
+  }
+}
+
+/**
+ * Atualiza ou cria uma configuração de duração
+ */
+export async function upsertConfiguracaoDuracao(
+  tenantId: number,
+  tipoCompromisso: string,
+  duracaoMinutos: number,
+  localPadrao?: string | null,
+  cor?: string | null
+): Promise<ConfiguracaoDuracao | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  try {
+    // Verificar se já existe
+    const existente = await db.select()
+      .from(configuracoesDuracao)
+      .where(
+        and(
+          eq(configuracoesDuracao.tenantId, tenantId),
+          eq(configuracoesDuracao.tipoCompromisso, tipoCompromisso)
+        )
+      )
+      .limit(1);
+    
+    if (existente.length > 0) {
+      // Atualizar existente
+      await db.update(configuracoesDuracao)
+        .set({
+          duracaoMinutos,
+          localPadrao: localPadrao ?? existente[0].localPadrao,
+          cor: cor ?? existente[0].cor,
+          ativo: true,
+        })
+        .where(eq(configuracoesDuracao.id, existente[0].id));
+      
+      return { ...existente[0], duracaoMinutos, localPadrao: localPadrao ?? existente[0].localPadrao, cor: cor ?? existente[0].cor };
+    } else {
+      // Criar novo
+      const result = await db.insert(configuracoesDuracao).values({
+        tenantId,
+        tipoCompromisso,
+        duracaoMinutos,
+        localPadrao: localPadrao || null,
+        cor: cor || null,
+        ativo: true,
+      });
+      
+      const insertId = result[0].insertId;
+      const novo = await db.select()
+        .from(configuracoesDuracao)
+        .where(eq(configuracoesDuracao.id, insertId))
+        .limit(1);
+      
+      return novo.length > 0 ? novo[0] : null;
+    }
+  } catch (error) {
+    console.error("[DB] Erro ao salvar configuração de duração:", error);
+    return null;
+  }
+}
+
+/**
+ * Atualiza múltiplas configurações de duração de uma vez
+ */
+export async function updateConfiguracoesDuracaoBatch(
+  tenantId: number,
+  configs: Array<{ tipoCompromisso: string; duracaoMinutos: number; localPadrao?: string | null; cor?: string | null }>
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  try {
+    for (const config of configs) {
+      await upsertConfiguracaoDuracao(
+        tenantId,
+        config.tipoCompromisso,
+        config.duracaoMinutos,
+        config.localPadrao,
+        config.cor
+      );
+    }
+    return true;
+  } catch (error) {
+    console.error("[DB] Erro ao atualizar configurações em lote:", error);
+    return false;
   }
 }

@@ -4008,3 +4008,18 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Validar que horário de fim seja sempre > horário de início no backend
 - [x] Atualizar automaticamente horário de fim quando usuário alterar horário de início
 - [x] Manter duração do evento ao alterar horário de início
+
+---
+
+## ⏱️ Duração Padrão por Tipo de Compromisso (28/01/2026)
+
+### Requisito
+- Permitir configurar duração padrão para cada tipo de compromisso
+- Durações sugeridas: Consulta (30min), Cirurgia (120min), Retorno (15min), etc.
+
+### A Implementar
+- [x] Criar tabela de configurações de duração por tipo no schema
+- [x] Criar endpoints para listar e atualizar durações padrão
+- [x] Adicionar UI de configuração nas Configurações do sistema
+- [x] Integrar durações padrão no modal de novo agendamento
+- [x] Atualizar horário de fim automaticamente ao selecionar tipo

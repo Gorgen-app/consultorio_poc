@@ -287,6 +287,9 @@ export default function Agenda() {
 
   const { data: nextAgendamentoId } = trpc.agenda.getNextId.useQuery();
   const { data: nextBloqueioId } = trpc.bloqueios.getNextId.useQuery();
+  
+  // Configurações de duração por tipo de compromisso
+  const { data: configuracoesDuracao } = trpc.agenda.getConfiguracoesDuracao.useQuery();
 
   // Mutations
   const createAgendamento = trpc.agenda.create.useMutation({
@@ -577,21 +580,31 @@ export default function Agenda() {
     // Formatar hora de início como HH:MM
     const horaInicioFormatada = `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
     
-    // Calcular hora de fim (30 minutos depois por padrão)
-    let horaFim = hora;
-    let minutoFim = minuto + 30;
-    if (minutoFim >= 60) {
-      horaFim += 1;
-      minutoFim -= 60;
+    // Buscar duração configurada para o tipo padrão (Consulta)
+    const configConsulta = configuracoesDuracao?.find(c => c.tipoCompromisso === "Consulta");
+    const duracaoPadrao = configConsulta?.duracaoMinutos || 30;
+    const localPadrao = configConsulta?.localPadrao || "Consultório";
+    
+    // Calcular hora de fim baseado na duração configurada
+    const totalMinutos = hora * 60 + minuto + duracaoPadrao;
+    let horaFim = Math.floor(totalMinutos / 60);
+    let minutoFim = totalMinutos % 60;
+    
+    // Limitar a 23:59
+    if (horaFim >= 24) {
+      horaFim = 23;
+      minutoFim = 59;
     }
     const horaFimFormatada = `${String(horaFim).padStart(2, '0')}:${String(minutoFim).padStart(2, '0')}`;
     
     // Atualizar estado do formulário
     setNovoAgendamento(prev => ({
       ...prev,
+      tipoCompromisso: "Consulta",
       data: dataFormatada,
       horaInicio: horaInicioFormatada,
       horaFim: horaFimFormatada,
+      local: localPadrao,
     }));
     
     // Abrir modal
@@ -985,15 +998,44 @@ export default function Agenda() {
               <Label>Tipo de Compromisso</Label>
               <Select 
                 value={novoAgendamento.tipoCompromisso} 
-                onValueChange={(v) => setNovoAgendamento({...novoAgendamento, tipoCompromisso: v as any})}
+                onValueChange={(v) => {
+                  // Buscar configuração de duração para o tipo selecionado
+                  const config = configuracoesDuracao?.find(c => c.tipoCompromisso === v);
+                  const duracaoMinutos = config?.duracaoMinutos || 30;
+                  const localPadrao = config?.localPadrao || (v === "Consulta" ? "Consultório" : "");
+                  
+                  // Calcular novo horário de fim se já tiver horário de início
+                  let novoHoraFim = novoAgendamento.horaFim;
+                  if (novoAgendamento.horaInicio) {
+                    const [h, m] = novoAgendamento.horaInicio.split(":").map(Number);
+                    const inicioMinutos = h * 60 + m;
+                    const fimMinutos = inicioMinutos + duracaoMinutos;
+                    const fimH = Math.floor(fimMinutos / 60);
+                    const fimM = fimMinutos % 60;
+                    novoHoraFim = `${fimH.toString().padStart(2, "0")}:${fimM.toString().padStart(2, "0")}`;
+                  }
+                  
+                  setNovoAgendamento({
+                    ...novoAgendamento, 
+                    tipoCompromisso: v as any,
+                    local: localPadrao,
+                    horaFim: novoHoraFim,
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIPOS_COMPROMISSO.map((tipo) => (
-                    <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-                  ))}
+                  {TIPOS_COMPROMISSO.map((tipo) => {
+                    const config = configuracoesDuracao?.find(c => c.tipoCompromisso === tipo);
+                    const duracao = config?.duracaoMinutos || 30;
+                    return (
+                      <SelectItem key={tipo} value={tipo}>
+                        {tipo} ({duracao}min)
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>

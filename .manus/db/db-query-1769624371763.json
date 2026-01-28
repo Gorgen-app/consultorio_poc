@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO configuracoes_duracao (tenant_id, tipo_compromisso, duracao_minutos, local_padrao, cor) VALUES\n(1, 'Consulta', 30, 'Consultório', '#3b82f6'),\n(1, 'Cirurgia', 120, 'HMV', '#ef4444'),\n(1, 'Visita internado', 20, 'HMV', '#8b5cf6'),\n(1, 'Procedimento em consultório', 45, 'Consultório', '#f97316'),\n(1, 'Exame', 30, 'Consultório', '#22c55e'),\n(1, 'Reunião', 60, 'Consultório', '#eab308');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute INSERT INTO configuracoes_duracao (tenant_id, tipo_compromisso, duracao_minutos, local_padrao, cor) VALUES\n(1, 'Consulta', 30, 'Consultório', '#3b82f6'),\n(1, 'Cirurgia', 120, 'HMV', '#ef4444'),\n(1, 'Visita internado', 20, 'HMV', '#8b5cf6'),\n(1, 'Procedimento em consultório', 45, 'Consultório', '#f97316'),\n(1, 'Exame', 30, 'Consultório', '#22c55e'),\n(1, 'Reunião', 60, 'Consultório', '#eab308');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 360
+}
