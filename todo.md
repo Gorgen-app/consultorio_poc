@@ -4034,3 +4034,19 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Mostrar preview visual durante o arrasto (highlight do slot alvo)
 - [x] Confirmar reagendamento após soltar (toast de sucesso)
 - [x] Manter registro de auditoria do reagendamento (usa mutation existente)
+
+---
+
+## 🎨 Novo Layout Modal Nova Evolução (Protótipo 3)
+
+### Implementado
+- [x] Aumentar largura do modal para 3 colunas (1600px)
+- [x] Adicionar cabeçalho com dados do paciente (nome, CPF, nascimento, ícone prontuário)
+- [x] Timer discreto de duração da consulta
+- [x] Atalhos de teclado ultra discretos (Ctrl+S, Ctrl+Enter, Ctrl+1/2/3/4)
+- [x] Aba "Texto Livre" substituindo "Sinais Vitais"
+- [x] Coluna de upload de documentos com drag-and-drop
+- [x] Coluna de histórico rápido com últimas 5 consultas
+- [x] Botões "Inserir Padrão" em cinza/preto
+- [x] Botões finais alinhados horizontalmente com cores da paleta Gorgen
+- [x] Botão "Copiar da última consulta"

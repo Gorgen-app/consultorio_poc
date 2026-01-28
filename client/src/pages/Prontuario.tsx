@@ -842,6 +842,12 @@ export default function Prontuario() {
                 agendamentoIdVinculado={agendamentoIdVinculado}
                 onEvolucaoCriada={handleEvolucaoCriada}
                 onAtendimentoEncerrado={() => setLocation("/agenda")}
+                paciente={{
+                  nome: paciente.nome,
+                  cpf: paciente.cpf,
+                  dataNascimento: paciente.dataNascimento,
+                  idPaciente: paciente.idPaciente
+                }}
               />
             </div>
           )}

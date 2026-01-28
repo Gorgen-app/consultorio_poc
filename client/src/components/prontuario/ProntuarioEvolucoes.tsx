@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,20 +12,28 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2, FileOutput, Pill, FileCheck, Scissors, ClipboardList, File, Save, Clock, PenLine, CheckCircle, Lock, Pencil, AlertTriangle } from "lucide-react";
+import { Plus, FileText, Calendar, User, ChevronDown, ChevronUp, Upload, Link2, FileOutput, Pill, FileCheck, Scissors, ClipboardList, File, Save, Clock, PenLine, CheckCircle, Lock, Pencil, AlertTriangle, Copy, ExternalLink } from "lucide-react";
 import { DocumentoUpload, DocumentosList } from "./DocumentoUpload";
+import { useLocation } from "wouter";
+
+interface PacienteInfo {
+  nome: string;
+  cpf?: string | null;
+  dataNascimento?: string | Date | null;
+  idPaciente?: string | null;
+}
 
 interface Props {
   pacienteId: number;
   evolucoes: any[];
   onUpdate: () => void;
-  // Novos parâmetros para abrir automaticamente o formulário
   abrirNovaEvolucao?: boolean;
   agendamentoIdVinculado?: number | null;
   onEvolucaoCriada?: () => void;
-  // Callback para redirecionar após encerrar atendimento
   onAtendimentoEncerrado?: () => void;
+  paciente?: PacienteInfo;
 }
 
 export default function ProntuarioEvolucoes({ 
@@ -35,18 +43,29 @@ export default function ProntuarioEvolucoes({
   abrirNovaEvolucao = false,
   agendamentoIdVinculado = null,
   onEvolucaoCriada,
-  onAtendimentoEncerrado
+  onAtendimentoEncerrado,
+  paciente
 }: Props) {
+  const [, setLocation] = useLocation();
   
   const [novaEvolucao, setNovaEvolucao] = useState(false);
   const [expandido, setExpandido] = useState<number | null>(null);
   const [modalUploadAberto, setModalUploadAberto] = useState(false);
   const [evolucaoIdParaUpload, setEvolucaoIdParaUpload] = useState<number | null>(null);
   const [agendamentoId, setAgendamentoId] = useState<number | null>(agendamentoIdVinculado);
+  const [activeTab, setActiveTab] = useState<"soap" | "livre">("soap");
+  
+  // Timer de consulta
+  const [tempoConsulta, setTempoConsulta] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Estado para modal de confirmação de assinatura
   const [modalAssinarAberto, setModalAssinarAberto] = useState(false);
   const [evolucaoParaAssinar, setEvolucaoParaAssinar] = useState<any | null>(null);
+  
+  // Estado para upload de documentos no modal
+  const [arquivosParaUpload, setArquivosParaUpload] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   
   const [form, setForm] = useState({
     dataEvolucao: new Date().toISOString().split("T")[0],
@@ -55,6 +74,7 @@ export default function ProntuarioEvolucoes({
     objetivo: "",
     avaliacao: "",
     plano: "",
+    textoLivre: "",
     pressaoArterial: "",
     frequenciaCardiaca: "",
     temperatura: "",
@@ -71,6 +91,36 @@ export default function ProntuarioEvolucoes({
     { enabled: !!agendamentoIdVinculado }
   );
   
+  // Buscar histórico de evoluções para o painel lateral
+  const ultimasEvolucoes = evolucoes.slice(0, 5);
+  
+  // Timer de consulta
+  useEffect(() => {
+    if (novaEvolucao) {
+      setTempoConsulta(0);
+      timerRef.current = setInterval(() => {
+        setTempoConsulta(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [novaEvolucao]);
+  
+  // Formatar tempo do timer
+  const formatarTempo = (segundos: number) => {
+    const mins = Math.floor(segundos / 60);
+    const secs = segundos % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
   // Efeito para abrir automaticamente o formulário quando solicitado via parâmetros
   useEffect(() => {
     if (abrirNovaEvolucao) {
@@ -85,9 +135,8 @@ export default function ProntuarioEvolucoes({
   // Efeito para pré-preencher a data quando o agendamento é carregado
   useEffect(() => {
     if (agendamentoVinculado && agendamentoIdVinculado) {
-      // Formatar a data do agendamento para datetime-local
       const dataAgendamento = new Date(agendamentoVinculado.dataHoraInicio);
-      const dataFormatada = dataAgendamento.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+      const dataFormatada = dataAgendamento.toISOString().slice(0, 16);
       setForm(prev => ({
         ...prev,
         dataEvolucao: dataFormatada,
@@ -96,20 +145,57 @@ export default function ProntuarioEvolucoes({
     }
   }, [agendamentoVinculado, agendamentoIdVinculado]);
   
+  // Atalhos de teclado
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!novaEvolucao) return;
+      
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 's') {
+          e.preventDefault();
+          handleSalvarEvolucao();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          handleAssinarEEncerrar();
+        } else if (e.key === '1') {
+          e.preventDefault();
+          document.getElementById('campo-subjetivo')?.focus();
+        } else if (e.key === '2') {
+          e.preventDefault();
+          document.getElementById('campo-objetivo')?.focus();
+        } else if (e.key === '3') {
+          e.preventDefault();
+          document.getElementById('campo-avaliacao')?.focus();
+        } else if (e.key === '4') {
+          e.preventDefault();
+          document.getElementById('campo-plano')?.focus();
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [novaEvolucao]);
+  
   // Mutation para assinar evolução existente
   const assinarEvolucao = trpc.prontuario.evolucoes.assinar.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("Evolução assinada com sucesso!");
       setModalAssinarAberto(false);
       setEvolucaoParaAssinar(null);
       onUpdate();
+      if (variables.encerrarAtendimento && onAtendimentoEncerrado) {
+        toast.success("Atendimento encerrado. Redirecionando para a agenda...");
+        setTimeout(() => {
+          onAtendimentoEncerrado();
+        }, 1000);
+      }
     },
     onError: (error) => {
       toast.error("Erro ao assinar evolução: " + error.message);
     },
   });
 
-  // Estado para rastrear se o atendimento foi encerrado
   const [atendimentoFoiEncerrado, setAtendimentoFoiEncerrado] = useState(false);
   
   const createEvolucao = trpc.prontuario.evolucoes.create.useMutation({
@@ -117,6 +203,7 @@ export default function ProntuarioEvolucoes({
       toast.success("Evolução registrada com sucesso!");
       setNovaEvolucao(false);
       setAgendamentoId(null);
+      setArquivosParaUpload([]);
       setForm({
         dataEvolucao: new Date().toISOString().split("T")[0],
         tipo: "Consulta",
@@ -124,6 +211,7 @@ export default function ProntuarioEvolucoes({
         objetivo: "",
         avaliacao: "",
         plano: "",
+        textoLivre: "",
         pressaoArterial: "",
         frequenciaCardiaca: "",
         temperatura: "",
@@ -131,11 +219,9 @@ export default function ProntuarioEvolucoes({
         altura: "",
       });
       onUpdate();
-      // Callback para notificar que a evolução foi criada (útil para atualizar status do agendamento)
       if (onEvolucaoCriada) {
         onEvolucaoCriada();
       }
-      // Se o atendimento foi encerrado, redirecionar para a agenda
       if (variables.atendimentoEncerrado && onAtendimentoEncerrado) {
         toast.success("Atendimento encerrado. Redirecionando para a agenda...");
         setTimeout(() => {
@@ -157,18 +243,40 @@ export default function ProntuarioEvolucoes({
       minute: "2-digit",
     });
   };
+  
+  const formatarDataCurta = (data: string | Date) => {
+    return new Date(data).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+    });
+  };
+  
+  const calcularIdade = (dataNascimento: string | Date | null | undefined) => {
+    if (!dataNascimento) return null;
+    const hoje = new Date();
+    const nascimento = new Date(dataNascimento);
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const m = hoje.getMonth() - nascimento.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade--;
+    }
+    return idade;
+  };
 
   // Função base para criar evolução com diferentes status
   const criarEvolucaoComStatus = (statusAssinatura: "rascunho" | "pendente_assinatura" | "assinado", encerrarAtendimento: boolean = false) => {
+    // Se estiver na aba texto livre, usar o conteúdo de textoLivre
+    const conteudo = activeTab === "livre" 
+      ? { subjetivo: form.textoLivre, objetivo: null, avaliacao: null, plano: null }
+      : { subjetivo: form.subjetivo || null, objetivo: form.objetivo || null, avaliacao: form.avaliacao || null, plano: form.plano || null };
+    
     createEvolucao.mutate({
       pacienteId,
       agendamentoId: agendamentoId,
       dataEvolucao: new Date(form.dataEvolucao),
       tipo: form.tipo,
-      subjetivo: form.subjetivo || null,
-      objetivo: form.objetivo || null,
-      avaliacao: form.avaliacao || null,
-      plano: form.plano || null,
+      ...conteudo,
       pressaoArterial: form.pressaoArterial || null,
       frequenciaCardiaca: form.frequenciaCardiaca ? parseInt(form.frequenciaCardiaca) : null,
       temperatura: form.temperatura || null,
@@ -180,22 +288,18 @@ export default function ProntuarioEvolucoes({
     });
   };
 
-  // Salvar Evolução (rascunho)
   const handleSalvarEvolucao = () => {
     criarEvolucaoComStatus("rascunho");
   };
 
-  // Salvar e deixar pendente de assinatura
   const handleSalvarPendenteAssinatura = () => {
     criarEvolucaoComStatus("pendente_assinatura");
   };
 
-  // Assinar evolução
   const handleAssinarEvolucao = () => {
     criarEvolucaoComStatus("assinado");
   };
 
-  // Assinar evolução e encerrar atendimento
   const handleAssinarEEncerrar = () => {
     criarEvolucaoComStatus("assinado", true);
   };
@@ -203,6 +307,7 @@ export default function ProntuarioEvolucoes({
   const handleFecharModal = () => {
     setNovaEvolucao(false);
     setAgendamentoId(null);
+    setArquivosParaUpload([]);
   };
 
   // Função para inserir texto padrão em um campo
@@ -221,7 +326,6 @@ export default function ProntuarioEvolucoes({
 
     const textoPadrao = mapeamento[campo];
     if (textoPadrao) {
-      // Se já houver conteúdo, adiciona no final com uma linha em branco
       const valorAtual = form[campo];
       const novoValor = valorAtual 
         ? valorAtual + "\n\n" + textoPadrao 
@@ -232,12 +336,58 @@ export default function ProntuarioEvolucoes({
       toast.info("Nenhum texto padrão definido para este campo.");
     }
   };
+  
+  // Copiar da última consulta
+  const copiarDaUltimaConsulta = () => {
+    if (ultimasEvolucoes.length === 0) {
+      toast.info("Nenhuma evolução anterior encontrada.");
+      return;
+    }
+    const ultima = ultimasEvolucoes[0];
+    setForm(prev => ({
+      ...prev,
+      subjetivo: ultima.subjetivo || "",
+      objetivo: ultima.objetivo || "",
+      avaliacao: ultima.avaliacao || "",
+      plano: ultima.plano || "",
+    }));
+    toast.success("Conteúdo da última consulta copiado!");
+  };
 
   // Função para emitir documento
   const handleEmitirDocumento = (tipo: string) => {
-    // Por enquanto, apenas mostra um toast - a implementação completa virá depois
     toast.info(`Emitir ${tipo} - Funcionalidade em desenvolvimento`);
-    // TODO: Abrir modal de emissão de documento do tipo selecionado
+  };
+  
+  // Handlers de drag and drop para upload
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+  
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+  
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    setArquivosParaUpload(prev => [...prev, ...files]);
+    toast.success(`${files.length} arquivo(s) adicionado(s)`);
+  }, []);
+  
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setArquivosParaUpload(prev => [...prev, ...files]);
+      toast.success(`${files.length} arquivo(s) adicionado(s)`);
+    }
+  };
+  
+  const removerArquivo = (index: number) => {
+    setArquivosParaUpload(prev => prev.filter((_, i) => i !== index));
   };
 
   // Tipos de documentos disponíveis - estrutura hierárquica
@@ -292,306 +442,534 @@ export default function ProntuarioEvolucoes({
             else setNovaEvolucao(true);
           }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-[#6B8CBE] hover:bg-[#5A7BAD]">
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Evolução
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-[95vw] w-[1400px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                Nova Evolução
-                {agendamentoId && (
-                  <Badge variant="outline" className="ml-2 text-xs">
-                    <Link2 className="h-3 w-3 mr-1" />
-                    Vinculada ao Agendamento #{agendamentoId}
-                  </Badge>
-                )}
-              </DialogTitle>
-            </DialogHeader>
-            <Tabs defaultValue="soap" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="soap">SOAP</TabsTrigger>
-                <TabsTrigger value="sinais">Sinais Vitais</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="soap" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Data/Hora</Label>
-                    <Input
-                      type="datetime-local"
-                      value={form.dataEvolucao}
-                      onChange={(e) => setForm({ ...form, dataEvolucao: e.target.value })}
-                    />
+          <DialogContent className="max-w-[98vw] w-[1600px] max-h-[95vh] overflow-hidden p-0">
+            {/* Cabeçalho do Paciente */}
+            <div className="bg-[#F5F7FA] border-b border-[#D1DBEA] px-6 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-[#6B8CBE]" />
+                    <span className="font-semibold text-lg text-gray-800">{paciente?.nome || "Paciente"}</span>
                   </div>
-                  <div>
-                    <Label>Tipo de Atendimento</Label>
-                    <Select
-                      value={form.tipo}
-                      onValueChange={(v) => setForm({ ...form, tipo: v as any })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Consulta">Consulta</SelectItem>
-                        <SelectItem value="Retorno">Retorno</SelectItem>
-                        <SelectItem value="Urgência">Urgência</SelectItem>
-                        <SelectItem value="Teleconsulta">Teleconsulta</SelectItem>
-                        <SelectItem value="Parecer">Parecer</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span><strong>CPF:</strong> {paciente?.cpf || "-"}</span>
+                    <span><strong>Nasc:</strong> {paciente?.dataNascimento ? formatarDataCurta(paciente.dataNascimento) : "-"}</span>
+                    {paciente?.dataNascimento && (
+                      <span className="text-gray-500">({calcularIdade(paciente.dataNascimento)} anos)</span>
+                    )}
                   </div>
                 </div>
-                
-                {/* Campo Subjetivo com botão Inserir Padrão */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <Label className="flex items-center gap-2">
-                      <span className="bg-blue-100 text-[#0056A4] px-2 py-0.5 rounded text-xs font-bold">S</span>
-                      Subjetivo (Queixa / História)
-                    </Label>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-xs h-7 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                      onClick={() => inserirTextoPadrao("subjetivo")}
-                    >
-                      <FileText className="h-3 w-3 mr-1" />
-                      Inserir Padrão
-                    </Button>
+                <div className="flex items-center gap-4">
+                  {/* Timer discreto */}
+                  <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <Clock className="h-3 w-3" />
+                    <span>{formatarTempo(tempoConsulta)}</span>
                   </div>
-                  <Textarea
-                    rows={4}
-                    value={form.subjetivo}
-                    onChange={(e) => setForm({ ...form, subjetivo: e.target.value })}
-                    placeholder="Queixa principal, história da doença atual, sintomas relatados pelo paciente..."
-                  />
+                  {/* Ícone prontuário */}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-[#6B8CBE] hover:bg-[#6B8CBE]/10"
+                          onClick={() => setLocation(`/pacientes/${pacienteId}/prontuario`)}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Abrir Prontuário Completo</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  {agendamentoId && (
+                    <Badge variant="outline" className="text-xs border-[#6B8CBE] text-[#6B8CBE]">
+                      <Link2 className="h-3 w-3 mr-1" />
+                      Agendamento #{agendamentoId}
+                    </Badge>
+                  )}
                 </div>
-                
-                {/* Campo Objetivo com botão Inserir Padrão */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <Label className="flex items-center gap-2">
-                      <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
-                      Objetivo (Exame Físico)
-                    </Label>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-xs h-7 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50"
-                      onClick={() => inserirTextoPadrao("objetivo")}
-                    >
-                      <FileText className="h-3 w-3 mr-1" />
-                      Inserir Padrão
-                    </Button>
-                  </div>
-                  <Textarea
-                    rows={4}
-                    value={form.objetivo}
-                    onChange={(e) => setForm({ ...form, objetivo: e.target.value })}
-                    placeholder="Achados do exame físico, sinais vitais, resultados de exames..."
-                  />
-                </div>
-                
-                {/* Campo Avaliação com botão Inserir Padrão */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <Label className="flex items-center gap-2">
-                      <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-bold">A</span>
-                      Avaliação (Diagnóstico)
-                    </Label>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-xs h-7 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
-                      onClick={() => inserirTextoPadrao("avaliacao")}
-                    >
-                      <FileText className="h-3 w-3 mr-1" />
-                      Inserir Padrão
-                    </Button>
-                  </div>
-                  <Textarea
-                    rows={3}
-                    value={form.avaliacao}
-                    onChange={(e) => setForm({ ...form, avaliacao: e.target.value })}
-                    placeholder="Hipóteses diagnósticas, diagnóstico diferencial..."
-                  />
-                </div>
-                
-                {/* Campo Plano com botão Inserir Padrão */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <Label className="flex items-center gap-2">
-                      <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold">P</span>
-                      Plano (Conduta)
-                    </Label>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-xs h-7 text-purple-600 hover:text-purple-800 hover:bg-purple-50"
-                      onClick={() => inserirTextoPadrao("plano")}
-                    >
-                      <FileText className="h-3 w-3 mr-1" />
-                      Inserir Padrão
-                    </Button>
-                  </div>
-                  <Textarea
-                    rows={4}
-                    value={form.plano}
-                    onChange={(e) => setForm({ ...form, plano: e.target.value })}
-                    placeholder="Prescrições, exames solicitados, encaminhamentos, orientações..."
-                  />
-                </div>
+              </div>
+            </div>
+            
+            {/* Conteúdo Principal - 3 colunas */}
+            <div className="flex h-[calc(95vh-180px)] overflow-hidden">
+              {/* Coluna 1: Formulário Principal */}
+              <div className="flex-1 overflow-y-auto p-6 border-r border-[#E8EDF5]">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "soap" | "livre")} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 bg-[#E8EDF5]">
+                    <TabsTrigger value="soap" className="data-[state=active]:bg-[#6B8CBE] data-[state=active]:text-white">SOAP</TabsTrigger>
+                    <TabsTrigger value="livre" className="data-[state=active]:bg-[#6B8CBE] data-[state=active]:text-white">Texto Livre</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="soap" className="space-y-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Data/Hora</Label>
+                        <Input
+                          type="datetime-local"
+                          value={form.dataEvolucao}
+                          onChange={(e) => setForm({ ...form, dataEvolucao: e.target.value })}
+                          className="border-[#D1DBEA]"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Label>Tipo de Atendimento</Label>
+                          <Select
+                            value={form.tipo}
+                            onValueChange={(v) => setForm({ ...form, tipo: v as any })}
+                          >
+                            <SelectTrigger className="border-[#D1DBEA]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Consulta">Consulta</SelectItem>
+                              <SelectItem value="Retorno">Retorno</SelectItem>
+                              <SelectItem value="Urgência">Urgência</SelectItem>
+                              <SelectItem value="Teleconsulta">Teleconsulta</SelectItem>
+                              <SelectItem value="Parecer">Parecer</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-end">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="icon"
+                                  onClick={copiarDaUltimaConsulta}
+                                  className="border-[#D1DBEA] text-gray-500 hover:text-[#6B8CBE]"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Copiar da última consulta</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Campo Subjetivo */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label className="flex items-center gap-2">
+                          <span className="bg-[#E8EDF5] text-[#4A6A9A] px-2 py-0.5 rounded text-xs font-bold">S</span>
+                          Subjetivo (Queixa / História)
+                          <span className="text-[9px] text-gray-300 ml-2">Ctrl+1</span>
+                        </Label>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs h-6 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                          onClick={() => inserirTextoPadrao("subjetivo")}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Inserir Padrão
+                        </Button>
+                      </div>
+                      <Textarea
+                        id="campo-subjetivo"
+                        rows={3}
+                        value={form.subjetivo}
+                        onChange={(e) => setForm({ ...form, subjetivo: e.target.value })}
+                        placeholder="Queixa principal, história da doença atual..."
+                        className="border-[#D1DBEA] focus:border-[#6B8CBE]"
+                      />
+                    </div>
+                    
+                    {/* Campo Objetivo */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label className="flex items-center gap-2">
+                          <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">O</span>
+                          Objetivo (Exame Físico)
+                          <span className="text-[9px] text-gray-300 ml-2">Ctrl+2</span>
+                        </Label>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs h-6 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                          onClick={() => inserirTextoPadrao("objetivo")}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Inserir Padrão
+                        </Button>
+                      </div>
+                      <Textarea
+                        id="campo-objetivo"
+                        rows={3}
+                        value={form.objetivo}
+                        onChange={(e) => setForm({ ...form, objetivo: e.target.value })}
+                        placeholder="Achados do exame físico, sinais vitais..."
+                        className="border-[#D1DBEA] focus:border-[#6B8CBE]"
+                      />
+                    </div>
+                    
+                    {/* Campo Avaliação */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label className="flex items-center gap-2">
+                          <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-bold">A</span>
+                          Avaliação (Diagnóstico)
+                          <span className="text-[9px] text-gray-300 ml-2">Ctrl+3</span>
+                        </Label>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs h-6 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                          onClick={() => inserirTextoPadrao("avaliacao")}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Inserir Padrão
+                        </Button>
+                      </div>
+                      <Textarea
+                        id="campo-avaliacao"
+                        rows={2}
+                        value={form.avaliacao}
+                        onChange={(e) => setForm({ ...form, avaliacao: e.target.value })}
+                        placeholder="Hipóteses diagnósticas..."
+                        className="border-[#D1DBEA] focus:border-[#6B8CBE]"
+                      />
+                    </div>
+                    
+                    {/* Campo Plano */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label className="flex items-center gap-2">
+                          <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold">P</span>
+                          Plano (Conduta)
+                          <span className="text-[9px] text-gray-300 ml-2">Ctrl+4</span>
+                        </Label>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs h-6 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                          onClick={() => inserirTextoPadrao("plano")}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Inserir Padrão
+                        </Button>
+                      </div>
+                      <Textarea
+                        id="campo-plano"
+                        rows={3}
+                        value={form.plano}
+                        onChange={(e) => setForm({ ...form, plano: e.target.value })}
+                        placeholder="Prescrições, exames solicitados, orientações..."
+                        className="border-[#D1DBEA] focus:border-[#6B8CBE]"
+                      />
+                    </div>
 
-                {/* Dropdown Emitir Documento */}
-                <div className="pt-4 border-t border-dashed">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
-                        <span className="flex items-center gap-2">
-                          <FileOutput className="h-4 w-4" />
-                          Emitir Documento
-                        </span>
-                        <ChevronDown className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-full min-w-[300px]">
-                      {tiposDocumento.map((doc) => (
-                        doc.submenu ? (
-                          <div key={doc.id} className="relative group">
-                            <DropdownMenuItem 
-                              className="cursor-pointer flex items-center justify-between"
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              <div className="flex items-center">
+                    {/* Dropdown Emitir Documento */}
+                    <div className="pt-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full justify-between border-[#D1DBEA]">
+                            <span className="flex items-center gap-2">
+                              <FileOutput className="h-4 w-4" />
+                              Emitir Documento
+                            </span>
+                            <ChevronDown className="h-4 w-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-full min-w-[300px]">
+                          {tiposDocumento.map((doc) => (
+                            doc.submenu ? (
+                              <div key={doc.id} className="relative group">
+                                <DropdownMenuItem 
+                                  className="cursor-pointer flex items-center justify-between"
+                                  onSelect={(e) => e.preventDefault()}
+                                >
+                                  <div className="flex items-center">
+                                    <doc.icon className="h-4 w-4 mr-2" />
+                                    {doc.label}
+                                  </div>
+                                  <ChevronDown className="h-3 w-3 ml-2" />
+                                </DropdownMenuItem>
+                                <div className="pl-6 border-l-2 border-gray-200 ml-2">
+                                  {doc.submenu.map((sub) => (
+                                    <DropdownMenuItem 
+                                      key={sub.id}
+                                      onClick={() => handleEmitirDocumento(sub.label)}
+                                      className="cursor-pointer text-sm"
+                                    >
+                                      {sub.label}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <DropdownMenuItem 
+                                key={doc.id}
+                                onClick={() => handleEmitirDocumento(doc.label)}
+                                className="cursor-pointer"
+                              >
                                 <doc.icon className="h-4 w-4 mr-2" />
                                 {doc.label}
-                              </div>
-                              <ChevronDown className="h-3 w-3 ml-2" />
-                            </DropdownMenuItem>
-                            <div className="pl-6 border-l-2 border-gray-200 ml-2">
-                              {doc.submenu.map((sub) => (
+                              </DropdownMenuItem>
+                            )
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="livre" className="space-y-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Data/Hora</Label>
+                        <Input
+                          type="datetime-local"
+                          value={form.dataEvolucao}
+                          onChange={(e) => setForm({ ...form, dataEvolucao: e.target.value })}
+                          className="border-[#D1DBEA]"
+                        />
+                      </div>
+                      <div>
+                        <Label>Tipo de Atendimento</Label>
+                        <Select
+                          value={form.tipo}
+                          onValueChange={(v) => setForm({ ...form, tipo: v as any })}
+                        >
+                          <SelectTrigger className="border-[#D1DBEA]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Consulta">Consulta</SelectItem>
+                            <SelectItem value="Retorno">Retorno</SelectItem>
+                            <SelectItem value="Urgência">Urgência</SelectItem>
+                            <SelectItem value="Teleconsulta">Teleconsulta</SelectItem>
+                            <SelectItem value="Parecer">Parecer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label className="mb-2 block">Evolução</Label>
+                      <Textarea
+                        rows={16}
+                        value={form.textoLivre}
+                        onChange={(e) => setForm({ ...form, textoLivre: e.target.value })}
+                        placeholder="Digite a evolução do atendimento de forma livre, sem divisões em SOAP..."
+                        className="border-[#D1DBEA] focus:border-[#6B8CBE] min-h-[400px]"
+                      />
+                    </div>
+                    
+                    {/* Dropdown Emitir Documento */}
+                    <div className="pt-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full justify-between border-[#D1DBEA]">
+                            <span className="flex items-center gap-2">
+                              <FileOutput className="h-4 w-4" />
+                              Emitir Documento
+                            </span>
+                            <ChevronDown className="h-4 w-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-full min-w-[300px]">
+                          {tiposDocumento.map((doc) => (
+                            doc.submenu ? (
+                              <div key={doc.id} className="relative group">
                                 <DropdownMenuItem 
-                                  key={sub.id}
-                                  onClick={() => handleEmitirDocumento(sub.label)}
-                                  className="cursor-pointer text-sm"
+                                  className="cursor-pointer flex items-center justify-between"
+                                  onSelect={(e) => e.preventDefault()}
                                 >
-                                  {sub.label}
+                                  <div className="flex items-center">
+                                    <doc.icon className="h-4 w-4 mr-2" />
+                                    {doc.label}
+                                  </div>
+                                  <ChevronDown className="h-3 w-3 ml-2" />
                                 </DropdownMenuItem>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <DropdownMenuItem 
-                            key={doc.id}
-                            onClick={() => handleEmitirDocumento(doc.label)}
-                            className="cursor-pointer"
-                          >
-                            <doc.icon className="h-4 w-4 mr-2" />
-                            {doc.label}
-                          </DropdownMenuItem>
-                        )
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="sinais" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Pressão Arterial</Label>
-                    <Input
-                      value={form.pressaoArterial}
-                      onChange={(e) => setForm({ ...form, pressaoArterial: e.target.value })}
-                      placeholder="Ex: 120x80"
-                    />
-                  </div>
-                  <div>
-                    <Label>Frequência Cardíaca (bpm)</Label>
-                    <NumberInput
-                      decimals={0}
-                      value={form.frequenciaCardiaca}
-                      onChange={(value) => setForm({ ...form, frequenciaCardiaca: value?.toString() || "" })}
-                      placeholder="Ex: 72"
-                    />
-                  </div>
-                  <div>
-                    <Label>Temperatura (°C)</Label>
-                    <Input
-                      value={form.temperatura}
-                      onChange={(e) => setForm({ ...form, temperatura: e.target.value })}
-                      placeholder="Ex: 36.5"
-                    />
-                  </div>
-                  <div>
-                    <Label>Peso (kg)</Label>
-                    <Input
-                      value={form.peso}
-                      onChange={(e) => setForm({ ...form, peso: e.target.value })}
-                      placeholder="Ex: 70.5"
-                    />
-                  </div>
-                  <div>
-                    <Label>Altura (m)</Label>
-                    <Input
-                      value={form.altura}
-                      onChange={(e) => setForm({ ...form, altura: e.target.value })}
-                      placeholder="Ex: 1.75"
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={handleFecharModal}>Cancelar</Button>
-              <div className="flex flex-wrap gap-2 justify-end">
-                <Button 
-                  variant="outline"
-                  onClick={handleSalvarEvolucao}
-                  disabled={createEvolucao.isPending}
-                  title="Salva a evolução como rascunho para edição posterior"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar Evolução
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={handleSalvarPendenteAssinatura}
-                  disabled={createEvolucao.isPending}
-                  className="text-amber-600 border-amber-300 hover:bg-amber-50"
-                  title="Salva e marca como pendente de assinatura"
-                >
-                  <Clock className="h-4 w-4 mr-2" />
-                  Pendente de Assinatura
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={handleAssinarEvolucao}
-                  disabled={createEvolucao.isPending}
-                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                  title="Assina digitalmente a evolução"
-                >
-                  <PenLine className="h-4 w-4 mr-2" />
-                  Assinar Evolução
-                </Button>
-                <Button 
-                  onClick={handleAssinarEEncerrar}
-                  disabled={createEvolucao.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                  title="Assina a evolução e encerra o atendimento"
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Assinar e Encerrar
-                </Button>
+                                <div className="pl-6 border-l-2 border-gray-200 ml-2">
+                                  {doc.submenu.map((sub) => (
+                                    <DropdownMenuItem 
+                                      key={sub.id}
+                                      onClick={() => handleEmitirDocumento(sub.label)}
+                                      className="cursor-pointer text-sm"
+                                    >
+                                      {sub.label}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <DropdownMenuItem 
+                                key={doc.id}
+                                onClick={() => handleEmitirDocumento(doc.label)}
+                                className="cursor-pointer"
+                              >
+                                <doc.icon className="h-4 w-4 mr-2" />
+                                {doc.label}
+                              </DropdownMenuItem>
+                            )
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
-            </DialogFooter>
+              
+              {/* Coluna 2: Upload de Documentos */}
+              <div className="w-[280px] p-4 border-r border-[#E8EDF5] bg-[#FAFBFC] overflow-y-auto">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Documentos</h3>
+                
+                {/* Área de Drop */}
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+                    isDragging 
+                      ? 'border-[#6B8CBE] bg-[#6B8CBE]/10' 
+                      : 'border-[#D1DBEA] hover:border-[#6B8CBE]/50'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-xs text-gray-500 mb-2">Arraste arquivos aqui</p>
+                  <label className="cursor-pointer">
+                    <span className="text-xs text-[#6B8CBE] hover:underline">ou clique para selecionar</span>
+                    <input 
+                      type="file" 
+                      multiple 
+                      className="hidden" 
+                      onChange={handleFileSelect}
+                    />
+                  </label>
+                </div>
+                
+                {/* Lista de arquivos */}
+                {arquivosParaUpload.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs font-medium text-gray-600">{arquivosParaUpload.length} arquivo(s)</p>
+                    {arquivosParaUpload.map((file, index) => (
+                      <div key={index} className="flex items-center gap-2 bg-white p-2 rounded border border-[#E8EDF5]">
+                        <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-xs text-gray-600 truncate flex-1">{file.name}</span>
+                        <button 
+                          onClick={() => removerArquivo(index)}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Coluna 3: Histórico Rápido */}
+              <div className="w-[280px] p-4 bg-[#FAFBFC] overflow-y-auto">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Histórico Recente</h3>
+                
+                {ultimasEvolucoes.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-4">Nenhuma evolução anterior</p>
+                ) : (
+                  <div className="space-y-2">
+                    {ultimasEvolucoes.map((ev, index) => (
+                      <TooltipProvider key={ev.id}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                              index === 0 
+                                ? 'bg-[#6B8CBE]/10 border-[#6B8CBE]/30' 
+                                : 'bg-white border-[#E8EDF5] hover:border-[#6B8CBE]/30'
+                            }`}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-medium text-gray-700">{formatarDataCurta(ev.dataEvolucao)}</span>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">{ev.tipo}</Badge>
+                              </div>
+                              <p className="text-xs text-gray-500 line-clamp-2">
+                                {ev.subjetivo || ev.avaliacao || "Sem descrição"}
+                              </p>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-[300px]">
+                            <div className="space-y-2">
+                              <p className="font-semibold">{formatarData(ev.dataEvolucao)}</p>
+                              {ev.subjetivo && <p className="text-xs"><strong>S:</strong> {ev.subjetivo.substring(0, 150)}...</p>}
+                              {ev.objetivo && <p className="text-xs"><strong>O:</strong> {ev.objetivo.substring(0, 150)}...</p>}
+                              {ev.avaliacao && <p className="text-xs"><strong>A:</strong> {ev.avaliacao.substring(0, 150)}...</p>}
+                              {ev.plano && <p className="text-xs"><strong>P:</strong> {ev.plano.substring(0, 150)}...</p>}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Footer com botões */}
+            <div className="border-t border-[#D1DBEA] bg-[#F5F7FA] px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-gray-300">Ctrl+S salvar</span>
+                  <span className="text-[9px] text-gray-300">Ctrl+Enter assinar e encerrar</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleFecharModal}
+                    className="border-gray-300 text-gray-600 hover:bg-gray-100"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={handleSalvarEvolucao}
+                    disabled={createEvolucao.isPending}
+                    className="border-[#6B8CBE] text-[#6B8CBE] hover:bg-[#6B8CBE]/10"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar
+                  </Button>
+                  <Button 
+                    onClick={handleSalvarPendenteAssinatura}
+                    disabled={createEvolucao.isPending}
+                    className="bg-amber-500 hover:bg-amber-600 text-white"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Pendente
+                  </Button>
+                  <Button 
+                    onClick={handleAssinarEvolucao}
+                    disabled={createEvolucao.isPending}
+                    className="bg-[#6B8CBE] hover:bg-[#5A7BAD] text-white"
+                  >
+                    <PenLine className="h-4 w-4 mr-2" />
+                    Assinar
+                  </Button>
+                  <Button 
+                    onClick={handleAssinarEEncerrar}
+                    disabled={createEvolucao.isPending}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Assinar e Encerrar
+                  </Button>
+                </div>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
         </div>
@@ -603,7 +981,7 @@ export default function ProntuarioEvolucoes({
           <CardContent className="py-8 text-center">
             <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">Nenhuma evolução registrada.</p>
-            <Button className="mt-4" onClick={() => setNovaEvolucao(true)}>
+            <Button className="mt-4 bg-[#6B8CBE] hover:bg-[#5A7BAD]" onClick={() => setNovaEvolucao(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Registrar Primeira Evolução
             </Button>
@@ -632,10 +1010,9 @@ export default function ProntuarioEvolucoes({
                             Agendamento #{ev.agendamentoId}
                           </Badge>
                         )}
-                        {/* Badge de Status de Assinatura */}
                         {ev.statusAssinatura === 'assinado' || ev.assinado ? (
                           <Badge 
-                            className="bg-green-500 hover:bg-green-600"
+                            className="bg-emerald-500 hover:bg-emerald-600"
                             title={ev.assinadoPorNome && ev.dataAssinatura 
                               ? `Assinada por ${ev.assinadoPorNome} em ${formatarData(ev.dataAssinatura)}`
                               : 'Evolução assinada digitalmente'
@@ -655,9 +1032,8 @@ export default function ProntuarioEvolucoes({
                             Rascunho
                           </Badge>
                         )}
-                        {/* Indicador de Atendimento Encerrado */}
                         {ev.atendimentoEncerrado && (
-                          <Badge className="bg-blue-500 hover:bg-blue-600">
+                          <Badge className="bg-[#6B8CBE] hover:bg-[#5A7BAD]">
                             Atendimento Encerrado
                           </Badge>
                         )}
@@ -686,7 +1062,7 @@ export default function ProntuarioEvolucoes({
                     {ev.subjetivo && (
                       <div>
                         <Label className="flex items-center gap-2 mb-1">
-                          <span className="bg-blue-100 text-[#0056A4] px-2 py-0.5 rounded text-xs font-bold">S</span>
+                          <span className="bg-[#E8EDF5] text-[#4A6A9A] px-2 py-0.5 rounded text-xs font-bold">S</span>
                           Subjetivo
                         </Label>
                         <p className="text-sm whitespace-pre-wrap bg-white p-3 rounded border">{ev.subjetivo}</p>
@@ -706,7 +1082,7 @@ export default function ProntuarioEvolucoes({
                     {ev.avaliacao && (
                       <div>
                         <Label className="flex items-center gap-2 mb-1">
-                          <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs font-bold">A</span>
+                          <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-bold">A</span>
                           Avaliação
                         </Label>
                         <p className="text-sm whitespace-pre-wrap bg-white p-3 rounded border">{ev.avaliacao}</p>
@@ -766,13 +1142,13 @@ export default function ProntuarioEvolucoes({
                     {(ev.statusAssinatura === 'assinado' || ev.assinado) && ev.assinadoPorNome && (
                       <div className="pt-2 border-t">
                         <Label className="mb-2 block">Assinatura Digital</Label>
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                          <div className="flex items-center gap-2 text-sm text-green-800">
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                          <div className="flex items-center gap-2 text-sm text-emerald-800">
+                            <CheckCircle className="h-4 w-4 text-emerald-600" />
                             <span>Assinada digitalmente por <strong>{ev.assinadoPorNome}</strong></span>
                           </div>
                           {ev.dataAssinatura && (
-                            <div className="text-xs text-green-600 mt-1 ml-6">
+                            <div className="text-xs text-emerald-600 mt-1 ml-6">
                               em {formatarData(ev.dataAssinatura)}
                             </div>
                           )}
@@ -785,14 +1161,13 @@ export default function ProntuarioEvolucoes({
                         <div className="flex items-center justify-between mb-4">
                           <Label>Ações</Label>
                           <div className="flex gap-2">
-                            {/* Botão Editar - bloqueado se assinada */}
                             {(ev.statusAssinatura === 'assinado' || ev.assinado) ? (
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 disabled
                                 className="opacity-50 cursor-not-allowed"
-                                title="Evoluções assinadas não podem ser editadas para manter a integridade do registro médico"
+                                title="Evoluções assinadas não podem ser editadas"
                               >
                                 <Lock className="h-3 w-3 mr-1" />
                                 Bloqueada
@@ -803,7 +1178,6 @@ export default function ProntuarioEvolucoes({
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // TODO: Implementar modal de edição
                                   toast.info('Funcionalidade de edição em desenvolvimento');
                                 }}
                                 title="Editar esta evolução"
@@ -812,12 +1186,11 @@ export default function ProntuarioEvolucoes({
                                 Editar
                               </Button>
                             )}
-                            {/* Botão Assinar - apenas se não assinada */}
                             {!(ev.statusAssinatura === 'assinado' || ev.assinado) && (
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                                className="text-[#6B8CBE] border-[#6B8CBE]/50 hover:bg-[#6B8CBE]/10"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setEvolucaoParaAssinar(ev);
@@ -915,7 +1288,7 @@ export default function ProntuarioEvolucoes({
                     <div className="space-y-2 mt-3 pt-3 border-t">
                       {evolucaoParaAssinar.subjetivo && (
                         <div className="text-sm">
-                          <span className="bg-blue-100 text-[#0056A4] px-1.5 py-0.5 rounded text-xs font-bold mr-2">S</span>
+                          <span className="bg-[#E8EDF5] text-[#4A6A9A] px-1.5 py-0.5 rounded text-xs font-bold mr-2">S</span>
                           <span className="text-gray-600 line-clamp-2">{evolucaoParaAssinar.subjetivo}</span>
                         </div>
                       )}
@@ -927,7 +1300,7 @@ export default function ProntuarioEvolucoes({
                       )}
                       {evolucaoParaAssinar.avaliacao && (
                         <div className="text-sm">
-                          <span className="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded text-xs font-bold mr-2">A</span>
+                          <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-xs font-bold mr-2">A</span>
                           <span className="text-gray-600 line-clamp-2">{evolucaoParaAssinar.avaliacao}</span>
                         </div>
                       )}
@@ -943,7 +1316,6 @@ export default function ProntuarioEvolucoes({
                 
                 <p className="text-sm text-gray-500">
                   Ao assinar, você confirma que revisou o conteúdo e que as informações estão corretas.
-                  A assinatura digital registrará seu nome e a data/hora da assinatura.
                 </p>
               </div>
             </AlertDialogDescription>
@@ -954,7 +1326,7 @@ export default function ProntuarioEvolucoes({
                 setModalAssinarAberto(false);
                 setEvolucaoParaAssinar(null);
               }}
-              className="sm:mr-auto"
+              className="sm:mr-auto border-gray-300"
             >
               Cancelar
             </AlertDialogCancel>
@@ -970,8 +1342,7 @@ export default function ProntuarioEvolucoes({
                   }
                 }}
                 disabled={assinarEvolucao.isPending}
-                className="border-green-300 text-green-700 hover:bg-green-50"
-                title="Assina a evolução mas mantém o atendimento aberto"
+                className="border-[#6B8CBE] text-[#6B8CBE] hover:bg-[#6B8CBE]/10"
               >
                 {assinarEvolucao.isPending ? (
                   <>
@@ -995,8 +1366,7 @@ export default function ProntuarioEvolucoes({
                   }
                 }}
                 disabled={assinarEvolucao.isPending}
-                className="bg-green-600 hover:bg-green-700"
-                title="Assina a evolução e encerra o atendimento"
+                className="bg-emerald-600 hover:bg-emerald-700"
               >
                 {assinarEvolucao.isPending ? (
                   <>
