@@ -228,6 +228,10 @@ export default function Agenda() {
   const [showPacienteDropdown, setShowPacienteDropdown] = useState(false);
   const [pacienteSelecionadoInfo, setPacienteSelecionadoInfo] = useState<any>(null);
   
+  // Drag-and-drop state
+  const [draggedAgendamento, setDraggedAgendamento] = useState<any>(null);
+  const [dragOverSlot, setDragOverSlot] = useState<{ data: string; hora: number; minuto: number } | null>(null);
+  
   // Debounce da busca de pacientes (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -623,6 +627,80 @@ export default function Agenda() {
     setBuscaPaciente(paciente.nome);
   };
 
+  // Drag-and-drop handlers
+  const handleDragStart = (e: React.DragEvent, ag: any) => {
+    // Não permitir arrastar agendamentos cancelados/reagendados
+    if (ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou") {
+      e.preventDefault();
+      return;
+    }
+    setDraggedAgendamento(ag);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", ag.id.toString());
+    // Adicionar classe visual ao elemento arrastado
+    (e.target as HTMLElement).style.opacity = "0.5";
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    setDraggedAgendamento(null);
+    setDragOverSlot(null);
+    (e.target as HTMLElement).style.opacity = "1";
+  };
+
+  const handleDragOver = (e: React.DragEvent, data: Date, hora: number, minuto: number = 0) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    const dataStr = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+    setDragOverSlot({ data: dataStr, hora, minuto });
+  };
+
+  const handleDragLeave = () => {
+    setDragOverSlot(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, data: Date, hora: number, minuto: number = 0) => {
+    e.preventDefault();
+    setDragOverSlot(null);
+    
+    if (!draggedAgendamento) return;
+    
+    // Calcular nova data/hora
+    const novaDataStr = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+    const novaHoraInicioStr = `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
+    
+    // Calcular duração original do agendamento
+    const inicioOriginal = new Date(draggedAgendamento.dataHoraInicio);
+    const fimOriginal = draggedAgendamento.dataHoraFim ? new Date(draggedAgendamento.dataHoraFim) : new Date(inicioOriginal.getTime() + 30 * 60000);
+    const duracaoMs = fimOriginal.getTime() - inicioOriginal.getTime();
+    
+    // Calcular novo horário de fim mantendo a duração
+    const novoInicio = new Date(`${novaDataStr}T${novaHoraInicioStr}`);
+    const novoFim = new Date(novoInicio.getTime() + duracaoMs);
+    const novaHoraFimStr = `${String(novoFim.getHours()).padStart(2, '0')}:${String(novoFim.getMinutes()).padStart(2, '0')}`;
+    
+    // Verificar se é o mesmo horário (sem mudança)
+    if (inicioOriginal.getTime() === novoInicio.getTime()) {
+      setDraggedAgendamento(null);
+      return;
+    }
+    
+    // Executar reagendamento
+    reagendarAgendamento.mutate({
+      idOriginal: draggedAgendamento.id,
+      novaDataInicio: novoInicio,
+      novaDataFim: novoFim,
+    }, {
+      onSuccess: () => {
+        toast.success(`Agendamento movido para ${novaDataStr} às ${novaHoraInicioStr}`);
+        setDraggedAgendamento(null);
+      },
+      onError: (error) => {
+        toast.error(`Erro ao reagendar: ${error.message}`);
+        setDraggedAgendamento(null);
+      }
+    });
+  };
+
   // Renderizar agendamento no calendário
   const renderAgendamento = (ag: any) => {
     const isCancelado = ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou";
@@ -638,18 +716,28 @@ export default function Agenda() {
     // Cada minuto = 0.8px
     const alturaPixels = Math.round(duracaoMinutos * 0.8);
     
+    // Verificar se pode ser arrastado
+    const canDrag = !isCancelado;
+    
     return (
       <div
         key={ag.id}
-        onClick={() => abrirDetalhes(ag)}
+        onClick={(e) => {
+          e.stopPropagation();
+          abrirDetalhes(ag);
+        }}
+        draggable={canDrag}
+        onDragStart={(e) => handleDragStart(e, ag)}
+        onDragEnd={handleDragEnd}
         style={{ height: `${alturaPixels}px`, minHeight: '16px' }}
         className={`
-          px-1 py-0.5 rounded cursor-pointer text-white text-[10px] leading-tight overflow-hidden
+          px-1 py-0.5 rounded text-white text-[10px] leading-tight overflow-hidden
           ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
-          ${isCancelado ? "opacity-40 line-through" : "hover:opacity-90"}
+          ${isCancelado ? "opacity-40 line-through cursor-not-allowed" : "hover:opacity-90 cursor-grab active:cursor-grabbing"}
           ${CORES_STATUS[ag.status]}
+          ${draggedAgendamento?.id === ag.id ? "ring-2 ring-white ring-offset-1" : ""}
         `}
-        title={statusInfo?.label || ag.status}
+        title={canDrag ? "Arraste para reagendar" : (statusInfo?.label || ag.status)}
       >
         <div className="font-medium truncate flex items-center gap-0.5">
           {StatusIcon && statusInfo && (
@@ -808,11 +896,16 @@ export default function Agenda() {
                     const feriado = getFeriado(dia);
                     const isHoje = dia.toDateString() === new Date().toDateString();
                     
+                    // Verificar se este slot está sendo alvo do drag
+                    const isDragOver = dragOverSlot?.data === chave && dragOverSlot?.hora === hora;
+                    
                     return (
                       <div 
                         key={i} 
-                        className={`px-0.5 py-0 border-r overflow-hidden cursor-pointer hover:bg-primary/5 transition-colors ${
+                        className={`px-0.5 py-0 border-r overflow-hidden cursor-pointer transition-colors ${
                           isHoje ? "bg-blue-50/50" : feriado ? "bg-amber-50" : ""
+                        } ${
+                          isDragOver ? "bg-primary/20 ring-2 ring-primary ring-inset" : "hover:bg-primary/5"
                         }`}
                         onClick={(e) => {
                           // Só abre modal se clicar no slot vazio (não em um agendamento existente)
@@ -825,7 +918,24 @@ export default function Agenda() {
                             abrirNovoAgendamentoComHorario(dia, hora, minuto);
                           }
                         }}
-                        title={`Clique para agendar (metade superior: ${hora.toString().padStart(2, '0')}:00, metade inferior: ${hora.toString().padStart(2, '0')}:30)`}
+                        onDragOver={(e) => {
+                          // Determinar se está na metade superior (xx:00) ou inferior (xx:30)
+                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                          const dragY = e.clientY - rect.top;
+                          const metadeInferior = dragY > rect.height / 2;
+                          const minuto = metadeInferior ? 30 : 0;
+                          handleDragOver(e, dia, hora, minuto);
+                        }}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => {
+                          // Determinar se soltou na metade superior (xx:00) ou inferior (xx:30)
+                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                          const dropY = e.clientY - rect.top;
+                          const metadeInferior = dropY > rect.height / 2;
+                          const minuto = metadeInferior ? 30 : 0;
+                          handleDrop(e, dia, hora, minuto);
+                        }}
+                        title={draggedAgendamento ? `Solte aqui para mover para ${hora.toString().padStart(2, '0')}:00` : `Clique para agendar (metade superior: ${hora.toString().padStart(2, '0')}:00, metade inferior: ${hora.toString().padStart(2, '0')}:30)`}
                       >
                         {agendamentosHora.length === 0 && (
                           <div data-slot-empty className="h-full w-full" />
@@ -853,11 +963,16 @@ export default function Agenda() {
                   const horaAg = new Date(ag.dataHoraInicio).getHours();
                   return horaAg === hora;
                 });
+                
+                // Verificar se este slot está sendo alvo do drag
+                const isDragOverDia = dragOverSlot?.data === chave && dragOverSlot?.hora === hora;
 
                 return (
                   <div 
                     key={hora} 
-                    className="flex gap-4 min-h-[50px] border-b pb-2 cursor-pointer hover:bg-primary/5 transition-colors rounded"
+                    className={`flex gap-4 min-h-[50px] border-b pb-2 cursor-pointer transition-colors rounded ${
+                      isDragOverDia ? "bg-primary/20 ring-2 ring-primary" : "hover:bg-primary/5"
+                    }`}
                     onClick={(e) => {
                       // Só abre modal se clicar no slot vazio (não em um agendamento existente)
                       if (e.target === e.currentTarget || agendamentosHora.length === 0) {
@@ -869,7 +984,22 @@ export default function Agenda() {
                         abrirNovoAgendamentoComHorario(dataAtual, hora, minuto);
                       }
                     }}
-                    title={`Clique para agendar (metade superior: ${hora.toString().padStart(2, '0')}:00, metade inferior: ${hora.toString().padStart(2, '0')}:30)`}
+                    onDragOver={(e) => {
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      const dragY = e.clientY - rect.top;
+                      const metadeInferior = dragY > rect.height / 2;
+                      const minuto = metadeInferior ? 30 : 0;
+                      handleDragOver(e, dataAtual, hora, minuto);
+                    }}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => {
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      const dropY = e.clientY - rect.top;
+                      const metadeInferior = dropY > rect.height / 2;
+                      const minuto = metadeInferior ? 30 : 0;
+                      handleDrop(e, dataAtual, hora, minuto);
+                    }}
+                    title={draggedAgendamento ? `Solte aqui para mover para ${hora.toString().padStart(2, '0')}:00` : `Clique para agendar (metade superior: ${hora.toString().padStart(2, '0')}:00, metade inferior: ${hora.toString().padStart(2, '0')}:30)`}
                   >
                     <div className="w-16 text-sm text-muted-foreground font-medium">
                       {hora.toString().padStart(2, "0")}:00
@@ -878,21 +1008,30 @@ export default function Agenda() {
                       {agendamentosHora.length === 0 && (
                         <div className="h-full flex items-center text-muted-foreground text-sm">
                           <Plus className="w-4 h-4 mr-1 opacity-50" />
-                          <span className="opacity-50">Clique para agendar</span>
+                          <span className="opacity-50">{draggedAgendamento ? "Solte aqui" : "Clique para agendar"}</span>
                         </div>
                       )}
-                      {agendamentosHora.map((ag: any) => (
+                      {agendamentosHora.map((ag: any) => {
+                        const isCanceladoDia = ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou";
+                        const canDragDia = !isCanceladoDia;
+                        
+                        return (
                         <div
                           key={ag.id}
+                          draggable={canDragDia}
+                          onDragStart={(e) => handleDragStart(e, ag)}
+                          onDragEnd={handleDragEnd}
                           onClick={(e) => {
                             e.stopPropagation();
                             abrirDetalhes(ag);
                           }}
                           className={`
-                            p-3 rounded cursor-pointer text-white mb-2
+                            p-3 rounded text-white mb-2
                             ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
-                            ${ag.status === "Cancelado" || ag.status === "Reagendado" ? "opacity-40" : "hover:opacity-90"}
+                            ${isCanceladoDia ? "opacity-40 cursor-not-allowed" : "hover:opacity-90 cursor-grab active:cursor-grabbing"}
+                            ${draggedAgendamento?.id === ag.id ? "ring-2 ring-white ring-offset-1" : ""}
                           `}
+                          title={canDragDia ? "Arraste para reagendar" : ag.status}
                         >
                           <div className="flex items-center justify-between">
                             <div>
@@ -908,7 +1047,8 @@ export default function Agenda() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   </div>
                 );

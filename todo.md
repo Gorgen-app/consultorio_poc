@@ -4023,3 +4023,14 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Adicionar UI de configuração nas Configurações do sistema
 - [x] Integrar durações padrão no modal de novo agendamento
 - [x] Atualizar horário de fim automaticamente ao selecionar tipo
+
+---
+
+## 🖱️ Drag-and-Drop na Agenda
+
+### A Implementar
+- [x] Implementar drag-and-drop nos agendamentos da visualização semanal
+- [x] Implementar drag-and-drop na visualização diária
+- [x] Mostrar preview visual durante o arrasto (highlight do slot alvo)
+- [x] Confirmar reagendamento após soltar (toast de sucesso)
+- [x] Manter registro de auditoria do reagendamento (usa mutation existente)
