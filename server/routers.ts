@@ -200,6 +200,17 @@ export const appRouter = router({
         }
       }),
     
+    // Histórico de uso de memória
+    memoryHistory: protectedProcedure
+      .input(z.object({ minutes: z.number().min(5).max(120).default(60) }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Acesso negado: apenas administradores');
+        }
+        
+        return performance.getMemoryHistory(input?.minutes ?? 60);
+      }),
+    
     // Auto-Healing - Diagnóstico do sistema
     diagnose: protectedProcedure
       .query(async ({ ctx }) => {

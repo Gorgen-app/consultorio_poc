@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Activity, Clock, Database, Server, Zap, AlertTriangle, TrendingUp, HardDrive, Download, Bell, Settings, Check, X, Wrench, Play, History, RefreshCw, Shield, Cpu } from "lucide-react";
+import { Activity, Clock, Database, Server, Zap, AlertTriangle, TrendingUp, HardDrive, Download, Bell, Settings, Check, X, Wrench, Play, History, RefreshCw, Shield, Cpu, TrendingDown, Minus } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -130,6 +131,15 @@ export default function Performance() {
   
   const { data: healingHistory } = trpc.performance.getHealingHistory.useQuery(
     { limit: 10 },
+    {
+      refetchInterval: 30000,
+      enabled: user?.role === 'admin',
+    }
+  );
+  
+  // Histórico de memória
+  const { data: memoryHistory, refetch: refetchMemoryHistory } = trpc.performance.memoryHistory.useQuery(
+    { minutes: 60 },
     {
       refetchInterval: 30000,
       enabled: user?.role === 'admin',
@@ -658,15 +668,164 @@ export default function Performance() {
         </Card>
       </div>
       
+      {/* Gráfico de Histórico de Memória */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Histórico de Uso de Memória
+              </CardTitle>
+              <CardDescription>
+                Evolução do consumo de memória na última hora
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {memoryHistory?.summary && (
+                <div className="flex items-center gap-1 text-sm">
+                  {memoryHistory.summary.trend === 'increasing' ? (
+                    <><TrendingUp className="h-4 w-4 text-red-500" /><span className="text-red-500">Subindo</span></>
+                  ) : memoryHistory.summary.trend === 'decreasing' ? (
+                    <><TrendingDown className="h-4 w-4 text-green-500" /><span className="text-green-500">Caindo</span></>
+                  ) : (
+                    <><Minus className="h-4 w-4 text-gray-500" /><span className="text-gray-500">Estável</span></>
+                  )}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchMemoryHistory()}
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {memoryHistory?.data && memoryHistory.data.length > 0 ? (
+            <div className="space-y-4">
+              {/* Sumário */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <div className="p-2 bg-gray-50 rounded text-center">
+                  <div className="text-lg font-bold">{memoryHistory.summary.avgHeapUsed}MB</div>
+                  <div className="text-xs text-muted-foreground">Média</div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded text-center">
+                  <div className="text-lg font-bold text-red-600">{memoryHistory.summary.maxHeapUsed}MB</div>
+                  <div className="text-xs text-muted-foreground">Máximo</div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded text-center">
+                  <div className="text-lg font-bold text-green-600">{memoryHistory.summary.minHeapUsed}MB</div>
+                  <div className="text-xs text-muted-foreground">Mínimo</div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded text-center">
+                  <div className="text-lg font-bold">{memoryHistory.summary.avgHeapPercent}%</div>
+                  <div className="text-xs text-muted-foreground">% Médio</div>
+                </div>
+                <div className="p-2 bg-gray-50 rounded text-center">
+                  <div className="text-lg font-bold text-orange-600">{memoryHistory.summary.maxHeapPercent}%</div>
+                  <div className="text-xs text-muted-foreground">% Máximo</div>
+                </div>
+              </div>
+              
+              {/* Gráfico */}
+              <div style={{ height: '300px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={memoryHistory.data}>
+                    <defs>
+                      <linearGradient id="colorHeapUsed" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0056A4" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#0056A4" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorHeapTotal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="time" 
+                      tick={{ fontSize: 11 }}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 11 }}
+                      label={{ value: 'MB', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value: number, name: string) => {
+                        const labels: Record<string, string> = {
+                          heapUsed: 'Heap Usado',
+                          heapTotal: 'Heap Total',
+                          rss: 'RSS',
+                          heapUsagePercent: 'Uso %'
+                        };
+                        return [name === 'heapUsagePercent' ? `${value}%` : `${value}MB`, labels[name] || name];
+                      }}
+                    />
+                    <Legend 
+                      formatter={(value: string) => {
+                        const labels: Record<string, string> = {
+                          heapUsed: 'Heap Usado',
+                          heapTotal: 'Heap Total',
+                          rss: 'RSS'
+                        };
+                        return labels[value] || value;
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="heapUsed" 
+                      stroke="#0056A4" 
+                      strokeWidth={2}
+                      fill="url(#colorHeapUsed)" 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="heapTotal" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      fill="url(#colorHeapTotal)" 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="rss" 
+                      stroke="#f59e0b" 
+                      strokeWidth={1}
+                      strokeDasharray="5 5"
+                      dot={false}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <HardDrive className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Coletando dados de memória...</p>
+              <p className="text-xs mt-1">O histórico aparecerá após alguns minutos de uso</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
       {/* Métricas do Sistema */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <HardDrive className="h-5 w-5" />
-              Uso de Memória
+              Uso de Memória Atual
             </CardTitle>
-            <CardDescription>Consumo de memória do servidor</CardDescription>
+            <CardDescription>Consumo de memória do servidor em tempo real</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

@@ -47,6 +47,22 @@ const metricsBuffer: EndpointMetric[] = [];
 const MAX_BUFFER_SIZE = 2000; // Reduzido de 10000 para 2000
 const RETENTION_PERIOD = 6 * 60 * 60 * 1000; // 6 horas (reduzido de 24 horas)
 
+// Estrutura para histórico de memória
+interface MemorySnapshot {
+  timestamp: number;
+  heapUsed: number; // MB
+  heapTotal: number; // MB
+  heapUsagePercent: number;
+  rss: number; // MB
+  external: number; // MB
+}
+
+// Buffer de histórico de memória (coleta a cada 30 segundos, mantém 2 horas)
+const memoryHistoryBuffer: MemorySnapshot[] = [];
+const MAX_MEMORY_HISTORY_SIZE = 240; // 2 horas * 60 min * 2 (a cada 30s)
+const MEMORY_SNAPSHOT_INTERVAL = 30 * 1000; // 30 segundos
+let memorySnapshotTimer: NodeJS.Timeout | null = null;
+
 // Estatísticas de cache
 let cacheHits = 0;
 let cacheMisses = 0;
@@ -476,3 +492,156 @@ export function exportAggregatedMetricsToCSV(): string {
   
   return csvContent;
 }
+
+// ============================================================================
+// HISTÓRICO DE MEMÓRIA
+// ============================================================================
+
+/**
+ * Captura um snapshot do uso de memória atual
+ */
+function captureMemorySnapshot(): void {
+  const memUsage = process.memoryUsage();
+  const heapUsed = Math.round(memUsage.heapUsed / 1024 / 1024);
+  const heapTotal = Math.round(memUsage.heapTotal / 1024 / 1024);
+  
+  const snapshot: MemorySnapshot = {
+    timestamp: Date.now(),
+    heapUsed,
+    heapTotal,
+    heapUsagePercent: Math.round((heapUsed / heapTotal) * 100),
+    rss: Math.round(memUsage.rss / 1024 / 1024),
+    external: Math.round(memUsage.external / 1024 / 1024),
+  };
+  
+  memoryHistoryBuffer.push(snapshot);
+  
+  // Limitar tamanho do buffer
+  while (memoryHistoryBuffer.length > MAX_MEMORY_HISTORY_SIZE) {
+    memoryHistoryBuffer.shift();
+  }
+}
+
+/**
+ * Inicia a coleta automática de snapshots de memória
+ */
+export function startMemoryHistoryCollection(): void {
+  if (memorySnapshotTimer) {
+    return; // Já está rodando
+  }
+  
+  // Capturar snapshot inicial
+  captureMemorySnapshot();
+  
+  // Iniciar timer para coleta periódica
+  memorySnapshotTimer = setInterval(() => {
+    captureMemorySnapshot();
+  }, MEMORY_SNAPSHOT_INTERVAL);
+  
+  console.log('[Performance] Coleta de histórico de memória iniciada');
+}
+
+/**
+ * Para a coleta automática de snapshots de memória
+ */
+export function stopMemoryHistoryCollection(): void {
+  if (memorySnapshotTimer) {
+    clearInterval(memorySnapshotTimer);
+    memorySnapshotTimer = null;
+    console.log('[Performance] Coleta de histórico de memória parada');
+  }
+}
+
+/**
+ * Obtém o histórico de uso de memória
+ * @param minutes Número de minutos de histórico (padrão: 60 = 1 hora)
+ */
+export function getMemoryHistory(minutes: number = 60): {
+  data: Array<{
+    time: string;
+    heapUsed: number;
+    heapTotal: number;
+    heapUsagePercent: number;
+    rss: number;
+  }>;
+  summary: {
+    avgHeapUsed: number;
+    maxHeapUsed: number;
+    minHeapUsed: number;
+    avgHeapPercent: number;
+    maxHeapPercent: number;
+    trend: 'increasing' | 'decreasing' | 'stable';
+  };
+} {
+  const cutoff = Date.now() - (minutes * 60 * 1000);
+  const filteredData = memoryHistoryBuffer.filter(s => s.timestamp >= cutoff);
+  
+  if (filteredData.length === 0) {
+    return {
+      data: [],
+      summary: {
+        avgHeapUsed: 0,
+        maxHeapUsed: 0,
+        minHeapUsed: 0,
+        avgHeapPercent: 0,
+        maxHeapPercent: 0,
+        trend: 'stable',
+      },
+    };
+  }
+  
+  // Formatar dados para o gráfico
+  const data = filteredData.map(s => {
+    const date = new Date(s.timestamp);
+    return {
+      time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
+      heapUsed: s.heapUsed,
+      heapTotal: s.heapTotal,
+      heapUsagePercent: s.heapUsagePercent,
+      rss: s.rss,
+    };
+  });
+  
+  // Calcular sumário
+  const heapUsedValues = filteredData.map(s => s.heapUsed);
+  const heapPercentValues = filteredData.map(s => s.heapUsagePercent);
+  
+  const avgHeapUsed = Math.round(heapUsedValues.reduce((a, b) => a + b, 0) / heapUsedValues.length);
+  const maxHeapUsed = Math.max(...heapUsedValues);
+  const minHeapUsed = Math.min(...heapUsedValues);
+  const avgHeapPercent = Math.round(heapPercentValues.reduce((a, b) => a + b, 0) / heapPercentValues.length);
+  const maxHeapPercent = Math.max(...heapPercentValues);
+  
+  // Calcular tendência (comparar primeira e última metade)
+  let trend: 'increasing' | 'decreasing' | 'stable' = 'stable';
+  if (filteredData.length >= 4) {
+    const midpoint = Math.floor(filteredData.length / 2);
+    const firstHalf = filteredData.slice(0, midpoint);
+    const secondHalf = filteredData.slice(midpoint);
+    
+    const avgFirst = firstHalf.reduce((a, b) => a + b.heapUsagePercent, 0) / firstHalf.length;
+    const avgSecond = secondHalf.reduce((a, b) => a + b.heapUsagePercent, 0) / secondHalf.length;
+    
+    const diff = avgSecond - avgFirst;
+    if (diff > 5) {
+      trend = 'increasing';
+    } else if (diff < -5) {
+      trend = 'decreasing';
+    }
+  }
+  
+  return {
+    data,
+    summary: {
+      avgHeapUsed,
+      maxHeapUsed,
+      minHeapUsed,
+      avgHeapPercent,
+      maxHeapPercent,
+      trend,
+    },
+  };
+}
+
+// Iniciar coleta de histórico de memória automaticamente
+startMemoryHistoryCollection();

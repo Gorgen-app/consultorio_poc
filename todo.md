@@ -3959,3 +3959,13 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Otimizar queries e conexões de banco de dados (pool reduzido de 50 para 20)
 - [x] Implementar limpeza de cache mais agressiva (threshold 70%, intervalo 3min)
 - [x] Aumentar limite de memória do Node.js (256MB → 512MB + --expose-gc)
+
+---
+
+## 📊 Gráfico de Histórico de Memória (27/01/2026)
+
+### A Implementar
+- [x] Implementar coleta e armazenamento de dados históricos de memória no backend
+- [x] Criar endpoint para retornar histórico de métricas de memória
+- [x] Adicionar gráfico de linha com Recharts no painel de Performance
+- [x] Exibir tendências de uso de memória ao longo do tempo
