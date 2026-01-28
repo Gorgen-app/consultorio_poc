@@ -3994,3 +3994,17 @@ Adicionar os seguintes botões ao final da janela de evolução:
   - Encaminhamento
   - Protocolo Cirurgia/Procedimento
   - Outros (LME, Laudos INSS)
+
+---
+
+## 🐛 Bug: Horário de Fim Anterior ao Início (28/01/2026)
+
+### Problema
+- Sistema aceita agendamento com horário de fim anterior ao início (ex: 14:00 - 13:30)
+- Isso é uma inconsistência grave que não pode acontecer
+
+### A Implementar
+- [x] Validar que horário de fim seja sempre > horário de início no frontend
+- [x] Validar que horário de fim seja sempre > horário de início no backend
+- [x] Atualizar automaticamente horário de fim quando usuário alterar horário de início
+- [x] Manter duração do evento ao alterar horário de início

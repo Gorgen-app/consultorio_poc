@@ -490,6 +490,12 @@ export default function Agenda() {
     const dataHoraInicio = new Date(`${novoAgendamento.data}T${novoAgendamento.horaInicio}`);
     const dataHoraFim = new Date(`${novoAgendamento.data}T${novoAgendamento.horaFim}`);
     
+    // Validar que horário de fim seja posterior ao horário de início
+    if (dataHoraFim <= dataHoraInicio) {
+      toast.error("Horário de término deve ser posterior ao horário de início");
+      return;
+    }
+    
     // Preparar dados do novo paciente se necessário
     const novoPaciente = !novoAgendamento.pacienteId && novoAgendamento.pacienteNome && novoAgendamento.tipoCompromisso !== "Reunião"
       ? {
@@ -1132,16 +1138,31 @@ export default function Agenda() {
                   value={novoAgendamento.horaInicio}
                   onChange={(e) => {
                     const horaInicio = e.target.value;
-                    // Calcular hora de fim automaticamente (+30 minutos)
                     if (horaInicio) {
-                      const [h, m] = horaInicio.split(':').map(Number);
-                      let horaFim = h;
-                      let minutoFim = m + 30;
-                      if (minutoFim >= 60) {
-                        horaFim += 1;
-                        minutoFim -= 60;
+                      const [hInicio, mInicio] = horaInicio.split(':').map(Number);
+                      
+                      // Calcular duração atual (se houver horário de fim válido)
+                      let duracaoMinutos = 30; // Padrão: 30 minutos
+                      if (novoAgendamento.horaFim && novoAgendamento.horaInicio) {
+                        const [hFimAtual, mFimAtual] = novoAgendamento.horaFim.split(':').map(Number);
+                        const [hInicioAtual, mInicioAtual] = novoAgendamento.horaInicio.split(':').map(Number);
+                        const duracaoAtual = (hFimAtual * 60 + mFimAtual) - (hInicioAtual * 60 + mInicioAtual);
+                        if (duracaoAtual > 0) {
+                          duracaoMinutos = duracaoAtual;
+                        }
                       }
-                      if (horaFim >= 24) horaFim = 23;
+                      
+                      // Calcular novo horário de fim mantendo a duração
+                      const totalMinutosFim = hInicio * 60 + mInicio + duracaoMinutos;
+                      let horaFim = Math.floor(totalMinutosFim / 60);
+                      let minutoFim = totalMinutosFim % 60;
+                      
+                      // Limitar a 23:59
+                      if (horaFim >= 24) {
+                        horaFim = 23;
+                        minutoFim = 59;
+                      }
+                      
                       const horaFimFormatada = `${String(horaFim).padStart(2, '0')}:${String(minutoFim).padStart(2, '0')}`;
                       setNovoAgendamento({...novoAgendamento, horaInicio, horaFim: horaFimFormatada});
                     } else {
@@ -1155,7 +1176,32 @@ export default function Agenda() {
                 <Input
                   type="time"
                   value={novoAgendamento.horaFim}
-                  onChange={(e) => setNovoAgendamento({...novoAgendamento, horaFim: e.target.value})}
+                  onChange={(e) => {
+                    const horaFim = e.target.value;
+                    // Validar que horário de fim seja posterior ao início
+                    if (horaFim && novoAgendamento.horaInicio) {
+                      const [hInicio, mInicio] = novoAgendamento.horaInicio.split(':').map(Number);
+                      const [hFim, mFim] = horaFim.split(':').map(Number);
+                      const minutosInicio = hInicio * 60 + mInicio;
+                      const minutosFim = hFim * 60 + mFim;
+                      
+                      if (minutosFim <= minutosInicio) {
+                        toast.error("Horário de término deve ser posterior ao horário de início");
+                        // Corrigir automaticamente para início + 30 minutos
+                        const totalMinutosFim = minutosInicio + 30;
+                        let horaFimCorrigida = Math.floor(totalMinutosFim / 60);
+                        let minutoFimCorrigido = totalMinutosFim % 60;
+                        if (horaFimCorrigida >= 24) {
+                          horaFimCorrigida = 23;
+                          minutoFimCorrigido = 59;
+                        }
+                        const horaFimFormatada = `${String(horaFimCorrigida).padStart(2, '0')}:${String(minutoFimCorrigido).padStart(2, '0')}`;
+                        setNovoAgendamento({...novoAgendamento, horaFim: horaFimFormatada});
+                        return;
+                      }
+                    }
+                    setNovoAgendamento({...novoAgendamento, horaFim});
+                  }}
                 />
               </div>
             </div>

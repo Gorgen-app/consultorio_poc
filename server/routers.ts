@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, tenantProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
@@ -1738,6 +1739,14 @@ export const appRouter = router({
         }).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
+        // Validar que horário de fim seja posterior ao horário de início
+        if (input.dataHoraFim <= input.dataHoraInicio) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Horário de término deve ser posterior ao horário de início',
+          });
+        }
+        
         let pacienteId = input.pacienteId;
         let pacienteNome = input.pacienteNome;
         
