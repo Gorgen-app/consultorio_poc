@@ -1374,6 +1374,42 @@ export const appRouter = router({
         .mutation(async ({ ctx, input }) => {
           return await db.saveTextosPadraoEvolucao(ctx.user.id, ctx.tenant.tenantId, input);
         }),
+      
+      // ===== NOVOS ENDPOINTS PARA MODAL DE EVOLUÇÃO V4 =====
+      
+      // Contar documentos pendentes de assinatura
+      countPendentes: tenantProcedure
+        .query(async ({ ctx }) => {
+          const dbPendentes = await import('./db-pendentes');
+          const count = await dbPendentes.countDocumentosPendentes(ctx.tenant.tenantId);
+          return { count };
+        }),
+      
+      // Listar documentos pendentes de assinatura
+      listPendentes: tenantProcedure
+        .input(z.object({
+          limit: z.number().default(10),
+          offset: z.number().default(0),
+        }).optional())
+        .query(async ({ ctx, input }) => {
+          const dbPendentes = await import('./db-pendentes');
+          return await dbPendentes.listDocumentosPendentes(
+            ctx.tenant.tenantId,
+            input?.limit || 10,
+            input?.offset || 0
+          );
+        }),
+      
+      // Listar exames laboratoriais de um paciente (para importação)
+      listExamesPaciente: tenantProcedure
+        .input(z.object({ pacienteId: z.number() }))
+        .query(async ({ ctx, input }) => {
+          const dbPendentes = await import('./db-pendentes');
+          return await dbPendentes.listExamesPaciente(
+            ctx.tenant.tenantId,
+            input.pacienteId
+          );
+        }),
     }),
 
     // Internações

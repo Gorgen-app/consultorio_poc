@@ -24,6 +24,7 @@ import BackupSettings from "./pages/BackupSettings";
 import ExamExtraction from "./pages/ExamExtraction";
 import Dashboard from "./pages/DashboardCustom";
 import Notificacoes from "./pages/Notificacoes";
+import DocumentosPendentes from "./pages/DocumentosPendentes";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 // Páginas de autenticação
 import Login from "./pages/Login";
@@ -146,6 +147,11 @@ function ProtectedRouter() {
       <Route path="/notificacoes">
         <ProtectedRoute funcionalidade="dashboard">
           <Notificacoes />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/documentos-pendentes">
+        <ProtectedRoute funcionalidade="prontuario">
+          <DocumentosPendentes />
         </ProtectedRoute>
       </Route>
       <Route path="/config-simples">
