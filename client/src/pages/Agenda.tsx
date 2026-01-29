@@ -1517,14 +1517,14 @@ export default function Agenda() {
 
       {/* Modal Detalhes do Agendamento - Redesenhado para consistência visual */}
       <Dialog open={modalDetalhesAberto} onOpenChange={setModalDetalhesAberto}>
-        <DialogContent className="max-w-[800px] p-0 flex flex-col max-h-[85vh]">
+        <DialogContent className="max-w-2xl p-0 flex flex-col max-h-[85vh]">
           {/* Cabeçalho com dados do paciente - igual ao modal de evolução */}
           <div className="bg-[#F5F7FA] border-b border-[#D1DBEA] px-6 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className={`w-3 h-3 rounded ${CORES_TIPO[agendamentoSelecionado?.tipoCompromisso] || "bg-gray-500"}`}></div>
-                <span className="font-semibold text-sm text-gray-800">{agendamentoSelecionado?.tipoCompromisso}</span>
-                <span className="text-xs text-gray-500">#{agendamentoSelecionado?.idAgendamento}</span>
+                <span className="font-semibold text-lg text-gray-800">{agendamentoSelecionado?.tipoCompromisso}</span>
+                <span className="text-sm text-gray-500">#{agendamentoSelecionado?.idAgendamento}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -1553,7 +1553,7 @@ export default function Agenda() {
                         <User className="w-5 h-5 text-[#6B8CBE]" />
                       </div>
                       <div>
-                        <p className="font-semibold text-sm text-gray-800">{agendamentoSelecionado.pacienteNome}</p>
+                        <p className="font-semibold text-gray-800">{agendamentoSelecionado.pacienteNome}</p>
                         <p className="text-xs text-gray-500">Paciente</p>
                       </div>
                     </div>
@@ -1581,18 +1581,18 @@ export default function Agenda() {
                   <Label className="text-xs text-gray-500 mb-2 block">Data e Horário</Label>
                   <div className="flex items-center gap-2 text-gray-800">
                     <CalendarIcon className="w-4 h-4 text-[#6B8CBE]" />
-                    <span className="font-medium text-sm">{new Date(agendamentoSelecionado.dataHoraInicio).toLocaleDateString("pt-BR", { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                    <span className="font-medium">{new Date(agendamentoSelecionado.dataHoraInicio).toLocaleDateString("pt-BR", { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600 mt-1">
                     <Clock className="w-4 h-4 text-[#6B8CBE]" />
-                    <span className="text-sm">{formatarHora(agendamentoSelecionado.dataHoraInicio)} - {formatarHora(agendamentoSelecionado.dataHoraFim)}</span>
+                    <span>{formatarHora(agendamentoSelecionado.dataHoraInicio)} - {formatarHora(agendamentoSelecionado.dataHoraFim)}</span>
                   </div>
                 </div>
                 <div className="bg-white border border-[#E8EDF5] rounded-lg p-4">
                   <Label className="text-xs text-gray-500 mb-2 block">Local</Label>
                   <div className="flex items-center gap-2 text-gray-800">
                     <MapPin className="w-4 h-4 text-[#6B8CBE]" />
-                    <span className="font-medium text-sm">{agendamentoSelecionado.local || "Não informado"}</span>
+                    <span className="font-medium">{agendamentoSelecionado.local || "Não informado"}</span>
                   </div>
                 </div>
               </div>
