@@ -1,0 +1,53 @@
+/**
+ * ============================================================================
+ * COMPONENTE: ProntuarioEvolucoesWrapper
+ * ============================================================================
+ * 
+ * Wrapper que decide qual versão do componente de evoluções usar com base
+ * na feature flag NOVO_MODAL_EVOLUCAO.
+ * 
+ * Este componente deve ser usado no lugar do ProntuarioEvolucoes original
+ * para permitir a substituição gradual e controlada.
+ * 
+ * ============================================================================
+ */
+
+import React from 'react';
+import { isFeatureEnabled, FEATURES } from '@/lib/featureFlags';
+import { ProntuarioEvolucoesV4 } from './ProntuarioEvolucoesV4';
+
+// Importar o componente antigo (lazy loading para não carregar se não for usado)
+const ProntuarioEvolucoesLegacy = React.lazy(() => 
+  import('@/components/prontuario/ProntuarioEvolucoes')
+);
+
+interface ProntuarioEvolucoesWrapperProps {
+  pacienteId: number;
+  pacienteNome: string;
+  agendamentoId?: number;
+  // Props adicionais do componente legado
+  [key: string]: any;
+}
+
+export function ProntuarioEvolucoesWrapper(props: ProntuarioEvolucoesWrapperProps) {
+  const useNewModal = isFeatureEnabled(FEATURES.NOVO_MODAL_EVOLUCAO);
+  
+  if (useNewModal) {
+    return (
+      <ProntuarioEvolucoesV4
+        pacienteId={props.pacienteId}
+        pacienteNome={props.pacienteNome}
+        agendamentoId={props.agendamentoId}
+      />
+    );
+  }
+  
+  // Fallback para o componente legado
+  return (
+    <React.Suspense fallback={<div className="p-4">Carregando...</div>}>
+      <ProntuarioEvolucoesLegacy {...props} />
+    </React.Suspense>
+  );
+}
+
+export default ProntuarioEvolucoesWrapper;

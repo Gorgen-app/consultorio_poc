@@ -3,84 +3,99 @@
  * HOOK: usePendingDocuments
  * ============================================================================
  * Gerencia a lista de documentos pendentes de assinatura/conclusão
+ * Integrado com API real via tRPC
  * ============================================================================
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { trpc } from '@/lib/trpc';
 import { DocumentoPendente } from '../types';
 
 interface UsePendingDocumentsReturn {
   pendentes: DocumentoPendente[];
   count: number;
   isLoading: boolean;
-  refresh: () => Promise<void>;
+  error: Error | null;
+  refresh: () => void;
   marcarComoConcluido: (id: number) => void;
 }
 
+// Intervalo de polling em milissegundos (5 minutos)
+const POLLING_INTERVAL = 5 * 60 * 1000;
+
 export function usePendingDocuments(): UsePendingDocumentsReturn {
-  const [pendentes, setPendentes] = useState<DocumentoPendente[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [pendentesLocais, setPendentesLocais] = useState<DocumentoPendente[]>([]);
 
-  // Buscar documentos pendentes
-  const fetchPendentes = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // TODO: Implementar chamada de API real
-      // const response = await api.get('/documentos/pendentes');
-      // setPendentes(response.data);
-      
-      // Dados simulados
-      const dadosSimulados: DocumentoPendente[] = [
-        {
-          id: 1,
-          pacienteNome: 'Maria Silva',
-          tipo: 'Evolução',
-          dataAbertura: '2026-01-29T10:30:00',
-          tempoAberto: 3600,
-        },
-        {
-          id: 2,
-          pacienteNome: 'João Santos',
-          tipo: 'Receita',
-          dataAbertura: '2026-01-29T09:15:00',
-          tempoAberto: 7200,
-        },
-        {
-          id: 3,
-          pacienteNome: 'Ana Costa',
-          tipo: 'Atestado',
-          dataAbertura: '2026-01-28T16:45:00',
-          tempoAberto: 86400,
-        },
-      ];
-      
-      setPendentes(dadosSimulados);
-    } catch (error) {
-      console.error('Erro ao buscar documentos pendentes:', error);
-    } finally {
-      setIsLoading(false);
+  // Query para contar documentos pendentes
+  const { 
+    data: countData, 
+    isLoading: isLoadingCount,
+    error: countError,
+    refetch: refetchCount,
+  } = trpc.evolucoes.countPendentes.useQuery(undefined, {
+    refetchInterval: POLLING_INTERVAL,
+    staleTime: 60000, // 1 minuto
+  });
+
+  // Query para listar documentos pendentes
+  const { 
+    data: listData, 
+    isLoading: isLoadingList,
+    error: listError,
+    refetch: refetchList,
+  } = trpc.evolucoes.listPendentes.useQuery(
+    { limit: 10, offset: 0 },
+    {
+      refetchInterval: POLLING_INTERVAL,
+      staleTime: 60000, // 1 minuto
     }
-  }, []);
+  );
 
-  // Marcar documento como concluído
+  // Mapear dados da API para o formato do componente
+  useEffect(() => {
+    if (listData) {
+      const mapped: DocumentoPendente[] = listData.map((doc: any) => ({
+        id: doc.id,
+        pacienteNome: doc.pacienteNome || 'Paciente',
+        tipo: doc.tipo || 'Evolução',
+        dataAbertura: doc.createdAt || doc.data,
+        tempoAberto: calcularTempoAberto(doc.createdAt || doc.data),
+      }));
+      setPendentesLocais(mapped);
+    }
+  }, [listData]);
+
+  // Calcular tempo aberto em segundos
+  const calcularTempoAberto = (dataStr: string | Date): number => {
+    try {
+      const data = new Date(dataStr);
+      const agora = new Date();
+      return Math.floor((agora.getTime() - data.getTime()) / 1000);
+    } catch {
+      return 0;
+    }
+  };
+
+  // Marcar documento como concluído (remove da lista local)
   const marcarComoConcluido = useCallback((id: number) => {
-    setPendentes((prev) => prev.filter((doc) => doc.id !== id));
+    setPendentesLocais((prev) => prev.filter((doc) => doc.id !== id));
   }, []);
 
   // Refresh manual
-  const refresh = useCallback(async () => {
-    await fetchPendentes();
-  }, [fetchPendentes]);
+  const refresh = useCallback(() => {
+    refetchCount();
+    refetchList();
+  }, [refetchCount, refetchList]);
 
-  // Carregar ao montar
-  useEffect(() => {
-    fetchPendentes();
-  }, [fetchPendentes]);
+  // Combinar estados de loading e error
+  const isLoading = isLoadingCount || isLoadingList;
+  const error = countError || listError || null;
 
   return {
-    pendentes,
-    count: pendentes.length,
+    pendentes: pendentesLocais,
+    count: countData?.count || pendentesLocais.length,
     isLoading,
+    error,
     refresh,
     marcarComoConcluido,
   };

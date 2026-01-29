@@ -3,11 +3,13 @@
  * HOOK: useEvolucao
  * ============================================================================
  * Gerencia o estado e operações da evolução médica
+ * Integrado com API real via tRPC
  * ============================================================================
  */
 
 import { useState, useCallback } from 'react';
-import { Evolucao, TipoAtendimento, StatusEvolucao } from '../types';
+import { trpc } from '@/lib/trpc';
+import { Evolucao, TipoAtendimento } from '../types';
 
 interface UseEvolucaoReturn {
   evolucao: Evolucao | null;
@@ -17,6 +19,7 @@ interface UseEvolucaoReturn {
   isDirty: boolean;
   isSaving: boolean;
   isSigning: boolean;
+  error: string | null;
   setConteudo: (conteudo: string) => void;
   setTipoAtendimento: (tipo: TipoAtendimento) => void;
   setDataHora: (dataHora: string) => void;
@@ -33,10 +36,22 @@ interface UseEvolucaoOptions {
   evolucaoExistente?: Evolucao;
   onSaveSuccess?: () => void;
   onSignSuccess?: () => void;
+  onClose?: () => void;
 }
 
+// Mapear tipo de atendimento do frontend para o backend
+const mapTipoAtendimento = (tipo: TipoAtendimento): "Consulta" | "Retorno" | "Urgência" | "Teleconsulta" | "Parecer" => {
+  const mapa: Record<TipoAtendimento, "Consulta" | "Retorno" | "Urgência" | "Teleconsulta" | "Parecer"> = {
+    consulta: 'Consulta',
+    retorno: 'Retorno',
+    urgencia: 'Urgência',
+    teleconsulta: 'Teleconsulta',
+  };
+  return mapa[tipo] || 'Consulta';
+};
+
 export function useEvolucao(options: UseEvolucaoOptions): UseEvolucaoReturn {
-  const { pacienteId, agendamentoId, evolucaoExistente, onSaveSuccess, onSignSuccess } = options;
+  const { pacienteId, agendamentoId, evolucaoExistente, onSaveSuccess, onSignSuccess, onClose } = options;
 
   // Estado inicial
   const [evolucao, setEvolucao] = useState<Evolucao | null>(evolucaoExistente || null);
@@ -56,11 +71,18 @@ export function useEvolucao(options: UseEvolucaoOptions): UseEvolucaoReturn {
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Mutations tRPC
+  const createMutation = trpc.evolucoes.create.useMutation();
+  const updateMutation = trpc.evolucoes.update.useMutation();
+  const assinarMutation = trpc.evolucoes.assinar.useMutation();
 
   // Setters com marcação de dirty
   const setConteudo = useCallback((novoConteudo: string) => {
     setConteudoState(novoConteudo);
     setIsDirty(true);
+    setError(null);
   }, []);
 
   const setTipoAtendimento = useCallback((tipo: TipoAtendimento) => {
@@ -76,93 +98,162 @@ export function useEvolucao(options: UseEvolucaoOptions): UseEvolucaoReturn {
   // Salvar evolução
   const salvar = useCallback(async (): Promise<boolean> => {
     if (!conteudo.trim()) {
+      setError('O conteúdo da evolução não pode estar vazio.');
       return false;
     }
 
     setIsSaving(true);
+    setError(null);
+    
     try {
-      // TODO: Implementar chamada de API real
-      // const response = await api.post('/evolucoes', { ... });
+      const dataEvolucao = new Date(dataHora);
       
-      // Simulação de salvamento
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (evolucao?.id) {
+        // Atualizar evolução existente
+        await updateMutation.mutateAsync({
+          id: evolucao.id,
+          subjetivo: conteudo, // Usando subjetivo para texto livre
+        });
+      } else {
+        // Criar nova evolução
+        const novaEvolucao = await createMutation.mutateAsync({
+          pacienteId,
+          agendamentoId: agendamentoId || null,
+          dataEvolucao,
+          tipo: mapTipoAtendimento(tipoAtendimento),
+          subjetivo: conteudo, // Usando subjetivo para texto livre
+          statusAssinatura: 'rascunho',
+          assinado: false,
+          atendimentoEncerrado: false,
+        });
+        
+        setEvolucao({
+          id: novaEvolucao.id,
+          pacienteId,
+          agendamentoId,
+          dataHora,
+          tipoAtendimento,
+          conteudo,
+          status: 'salva',
+          assinada: false,
+        });
+      }
       
-      const novaEvolucao: Evolucao = {
-        id: evolucao?.id || Date.now(),
-        pacienteId,
-        agendamentoId,
-        dataHora,
-        tipoAtendimento,
-        conteudo,
-        status: 'salva',
-        assinada: false,
-      };
-      
-      setEvolucao(novaEvolucao);
       setIsDirty(false);
       onSaveSuccess?.();
       return true;
-    } catch (error) {
-      console.error('Erro ao salvar evolução:', error);
+    } catch (err) {
+      console.error('Erro ao salvar evolução:', err);
+      setError('Erro ao salvar evolução. Tente novamente.');
       return false;
     } finally {
       setIsSaving(false);
     }
-  }, [conteudo, evolucao, pacienteId, agendamentoId, dataHora, tipoAtendimento, onSaveSuccess]);
+  }, [conteudo, evolucao, pacienteId, agendamentoId, dataHora, tipoAtendimento, createMutation, updateMutation, onSaveSuccess]);
 
   // Salvar e sair
   const salvarESair = useCallback(async (): Promise<boolean> => {
     const sucesso = await salvar();
+    if (sucesso) {
+      onClose?.();
+    }
     return sucesso;
-  }, [salvar]);
+  }, [salvar, onClose]);
 
   // Assinar evolução
   const assinar = useCallback(async (): Promise<boolean> => {
     if (!conteudo.trim()) {
+      setError('O conteúdo da evolução não pode estar vazio.');
       return false;
     }
 
     setIsSigning(true);
+    setError(null);
+    
     try {
-      // TODO: Implementar chamada de API real para assinatura digital
-      // const response = await api.post('/evolucoes/assinar', { ... });
+      // Primeiro salvar se houver alterações
+      if (isDirty || !evolucao?.id) {
+        const salvou = await salvar();
+        if (!salvou) {
+          setIsSigning(false);
+          return false;
+        }
+      }
       
-      // Simulação de assinatura
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Depois assinar
+      if (evolucao?.id) {
+        await assinarMutation.mutateAsync({
+          id: evolucao.id,
+          encerrarAtendimento: false,
+        });
+        
+        setEvolucao({
+          ...evolucao,
+          status: 'assinada',
+          assinada: true,
+          dataAssinatura: new Date().toISOString(),
+        });
+      }
       
-      const evolucaoAssinada: Evolucao = {
-        ...evolucao!,
-        id: evolucao?.id || Date.now(),
-        pacienteId,
-        agendamentoId,
-        dataHora,
-        tipoAtendimento,
-        conteudo,
-        status: 'assinada',
-        assinada: true,
-        dataAssinatura: new Date().toISOString(),
-      };
-      
-      setEvolucao(evolucaoAssinada);
       setIsDirty(false);
       onSignSuccess?.();
       return true;
-    } catch (error) {
-      console.error('Erro ao assinar evolução:', error);
+    } catch (err) {
+      console.error('Erro ao assinar evolução:', err);
+      setError('Erro ao assinar evolução. Tente novamente.');
       return false;
     } finally {
       setIsSigning(false);
     }
-  }, [conteudo, evolucao, pacienteId, agendamentoId, dataHora, tipoAtendimento, onSignSuccess]);
+  }, [conteudo, evolucao, isDirty, salvar, assinarMutation, onSignSuccess]);
 
   // Assinar e encerrar
   const assinarEEncerrar = useCallback(async (): Promise<boolean> => {
-    const sucesso = await assinar();
-    if (sucesso && evolucao) {
-      setEvolucao({ ...evolucao, status: 'encerrada' });
+    if (!conteudo.trim()) {
+      setError('O conteúdo da evolução não pode estar vazio.');
+      return false;
     }
-    return sucesso;
-  }, [assinar, evolucao]);
+
+    setIsSigning(true);
+    setError(null);
+    
+    try {
+      // Primeiro salvar se houver alterações
+      if (isDirty || !evolucao?.id) {
+        const salvou = await salvar();
+        if (!salvou) {
+          setIsSigning(false);
+          return false;
+        }
+      }
+      
+      // Depois assinar e encerrar
+      if (evolucao?.id) {
+        await assinarMutation.mutateAsync({
+          id: evolucao.id,
+          encerrarAtendimento: true,
+        });
+        
+        setEvolucao({
+          ...evolucao,
+          status: 'encerrada',
+          assinada: true,
+          dataAssinatura: new Date().toISOString(),
+        });
+      }
+      
+      setIsDirty(false);
+      onSignSuccess?.();
+      onClose?.();
+      return true;
+    } catch (err) {
+      console.error('Erro ao assinar e encerrar evolução:', err);
+      setError('Erro ao assinar e encerrar evolução. Tente novamente.');
+      return false;
+    } finally {
+      setIsSigning(false);
+    }
+  }, [conteudo, evolucao, isDirty, salvar, assinarMutation, onSignSuccess, onClose]);
 
   // Resetar estado
   const resetar = useCallback(() => {
@@ -175,6 +266,7 @@ export function useEvolucao(options: UseEvolucaoOptions): UseEvolucaoReturn {
         .slice(0, 16)
     );
     setIsDirty(false);
+    setError(null);
   }, []);
 
   return {
@@ -185,6 +277,7 @@ export function useEvolucao(options: UseEvolucaoOptions): UseEvolucaoReturn {
     isDirty,
     isSaving,
     isSigning,
+    error,
     setConteudo,
     setTipoAtendimento,
     setDataHora,

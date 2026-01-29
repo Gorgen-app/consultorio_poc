@@ -27,7 +27,14 @@ export {
   ModalFooter,
   MinimizedBar,
   NotificationDropdown,
+  ModalSelecionarExame,
 } from './components';
+
+// Componente Principal Integrado
+export { ProntuarioEvolucoesV4 } from './ProntuarioEvolucoesV4';
+
+// Wrapper com Feature Flag
+export { ProntuarioEvolucoesWrapper } from './ProntuarioEvolucoesWrapper';
 
 // Hooks
 export {
