@@ -4132,3 +4132,18 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [ ] Testar navegação para prontuário
 - [ ] Validar responsividade
 
+
+
+---
+
+## 🔧 GORGEN 3.9.83.1 - Ajustes Finais Modal de Agendamento ✅ (29/01/2026)
+
+### Solicitado pelo Dr. André Gorgen
+- [x] Aumentar largura do modal (de 768px para ~896px - max-w-4xl)
+- [x] Reduzir todas as fontes em 1 ponto (text-sm, text-xs)
+- [x] Avatar com iniciais do paciente (não ícone genérico)
+- [x] Background da seção do paciente: #F5F7FA
+- [x] ID do agendamento na mesma linha do nome
+- [x] Ícones dos botões reduzidos (w-3.5 h-3.5)
+- [x] Bolinhas do stepper reduzidas (w-7 h-7)
+

@@ -1521,13 +1521,13 @@ export default function Agenda() {
 
       {/* Modal Detalhes do Agendamento - Redesenhado para consistência visual */}
       <Dialog open={modalDetalhesAberto} onOpenChange={setModalDetalhesAberto}>
-        <DialogContent className="max-w-3xl p-0 flex flex-col max-h-[85vh]">
+        <DialogContent className="max-w-4xl p-0 flex flex-col max-h-[85vh]">
           {/* Cabeçalho com fundo azul - GORGEN 3.9.83 */}
           <div className="bg-[#6B8CBE] px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-3 h-3 rounded-full bg-white"></div>
-                <span className="font-semibold text-lg text-white">{agendamentoSelecionado?.tipoCompromisso}</span>
+                <span className="font-semibold text-base text-white">{agendamentoSelecionado?.tipoCompromisso}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
@@ -1549,15 +1549,17 @@ export default function Agenda() {
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {/* Informações do Paciente - Layout aprimorado com CPF, Data Nasc. e WhatsApp */}
               {agendamentoSelecionado.pacienteNome && (
-                <div className="bg-white border border-[#E8EDF5] rounded-lg p-4">
+                <div className="bg-[#F5F7FA] border border-[#E8EDF5] rounded-lg p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#6B8CBE]/10 flex items-center justify-center">
-                        <User className="w-5 h-5 text-[#6B8CBE]" />
+                      <div className="w-10 h-10 rounded-full bg-[#D1DBEA] flex items-center justify-center">
+                        <span className="text-sm font-semibold text-[#4A6A9A]">
+                          {agendamentoSelecionado.pacienteNome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                        </span>
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold text-gray-800">{agendamentoSelecionado.pacienteNome}</p>
+                          <p className="font-semibold text-sm text-gray-800">{agendamentoSelecionado.pacienteNome}</p>
                           {/* Botão WhatsApp */}
                           {agendamentoSelecionado.telefonePaciente && (
                             <a
@@ -1604,20 +1606,20 @@ export default function Agenda() {
               {/* Data, Hora e Local */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white border border-[#E8EDF5] rounded-lg p-4">
-                  <Label className="text-xs text-gray-500 mb-2 block">Data e Horário</Label>
+                  <Label className="text-xs text-gray-500 mb-1 block">Data e Horário</Label>
                   <div className="flex items-center gap-2 text-gray-800">
-                    <CalendarIcon className="w-4 h-4 text-[#6B8CBE]" />
-                    <span className="font-medium">{new Date(agendamentoSelecionado.dataHoraInicio).toLocaleDateString("pt-BR", { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#6B8CBE]" />
+                    <span className="font-medium text-sm">{new Date(agendamentoSelecionado.dataHoraInicio).toLocaleDateString("pt-BR", { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600 mt-1">
-                    <Clock className="w-4 h-4 text-[#6B8CBE]" />
-                    <span>{formatarHora(agendamentoSelecionado.dataHoraInicio)} - {formatarHora(agendamentoSelecionado.dataHoraFim)}</span>
+                    <Clock className="w-3.5 h-3.5 text-[#6B8CBE]" />
+                    <span className="text-sm">{formatarHora(agendamentoSelecionado.dataHoraInicio)} - {formatarHora(agendamentoSelecionado.dataHoraFim)}</span>
                   </div>
                 </div>
                 <div className="bg-white border border-[#E8EDF5] rounded-lg p-4">
-                  <Label className="text-xs text-gray-500 mb-2 block">Local</Label>
+                  <Label className="text-xs text-gray-500 mb-1 block">Local</Label>
                   <div className="flex items-center gap-2 text-gray-800">
-                    <MapPin className="w-4 h-4 text-[#6B8CBE]" />
+                    <MapPin className="w-3.5 h-3.5 text-[#6B8CBE]" />
                     <span className="font-medium">{agendamentoSelecionado.local || "Não informado"}</span>
                   </div>
                 </div>
@@ -1656,7 +1658,7 @@ export default function Agenda() {
                 <div className="flex items-center justify-between">
                   {/* Etapa 1: Agendado */}
                   <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center mb-1 ${
                       ["Confirmado", "Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) 
                         ? "bg-[#10B981] text-white" 
                         : agendamentoSelecionado.status === "Agendado" 
@@ -1683,7 +1685,7 @@ export default function Agenda() {
                   
                   {/* Etapa 2: Confirmado */}
                   <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center mb-1 ${
                       ["Aguardando", "Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) 
                         ? "bg-[#10B981] text-white" 
                         : agendamentoSelecionado.status === "Confirmado" 
@@ -1710,7 +1712,7 @@ export default function Agenda() {
                   
                   {/* Etapa 3: Aguardando */}
                   <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center mb-1 ${
                       ["Em atendimento", "Realizado"].includes(agendamentoSelecionado.status) 
                         ? "bg-[#10B981] text-white" 
                         : agendamentoSelecionado.status === "Aguardando" 
@@ -1737,7 +1739,7 @@ export default function Agenda() {
                   
                   {/* Etapa 4: Em Atendimento */}
                   <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center mb-1 ${
                       agendamentoSelecionado.status === "Realizado" 
                         ? "bg-[#10B981] text-white" 
                         : agendamentoSelecionado.status === "Em atendimento" 
@@ -1764,7 +1766,7 @@ export default function Agenda() {
                   
                   {/* Etapa 5: Encerrado */}
                   <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center mb-1 ${
                       agendamentoSelecionado.status === "Realizado" 
                         ? "bg-[#10B981] text-white" 
                         : "bg-gray-200 text-gray-400"
@@ -1817,8 +1819,8 @@ export default function Agenda() {
                   } bg-[#10B981] hover:bg-[#059669] text-white`}
                   title="Confirmar presença do paciente"
                 >
-                  <Check className="w-4 h-4 mr-1" />
-                  Confirmar
+                  <Check className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs">Confirmar</span>
                 </Button>
                 
                 {/* Botão Chegou - sempre visível */}
@@ -1835,8 +1837,8 @@ export default function Agenda() {
                   } bg-[#F59E0B] hover:bg-[#D97706] text-white`}
                   title="Marcar que o paciente chegou"
                 >
-                  <UserCheck className="w-4 h-4 mr-1" />
-                  Chegou
+                  <UserCheck className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs">Chegou</span>
                 </Button>
                 
                 {/* Botão Atender - sempre visível */}
@@ -1859,8 +1861,8 @@ export default function Agenda() {
                   } bg-[#6B8CBE] hover:bg-[#5A7BAD] text-white`}
                   title="Iniciar atendimento"
                 >
-                  <Stethoscope className="w-4 h-4 mr-1" />
-                  Atender
+                  <Stethoscope className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs">Atender</span>
                 </Button>
                 
                 {/* Botão Encerrar Atendimento - sempre visível */}
@@ -1877,8 +1879,8 @@ export default function Agenda() {
                   } bg-[#374151] hover:bg-[#1F2937] text-white`}
                   title="Encerrar o atendimento"
                 >
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                  Encerrar Atendimento
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs">Encerrar</span>
                 </Button>
                 
                 {/* Botão Continuar - sempre visível */}
@@ -1894,8 +1896,8 @@ export default function Agenda() {
                   } bg-[#5A7DB0] hover:bg-[#4A6A9A] text-white`}
                   title="Continuar evolução do prontuário"
                 >
-                  <FileText className="w-4 h-4 mr-1" />
-                  Continuar
+                  <FileText className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs">Continuar</span>
                 </Button>
               </div>
               
@@ -1917,8 +1919,8 @@ export default function Agenda() {
                   } border-gray-300 text-gray-600`}
                   title="Reagendar para outra data/hora"
                 >
-                  <RefreshCw className="w-4 h-4 mr-1" />
-                  Reagendar
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs">Reagendar</span>
                 </Button>
                 
                 {/* Botão Faltou - sempre visível */}
@@ -1939,8 +1941,8 @@ export default function Agenda() {
                   } border-orange-300 text-orange-600 hover:bg-orange-50`}
                   title="Marcar que o paciente faltou"
                 >
-                  <UserX className="w-4 h-4 mr-1" />
-                  Faltou
+                  <UserX className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs">Faltou</span>
                 </Button>
                 
                 {/* Botão Cancelar - sempre visível */}
@@ -1954,8 +1956,8 @@ export default function Agenda() {
                   } border-red-300 text-red-600 hover:bg-red-50`}
                   title="Cancelar este agendamento"
                 >
-                  <X className="w-4 h-4 mr-1" />
-                  Cancelar
+                  <X className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs">Cancelar</span>
                 </Button>
                 
                 {/* Botão Agendar Próxima Consulta - sempre visível */}
@@ -1981,8 +1983,8 @@ export default function Agenda() {
                   } border-[#6B8CBE] text-[#6B8CBE] hover:bg-[#6B8CBE]/10`}
                   title="Agendar próxima consulta para este paciente"
                 >
-                  <CalendarPlus className="w-4 h-4 mr-1" />
-                  Agendar Próxima
+                  <CalendarPlus className="w-3.5 h-3.5 mr-1" />
+                  <span className="text-xs">Próxima Consulta</span>
                 </Button>
               </div>
             </div>
