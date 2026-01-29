@@ -4053,18 +4053,20 @@ Adicionar os seguintes botões ao final da janela de evolução:
 
 ---
 
-## 🐛 Bug Crítico: Layout Modal de Evolução Quebrado
+## ✅ Bug Crítico: Layout Modal de Evolução Quebrado - RESOLVIDO (29/01/2026)
 
-### Problema
-- Modal de evolução está completamente desformatado
-- Elementos sobrepostos e fora de posição
-- Não corresponde ao protótipo aprovado
+### Problema (CORRIGIDO)
+- ~~Modal de evolução está completamente desformatado~~
+- ~~Elementos sobrepostos e fora de posição~~
+- ~~Não corresponde ao protótipo aprovado~~
 
-### A Corrigir
-- [ ] Corrigir layout do modal de evolução para corresponder ao protótipo 3
-- [ ] Layout em 3 colunas: SOAP/Texto Livre | Documentos | Histórico
-- [ ] Cabeçalho com dados do paciente alinhado
-- [ ] Botões finais alinhados horizontalmente
+### Correções Aplicadas
+- [x] Corrigir layout do modal de evolução para corresponder ao protótipo 3
+- [x] Layout em 3 colunas: SOAP/Texto Livre | Documentos | Histórico
+- [x] Cabeçalho com dados do paciente alinhado
+- [x] Botões finais alinhados horizontalmente
+
+**Resolução:** Rollback para versão funcional (825407e5) + validação do código atual
 
 ---
 
@@ -4096,4 +4098,37 @@ Adicionar os seguintes botões ao final da janela de evolução:
   - `tenantId` - Isolamento de tenant
 - [x] Criar teste unitário para validar proteção (server/campos-protegidos.test.ts - 11 testes)
 - [x] Retornar erro claro quando não-admin tentar alterar campos protegidos
+
+
+
+---
+
+## 🎨 GORGEN 3.9.83 - Redesign Modal de Agendamento ✅ IMPLEMENTADO (29/01/2026)
+
+### Aprovado pelo Dr. André Gorgen em 29/01/2026
+
+### Fase 1: Header do Modal ✅
+- [x] Alterar background de #F5F7FA para #6B8CBE
+- [x] Alterar texto para branco
+- [x] Manter estrutura: tipo + status badge + botão fechar
+
+### Fase 2: Stepper de Progresso ✅
+- [x] Aumentar bolinhas de 2px para 8px
+- [x] Adicionar ícone de check nas etapas completas
+- [x] Aumentar fonte dos labels de 10px para 12px
+- [x] Aplicar cores oficiais Gorgen
+
+### Fase 3: Botões de Ação ✅
+- [x] Refatorar para TODOS os 9 botões sempre visíveis
+- [x] Botões desabilitados com opacity 0.5 (não ocultos)
+- [x] Linha 1: Confirmar, Chegou, Atender, Encerrar Atendimento, Continuar
+- [x] Linha 2: Reagendar, Faltou, Cancelar, Agendar Próxima Consulta
+- [x] Manter todas as mutations tRPC funcionando
+- [x] Tooltips em todos os botões
+
+### Fase 4: Testes
+- [ ] Testar fluxo completo de status
+- [ ] Testar cancelamento e reagendamento
+- [ ] Testar navegação para prontuário
+- [ ] Validar responsividade
 
