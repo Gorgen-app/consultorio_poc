@@ -4076,3 +4076,24 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [ ] Mesma tipografia e espaçamento
 - [ ] Cabeçalho com dados do paciente similar
 - [ ] Botões com mesmo estilo visual
+
+
+---
+
+## 🔒 GORGEN 3.9.82 - Proteção de Campos Sensíveis de Pacientes ✅ IMPLEMENTADO
+
+### Campos Protegidos (apenas admin_master pode alterar)
+- [x] Implementar validação no endpoint pacientes.update
+- [x] Lista de campos protegidos:
+  - `id` - Chave primária
+  - `idPaciente` - ID único do paciente (ex: 2026-0001)
+  - `nome` - Nome completo
+  - `cpf` - Documento de identificação
+  - `dataNascimento` - Data de nascimento
+  - `sexo` - Sexo biológico
+  - `nomeMae` - Nome da mãe
+  - `dataInclusao` - Data de cadastro
+  - `tenantId` - Isolamento de tenant
+- [x] Criar teste unitário para validar proteção (server/campos-protegidos.test.ts - 11 testes)
+- [x] Retornar erro claro quando não-admin tentar alterar campos protegidos
+

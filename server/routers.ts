@@ -758,6 +758,47 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
+        // ===========================================
+        // PROTEÇÃO DE CAMPOS SENSÍVEIS - Pilar 1: Imutabilidade
+        // Apenas admin_master pode alterar campos protegidos
+        // ===========================================
+        const CAMPOS_PROTEGIDOS = [
+          'id',           // Chave primária
+          'idPaciente',   // ID único do paciente (ex: 2026-0001)
+          'nome',         // Nome completo
+          'cpf',          // Documento de identificação
+          'dataNascimento', // Data de nascimento
+          'sexo',         // Sexo biológico
+          'nomeMae',      // Nome da mãe
+          'dataInclusao', // Data de cadastro
+          'tenantId',     // Isolamento de tenant
+        ];
+
+        // Verificar se o usuário está tentando alterar campos protegidos
+        const camposAlterados = Object.keys(input.data);
+        const camposProtegidosAlterados = camposAlterados.filter(campo => 
+          CAMPOS_PROTEGIDOS.includes(campo)
+        );
+
+        if (camposProtegidosAlterados.length > 0) {
+          // Verificar se o usuário é admin_master
+          const profile = await db.getUserProfile(ctx.user?.id || 0);
+          
+          if (profile?.perfilAtivo !== 'admin_master') {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: `Acesso negado: apenas o Administrador Master pode alterar os campos protegidos: ${camposProtegidosAlterados.join(', ')}. ` +
+                       `Estes campos são imutáveis conforme Pilar 1 do Gorgen (Imutabilidade e Preservação Histórica).`,
+            });
+          }
+
+          // Registrar log especial para alteração de campos protegidos por admin
+          console.log(`[CAMPOS_PROTEGIDOS] Admin Master (${ctx.user?.name}) alterando campos protegidos do paciente ${input.id}: ${camposProtegidosAlterados.join(', ')}`);
+        }
+        // ===========================================
+        // FIM DA PROTEÇÃO DE CAMPOS SENSÍVEIS
+        // ===========================================
+
         // Buscar valores antigos para auditoria
         const oldPaciente = await db.getPacienteById(ctx.tenant.tenantId, input.id);
         
