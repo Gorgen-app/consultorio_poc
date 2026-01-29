@@ -4147,3 +4147,39 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Ícones dos botões reduzidos (w-3.5 h-3.5)
 - [x] Bolinhas do stepper reduzidas (w-7 h-7)
 
+
+
+---
+
+## 🐛 GORGEN 3.9.84 - Correção de Erros TypeScript (29/01/2026)
+
+### Erros Detectados
+- [ ] server/db-pendentes.ts(56,34): Property 'statusAssinatura' does not exist on type documentos_medicos
+- [ ] server/db-pendentes.ts(58,32): Property 'assinado' does not exist on type documentos_medicos
+
+### Correção
+- [ ] Adicionar campo `statusAssinatura` ao schema da tabela documentos_medicos
+- [ ] Adicionar campo `assinado` ao schema da tabela documentos_medicos
+- [ ] Executar `pnpm db:push` para aplicar migração
+- [ ] Verificar que os erros de TypeScript foram resolvidos
+
+
+---
+
+## 🔧 GORGEN 3.9.84 - Correções de TypeScript e Compatibilidade (29/01/2026)
+
+### Correções de Tipos do Módulo de Evolução v4
+- [x] Adicionar tipo `MinimizedWindow` com `id: string` para compatibilidade com hook v4
+- [x] Reescrever hook `useMinimizedWindows` com nova interface (windows, addWindow, removeWindow, etc.)
+- [x] Criar componente `MinimizedBarV4` para aceitar `MinimizedWindow[]` com IDs string
+- [x] Corrigir `ProntuarioEvolucoesV4` para usar `MinimizedBarV4`
+- [x] Corrigir props do `ModalEvolucao` (passar objeto `paciente` em vez de props separadas)
+- [x] Corrigir router de evoluções (`trpc.prontuario.evolucoes.list`)
+- [x] Corrigir props do `NotificationDropdown` (adicionar `onViewAll` e `onItemClick`)
+
+### Banco de Dados
+- [x] Executar ALTER TABLE para adicionar `statusAssinatura` e `assinado` em `documentos_medicos`
+- [x] Verificar que campos já existem no schema Drizzle
+
+### Versão
+- [x] Atualizar package.json para versão 3.9.84

@@ -32,7 +32,7 @@ export function usePendingDocuments(): UsePendingDocumentsReturn {
     isLoading: isLoadingCount,
     error: countError,
     refetch: refetchCount,
-  } = trpc.evolucoes.countPendentes.useQuery(undefined, {
+  } = trpc.prontuario.evolucoes.countPendentes.useQuery(undefined, {
     refetchInterval: POLLING_INTERVAL,
     staleTime: 60000, // 1 minuto
   });
@@ -43,7 +43,7 @@ export function usePendingDocuments(): UsePendingDocumentsReturn {
     isLoading: isLoadingList,
     error: listError,
     refetch: refetchList,
-  } = trpc.evolucoes.listPendentes.useQuery(
+  } = trpc.prontuario.evolucoes.listPendentes.useQuery(
     { limit: 10, offset: 0 },
     {
       refetchInterval: POLLING_INTERVAL,
@@ -89,7 +89,7 @@ export function usePendingDocuments(): UsePendingDocumentsReturn {
 
   // Combinar estados de loading e error
   const isLoading = isLoadingCount || isLoadingList;
-  const error = countError || listError || null;
+  const error = (countError || listError) as Error | null;
 
   return {
     pendentes: pendentesLocais,

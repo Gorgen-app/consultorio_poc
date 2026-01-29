@@ -16,8 +16,8 @@ export interface DocumentoPendente {
   tipo: 'Evolução' | 'Documento Médico';
   pacienteId: number;
   pacienteNome: string;
-  data: Date;
-  createdAt: Date;
+  data: string;
+  createdAt: string;
 }
 
 /**
@@ -51,10 +51,7 @@ export async function countDocumentosPendentes(tenantId: number): Promise<number
       .where(
         and(
           eq(documentosMedicos.tenantId, tenantId),
-          or(
-            eq(documentosMedicos.statusAssinatura, 'pendente_assinatura'),
-            eq(documentosMedicos.statusAssinatura, 'rascunho')
-          ),
+          eq(documentosMedicos.statusAssinatura, 'pendente'),
           eq(documentosMedicos.assinado, false)
         )
       );
@@ -112,8 +109,8 @@ export async function listDocumentosPendentes(
       tipo: 'Evolução' as const,
       pacienteId: e.pacienteId,
       pacienteNome: e.pacienteNome || 'Paciente',
-      data: e.data,
-      createdAt: e.createdAt,
+      data: e.data instanceof Date ? e.data.toISOString() : String(e.data),
+      createdAt: e.createdAt instanceof Date ? e.createdAt.toISOString() : String(e.createdAt),
     }));
 
     return pendentes;
@@ -151,7 +148,8 @@ export async function listExamesPaciente(
       LIMIT 50
     `);
 
-    return exames[0] as any[];
+    const result = exames as unknown as any[][];
+    return result[0] || [];
   } catch (error) {
     console.error('[listExamesPaciente] Erro:', error);
     return [];

@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE documentos_medicos \nADD COLUMN status_assinatura ENUM('pendente', 'assinado', 'cancelado') DEFAULT 'pendente',\nADD COLUMN assinado BOOLEAN DEFAULT FALSE,\nADD COLUMN data_assinatura TIMESTAMP NULL,\nADD COLUMN assinado_por_id INT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute ALTER TABLE documentos_medicos \nADD COLUMN status_assinatura ENUM('pendente', 'assinado', 'cancelado') DEFAULT 'pendente',\nADD COLUMN assinado BOOLEAN DEFAULT FALSE,\nADD COLUMN data_assinatura TIMESTAMP NULL,\nADD COLUMN assinado_por_id INT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3316
+}

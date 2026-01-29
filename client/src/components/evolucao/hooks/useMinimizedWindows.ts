@@ -7,78 +7,78 @@
  */
 
 import { useState, useCallback } from 'react';
-import { JanelaMinimizada } from '../types';
+import { MinimizedWindow } from '../types';
 
 interface UseMinimizedWindowsReturn {
-  janelas: JanelaMinimizada[];
-  adicionar: (janela: JanelaMinimizada) => void;
-  remover: (id: number) => JanelaMinimizada | null;
-  restaurar: (id: number) => JanelaMinimizada | null;
-  atualizar: (id: number, updates: Partial<JanelaMinimizada>) => void;
-  limpar: () => void;
+  windows: MinimizedWindow[];
+  addWindow: (window: MinimizedWindow) => void;
+  removeWindow: (id: string) => MinimizedWindow | null;
+  restoreWindow: (id: string) => MinimizedWindow | null;
+  updateWindow: (id: string, updates: Partial<MinimizedWindow>) => void;
+  clearWindows: () => void;
   count: number;
 }
 
 export function useMinimizedWindows(): UseMinimizedWindowsReturn {
-  const [janelas, setJanelas] = useState<JanelaMinimizada[]>([]);
+  const [windows, setWindows] = useState<MinimizedWindow[]>([]);
 
   // Adicionar janela minimizada
-  const adicionar = useCallback((janela: JanelaMinimizada) => {
-    setJanelas((prev) => [...prev, janela]);
+  const addWindow = useCallback((window: MinimizedWindow) => {
+    setWindows((prev) => [...prev, window]);
   }, []);
 
   // Remover janela (sem restaurar)
-  const remover = useCallback((id: number): JanelaMinimizada | null => {
-    let janelaRemovida: JanelaMinimizada | null = null;
+  const removeWindow = useCallback((id: string): MinimizedWindow | null => {
+    let removedWindow: MinimizedWindow | null = null;
     
-    setJanelas((prev) => {
-      const index = prev.findIndex((j) => j.id === id);
+    setWindows((prev) => {
+      const index = prev.findIndex((w) => w.id === id);
       if (index !== -1) {
-        janelaRemovida = prev[index];
-        return prev.filter((j) => j.id !== id);
+        removedWindow = prev[index];
+        return prev.filter((w) => w.id !== id);
       }
       return prev;
     });
     
-    return janelaRemovida;
+    return removedWindow;
   }, []);
 
   // Restaurar janela (remove e retorna)
-  const restaurar = useCallback((id: number): JanelaMinimizada | null => {
-    let janelaRestaurada: JanelaMinimizada | null = null;
+  const restoreWindow = useCallback((id: string): MinimizedWindow | null => {
+    let restoredWindow: MinimizedWindow | null = null;
     
-    setJanelas((prev) => {
-      const index = prev.findIndex((j) => j.id === id);
+    setWindows((prev) => {
+      const index = prev.findIndex((w) => w.id === id);
       if (index !== -1) {
-        janelaRestaurada = prev[index];
-        return prev.filter((j) => j.id !== id);
+        restoredWindow = prev[index];
+        return prev.filter((w) => w.id !== id);
       }
       return prev;
     });
     
-    return janelaRestaurada;
+    return restoredWindow;
   }, []);
 
   // Atualizar janela existente
-  const atualizar = useCallback((id: number, updates: Partial<JanelaMinimizada>) => {
-    setJanelas((prev) =>
-      prev.map((j) => (j.id === id ? { ...j, ...updates } : j))
+  const updateWindow = useCallback((id: string, updates: Partial<MinimizedWindow>) => {
+    setWindows((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, ...updates } : w))
     );
   }, []);
 
   // Limpar todas as janelas
-  const limpar = useCallback(() => {
-    setJanelas([]);
+  const clearWindows = useCallback(() => {
+    setWindows([]);
   }, []);
 
   return {
-    janelas,
-    adicionar,
-    remover,
-    restaurar,
-    atualizar,
-    limpar,
-    count: janelas.length,
+    windows,
+    addWindow,
+    removeWindow,
+    restoreWindow,
+    updateWindow,
+    clearWindows,
+    count: windows.length,
   };
 }
 

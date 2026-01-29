@@ -39,7 +39,7 @@ export const ModalSelecionarExame: React.FC<ModalSelecionarExameProps> = ({
   const [isImporting, setIsImporting] = useState(false);
 
   // Buscar exames do paciente
-  const { data: exames, isLoading, error } = trpc.evolucoes.listExamesPaciente.useQuery(
+  const { data: exames, isLoading, error } = trpc.prontuario.evolucoes.listExamesPaciente.useQuery(
     { pacienteId },
     { enabled: isOpen && pacienteId > 0 }
   );

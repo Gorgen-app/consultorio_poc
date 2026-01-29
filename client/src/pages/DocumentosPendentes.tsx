@@ -147,7 +147,7 @@ export default function DocumentosPendentes() {
   const { 
     data: countData, 
     isLoading: isLoadingCount 
-  } = trpc.evolucoes.countPendentes.useQuery();
+  } = trpc.prontuario.evolucoes.countPendentes.useQuery();
 
   // Buscar lista de pendentes
   const { 
@@ -155,7 +155,7 @@ export default function DocumentosPendentes() {
     isLoading: isLoadingList,
     refetch,
     isRefetching,
-  } = trpc.evolucoes.listPendentes.useQuery({ limit: 50, offset: 0 });
+  } = trpc.prontuario.evolucoes.listPendentes.useQuery({ limit: 50, offset: 0 });
 
   // Filtrar documentos
   const documentosFiltrados = (pendentes || []).filter((doc: DocumentoPendente) => {

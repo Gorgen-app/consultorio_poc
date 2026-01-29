@@ -11,6 +11,6 @@ export { ModalHeader } from './ModalHeader';
 export { RichTextEditor } from './RichTextEditor';
 export { SidePanels } from './SidePanels';
 export { ModalFooter } from './ModalFooter';
-export { MinimizedBar } from './MinimizedBar';
+export { MinimizedBar, MinimizedBarV4 } from './MinimizedBar';
 export { NotificationDropdown } from './NotificationDropdown';
 export { ModalSelecionarExame } from './ModalSelecionarExame';

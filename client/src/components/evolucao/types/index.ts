@@ -98,6 +98,15 @@ export interface JanelaMinimizada {
   tipoAtendimento: TipoAtendimento;
 }
 
+// Tipo alternativo para janelas minimizadas (usado no v4)
+export interface MinimizedWindow {
+  id: string;
+  pacienteNome: string;
+  tipo: string;
+  tempoAberto: number;
+  dataAbertura: string;
+}
+
 // ============================================================================
 // TIPOS DE ESTADO DO MODAL
 // ============================================================================
@@ -164,6 +173,13 @@ export interface MinimizedBarProps {
   janelas: JanelaMinimizada[];
   onRestore: (id: number) => void;
   onClose: (id: number) => void;
+}
+
+// Props alternativas para MinimizedBar v4 (usa MinimizedWindow com id string)
+export interface MinimizedBarV4Props {
+  windows: MinimizedWindow[];
+  onRestore: (id: string) => void;
+  onClose: (id: string) => void;
 }
 
 export interface NotificationDropdownProps {

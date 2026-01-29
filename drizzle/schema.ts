@@ -811,6 +811,16 @@ export const documentosMedicos = mysqlTable("documentos_medicos", {
   // Arquivo gerado
   arquivoUrl: varchar("arquivo_url", { length: 500 }),
   
+  // Campos de assinatura digital
+  statusAssinatura: mysqlEnum("status_assinatura", [
+    "pendente",
+    "assinado",
+    "cancelado"
+  ]).default("pendente"),
+  assinado: boolean("assinado").default(false),
+  dataAssinatura: timestamp("data_assinatura"),
+  assinadoPorId: int("assinado_por_id").references(() => users.id),
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({

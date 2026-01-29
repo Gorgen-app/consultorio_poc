@@ -21,7 +21,7 @@ import { Plus, FileText, Calendar, Clock, CheckCircle2, AlertCircle, Upload } fr
 // Importar componentes do módulo de evolução
 import {
   ModalEvolucao,
-  MinimizedBar,
+  MinimizedBarV4,
   NotificationDropdown,
   ModalSelecionarExame,
 } from './components';
@@ -144,7 +144,7 @@ export function ProntuarioEvolucoesV4({
     data: evolucoes, 
     isLoading, 
     refetch: refetchEvolucoes,
-  } = trpc.evolucoes.list.useQuery(
+  } = trpc.prontuario.evolucoes.list.useQuery(
     { pacienteId },
     { enabled: pacienteId > 0 }
   );
@@ -167,14 +167,14 @@ export function ProntuarioEvolucoesV4({
     setEvolucaoSelecionada(null);
   }, []);
 
-  // Minimizar modal
-  const handleMinimizeModal = useCallback(() => {
+  // Minimizar modal - recebe JanelaMinimizada do ModalEvolucao
+  const handleMinimizeModal = useCallback((janela: any) => {
     const newWindow: MinimizedWindow = {
-      id: `evolucao-${Date.now()}`,
-      pacienteNome,
+      id: `evolucao-${janela.id || Date.now()}`,
+      pacienteNome: janela.pacienteNome || pacienteNome,
       tipo: 'evolucao',
-      tempoAberto: 0,
-      dataAbertura: new Date().toISOString(),
+      tempoAberto: janela.timerSeconds || 0,
+      dataAbertura: janela.dataHora || new Date().toISOString(),
     };
     addWindow(newWindow);
     setIsModalOpen(false);
@@ -221,7 +221,8 @@ export function ProntuarioEvolucoesV4({
           {/* Dropdown de notificações */}
           <NotificationDropdown 
             pendentes={pendentes}
-            count={pendentesCount}
+            onViewAll={() => window.location.href = '/documentos-pendentes'}
+            onItemClick={(id) => console.log('Item clicked:', id)}
           />
           
           {/* Botão de upload */}
@@ -289,13 +290,14 @@ export function ProntuarioEvolucoesV4({
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           onMinimize={handleMinimizeModal}
-          pacienteId={pacienteId}
-          pacienteNome={pacienteNome}
+          paciente={{
+            id: pacienteId,
+            nome: pacienteNome,
+            cpf: '',
+            dataNascimento: '',
+          }}
           agendamentoId={agendamentoId}
           evolucaoExistente={evolucaoSelecionada}
-          onSaveSuccess={handleSaveSuccess}
-          onSignSuccess={handleSignSuccess}
-          onOpenImportExam={() => setIsModalExameOpen(true)}
         />
       )}
 
@@ -309,7 +311,7 @@ export function ProntuarioEvolucoesV4({
 
       {/* Barra de janelas minimizadas */}
       {windows.length > 0 && (
-        <MinimizedBar
+        <MinimizedBarV4
           windows={windows}
           onRestore={handleRestoreWindow}
           onClose={removeWindow}

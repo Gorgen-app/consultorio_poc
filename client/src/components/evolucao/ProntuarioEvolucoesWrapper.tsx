@@ -25,8 +25,14 @@ interface ProntuarioEvolucoesWrapperProps {
   pacienteId: number;
   pacienteNome: string;
   agendamentoId?: number;
-  // Props adicionais do componente legado
-  [key: string]: any;
+  // Props do componente legado
+  evolucoes?: any[];
+  onUpdate?: () => void;
+  abrirNovaEvolucao?: boolean;
+  agendamentoIdVinculado?: number | null;
+  onEvolucaoCriada?: () => void;
+  onAtendimentoEncerrado?: () => void;
+  paciente?: any;
 }
 
 export function ProntuarioEvolucoesWrapper(props: ProntuarioEvolucoesWrapperProps) {
@@ -43,9 +49,16 @@ export function ProntuarioEvolucoesWrapper(props: ProntuarioEvolucoesWrapperProp
   }
   
   // Fallback para o componente legado
+  // Garantir que props obrigatórias tenham valores padrão
+  const legacyProps = {
+    ...props,
+    evolucoes: props.evolucoes || [],
+    onUpdate: props.onUpdate || (() => {}),
+  };
+  
   return (
     <React.Suspense fallback={<div className="p-4">Carregando...</div>}>
-      <ProntuarioEvolucoesLegacy {...props} />
+      <ProntuarioEvolucoesLegacy {...legacyProps} />
     </React.Suspense>
   );
 }

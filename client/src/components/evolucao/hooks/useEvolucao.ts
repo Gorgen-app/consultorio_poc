@@ -74,9 +74,9 @@ export function useEvolucao(options: UseEvolucaoOptions): UseEvolucaoReturn {
   const [error, setError] = useState<string | null>(null);
 
   // Mutations tRPC
-  const createMutation = trpc.evolucoes.create.useMutation();
-  const updateMutation = trpc.evolucoes.update.useMutation();
-  const assinarMutation = trpc.evolucoes.assinar.useMutation();
+  const createMutation = trpc.prontuario.evolucoes.create.useMutation();
+  const updateMutation = trpc.prontuario.evolucoes.update.useMutation();
+  const assinarMutation = trpc.prontuario.evolucoes.assinar.useMutation();
 
   // Setters com marcação de dirty
   const setConteudo = useCallback((novoConteudo: string) => {
