@@ -1,4 +1,4 @@
-import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne, isNull, isNotNull } from "drizzle-orm";
+import { eq, like, and, or, sql, desc, asc, getTableColumns, gte, gt, lte, inArray, ne, isNull, isNotNull, leftJoin } from "drizzle-orm";
 import { getPooledDb } from "./_core/database";
 import { InsertUser, users, pacientes, atendimentos, InsertPaciente, InsertAtendimento, Paciente, Atendimento, historicoMedidas, userProfiles, userSettings, UserProfile, InsertUserProfile, UserSetting, InsertUserSetting, vinculoSecretariaMedico, historicoVinculo, examesFavoritos, tenants, pacienteAutorizacoes, crossTenantAccessLogs, enderecoHistorico, InsertEnderecoHistorico, prontuarioAcessos, InsertProntuarioAcesso, configuracoesDuracao, ConfiguracaoDuracao, InsertConfiguracaoDuracao } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -2347,13 +2347,15 @@ export async function listAgendamentos(filters?: {
     conditions.push(eq(agendamentos.status, filters.status as any));
   }
   
-  // Query otimizada com filtros SQL e limite de campos
+  // Query otimizada com LEFT JOIN para buscar dados atualizados do paciente
+  // Isso garante que alterações no cadastro do paciente sejam refletidas nos agendamentos
   const result = await db.select({
     id: agendamentos.id,
     idAgendamento: agendamentos.idAgendamento,
     tipoCompromisso: agendamentos.tipoCompromisso,
     pacienteId: agendamentos.pacienteId,
-    pacienteNome: agendamentos.pacienteNome,
+    // Dados do paciente vindos da tabela pacientes (sempre atualizados)
+    pacienteNome: pacientes.nome,
     dataHoraInicio: agendamentos.dataHoraInicio,
     dataHoraFim: agendamentos.dataHoraFim,
     status: agendamentos.status,
@@ -2361,15 +2363,61 @@ export async function listAgendamentos(filters?: {
     titulo: agendamentos.titulo,
     descricao: agendamentos.descricao,
     convenio: agendamentos.convenio,
-    telefonePaciente: agendamentos.telefonePaciente,
-    cpfPaciente: agendamentos.cpfPaciente,
+    // Dados sensíveis do paciente (criptografados no banco)
+    telefonePaciente: pacientes.telefone,
+    cpfPaciente: pacientes.cpf,
+    // Novos campos do paciente para o modal de detalhes
+    dataNascimentoPaciente: pacientes.dataNascimento,
+    // Campos de fallback da tabela agendamentos (para agendamentos sem paciente vinculado)
+    pacienteNomeFallback: agendamentos.pacienteNome,
+    telefonePacienteFallback: agendamentos.telefonePaciente,
+    cpfPacienteFallback: agendamentos.cpfPaciente,
+    // Campos adicionais do agendamento
+    reagendadoDe: agendamentos.reagendadoDe,
+    canceladoEm: agendamentos.canceladoEm,
+    motivoCancelamento: agendamentos.motivoCancelamento,
   })
     .from(agendamentos)
+    .leftJoin(pacientes, eq(agendamentos.pacienteId, pacientes.id))
     .where(and(...conditions))
     .orderBy(asc(agendamentos.dataHoraInicio))
     .limit(500); // Limitar para performance
   
-  return result;
+  // Processar resultados: descriptografar dados sensíveis e usar fallback quando necessário
+  const processedResult = result.map(item => {
+    // Descriptografar dados do paciente se existirem
+    const decryptedPacienteData = item.pacienteId ? decryptPacienteData({
+      cpf: item.cpfPaciente,
+      telefone: item.telefonePaciente,
+    }) : null;
+    
+    return {
+      id: item.id,
+      idAgendamento: item.idAgendamento,
+      tipoCompromisso: item.tipoCompromisso,
+      pacienteId: item.pacienteId,
+      // Usar dados da tabela pacientes se disponíveis, senão usar fallback
+      pacienteNome: item.pacienteNome || item.pacienteNomeFallback,
+      dataHoraInicio: item.dataHoraInicio,
+      dataHoraFim: item.dataHoraFim,
+      status: item.status,
+      local: item.local,
+      titulo: item.titulo,
+      descricao: item.descricao,
+      convenio: item.convenio,
+      // Dados descriptografados ou fallback
+      telefonePaciente: decryptedPacienteData?.telefone || item.telefonePacienteFallback,
+      cpfPaciente: decryptedPacienteData?.cpf || item.cpfPacienteFallback,
+      // Novo campo: data de nascimento do paciente
+      dataNascimentoPaciente: item.dataNascimentoPaciente,
+      // Campos adicionais
+      reagendadoDe: item.reagendadoDe,
+      canceladoEm: item.canceladoEm,
+      motivoCancelamento: item.motivoCancelamento,
+    };
+  });
+  
+  return processedResult;
 }
 
 // Cancelar agendamento (não apaga, apenas marca como cancelado)
