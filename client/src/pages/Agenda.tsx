@@ -38,7 +38,11 @@ import {
   Search,
   Loader2,
   FileText,
-  Play
+  Play,
+  Phone,
+  MessageCircle,
+  UserX,
+  CalendarPlus
 } from "lucide-react";
 
 // Tipos de compromisso
@@ -1517,7 +1521,7 @@ export default function Agenda() {
 
       {/* Modal Detalhes do Agendamento - Redesenhado para consistência visual */}
       <Dialog open={modalDetalhesAberto} onOpenChange={setModalDetalhesAberto}>
-        <DialogContent className="max-w-2xl p-0 flex flex-col max-h-[85vh]">
+        <DialogContent className="max-w-3xl p-0 flex flex-col max-h-[85vh]">
           {/* Cabeçalho com dados do paciente - igual ao modal de evolução */}
           <div className="bg-[#F5F7FA] border-b border-[#D1DBEA] px-6 py-3">
             <div className="flex items-center justify-between">
@@ -1544,7 +1548,7 @@ export default function Agenda() {
           
           {agendamentoSelecionado && (
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {/* Informações do Paciente */}
+              {/* Informações do Paciente - Layout aprimorado com CPF, Data Nasc. e WhatsApp */}
               {agendamentoSelecionado.pacienteNome && (
                 <div className="bg-white border border-[#E8EDF5] rounded-lg p-4">
                   <div className="flex items-center justify-between">
@@ -1553,8 +1557,31 @@ export default function Agenda() {
                         <User className="w-5 h-5 text-[#6B8CBE]" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-800">{agendamentoSelecionado.pacienteNome}</p>
-                        <p className="text-xs text-gray-500">Paciente</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-800">{agendamentoSelecionado.pacienteNome}</p>
+                          {/* Botão WhatsApp */}
+                          {agendamentoSelecionado.telefonePaciente && (
+                            <a
+                              href={`https://wa.me/55${agendamentoSelecionado.telefonePaciente.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-600 hover:text-green-700 transition-colors"
+                              title="Abrir WhatsApp"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </a>
+                          )}
+                          <span className="text-xs text-gray-400">#{agendamentoSelecionado.idAgendamento}</span>
+                        </div>
+                        {/* CPF e Data de Nascimento */}
+                        <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                          {agendamentoSelecionado.cpfPaciente && (
+                            <span>CPF: {agendamentoSelecionado.cpfPaciente}</span>
+                          )}
+                          {agendamentoSelecionado.dataNascimentoPaciente && (
+                            <span>Nasc.: {new Date(agendamentoSelecionado.dataNascimentoPaciente).toLocaleDateString("pt-BR")}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     {agendamentoSelecionado.pacienteId && (
@@ -1682,16 +1709,17 @@ export default function Agenda() {
             </div>
           )}
           
-          {/* Footer com botões de ação - igual ao modal de evolução */}
+          {/* Footer com botões de ação - Layout responsivo com flex-wrap */}
           {agendamentoSelecionado && ![
             "Cancelado", "Reagendado", "Faltou", "Realizado"
           ].includes(agendamentoSelecionado.status) && (
             <div className="border-t border-[#D1DBEA] bg-[#F5F7FA] px-6 py-4 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                {/* Botões de ação principais */}
+              {/* Linha 1: Botões de progressão do fluxo */}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
                 <Button 
                   onClick={() => setModalDetalhesAberto(false)}
-                  className="flex-1 max-w-[120px] bg-gray-400 hover:bg-gray-500 text-white"
+                  variant="secondary"
+                  size="sm"
                 >
                   Fechar
                 </Button>
@@ -1703,9 +1731,10 @@ export default function Agenda() {
                         onSuccess: () => setAgendamentoSelecionado((prev: any) => prev ? { ...prev, status: "Confirmado" } : null)
                       });
                     }}
-                    className="flex-1 max-w-[140px] bg-[#6B8CBE] hover:bg-[#5A7BAD] text-white"
+                    size="sm"
+                    className="bg-[#6B8CBE] hover:bg-[#5A7BAD] text-white"
                   >
-                    <Check className="w-4 h-4 mr-2" />
+                    <Check className="w-4 h-4 mr-1" />
                     Confirmar
                   </Button>
                 )}
@@ -1717,9 +1746,10 @@ export default function Agenda() {
                         onSuccess: () => setAgendamentoSelecionado((prev: any) => prev ? { ...prev, status: "Aguardando" } : null)
                       });
                     }}
-                    className="flex-1 max-w-[140px] bg-yellow-500 hover:bg-yellow-600 text-white"
+                    size="sm"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white"
                   >
-                    <UserCheck className="w-4 h-4 mr-2" />
+                    <UserCheck className="w-4 h-4 mr-1" />
                     Chegou
                   </Button>
                 )}
@@ -1737,9 +1767,10 @@ export default function Agenda() {
                         }
                       });
                     }}
-                    className="flex-1 max-w-[140px] bg-emerald-600 hover:bg-emerald-700 text-white"
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
-                    <Stethoscope className="w-4 h-4 mr-2" />
+                    <Stethoscope className="w-4 h-4 mr-1" />
                     Atender
                   </Button>
                 )}
@@ -1751,10 +1782,11 @@ export default function Agenda() {
                         setModalDetalhesAberto(false);
                         setLocation(`/prontuario/${agendamentoSelecionado.pacienteId}?secao=evolucoes`);
                       }}
-                      className="flex-1 max-w-[180px] bg-[#6B8CBE] hover:bg-[#5A7BAD] text-white"
+                      size="sm"
+                      className="bg-[#6B8CBE] hover:bg-[#5A7BAD] text-white"
                     >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Continuar Evolução
+                      <FileText className="w-4 h-4 mr-1" />
+                      Continuar
                     </Button>
                     <Button 
                       onClick={() => {
@@ -1762,18 +1794,21 @@ export default function Agenda() {
                           onSuccess: () => setAgendamentoSelecionado((prev: any) => prev ? { ...prev, status: "Realizado" } : null)
                         });
                       }}
-                      className="flex-1 max-w-[140px] bg-emerald-600 hover:bg-emerald-700 text-white"
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Finalizar
+                      <CheckCircle2 className="w-4 h-4 mr-1" />
+                      Encerrar Atendimento
                     </Button>
                   </>
                 )}
-                
-                <div className="flex-1" />
-                
+              </div>
+              
+              {/* Linha 2: Ações secundárias */}
+              <div className="flex flex-wrap items-center gap-2">
                 <Button 
                   variant="outline"
+                  size="sm"
                   onClick={() => {
                     setNovaData(new Date(agendamentoSelecionado.dataHoraInicio).toISOString().split("T")[0]);
                     setNovaHoraInicio(formatarHora(agendamentoSelecionado.dataHoraInicio));
@@ -1783,19 +1818,68 @@ export default function Agenda() {
                   className="border-gray-300 text-gray-600"
                   disabled={["Aguardando", "Em atendimento"].includes(agendamentoSelecionado.status)}
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <RefreshCw className="w-4 h-4 mr-1" />
                   Reagendar
                 </Button>
                 
+                {/* Botão Faltou - Novo */}
+                {["Agendado", "Confirmado"].includes(agendamentoSelecionado.status) && (
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      marcarFalta.mutate({ id: agendamentoSelecionado.id }, {
+                        onSuccess: () => {
+                          setAgendamentoSelecionado((prev: any) => prev ? { ...prev, status: "Faltou" } : null);
+                          toast.success("Paciente marcado como faltou");
+                        }
+                      });
+                    }}
+                    className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                  >
+                    <UserX className="w-4 h-4 mr-1" />
+                    Faltou
+                  </Button>
+                )}
+                
                 <Button 
                   variant="outline"
+                  size="sm"
                   onClick={() => setModalCancelarAberto(true)}
                   className="border-red-300 text-red-600 hover:bg-red-50"
                   disabled={["Em atendimento"].includes(agendamentoSelecionado.status)}
                 >
-                  <X className="w-4 h-4 mr-2" />
+                  <X className="w-4 h-4 mr-1" />
                   Cancelar
                 </Button>
+                
+                {/* Botão Agendar Próxima Consulta - Novo */}
+                {agendamentoSelecionado.pacienteId && (
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Fechar modal de detalhes
+                      setModalDetalhesAberto(false);
+                      // Pré-preencher dados do paciente no formulário de novo agendamento
+                      setNovoAgendamento(prev => ({
+                        ...prev,
+                        pacienteId: agendamentoSelecionado.pacienteId,
+                        pacienteNome: agendamentoSelecionado.pacienteNome || "",
+                        tipoCompromisso: "Consulta",
+                        local: agendamentoSelecionado.local || "Consultório",
+                      }));
+                      setBuscaPaciente(agendamentoSelecionado.pacienteNome || "");
+                      // Abrir modal de novo agendamento
+                      setModalNovoAberto(true);
+                      toast.info("Selecione a data e horário para a próxima consulta");
+                    }}
+                    className="border-[#6B8CBE] text-[#6B8CBE] hover:bg-[#6B8CBE]/10"
+                  >
+                    <CalendarPlus className="w-4 h-4 mr-1" />
+                    Agendar Próxima Consulta
+                  </Button>
+                )}
               </div>
             </div>
           )}
