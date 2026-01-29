@@ -499,9 +499,9 @@ export default function ProntuarioEvolucoes({
             </div>
             
             {/* Conteúdo Principal - 3 colunas */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden" style={{ minWidth: '1400px' }}>
               {/* Coluna 1: Formulário Principal (58%) */}
-              <div className="flex-[7] overflow-y-auto p-6 border-r border-[#E8EDF5]">
+              <div className="overflow-y-auto p-6 border-r border-[#E8EDF5]" style={{ width: '850px', minWidth: '850px', flexShrink: 0 }}>
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "soap" | "livre")} className="w-full">
                   <TabsList className="grid w-full grid-cols-2 bg-[#E8EDF5]">
                     <TabsTrigger value="soap" className="data-[state=active]:bg-[#6B8CBE] data-[state=active]:text-white">SOAP</TabsTrigger>
@@ -829,7 +829,7 @@ export default function ProntuarioEvolucoes({
               </div>
               
               {/* Coluna 2: Upload de Documentos (25%) */}
-              <div className="flex-[3] min-w-[240px] max-w-[300px] p-4 border-r border-[#E8EDF5] bg-[#FAFBFC] overflow-y-auto">
+              <div className="p-4 border-r border-[#E8EDF5] bg-[#FAFBFC] overflow-y-auto" style={{ width: '280px', minWidth: '280px', flexShrink: 0 }}>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Documentos</h3>
                 
                 {/* Área de Drop */}
@@ -877,7 +877,7 @@ export default function ProntuarioEvolucoes({
               </div>
               
               {/* Coluna 3: Histórico Rápido (17%) */}
-              <div className="flex-[2] min-w-[200px] max-w-[260px] p-4 bg-[#F5F7FA] overflow-y-auto">
+              <div className="p-4 bg-[#F5F7FA] overflow-y-auto" style={{ width: '270px', minWidth: '270px', flexShrink: 0 }}>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Histórico Recente</h3>
                 
                 {ultimasEvolucoes.length === 0 ? (
