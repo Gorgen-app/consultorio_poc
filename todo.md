@@ -4194,3 +4194,23 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Ajustar props passadas ao componente wrapper
 - [x] Testar funcionamento do modal v4 (TypeScript OK)
 - [x] Salvar checkpoint
+
+
+---
+
+## 🔧 GORGEN 3.9.86 - Correções do Modal de Evolução v4 (29/01/2026)
+
+### Tipografia
+- [x] Corrigir fonte do cronômetro para padrão Inter do Gorgen
+
+### Dados do Paciente no Cabeçalho
+- [x] Exibir idade calculada do paciente
+- [x] Exibir CPF do paciente
+- [x] Exibir data de nascimento do paciente
+
+### Barra de Minimizados Global
+- [x] Criar componente MinimizedWindowsBar global
+- [x] Posicionar fixo na parte inferior de todas as telas
+- [x] Permitir múltiplas janelas minimizadas lado a lado (como tabs de browser)
+- [x] Manter estado persistente entre navegações de página
+- [x] Integrar com contexto global do React

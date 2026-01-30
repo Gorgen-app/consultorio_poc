@@ -24,6 +24,8 @@ const ProntuarioEvolucoesLegacy = React.lazy(() =>
 interface ProntuarioEvolucoesWrapperProps {
   pacienteId: number;
   pacienteNome: string;
+  pacienteCpf?: string;
+  pacienteDataNascimento?: string;
   agendamentoId?: number;
   // Props do componente legado
   evolucoes?: any[];
@@ -43,6 +45,8 @@ export function ProntuarioEvolucoesWrapper(props: ProntuarioEvolucoesWrapperProp
       <ProntuarioEvolucoesV4
         pacienteId={props.pacienteId}
         pacienteNome={props.pacienteNome}
+        pacienteCpf={props.pacienteCpf || props.paciente?.cpf || ''}
+        pacienteDataNascimento={props.pacienteDataNascimento || props.paciente?.dataNascimento || ''}
         agendamentoId={props.agendamentoId}
       />
     );

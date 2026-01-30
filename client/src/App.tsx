@@ -5,6 +5,7 @@ import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
+import { GlobalMinimizedBar } from "./components/GlobalMinimizedBar";
 // Dashboard antiga removida - usando DashboardCustom como principal
 import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
@@ -193,6 +194,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <AppContent />
+          <GlobalMinimizedBar />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
