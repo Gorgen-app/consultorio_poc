@@ -86,15 +86,15 @@ export function NotificacoesDropdown() {
     });
   }
 
-  // Adicionar notificação de pendências de documentação
-  if (notificacoes?.pendenciasDocumentacao && notificacoes.pendenciasDocumentacao > 0) {
+  // Adicionar notificação de documentos pendentes de assinatura
+  if (notificacoes?.documentosPendentesAssinatura && notificacoes.documentosPendentesAssinatura > 0) {
     listaNotificacoes.push({
-      id: "pendencias",
+      id: "documentos-pendentes",
       tipo: "pendencias",
-      titulo: "Pendências de Documentação",
-      descricao: `${notificacoes.pendenciasDocumentacao} atendimento${notificacoes.pendenciasDocumentacao > 1 ? "s" : ""} sem registro de evolução`,
-      quantidade: notificacoes.pendenciasDocumentacao,
-      rota: "/atendimentos?filtro=sem-evolucao",
+      titulo: "Documentos Pendentes",
+      descricao: `${notificacoes.documentosPendentesAssinatura} documento${notificacoes.documentosPendentesAssinatura > 1 ? "s" : ""} aguardando assinatura`,
+      quantidade: notificacoes.documentosPendentesAssinatura,
+      rota: "/documentos-pendentes",
       icone: <FileText className="h-4 w-4 text-orange-500" />,
     });
   }
