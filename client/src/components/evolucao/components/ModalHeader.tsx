@@ -230,8 +230,10 @@ export const ModalHeader: React.FC<ModalHeaderProps> = ({
           background: rgba(255, 255, 255, 0.15);
           border-radius: 6px;
           font-size: 14px;
-          font-weight: 500;
-          font-family: 'Courier New', monospace;
+          font-weight: 600;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: 0.5px;
         }
 
         .btn-header {

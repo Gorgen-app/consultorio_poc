@@ -21,7 +21,6 @@ import { Plus, FileText, Calendar, Clock, CheckCircle2, AlertCircle, Upload } fr
 // Importar componentes do módulo de evolução
 import {
   ModalEvolucao,
-  MinimizedBarV4,
   NotificationDropdown,
   ModalSelecionarExame,
 } from './components';
@@ -30,9 +29,11 @@ import {
 import {
   useTimer,
   useEvolucao,
-  useMinimizedWindows,
   usePendingDocuments,
 } from './hooks';
+
+// Importar contexto global de janelas minimizadas
+import { useMinimizedWindowsContext, MinimizedWindow as GlobalMinimizedWindow } from '@/contexts/MinimizedWindowsContext';
 
 // Tipos
 import { Evolucao, MinimizedWindow, TipoAtendimento } from './types';
@@ -40,6 +41,8 @@ import { Evolucao, MinimizedWindow, TipoAtendimento } from './types';
 interface ProntuarioEvolucoesV4Props {
   pacienteId: number;
   pacienteNome: string;
+  pacienteCpf?: string;
+  pacienteDataNascimento?: string;
   agendamentoId?: number;
 }
 
@@ -128,6 +131,8 @@ function EvolucaoCard({
 export function ProntuarioEvolucoesV4({
   pacienteId,
   pacienteNome,
+  pacienteCpf = '',
+  pacienteDataNascimento = '',
   agendamentoId,
 }: ProntuarioEvolucoesV4Props) {
   // Estados do modal
@@ -135,9 +140,14 @@ export function ProntuarioEvolucoesV4({
   const [evolucaoSelecionada, setEvolucaoSelecionada] = useState<any>(null);
   const [isModalExameOpen, setIsModalExameOpen] = useState(false);
 
+  // Contexto global de janelas minimizadas
+  const { addWindow, restoreWindow } = useMinimizedWindowsContext();
+  
   // Hooks customizados
-  const { windows, addWindow, removeWindow, restoreWindow, updateWindow } = useMinimizedWindows();
   const { pendentes, count: pendentesCount, refresh: refreshPendentes } = usePendingDocuments();
+  
+  // Estado para armazenar dados da janela restaurada
+  const [restoredWindowData, setRestoredWindowData] = useState<GlobalMinimizedWindow | null>(null);
 
   // Buscar evoluções do paciente
   const { 
@@ -169,22 +179,38 @@ export function ProntuarioEvolucoesV4({
 
   // Minimizar modal - recebe JanelaMinimizada do ModalEvolucao
   const handleMinimizeModal = useCallback((janela: any) => {
-    const newWindow: MinimizedWindow = {
-      id: `evolucao-${janela.id || Date.now()}`,
+    const newWindow: GlobalMinimizedWindow = {
+      id: `evolucao-${pacienteId}-${Date.now()}`,
+      pacienteId: pacienteId,
       pacienteNome: janela.pacienteNome || pacienteNome,
+      pacienteCpf: pacienteCpf,
+      pacienteDataNascimento: pacienteDataNascimento,
       tipo: 'evolucao',
+      conteudo: janela.conteudo || '',
       tempoAberto: janela.timerSeconds || 0,
       dataAbertura: janela.dataHora || new Date().toISOString(),
+      agendamentoId: agendamentoId,
     };
     addWindow(newWindow);
     setIsModalOpen(false);
-  }, [pacienteNome, addWindow]);
+  }, [pacienteId, pacienteNome, pacienteCpf, pacienteDataNascimento, agendamentoId, addWindow]);
 
-  // Restaurar janela minimizada
-  const handleRestoreWindow = useCallback((id: string) => {
-    restoreWindow(id);
-    setIsModalOpen(true);
-  }, [restoreWindow]);
+  // Listener para restaurar janela do contexto global
+  useEffect(() => {
+    const handleRestoreEvent = (event: CustomEvent<GlobalMinimizedWindow>) => {
+      const window = event.detail;
+      // Só restaurar se for do mesmo paciente
+      if (window.pacienteId === pacienteId) {
+        setRestoredWindowData(window);
+        setIsModalOpen(true);
+      }
+    };
+
+    document.addEventListener('restoreMinimizedWindow', handleRestoreEvent as EventListener);
+    return () => {
+      document.removeEventListener('restoreMinimizedWindow', handleRestoreEvent as EventListener);
+    };
+  }, [pacienteId]);
 
   // Callback de sucesso ao salvar
   const handleSaveSuccess = useCallback(() => {
@@ -293,8 +319,8 @@ export function ProntuarioEvolucoesV4({
           paciente={{
             id: pacienteId,
             nome: pacienteNome,
-            cpf: '',
-            dataNascimento: '',
+            cpf: pacienteCpf,
+            dataNascimento: pacienteDataNascimento,
           }}
           agendamentoId={agendamentoId}
           evolucaoExistente={evolucaoSelecionada}
@@ -309,14 +335,7 @@ export function ProntuarioEvolucoesV4({
         onExameSelecionado={handleImportExam}
       />
 
-      {/* Barra de janelas minimizadas */}
-      {windows.length > 0 && (
-        <MinimizedBarV4
-          windows={windows}
-          onRestore={handleRestoreWindow}
-          onClose={removeWindow}
-        />
-      )}
+      {/* Barra de janelas minimizadas agora é global (GlobalMinimizedBar) */}
     </div>
   );
 }
