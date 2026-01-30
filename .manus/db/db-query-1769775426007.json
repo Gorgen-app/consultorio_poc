@@ -1,0 +1,25 @@
+{
+  "query": "SELECT COUNT(*) as total_pacientes FROM pacientes WHERE deleted_at IS NULL;\nSELECT COUNT(*) as total_com_excluidos FROM pacientes;\nSELECT COUNT(*) as total_atendimentos FROM atendimentos WHERE deleted_at IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT COUNT(*) as total_pacientes FROM pacientes WHERE deleted_at IS NULL;\nSELECT COUNT(*) as total_com_excluidos FROM pacientes;\nSELECT COUNT(*) as total_atendimentos FROM atendimentos WHERE deleted_at IS NULL;",
+  "rows": [
+    {
+      "total_pacientes": "21668"
+    },
+    {
+      "total_pacientes": "total_com_excluidos"
+    },
+    {
+      "total_pacientes": "21671"
+    },
+    {
+      "total_pacientes": "total_atendimentos"
+    },
+    {
+      "total_pacientes": "1346"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_pacientes\n21668\ntotal_com_excluidos\n21671\ntotal_atendimentos\n1346\n",
+  "stderr": "",
+  "execution_time_ms": 238
+}

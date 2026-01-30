@@ -1,0 +1,18 @@
+{
+  "query": "SELECT \n  (SELECT COUNT(*) FROM pacientes WHERE deleted_at IS NULL) as pacientes_ativos,\n  (SELECT COUNT(*) FROM pacientes) as pacientes_total,\n  (SELECT COUNT(*) FROM atendimentos WHERE deleted_at IS NULL) as atendimentos_ativos,\n  (SELECT COUNT(*) FROM atendimentos) as atendimentos_total,\n  (SELECT COUNT(*) FROM users) as usuarios,\n  (SELECT COUNT(*) FROM tenants) as tenants;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT \n  (SELECT COUNT(*) FROM pacientes WHERE deleted_at IS NULL) as pacientes_ativos,\n  (SELECT COUNT(*) FROM pacientes) as pacientes_total,\n  (SELECT COUNT(*) FROM atendimentos WHERE deleted_at IS NULL) as atendimentos_ativos,\n  (SELECT COUNT(*) FROM atendimentos) as atendimentos_total,\n  (SELECT COUNT(*) FROM users) as usuarios,\n  (SELECT COUNT(*) FROM tenants) as tenants;",
+  "rows": [
+    {
+      "pacientes_ativos": "21668",
+      "pacientes_total": "21671",
+      "atendimentos_ativos": "1346",
+      "atendimentos_total": "1346",
+      "usuarios": "6",
+      "tenants": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "pacientes_ativos\tpacientes_total\tatendimentos_ativos\tatendimentos_total\tusuarios\ttenants\n21668\t21671\t1346\t1346\t6\t3\n",
+  "stderr": "",
+  "execution_time_ms": 296
+}
