@@ -236,6 +236,17 @@ export default function Agenda() {
   const [draggedAgendamento, setDraggedAgendamento] = useState<any>(null);
   const [dragOverSlot, setDragOverSlot] = useState<{ data: string; hora: number; minuto: number } | null>(null);
   
+  // Estado para hora atual (linha vermelha indicadora)
+  const [horaAtual, setHoraAtual] = useState(new Date());
+  
+  // Atualizar hora atual a cada minuto
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHoraAtual(new Date());
+    }, 60000); // Atualiza a cada 1 minuto
+    return () => clearInterval(interval);
+  }, []);
+  
   // Debounce da busca de pacientes (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -970,11 +981,20 @@ export default function Agenda() {
                 
                 // Verificar se este slot está sendo alvo do drag
                 const isDragOverDia = dragOverSlot?.data === chave && dragOverSlot?.hora === hora;
+                
+                // Verificar se a hora atual está neste slot (para linha vermelha)
+                const hojeStr = new Date().toISOString().split("T")[0];
+                const isHoje = chave === hojeStr;
+                const horaAtualNum = horaAtual.getHours();
+                const minutoAtual = horaAtual.getMinutes();
+                const isHoraAtual = isHoje && horaAtualNum === hora;
+                // Calcular posição da linha vermelha (0-100% do slot de 50px)
+                const posicaoLinhaVermelha = isHoraAtual ? (minutoAtual / 60) * 100 : 0;
 
                 return (
                   <div 
                     key={hora} 
-                    className={`flex gap-4 min-h-[50px] border-b pb-2 cursor-pointer transition-colors rounded ${
+                    className={`relative flex gap-4 min-h-[50px] border-b pb-2 cursor-pointer transition-colors rounded ${
                       isDragOverDia ? "bg-primary/20 ring-2 ring-primary" : "hover:bg-primary/5"
                     }`}
                     onClick={(e) => {
@@ -1005,6 +1025,15 @@ export default function Agenda() {
                     }}
                     title={draggedAgendamento ? `Solte aqui para mover para ${hora.toString().padStart(2, '0')}:00` : `Clique para agendar (metade superior: ${hora.toString().padStart(2, '0')}:00, metade inferior: ${hora.toString().padStart(2, '0')}:30)`}
                   >
+                    {/* Linha vermelha indicadora de hora atual */}
+                    {isHoraAtual && (
+                      <div 
+                        className="absolute left-0 right-0 h-0.5 bg-red-500 z-10 pointer-events-none"
+                        style={{ top: `${posicaoLinhaVermelha}%` }}
+                      >
+                        <div className="absolute -left-1 -top-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+                      </div>
+                    )}
                     <div className="w-16 text-sm text-muted-foreground font-medium">
                       {hora.toString().padStart(2, "0")}:00
                     </div>
@@ -1151,7 +1180,7 @@ export default function Agenda() {
 
       {/* Modal Novo Agendamento */}
       <Dialog open={modalNovoAberto} onOpenChange={setModalNovoAberto}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo Agendamento</DialogTitle>
           </DialogHeader>
@@ -1535,7 +1564,7 @@ export default function Agenda() {
 
       {/* Modal Bloqueio de Horário */}
       <Dialog open={modalBloqueioAberto} onOpenChange={setModalBloqueioAberto}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Bloquear Horário</DialogTitle>
           </DialogHeader>

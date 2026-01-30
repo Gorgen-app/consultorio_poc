@@ -4325,3 +4325,16 @@ Dependencias quill e react-quill-new removidas (eram órfãs).
 - [ ] Permitir definir data de término ou número de ocorrências
 - [ ] Adicionar campos RRULE no banco de dados
 - [ ] Tratamento de exceções (editar/cancelar ocorrências individuais)
+
+
+---
+
+## 🗓️ GORGEN 3.9.93 - Melhorias Visuais na Agenda (30/01/2026)
+
+### Modal de Agendamento
+- [x] Aumentar largura do modal para layout mais espaçoso (max-w-lg → max-w-2xl)
+
+### Indicador de Hora Atual
+- [x] Adicionar linha vermelha que se desloca conforme a hora do dia
+- [x] Atualizar posição automaticamente em tempo real (a cada 1 minuto)
+- [x] Círculo vermelho no início da linha para destaque visual
