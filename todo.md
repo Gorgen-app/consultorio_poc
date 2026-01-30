@@ -4232,3 +4232,33 @@ Adicionar os seguintes botões ao final da janela de evolução:
 
 ### Menu Lateral
 - [x] Adicionar link para Documentos Pendentes no menu lateral
+
+
+---
+
+## 🔧 Migração de Repositório GitHub (30/01/2026)
+
+### Novo Endereço
+- [x] Atualizar remote de andre-gorgen/consultorio_poc para Gorgen-app/consultorio_poc
+- [x] Push dos commits locais para o novo repositório
+- [x] Ruleset de proteção configurada com bypass para Manus
+
+
+---
+
+## 🔒 Correção de Vulnerabilidades de Segurança (30/01/2026)
+
+### Atualizações de Dependências
+- [x] Atualizar @tailwindcss/vite e @tailwindcss/oxide (corrige tar)
+- [x] Atualizar express (corrige qs)
+- [x] Atualizar @trpc/server, @trpc/client, @trpc/react-query
+- [x] Atualizar vite e vitest
+- [x] Adicionar overrides para tar e qs
+- [x] Verificar com pnpm audit
+
+### Resultado
+- Vulnerabilidades de alta severidade: 12 → 5 (redução de 58%)
+- qs: CORRIGIDO (6.14.1)
+- tar: CORRIGIDO (removido)
+- @trpc/server: CORRIGIDO (11.9.0)
+- Pendentes: pnpm (3), xlsx (2) - requerem ações manuais
