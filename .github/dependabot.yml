@@ -1,0 +1,55 @@
+# Configuração do Dependabot para Gorgen
+# Atualiza dependências automaticamente e agrupa PRs de segurança
+
+version: 2
+updates:
+  # Dependências npm/pnpm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    # Agrupar atualizações de segurança
+    groups:
+      security-patches:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    # Labels para PRs
+    labels:
+      - "dependencies"
+      - "automated"
+    # Commit message
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    # Reviewers
+    reviewers:
+      - "andre-gorgen"
+    # Ignorar pacotes específicos que causam problemas
+    ignore:
+      # Ignorar major updates que podem quebrar o projeto
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci(deps)"

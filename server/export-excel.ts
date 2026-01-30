@@ -3,9 +3,10 @@
  * Gorgen - Aplicativo de Gestão em Saúde
  * 
  * Gera arquivos Excel (.xlsx) com dados de pacientes e atendimentos
+ * Usa ExcelJS (mais seguro que xlsx)
  */
 
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import * as db from './db';
 
 // Mapeamento de campos para nomes amigáveis em português
@@ -119,38 +120,61 @@ export async function exportPacientesToExcel(
     limit: 50000, // Limite alto para exportação
   });
   
-  // Preparar dados para o Excel
-  const data = pacientes.map(paciente => {
-    const row: Record<string, string | number> = {};
-    for (const field of PACIENTE_FIELDS) {
-      const header = PACIENTE_HEADERS[field] || field;
-      row[header] = formatValue(paciente[field], field);
-    }
-    return row;
-  });
-  
   // Criar workbook e worksheet
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Gorgen - Gestão em Saúde';
+  workbook.created = new Date();
   
-  // Ajustar largura das colunas
-  const colWidths = PACIENTE_FIELDS.map(field => {
-    const header = PACIENTE_HEADERS[field] || field;
-    const maxLen = Math.max(
-      header.length,
-      ...data.map(row => String(row[header] || '').length)
-    );
-    return { wch: Math.min(maxLen + 2, 50) };
+  const worksheet = workbook.addWorksheet('Pacientes', {
+    headerFooter: {
+      firstHeader: 'Gorgen - Lista de Pacientes',
+    },
   });
-  ws['!cols'] = colWidths;
   
-  // Adicionar worksheet ao workbook
-  XLSX.utils.book_append_sheet(wb, ws, 'Pacientes');
+  // Definir colunas
+  worksheet.columns = PACIENTE_FIELDS.map(field => ({
+    header: PACIENTE_HEADERS[field] || field,
+    key: field,
+    width: Math.max((PACIENTE_HEADERS[field] || field).length + 2, 15),
+  }));
+  
+  // Estilizar cabeçalho
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF0056A4' },
+  };
+  headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+  
+  // Adicionar dados
+  for (const paciente of pacientes) {
+    const rowData: Record<string, string | number> = {};
+    for (const field of PACIENTE_FIELDS) {
+      rowData[field] = formatValue(paciente[field], field);
+    }
+    worksheet.addRow(rowData);
+  }
+  
+  // Auto-ajustar largura das colunas baseado no conteúdo
+  worksheet.columns.forEach(column => {
+    if (column.eachCell) {
+      let maxLength = 0;
+      column.eachCell({ includeEmpty: true }, cell => {
+        const cellLength = cell.value ? String(cell.value).length : 0;
+        if (cellLength > maxLength) {
+          maxLength = cellLength;
+        }
+      });
+      column.width = Math.min(maxLength + 2, 50);
+    }
+  });
   
   // Gerar buffer do arquivo
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const buffer = await workbook.xlsx.writeBuffer();
   
-  return buffer;
+  return Buffer.from(buffer);
 }
 
 /**
@@ -190,11 +214,38 @@ export async function exportAtendimentosToExcel(
   
   const ATENDIMENTO_FIELDS = Object.keys(ATENDIMENTO_HEADERS);
   
-  // Preparar dados para o Excel
-  const data = atendimentos.map(atd => {
-    const row: Record<string, string | number> = {};
+  // Criar workbook e worksheet
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Gorgen - Gestão em Saúde';
+  workbook.created = new Date();
+  
+  const worksheet = workbook.addWorksheet('Atendimentos', {
+    headerFooter: {
+      firstHeader: 'Gorgen - Lista de Atendimentos',
+    },
+  });
+  
+  // Definir colunas
+  worksheet.columns = ATENDIMENTO_FIELDS.map(field => ({
+    header: ATENDIMENTO_HEADERS[field],
+    key: field,
+    width: Math.max(ATENDIMENTO_HEADERS[field].length + 2, 15),
+  }));
+  
+  // Estilizar cabeçalho
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF0056A4' },
+  };
+  headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+  
+  // Adicionar dados
+  for (const atd of atendimentos) {
+    const rowData: Record<string, string | number> = {};
     for (const field of ATENDIMENTO_FIELDS) {
-      const header = ATENDIMENTO_HEADERS[field];
       let value = atd[field];
       
       // Tratar nome do paciente que vem do join
@@ -207,33 +258,29 @@ export async function exportAtendimentosToExcel(
         value = value ? 'Sim' : 'Não';
       }
       
-      row[header] = formatValue(value, field);
+      rowData[field] = formatValue(value, field);
     }
-    return row;
+    worksheet.addRow(rowData);
+  }
+  
+  // Auto-ajustar largura das colunas baseado no conteúdo
+  worksheet.columns.forEach(column => {
+    if (column.eachCell) {
+      let maxLength = 0;
+      column.eachCell({ includeEmpty: true }, cell => {
+        const cellLength = cell.value ? String(cell.value).length : 0;
+        if (cellLength > maxLength) {
+          maxLength = cellLength;
+        }
+      });
+      column.width = Math.min(maxLength + 2, 50);
+    }
   });
-  
-  // Criar workbook e worksheet
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
-  
-  // Ajustar largura das colunas
-  const colWidths = ATENDIMENTO_FIELDS.map(field => {
-    const header = ATENDIMENTO_HEADERS[field];
-    const maxLen = Math.max(
-      header.length,
-      ...data.map(row => String(row[header] || '').length)
-    );
-    return { wch: Math.min(maxLen + 2, 50) };
-  });
-  ws['!cols'] = colWidths;
-  
-  // Adicionar worksheet ao workbook
-  XLSX.utils.book_append_sheet(wb, ws, 'Atendimentos');
   
   // Gerar buffer do arquivo
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const buffer = await workbook.xlsx.writeBuffer();
   
-  return buffer;
+  return Buffer.from(buffer);
 }
 
 /**

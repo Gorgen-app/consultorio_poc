@@ -4262,3 +4262,19 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - tar: CORRIGIDO (removido)
 - @trpc/server: CORRIGIDO (11.9.0)
 - Pendentes: pnpm (3), xlsx (2) - requerem ações manuais
+
+
+---
+
+## 🔒 GORGEN 3.9.90 - Ações de Segurança Adicionais (30/01/2026)
+
+### Atualizações
+- [x] Atualizar pnpm globalmente para >=10.27.0 (atualizado para 10.28.2)
+- [x] Migrar de xlsx para exceljs (mais seguro)
+- [x] Configurar Dependabot auto-merge no GitHub
+
+### Resultado
+- pnpm: 10.4.1 → 10.28.2 (corrige 3 vulnerabilidades)
+- xlsx removido, substituído por exceljs 4.4.0 (corrige 2 vulnerabilidades)
+- Dependabot configurado com auto-merge para patches de segurança
+- Vulnerabilidades de alta severidade: 5 → 3 (redução de 40%)

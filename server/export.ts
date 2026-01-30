@@ -5,7 +5,7 @@
  * Gera arquivos Excel (.xlsx), CSV (.csv) e PDF (.pdf) com dados de pacientes e atendimentos
  */
 
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import * as db from './db';
 import puppeteer from 'puppeteer-core';
 import { execSync } from 'child_process';
@@ -157,30 +157,58 @@ export async function exportPacientesToExcel(
   filters?: ExportFilters
 ): Promise<Buffer> {
   const pacientes = await fetchPacientes(tenantId, filters);
-  const data = prepareData(pacientes, PACIENTE_FIELDS);
   
   // Criar workbook e worksheet
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Gorgen - Gestão em Saúde';
+  workbook.created = new Date();
   
-  // Ajustar largura das colunas
-  const colWidths = PACIENTE_FIELDS.map(field => {
-    const header = PACIENTE_HEADERS[field] || field;
-    const maxLen = Math.max(
-      header.length,
-      ...data.map(row => String(row[header] || '').length)
-    );
-    return { wch: Math.min(maxLen + 2, 50) };
+  const worksheet = workbook.addWorksheet('Pacientes');
+  
+  // Definir colunas
+  worksheet.columns = PACIENTE_FIELDS.map(field => ({
+    header: PACIENTE_HEADERS[field] || field,
+    key: field,
+    width: Math.max((PACIENTE_HEADERS[field] || field).length + 2, 15),
+  }));
+  
+  // Estilizar cabeçalho
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF0056A4' },
+  };
+  headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+  
+  // Adicionar dados
+  for (const paciente of pacientes) {
+    const rowData: Record<string, string | number> = {};
+    for (const field of PACIENTE_FIELDS) {
+      rowData[field] = formatValue(paciente[field], field);
+    }
+    worksheet.addRow(rowData);
+  }
+  
+  // Auto-ajustar largura das colunas
+  worksheet.columns.forEach(column => {
+    if (column.eachCell) {
+      let maxLength = 0;
+      column.eachCell({ includeEmpty: true }, cell => {
+        const cellLength = cell.value ? String(cell.value).length : 0;
+        if (cellLength > maxLength) {
+          maxLength = cellLength;
+        }
+      });
+      column.width = Math.min(maxLength + 2, 50);
+    }
   });
-  ws['!cols'] = colWidths;
-  
-  // Adicionar worksheet ao workbook
-  XLSX.utils.book_append_sheet(wb, ws, 'Pacientes');
   
   // Gerar buffer do arquivo
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const buffer = await workbook.xlsx.writeBuffer();
   
-  return buffer;
+  return Buffer.from(buffer);
 }
 
 /**
@@ -193,17 +221,20 @@ export async function exportPacientesToCSV(
   const pacientes = await fetchPacientes(tenantId, filters);
   const data = prepareData(pacientes, PACIENTE_FIELDS);
   
-  // Criar workbook e worksheet
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
+  // Gerar CSV manualmente com ponto-e-vírgula para compatibilidade com Excel brasileiro
+  const headers = PACIENTE_FIELDS.map(f => PACIENTE_HEADERS[f] || f);
+  const csvRows = [headers.join(';')];
   
-  // Adicionar worksheet ao workbook
-  XLSX.utils.book_append_sheet(wb, ws, 'Pacientes');
+  for (const row of data) {
+    const values = headers.map(h => {
+      const val = String(row[h] || '').replace(/"/g, '""');
+      return `"${val}"`;
+    });
+    csvRows.push(values.join(';'));
+  }
   
-  // Gerar CSV com BOM para UTF-8
-  const csvContent = XLSX.utils.sheet_to_csv(ws, { FS: ';' }); // Usar ponto-e-vírgula para compatibilidade com Excel brasileiro
   const bom = '\uFEFF'; // BOM para UTF-8
-  const buffer = Buffer.from(bom + csvContent, 'utf-8');
+  const buffer = Buffer.from(bom + csvRows.join('\n'), 'utf-8');
   
   return buffer;
 }
@@ -552,30 +583,65 @@ export async function exportAtendimentosToExcel(
   filters?: AtendimentoExportFilters
 ): Promise<Buffer> {
   const atendimentos = await fetchAtendimentos(tenantId, filters);
-  const data = prepareAtendimentoData(atendimentos, ATENDIMENTO_FIELDS);
   
   // Criar workbook e worksheet
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Gorgen - Gestão em Saúde';
+  workbook.created = new Date();
   
-  // Ajustar largura das colunas
-  const colWidths = ATENDIMENTO_FIELDS.map(field => {
-    const header = ATENDIMENTO_HEADERS[field] || field;
-    const maxLen = Math.max(
-      header.length,
-      ...data.map(row => String(row[header] || '').length)
-    );
-    return { wch: Math.min(maxLen + 2, 50) };
+  const worksheet = workbook.addWorksheet('Atendimentos');
+  
+  // Definir colunas
+  worksheet.columns = ATENDIMENTO_FIELDS.map(field => ({
+    header: ATENDIMENTO_HEADERS[field] || field,
+    key: field,
+    width: Math.max((ATENDIMENTO_HEADERS[field] || field).length + 2, 15),
+  }));
+  
+  // Estilizar cabeçalho
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF0056A4' },
+  };
+  headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+  
+  // Adicionar dados
+  for (const atd of atendimentos) {
+    const rowData: Record<string, string | number> = {};
+    for (const field of ATENDIMENTO_FIELDS) {
+      let value = atd[field];
+      if (field === 'nomePaciente' && atd.pacientes?.nome) {
+        value = atd.pacientes.nome;
+      }
+      if (field === 'pagamentoEfetivado') {
+        value = value ? 'Sim' : 'Não';
+      }
+      rowData[field] = formatValue(value, field);
+    }
+    worksheet.addRow(rowData);
+  }
+  
+  // Auto-ajustar largura das colunas
+  worksheet.columns.forEach(column => {
+    if (column.eachCell) {
+      let maxLength = 0;
+      column.eachCell({ includeEmpty: true }, cell => {
+        const cellLength = cell.value ? String(cell.value).length : 0;
+        if (cellLength > maxLength) {
+          maxLength = cellLength;
+        }
+      });
+      column.width = Math.min(maxLength + 2, 50);
+    }
   });
-  ws['!cols'] = colWidths;
-  
-  // Adicionar worksheet ao workbook
-  XLSX.utils.book_append_sheet(wb, ws, 'Atendimentos');
   
   // Gerar buffer do arquivo
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const buffer = await workbook.xlsx.writeBuffer();
   
-  return buffer;
+  return Buffer.from(buffer);
 }
 
 /**
@@ -588,17 +654,20 @@ export async function exportAtendimentosToCSV(
   const atendimentos = await fetchAtendimentos(tenantId, filters);
   const data = prepareAtendimentoData(atendimentos, ATENDIMENTO_FIELDS);
   
-  // Criar workbook e worksheet
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
+  // Gerar CSV manualmente com ponto-e-vírgula para compatibilidade com Excel brasileiro
+  const headers = ATENDIMENTO_FIELDS.map(f => ATENDIMENTO_HEADERS[f] || f);
+  const csvRows = [headers.join(';')];
   
-  // Adicionar worksheet ao workbook
-  XLSX.utils.book_append_sheet(wb, ws, 'Atendimentos');
+  for (const row of data) {
+    const values = headers.map(h => {
+      const val = String(row[h] || '').replace(/"/g, '""');
+      return `"${val}"`;
+    });
+    csvRows.push(values.join(';'));
+  }
   
-  // Gerar CSV com BOM para UTF-8
-  const csvContent = XLSX.utils.sheet_to_csv(ws, { FS: ';' });
-  const bom = '\uFEFF';
-  const buffer = Buffer.from(bom + csvContent, 'utf-8');
+  const bom = '\uFEFF'; // BOM para UTF-8
+  const buffer = Buffer.from(bom + csvRows.join('\n'), 'utf-8');
   
   return buffer;
 }
