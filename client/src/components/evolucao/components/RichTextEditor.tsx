@@ -3,10 +3,18 @@
  * COMPONENTE: RichTextEditor
  * ============================================================================
  * Editor de texto rico com ribbon de formatação completa
+ * 
+ * CORREÇÃO: Bug de texto invertido
+ * O problema era causado pelo uso de dangerouslySetInnerHTML com contentEditable.
+ * Quando o React re-renderiza, o cursor volta ao início do div, fazendo com que
+ * os caracteres sejam inseridos no início (prepended) em vez do final.
+ * 
+ * Solução: Usar useEffect para definir o conteúdo inicial apenas uma vez,
+ * e não usar dangerouslySetInnerHTML durante a edição.
  * ============================================================================
  */
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { RichTextEditorProps, TipoAtendimento } from '../types';
 
 // Template padrão de evolução médica
@@ -61,10 +69,30 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
   const colorPickerRef = useRef<HTMLInputElement>(null);
   const currentColorCommandRef = useRef<string>('');
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Inicializar o conteúdo do editor apenas uma vez
+  useEffect(() => {
+    if (editorRef.current && !isInitialized) {
+      editorRef.current.innerHTML = value || '';
+      setIsInitialized(true);
+    }
+  }, [value, isInitialized]);
+
+  // Atualizar o conteúdo quando o value mudar externamente (ex: carregar evolução existente)
+  useEffect(() => {
+    if (editorRef.current && isInitialized) {
+      // Só atualizar se o conteúdo for diferente e não estivermos editando
+      const currentContent = editorRef.current.innerHTML;
+      if (value !== currentContent && document.activeElement !== editorRef.current) {
+        editorRef.current.innerHTML = value || '';
+      }
+    }
+  }, [value, isInitialized]);
 
   // Executar comando de formatação
-  const execCommand = useCallback((command: string, value: string | null = null) => {
-    document.execCommand(command, false, value || undefined);
+  const execCommand = useCallback((command: string, cmdValue: string | null = null) => {
+    document.execCommand(command, false, cmdValue || undefined);
     editorRef.current?.focus();
     
     // Atualizar valor
@@ -150,7 +178,7 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
     }
   }, [onChange]);
 
-  // Handler de input
+  // Handler de input - apenas atualiza o estado, não re-renderiza o editor
   const handleInput = useCallback(() => {
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
@@ -349,15 +377,13 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
         </div>
       </div>
 
-      {/* Área de Edição */}
+      {/* Área de Edição - SEM dangerouslySetInnerHTML para evitar bug de cursor */}
       <div
         ref={editorRef}
         className="editor-content"
         contentEditable
-        dir="ltr"
-        lang="pt-BR"
+        suppressContentEditableWarning
         onInput={handleInput}
-        dangerouslySetInnerHTML={{ __html: value }}
         data-placeholder={placeholder}
       />
 
