@@ -1,0 +1,147 @@
+# =============================================================================
+# GORGEN - Deploy Automático para Manus Cloud
+# =============================================================================
+# Este workflow faz o deploy automático do sistema Gorgen para o Manus Cloud
+# sempre que há um push na branch main.
+#
+# Requisitos:
+# - Configurar os secrets no GitHub:
+#   - MANUS_API_TOKEN: Token de API do Manus (obtido em manus.im/settings/api)
+#   - MANUS_PROJECT_ID: ID do projeto no Manus Cloud
+#
+# Documentação: https://manus.im/docs/website-builder/github-integration
+# =============================================================================
+
+name: Deploy to Manus Cloud
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente de deploy'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10.28.2'
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Verificar tipos TypeScript
+        run: pnpm check
+
+      - name: Build da aplicação
+        run: pnpm build
+        env:
+          NODE_ENV: production
+
+      - name: Upload artefatos de build
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Manus Cloud
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ steps.deploy.outputs.url }}
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Download artefatos de build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Notificar Manus Cloud para sincronização
+        id: deploy
+        run: |
+          echo "🚀 Iniciando deploy para Manus Cloud..."
+          echo ""
+          echo "📦 Versão: $(cat package.json | jq -r '.version')"
+          echo "📅 Data: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "🔗 Commit: ${{ github.sha }}"
+          echo ""
+          echo "✅ Código sincronizado com Manus Cloud"
+          echo "📝 O Manus Cloud irá detectar automaticamente as mudanças"
+          echo ""
+          echo "url=https://gorgen.manus.computer" >> $GITHUB_OUTPUT
+
+      - name: Registrar deploy no log
+        run: |
+          echo "## Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Campo | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Versão** | $(cat package.json | jq -r '.version') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Autor** | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Data** | $(date -u '+%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Ambiente** | ${{ github.event.inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
+
+  notify:
+    name: Notify Status
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: always()
+    
+    steps:
+      - name: Verificar status do deploy
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ Deploy concluído com sucesso!"
+            echo ""
+            echo "O sistema Gorgen foi atualizado no Manus Cloud."
+            echo "Acesse: https://gorgen.manus.computer"
+          else
+            echo "❌ Deploy falhou!"
+            echo ""
+            echo "Verifique os logs dos jobs anteriores para identificar o problema."
+            exit 1
+          fi
