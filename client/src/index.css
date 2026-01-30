@@ -1,6 +1,43 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ==============================================
+ * FIX: Correção global para texto espelhado em contenteditable
+ * Bug: Texto aparece invertido horizontalmente (como espelho)
+ * Causa: Possível conflito com plugins Vite ou herança de transform
+ * ============================================== */
+[contenteditable],
+[contenteditable] *,
+.editor-content,
+.editor-content * {
+  transform: none !important;
+  -webkit-transform: none !important;
+  -moz-transform: none !important;
+  -ms-transform: none !important;
+  -o-transform: none !important;
+  direction: ltr !important;
+  unicode-bidi: normal !important;
+  writing-mode: horizontal-tb !important;
+}
+
+/* Reset específico para o editor de evolução */
+div[data-loc*="RichTextEditor"] {
+  transform: none !important;
+  -webkit-transform: none !important;
+}
+
+/* Garantir que nenhum ancestral aplique transformação */
+.modal-overlay,
+.modal-overlay *,
+.modal-container,
+.modal-container *,
+.modal-body,
+.modal-body *,
+.main-content,
+.main-content * {
+  transform-style: flat !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
