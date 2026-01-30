@@ -1,0 +1,9 @@
+{
+  "query": "SELECT id_agendamento, COUNT(*) as count \nFROM agendamentos \nWHERE tenant_id = 1 \nGROUP BY id_agendamento \nHAVING COUNT(*) > 1 \nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id_agendamento, COUNT(*) as count \nFROM agendamentos \nWHERE tenant_id = 1 \nGROUP BY id_agendamento \nHAVING COUNT(*) > 1 \nLIMIT 20;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 977
+}

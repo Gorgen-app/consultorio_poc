@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, id_agendamento, paciente_nome, data_hora_inicio, data_hora_fim, status, tipo_compromisso\nFROM agendamentos \nWHERE tenant_id = 1 \nAND DATE(data_hora_inicio) = '2026-01-30'\nORDER BY data_hora_inicio\nLIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2eJNWYGY92vZU3w.root --database TyeFpW5ykZHTuZXuk6iMG7 --execute SELECT id, id_agendamento, paciente_nome, data_hora_inicio, data_hora_fim, status, tipo_compromisso\nFROM agendamentos \nWHERE tenant_id = 1 \nAND DATE(data_hora_inicio) = '2026-01-30'\nORDER BY data_hora_inicio\nLIMIT 30;",
+  "rows": [
+    {
+      "id": "32027",
+      "id_agendamento": "AG-2026-12036",
+      "paciente_nome": "LISANDRA TATSCH",
+      "data_hora_inicio": "2026-01-30 07:00:00",
+      "data_hora_fim": "2026-01-30 07:30:00",
+      "status": "Cancelado",
+      "tipo_compromisso": "Consulta"
+    },
+    {
+      "id": "32208",
+      "id_agendamento": "AG-2026-12219",
+      "paciente_nome": "MARIA DE FATIMA FERREIRA",
+      "data_hora_inicio": "2026-01-30 09:00:00",
+      "data_hora_fim": "2026-01-30 09:30:00",
+      "status": "Cancelado",
+      "tipo_compromisso": "Consulta"
+    },
+    {
+      "id": "570001",
+      "id_agendamento": "AG-2026-12408",
+      "paciente_nome": "Lisandra Tatsch",
+      "data_hora_inicio": "2026-01-30 12:00:00",
+      "data_hora_fim": "2026-01-30 12:30:00",
+      "status": "Agendado",
+      "tipo_compromisso": "Consulta"
+    },
+    {
+      "id": "570002",
+      "id_agendamento": "AG-2026-12409",
+      "paciente_nome": "Patrícia da Silva Campelo Costa Barcellos",
+      "data_hora_inicio": "2026-01-30 12:30:00",
+      "data_hora_fim": "2026-01-30 13:00:00",
+      "status": "Agendado",
+      "tipo_compromisso": "Consulta"
+    },
+    {
+      "id": "570003",
+      "id_agendamento": "AG-2026-12410",
+      "paciente_nome": "JANE MARIA DE MORAES BRANCO",
+      "data_hora_inicio": "2026-01-30 13:00:00",
+      "data_hora_fim": "2026-01-30 13:30:00",
+      "status": "Agendado",
+      "tipo_compromisso": "Consulta"
+    },
+    {
+      "id": "570004",
+      "id_agendamento": "AG-2026-12411",
+      "paciente_nome": "Demétrio de Freitas Xavier",
+      "data_hora_inicio": "2026-01-30 13:30:00",
+      "data_hora_fim": "2026-01-30 14:00:00",
+      "status": "Agendado",
+      "tipo_compromisso": "Consulta"
+    },
+    {
+      "id": "570005",
+      "id_agendamento": "AG-2026-12412",
+      "paciente_nome": "Maria de Fatima Ferreira",
+      "data_hora_inicio": "2026-01-30 14:00:00",
+      "data_hora_fim": "2026-01-30 14:30:00",
+      "status": "Agendado",
+      "tipo_compromisso": "Consulta"
+    },
+    {
+      "id": "570006",
+      "id_agendamento": "AG-2026-12413",
+      "paciente_nome": "Cristhian Silveira da Costa",
+      "data_hora_inicio": "2026-01-30 14:30:00",
+      "data_hora_fim": "2026-01-30 15:00:00",
+      "status": "Reagendado",
+      "tipo_compromisso": "Consulta"
+    },
+    {
+      "id": "570007",
+      "id_agendamento": "AG-2026-12414",
+      "paciente_nome": "Antônio Carlos chiavaro Junior",
+      "data_hora_inicio": "2026-01-30 14:45:00",
+      "data_hora_fim": "2026-01-30 15:15:00",
+      "status": "Agendado",
+      "tipo_compromisso": "Consulta"
+    },
+    {
+      "id": "600002",
+      "id_agendamento": "AG-2026-12416",
+      "paciente_nome": "Cristhian Silveira da Costa",
+      "data_hora_inicio": "2026-01-30 15:00:00",
+      "data_hora_fim": "2026-01-30 15:30:00",
+      "status": "Agendado",
+      "tipo_compromisso": "Consulta"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tid_agendamento\tpaciente_nome\tdata_hora_inicio\tdata_hora_fim\tstatus\ttipo_compromisso\n32027\tAG-2026-12036\tLISANDRA TATSCH\t2026-01-30 07:00:00\t2026-01-30 07:30:00\tCancelado\tConsulta\n32208\tAG-2026-12219\tMARIA DE FATIMA FERREIRA\t2026-01-30 09:00:00\t2026-01-30 09:30:00\tCancelado\tConsulta\n570001\tAG-2026-12408\tLisandra Tatsch\t2026-01-30 12:00:00\t2026-01-30 12:30:00\tAgendado\tConsulta\n570002\tAG-2026-12409\tPatrícia da Silva Campelo Costa Barcellos\t2026-01-30 12:30:00\t2026-01-30 13:00:00\tAgendado\tConsulta\n570003\tAG-2026-12410\tJANE MARIA DE MORAES BRANCO\t2026-01-30 13:00:00\t2026-01-30 13:30:00\tAgendado\tConsulta\n570004\tAG-2026-12411\tDemétrio de Freitas Xavier\t2026-01-30 13:30:00\t2026-01-30 14:00:00\tAgendado\tConsulta\n570005\tAG-2026-12412\tMaria de Fatima Ferreira\t2026-01-30 14:00:00\t2026-01-30 14:30:00\tAgendado\tConsulta\n570006\tAG-2026-12413\tCristhian Silveira da Costa\t2026-01-30 14:30:00\t2026-01-30 15:00:00\tReagendado\tConsulta\n570007\tAG-2026-12414\tAntônio Carlos chiavaro Junior\t2026-01-30 14:45:00\t2026-01-30 15:15:00\tAgendado\tConsulta\n600002\tAG-2026-12416\tCristhian Silveira da Costa\t2026-01-30 15:00:00\t2026-01-30 15:30:00\tAgendado\tConsulta\n",
+  "stderr": "",
+  "execution_time_ms": 159
+}

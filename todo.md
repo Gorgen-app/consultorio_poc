@@ -4417,3 +4417,16 @@ Dependencias quill e react-quill-new removidas (eram órfãs).
 ### GitHub Actions
 - [x] Corrigir conflito de versão do pnpm (10.28 → 10.28.2) no deploy-manus.yml
 
+
+
+---
+
+## 🐛 BUGS CRÍTICOS A CORRIGIR - 30/01/2026
+
+- [x] Bug de eventos duplicados na agenda - VERIFICADO: não há duplicação no banco de dados
+- [x] Criar botão para registrar NKDA - JÁ IMPLEMENTADO no modal de alergias
+- [x] Corrigir direção RTL no editor de evolução - Adicionados estilos CSS mais fortes
+- [x] Modal de agendamento mais largo - JÁ IMPLEMENTADO com max-w-4xl
+- [x] Adicionar endereços dos consultórios - JÁ IMPLEMENTADO com LOCAIS_COM_ENDERECO
+- [x] Botão X maior (size-6) e afastado do status (top-2 right-2)
+

@@ -492,16 +492,37 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
           min-height: 300px;
           /* Forçar direção LTR para evitar bug de texto espelhado/RTL */
           direction: ltr !important;
-          unicode-bidi: embed !important;
+          unicode-bidi: isolate !important;
           text-align: left !important;
           writing-mode: horizontal-tb !important;
           -webkit-writing-mode: horizontal-tb !important;
+          -webkit-text-orientation: mixed !important;
+          text-orientation: mixed !important;
+          /* Reset de transformações que podem causar espelhamento */
+          transform: none !important;
+          -webkit-transform: none !important;
         }
 
         .editor-content * {
           direction: ltr !important;
-          unicode-bidi: embed !important;
+          unicode-bidi: isolate !important;
           text-align: inherit;
+          transform: none !important;
+          -webkit-transform: none !important;
+        }
+
+        .editor-content p,
+        .editor-content div,
+        .editor-content span,
+        .editor-content strong,
+        .editor-content em,
+        .editor-content u,
+        .editor-content li,
+        .editor-content ol,
+        .editor-content ul {
+          direction: ltr !important;
+          unicode-bidi: isolate !important;
+          text-align: left !important;
         }
 
         .editor-content:focus {
