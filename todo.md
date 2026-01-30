@@ -4183,3 +4183,14 @@ Adicionar os seguintes botões ao final da janela de evolução:
 
 ### Versão
 - [x] Atualizar package.json para versão 3.9.84
+
+
+---
+
+## 🔧 GORGEN 3.9.85 - Ativação do Modal de Evolução v4 (29/01/2026)
+
+### Ativação do Modal v4
+- [x] Alterar import em Prontuario.tsx para usar ProntuarioEvolucoesWrapper
+- [x] Ajustar props passadas ao componente wrapper
+- [x] Testar funcionamento do modal v4 (TypeScript OK)
+- [x] Salvar checkpoint

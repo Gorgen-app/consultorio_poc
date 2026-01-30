@@ -48,7 +48,7 @@ import { toast } from "sonner";
 import { EditarPacienteModal } from "@/components/EditarPacienteModal";
 
 // Componentes das seções
-import ProntuarioEvolucoes from "@/components/prontuario/ProntuarioEvolucoes";
+import { ProntuarioEvolucoesWrapper } from "@/components/evolucao";
 import ProntuarioInternacoes from "@/components/prontuario/ProntuarioInternacoes";
 import ProntuarioCirurgias from "@/components/prontuario/ProntuarioCirurgias";
 import ProntuarioExamesLab from "@/components/prontuario/ProntuarioExamesLab";
@@ -834,8 +834,10 @@ export default function Prontuario() {
                   </div>
                 </CardContent>
               </Card>
-              <ProntuarioEvolucoes 
-                pacienteId={pacienteId} 
+              <ProntuarioEvolucoesWrapper 
+                pacienteId={pacienteId}
+                pacienteNome={paciente.nome}
+                agendamentoId={agendamentoIdVinculado || undefined}
                 evolucoes={prontuario.evolucoes}
                 onUpdate={refetch}
                 abrirNovaEvolucao={abrirNovaEvolucao}
