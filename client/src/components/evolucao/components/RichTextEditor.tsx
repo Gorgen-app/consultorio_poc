@@ -355,6 +355,16 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
         className="editor-content"
         contentEditable
         dir="ltr"
+        lang="pt-BR"
+        style={{
+          direction: 'ltr',
+          unicodeBidi: 'plaintext',
+          textAlign: 'left',
+          writingMode: 'horizontal-tb',
+          transform: 'none',
+          WebkitTransform: 'none',
+          MozTransform: 'none',
+        }}
         onInput={handleInput}
         dangerouslySetInnerHTML={{ __html: value }}
         data-placeholder={placeholder}

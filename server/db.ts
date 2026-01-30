@@ -2347,6 +2347,12 @@ export async function listAgendamentos(filters?: {
     conditions.push(eq(agendamentos.status, filters.status as any));
   }
   
+  // Excluir agendamentos reagendados da visualização (mostrar apenas o mais recente)
+  // Agendamentos com status "Reagendado" são versões antigas que foram substituídas
+  if (!filters?.incluirCancelados) {
+    conditions.push(ne(agendamentos.status, 'Reagendado'));
+  }
+  
   // Query otimizada com LEFT JOIN para buscar dados atualizados do paciente
   // Isso garante que alterações no cadastro do paciente sejam refletidas nos agendamentos
   const result = await db.select({

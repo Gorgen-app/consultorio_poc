@@ -4430,3 +4430,15 @@ Dependencias quill e react-quill-new removidas (eram órfãs).
 - [x] Adicionar endereços dos consultórios - JÁ IMPLEMENTADO com LOCAIS_COM_ENDERECO
 - [x] Botão X maior (size-6) e afastado do status (top-2 right-2)
 
+
+
+---
+
+## 🔧 GORGEN 3.9.99 - Log de Modificações da Agenda
+
+- [x] Criar tabela agendamento_historico no schema para registrar modificações (JÁ EXISTE: historicoAgendamentos)
+- [x] Implementar registro automático de modificações (quem, o quê, quando) (JÁ IMPLEMENTADO)
+- [x] Filtrar visualização da agenda para mostrar apenas agendamento mais recente (excluir status 'Reagendado')
+- [x] Corrigir botão X para cor branca (botão customizado no cabeçalho)
+- [x] Afastar botão X do status "Em atendimento" (pr-12 no container + posição absoluta)
+
