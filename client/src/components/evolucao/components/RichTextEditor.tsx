@@ -356,15 +356,6 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
         contentEditable
         dir="ltr"
         lang="pt-BR"
-        style={{
-          direction: 'ltr',
-          unicodeBidi: 'plaintext',
-          textAlign: 'left',
-          writingMode: 'horizontal-tb',
-          transform: 'none',
-          WebkitTransform: 'none',
-          MozTransform: 'none',
-        }}
         onInput={handleInput}
         dangerouslySetInnerHTML={{ __html: value }}
         data-placeholder={placeholder}
@@ -500,25 +491,26 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
           font-size: 14px;
           line-height: 1.6;
           min-height: 300px;
-          /* Forçar direção LTR para evitar bug de texto espelhado/RTL */
+          /* Correção definitiva para texto espelhado/invertido */
           direction: ltr !important;
-          unicode-bidi: isolate !important;
+          unicode-bidi: normal !important;
           text-align: left !important;
           writing-mode: horizontal-tb !important;
-          -webkit-writing-mode: horizontal-tb !important;
-          -webkit-text-orientation: mixed !important;
           text-orientation: mixed !important;
-          /* Reset de transformações que podem causar espelhamento */
+          /* Reset de transformações */
           transform: none !important;
-          -webkit-transform: none !important;
+          /* Propriedades adicionais para garantir comportamento correto */
+          -webkit-text-size-adjust: 100%;
+          -moz-text-size-adjust: 100%;
+          text-size-adjust: 100%;
+          /* Forçar renderização LTR */
+          -webkit-locale: "pt-BR";
         }
 
         .editor-content * {
-          direction: ltr !important;
-          unicode-bidi: isolate !important;
-          text-align: inherit;
+          direction: inherit !important;
+          unicode-bidi: normal !important;
           transform: none !important;
-          -webkit-transform: none !important;
         }
 
         .editor-content p,
@@ -531,8 +523,13 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
         .editor-content ol,
         .editor-content ul {
           direction: ltr !important;
-          unicode-bidi: isolate !important;
+          unicode-bidi: normal !important;
           text-align: left !important;
+        }
+
+        /* Prevenir herança de estilos RTL de elementos pais */
+        .editor-content[contenteditable="true"] {
+          -webkit-user-modify: read-write-plaintext-only;
         }
 
         .editor-content:focus {
