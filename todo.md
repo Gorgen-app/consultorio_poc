@@ -4413,3 +4413,7 @@ Dependencias quill e react-quill-new removidas (eram órfãs).
 - [x] Reforçar correção de direção RTL com writing-mode e unicode-bidi
 - [x] Aplicar estilos LTR em todos os elementos filhos
 
+
+### GitHub Actions
+- [x] Corrigir conflito de versão do pnpm (10.28 → 10.28.2) no deploy-manus.yml
+
