@@ -463,8 +463,8 @@ export default function Agenda() {
     return dias;
   }, [periodo.inicio]);
 
-  // Horários do dia (7h às 20h)
-  const horarios = Array.from({ length: 14 }, (_, i) => i + 7);
+  // Horários do dia (0h às 23h - 24 horas completas)
+  const horarios = Array.from({ length: 24 }, (_, i) => i);
 
   // Usar resultados da busca rápida otimizada
   const pacientesFiltrados = pacientesSearch || [];
@@ -1015,7 +1015,9 @@ export default function Agenda() {
                           <span className="opacity-50">{draggedAgendamento ? "Solte aqui" : "Clique para agendar"}</span>
                         </div>
                       )}
-                      {agendamentosHora.map((ag: any) => {
+                      {/* Container flex para eventos que colidem - dividir meio a meio */}
+                      <div className={`flex gap-1 ${agendamentosHora.length > 1 ? 'flex-row' : 'flex-col'}`}>
+                      {agendamentosHora.map((ag: any, agIndex: number) => {
                         const isCanceladoDia = ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou";
                         const canDragDia = !isCanceladoDia;
                         
@@ -1030,7 +1032,7 @@ export default function Agenda() {
                             abrirDetalhes(ag);
                           }}
                           className={`
-                            p-3 rounded text-white mb-2
+                            p-3 rounded text-white ${agendamentosHora.length > 1 ? 'flex-1 mb-0' : 'mb-2'}
                             ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
                             ${isCanceladoDia ? "opacity-40 cursor-not-allowed" : "hover:opacity-90 cursor-grab active:cursor-grabbing"}
                             ${draggedAgendamento?.id === ag.id ? "ring-2 ring-white ring-offset-1" : ""}
@@ -1038,12 +1040,27 @@ export default function Agenda() {
                           title={canDragDia ? "Arraste para reagendar" : ag.status}
                         >
                           <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium">
-                                {formatarHora(ag.dataHoraInicio)} - {formatarHora(ag.dataHoraFim)}
-                              </div>
-                              <div className="text-sm opacity-90">
-                                {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
+                            <div className="flex items-center gap-2">
+                              {/* Ícone de Status */}
+                              {(() => {
+                                const statusInfo = getStatusIcon(ag.status, ag.tipoCompromisso);
+                                if (statusInfo) {
+                                  const IconComponent = statusInfo.icon;
+                                  return (
+                                    <div className={`p-1.5 rounded ${statusInfo.bgColor}`} title={statusInfo.label}>
+                                      <IconComponent className={`w-4 h-4 ${statusInfo.color}`} />
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+                              <div>
+                                <div className="font-medium">
+                                  {formatarHora(ag.dataHoraInicio)} - {formatarHora(ag.dataHoraFim)}
+                                </div>
+                                <div className="text-sm opacity-90">
+                                  {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
+                                </div>
                               </div>
                             </div>
                             <div className="text-xs opacity-80">
@@ -1053,6 +1070,7 @@ export default function Agenda() {
                         </div>
                       );
                       })}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1249,48 +1267,55 @@ export default function Agenda() {
                         <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
                         Buscando pacientes...
                       </div>
-                    ) : pacientesFiltrados.length > 0 ? (
-                      pacientesFiltrados.map((p: any) => (
-                        <div
-                          key={p.id}
-                          className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0 transition-colors"
+                    ) : (
+                      <>
+                        {/* Lista de pacientes encontrados */}
+                        {pacientesFiltrados.length > 0 && pacientesFiltrados.map((p: any) => (
+                          <div
+                            key={p.id}
+                            className="p-3 hover:bg-muted cursor-pointer border-b transition-colors"
+                            onClick={() => {
+                              selecionarPaciente(p);
+                              setPacienteSelecionadoInfo(p);
+                              setShowPacienteDropdown(false);
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="w-4 h-4 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">{p.nome}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {p.idPaciente} {p.cpf && `| CPF: ${p.cpf}`} {p.dataNascimento && `| Nasc: ${new Date(p.dataNascimento).toLocaleDateString('pt-BR')}`}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {/* Opção de criar novo cadastro - SEMPRE visível para pacientes homônimos */}
+                        <div className="p-3 border-t bg-muted/30 hover:bg-muted cursor-pointer transition-colors"
                           onClick={() => {
-                            selecionarPaciente(p);
-                            setPacienteSelecionadoInfo(p);
+                            // Criar novo paciente com o nome digitado (para homônimos)
+                            setNovoAgendamento(prev => ({ ...prev, pacienteId: null, pacienteNome: buscaPaciente }));
+                            setPacienteSelecionadoInfo(null);
                             setShowPacienteDropdown(false);
+                            toast.info(`Novo cadastro será criado para "${buscaPaciente}" ao salvar. Diferencie por CPF, data de nascimento ou nome da mãe.`);
                           }}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <User className="w-4 h-4 text-primary" />
+                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                              <Plus className="w-4 h-4 text-green-600" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">{p.nome}</div>
+                              <div className="font-medium text-green-700">Criar novo cadastro</div>
                               <div className="text-xs text-muted-foreground">
-                                {p.idPaciente} {p.cpf && `| CPF: ${p.cpf}`} {p.operadora1 && `| ${p.operadora1}`}
+                                "{buscaPaciente}" - Novo paciente (mesmo nome de outro)
                               </div>
                             </div>
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center">
-                        <div className="text-muted-foreground mb-2">Nenhum paciente encontrado</div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // Criar novo paciente com o nome digitado
-                            setNovoAgendamento(prev => ({ ...prev, pacienteNome: buscaPaciente }));
-                            setShowPacienteDropdown(false);
-                            toast.info("Paciente será criado automaticamente ao salvar o agendamento");
-                          }}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Criar novo paciente: "{buscaPaciente}"
-                        </Button>
-                      </div>
+                      </>
                     )}
                   </div>
                 )}
@@ -1319,76 +1344,155 @@ export default function Agenda() {
               </div>
               <div>
                 <Label>Início</Label>
-                <Input
-                  type="time"
-                  value={novoAgendamento.horaInicio}
-                  onChange={(e) => {
-                    const horaInicio = e.target.value;
-                    if (horaInicio) {
-                      const [hInicio, mInicio] = horaInicio.split(':').map(Number);
+                <div className="flex gap-1">
+                  {/* Hora */}
+                  <Select
+                    value={novoAgendamento.horaInicio.split(':')[0] || ''}
+                    onValueChange={(h) => {
+                      const m = novoAgendamento.horaInicio.split(':')[1] || '00';
+                      const horaInicio = `${h}:${m}`;
                       
-                      // Calcular duração atual (se houver horário de fim válido)
-                      let duracaoMinutos = 30; // Padrão: 30 minutos
+                      // Calcular duração atual
+                      let duracaoMinutos = 30;
                       if (novoAgendamento.horaFim && novoAgendamento.horaInicio) {
                         const [hFimAtual, mFimAtual] = novoAgendamento.horaFim.split(':').map(Number);
                         const [hInicioAtual, mInicioAtual] = novoAgendamento.horaInicio.split(':').map(Number);
                         const duracaoAtual = (hFimAtual * 60 + mFimAtual) - (hInicioAtual * 60 + mInicioAtual);
-                        if (duracaoAtual > 0) {
-                          duracaoMinutos = duracaoAtual;
-                        }
+                        if (duracaoAtual > 0) duracaoMinutos = duracaoAtual;
                       }
                       
-                      // Calcular novo horário de fim mantendo a duração
-                      const totalMinutosFim = hInicio * 60 + mInicio + duracaoMinutos;
+                      // Calcular novo horário de fim
+                      const totalMinutosFim = parseInt(h) * 60 + parseInt(m) + duracaoMinutos;
                       let horaFim = Math.floor(totalMinutosFim / 60);
                       let minutoFim = totalMinutosFim % 60;
+                      if (horaFim >= 24) { horaFim = 23; minutoFim = 59; }
+                      const horaFimFormatada = `${String(horaFim).padStart(2, '0')}:${String(minutoFim).padStart(2, '0')}`;
                       
-                      // Limitar a 23:59
-                      if (horaFim >= 24) {
-                        horaFim = 23;
-                        minutoFim = 59;
+                      setNovoAgendamento({...novoAgendamento, horaInicio, horaFim: horaFimFormatada});
+                    }}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="HH" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <SelectItem key={i} value={String(i).padStart(2, '0')}>
+                          {String(i).padStart(2, '0')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="flex items-center">:</span>
+                  {/* Minutos - intervalos de 5 */}
+                  <Select
+                    value={novoAgendamento.horaInicio.split(':')[1] || ''}
+                    onValueChange={(m) => {
+                      const h = novoAgendamento.horaInicio.split(':')[0] || '08';
+                      const horaInicio = `${h}:${m}`;
+                      
+                      // Calcular duração atual
+                      let duracaoMinutos = 30;
+                      if (novoAgendamento.horaFim && novoAgendamento.horaInicio) {
+                        const [hFimAtual, mFimAtual] = novoAgendamento.horaFim.split(':').map(Number);
+                        const [hInicioAtual, mInicioAtual] = novoAgendamento.horaInicio.split(':').map(Number);
+                        const duracaoAtual = (hFimAtual * 60 + mFimAtual) - (hInicioAtual * 60 + mInicioAtual);
+                        if (duracaoAtual > 0) duracaoMinutos = duracaoAtual;
                       }
                       
+                      // Calcular novo horário de fim
+                      const totalMinutosFim = parseInt(h) * 60 + parseInt(m) + duracaoMinutos;
+                      let horaFim = Math.floor(totalMinutosFim / 60);
+                      let minutoFim = totalMinutosFim % 60;
+                      if (horaFim >= 24) { horaFim = 23; minutoFim = 59; }
                       const horaFimFormatada = `${String(horaFim).padStart(2, '0')}:${String(minutoFim).padStart(2, '0')}`;
+                      
                       setNovoAgendamento({...novoAgendamento, horaInicio, horaFim: horaFimFormatada});
-                    } else {
-                      setNovoAgendamento({...novoAgendamento, horaInicio});
-                    }
-                  }}
-                />
+                    }}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="MM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* Intervalos de 5 minutos */}
+                      {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
+                        <SelectItem key={m} value={String(m).padStart(2, '0')}>
+                          {String(m).padStart(2, '0')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
                 <Label>Fim</Label>
-                <Input
-                  type="time"
-                  value={novoAgendamento.horaFim}
-                  onChange={(e) => {
-                    const horaFim = e.target.value;
-                    // Validar que horário de fim seja posterior ao início
-                    if (horaFim && novoAgendamento.horaInicio) {
-                      const [hInicio, mInicio] = novoAgendamento.horaInicio.split(':').map(Number);
-                      const [hFim, mFim] = horaFim.split(':').map(Number);
-                      const minutosInicio = hInicio * 60 + mInicio;
-                      const minutosFim = hFim * 60 + mFim;
+                <div className="flex gap-1">
+                  {/* Hora */}
+                  <Select
+                    value={novoAgendamento.horaFim.split(':')[0] || ''}
+                    onValueChange={(h) => {
+                      const m = novoAgendamento.horaFim.split(':')[1] || '00';
+                      const horaFim = `${h}:${m}`;
                       
-                      if (minutosFim <= minutosInicio) {
-                        toast.error("Horário de término deve ser posterior ao horário de início");
-                        // Corrigir automaticamente para início + 30 minutos
-                        const totalMinutosFim = minutosInicio + 30;
-                        let horaFimCorrigida = Math.floor(totalMinutosFim / 60);
-                        let minutoFimCorrigido = totalMinutosFim % 60;
-                        if (horaFimCorrigida >= 24) {
-                          horaFimCorrigida = 23;
-                          minutoFimCorrigido = 59;
+                      // Validar que horário de fim seja posterior ao início
+                      if (novoAgendamento.horaInicio) {
+                        const [hInicio, mInicio] = novoAgendamento.horaInicio.split(':').map(Number);
+                        const minutosInicio = hInicio * 60 + mInicio;
+                        const minutosFim = parseInt(h) * 60 + parseInt(m);
+                        
+                        if (minutosFim <= minutosInicio) {
+                          toast.error("Horário de término deve ser posterior ao horário de início");
+                          return;
                         }
-                        const horaFimFormatada = `${String(horaFimCorrigida).padStart(2, '0')}:${String(minutoFimCorrigido).padStart(2, '0')}`;
-                        setNovoAgendamento({...novoAgendamento, horaFim: horaFimFormatada});
-                        return;
                       }
-                    }
-                    setNovoAgendamento({...novoAgendamento, horaFim});
-                  }}
-                />
+                      setNovoAgendamento({...novoAgendamento, horaFim});
+                    }}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="HH" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <SelectItem key={i} value={String(i).padStart(2, '0')}>
+                          {String(i).padStart(2, '0')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="flex items-center">:</span>
+                  {/* Minutos - intervalos de 5 */}
+                  <Select
+                    value={novoAgendamento.horaFim.split(':')[1] || ''}
+                    onValueChange={(m) => {
+                      const h = novoAgendamento.horaFim.split(':')[0] || '08';
+                      const horaFim = `${h}:${m}`;
+                      
+                      // Validar que horário de fim seja posterior ao início
+                      if (novoAgendamento.horaInicio) {
+                        const [hInicio, mInicio] = novoAgendamento.horaInicio.split(':').map(Number);
+                        const minutosInicio = hInicio * 60 + mInicio;
+                        const minutosFim = parseInt(h) * 60 + parseInt(m);
+                        
+                        if (minutosFim <= minutosInicio) {
+                          toast.error("Horário de término deve ser posterior ao horário de início");
+                          return;
+                        }
+                      }
+                      setNovoAgendamento({...novoAgendamento, horaFim});
+                    }}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue placeholder="MM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* Intervalos de 5 minutos */}
+                      {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
+                        <SelectItem key={m} value={String(m).padStart(2, '0')}>
+                          {String(m).padStart(2, '0')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

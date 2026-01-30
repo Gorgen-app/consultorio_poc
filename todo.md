@@ -4304,3 +4304,24 @@ Dependencias quill e react-quill-new removidas (eram órfãs).
 - [x] Confirmar que workflows estão ativos
 
 **Resultado:** Arquivos criados localmente, serão enviados no próximo push
+
+
+---
+
+## 🗓️ GORGEN 3.9.92 - Melhorias na Agenda e Agendamento (30/01/2026)
+
+### Visualização Diária
+- [x] Adicionar ícones de status das consultas na visualização dia
+- [x] Corrigir colisão de eventos (dividir slot meio a meio quando há sobreposição)
+- [x] Expandir horário da agenda para mostrar todas as 24 horas do dia (0h-23h)
+
+### Agendamento
+- [x] Permitir criar novo cadastro para pacientes homônimos (opção "Criar novo paciente" sempre visível)
+- [x] Ajustar dropdown de minutos para intervalos de 5 em 5
+
+### Eventos Recorrentes (TAREFA FUTURA)
+- [ ] Implementar sistema de eventos recorrentes (modelo Google Calendar)
+- [ ] Opções: diário, semanal, mensal, anual, personalizado
+- [ ] Permitir definir data de término ou número de ocorrências
+- [ ] Adicionar campos RRULE no banco de dados
+- [ ] Tratamento de exceções (editar/cancelar ocorrências individuais)
