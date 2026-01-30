@@ -4224,3 +4224,11 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Remover NotificationDropdown do ProntuarioEvolucoesV4
 - [x] Integrar alertas de documentos pendentes no sino do DashboardLayout
 - [x] Manter contagem de pendentes visível no sino global
+
+
+---
+
+## 🔧 GORGEN 3.9.88 - Link Documentos Pendentes no Menu (30/01/2026)
+
+### Menu Lateral
+- [x] Adicionar link para Documentos Pendentes no menu lateral

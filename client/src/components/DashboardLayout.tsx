@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, ChevronLeft, Search, Share2, Receipt, Megaphone, UserCircle, Clock, FileSpreadsheet, AlertTriangle, Activity, LayoutGrid, FlaskConical } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Stethoscope, ClipboardPlus, UserPlus, Settings, Shield, DollarSign, Eye, ChevronDown, ChevronRight, ChevronLeft, Search, Share2, Receipt, Megaphone, UserCircle, Clock, FileSpreadsheet, AlertTriangle, Activity, LayoutGrid, FlaskConical, FileClock } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -58,6 +58,7 @@ const perfilInfo: Record<string, { label: string; icon: React.ReactNode; color: 
 const mainMenuItems: { icon: typeof LayoutDashboard; label: string; path: string; funcionalidade: Funcionalidade; comingSoon?: boolean; adminOnly?: boolean }[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", funcionalidade: "dashboard" },
   { icon: Calendar, label: "Agenda", path: "/agenda", funcionalidade: "agenda" },
+  { icon: FileClock, label: "Documentos Pendentes", path: "/documentos-pendentes", funcionalidade: "prontuario" },
   { icon: Share2, label: "Compartilhamento", path: "/compartilhamento", funcionalidade: "compartilhamento" },
 ];
 
