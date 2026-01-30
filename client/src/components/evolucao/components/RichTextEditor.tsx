@@ -492,8 +492,16 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
           min-height: 300px;
           /* Forçar direção LTR para evitar bug de texto espelhado/RTL */
           direction: ltr !important;
-          unicode-bidi: normal !important;
-          text-align: left;
+          unicode-bidi: embed !important;
+          text-align: left !important;
+          writing-mode: horizontal-tb !important;
+          -webkit-writing-mode: horizontal-tb !important;
+        }
+
+        .editor-content * {
+          direction: ltr !important;
+          unicode-bidi: embed !important;
+          text-align: inherit;
         }
 
         .editor-content:focus {

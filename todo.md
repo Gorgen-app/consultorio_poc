@@ -4396,3 +4396,20 @@ Dependencias quill e react-quill-new removidas (eram órfãs).
 - [x] Botão "Confirmar NKDA" para registro rápido
 - [x] Separador visual entre NKDA e registro de alergia específica
 
+
+
+---
+
+## 🔧 GORGEN 3.9.95 - Correções de Posicionamento (30/01/2026)
+
+### Agenda - Visualização Diária
+- [x] Corrigir posicionamento de eventos na mesma hora
+  - Eventos na primeira metade (00-29min) ficam em cima
+  - Eventos na segunda metade (30-59min) ficam embaixo
+  - Apenas eventos com sobreposição real de horário ficam lado a lado
+- [x] Implementar detecção de colisão real entre eventos
+
+### Editor de Evolução
+- [x] Reforçar correção de direção RTL com writing-mode e unicode-bidi
+- [x] Aplicar estilos LTR em todos os elementos filhos
+

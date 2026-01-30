@@ -1046,62 +1046,104 @@ export default function Agenda() {
                           <span className="opacity-50">{draggedAgendamento ? "Solte aqui" : "Clique para agendar"}</span>
                         </div>
                       )}
-                      {/* Container flex para eventos que colidem - dividir meio a meio */}
-                      <div className={`flex gap-1 ${agendamentosHora.length > 1 ? 'flex-row' : 'flex-col'}`}>
-                      {agendamentosHora.map((ag: any, agIndex: number) => {
-                        const isCanceladoDia = ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou";
-                        const canDragDia = !isCanceladoDia;
+                      {/* Separar eventos por metade da hora e detectar colisões reais */}
+                      {agendamentosHora.length > 0 && (() => {
+                        // Função para verificar se dois eventos têm sobreposição de horário
+                        const eventosColidem = (ev1: any, ev2: any) => {
+                          const inicio1 = new Date(ev1.dataHoraInicio).getTime();
+                          const fim1 = new Date(ev1.dataHoraFim).getTime();
+                          const inicio2 = new Date(ev2.dataHoraInicio).getTime();
+                          const fim2 = new Date(ev2.dataHoraFim).getTime();
+                          return inicio1 < fim2 && inicio2 < fim1;
+                        };
                         
-                        return (
-                        <div
-                          key={ag.id}
-                          draggable={canDragDia}
-                          onDragStart={(e) => handleDragStart(e, ag)}
-                          onDragEnd={handleDragEnd}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            abrirDetalhes(ag);
-                          }}
-                          className={`
-                            p-3 rounded text-white ${agendamentosHora.length > 1 ? 'flex-1 mb-0' : 'mb-2'}
-                            ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
-                            ${isCanceladoDia ? "opacity-40 cursor-not-allowed" : "hover:opacity-90 cursor-grab active:cursor-grabbing"}
-                            ${draggedAgendamento?.id === ag.id ? "ring-2 ring-white ring-offset-1" : ""}
-                          `}
-                          title={canDragDia ? "Arraste para reagendar" : ag.status}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {/* Ícone de Status */}
-                              {(() => {
-                                const statusInfo = getStatusIcon(ag.status, ag.tipoCompromisso);
-                                if (statusInfo) {
-                                  const IconComponent = statusInfo.icon;
-                                  return (
-                                    <div className={`p-1.5 rounded ${statusInfo.bgColor}`} title={statusInfo.label}>
-                                      <IconComponent className={`w-4 h-4 ${statusInfo.color}`} />
+                        // Separar por metade da hora
+                        const primeiraMetade = agendamentosHora.filter((ag: any) => 
+                          new Date(ag.dataHoraInicio).getMinutes() < 30
+                        );
+                        const segundaMetade = agendamentosHora.filter((ag: any) => 
+                          new Date(ag.dataHoraInicio).getMinutes() >= 30
+                        );
+                        
+                        // Verificar colisões dentro de cada metade
+                        const temColisaoPrimeira = primeiraMetade.length > 1 && 
+                          primeiraMetade.some((ev1: any, i: number) => 
+                            primeiraMetade.slice(i + 1).some((ev2: any) => eventosColidem(ev1, ev2))
+                          );
+                        const temColisaoSegunda = segundaMetade.length > 1 && 
+                          segundaMetade.some((ev1: any, i: number) => 
+                            segundaMetade.slice(i + 1).some((ev2: any) => eventosColidem(ev1, ev2))
+                          );
+                        
+                        const renderEvento = (ag: any, temColisao: boolean, totalGrupo: number) => {
+                          const isCanceladoDia = ag.status === "Cancelado" || ag.status === "Reagendado" || ag.status === "Faltou";
+                          const canDragDia = !isCanceladoDia;
+                          return (
+                            <div
+                              key={ag.id}
+                              draggable={canDragDia}
+                              onDragStart={(e) => handleDragStart(e, ag)}
+                              onDragEnd={handleDragEnd}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                abrirDetalhes(ag);
+                              }}
+                              className={`
+                                p-2 rounded text-white ${temColisao && totalGrupo > 1 ? 'flex-1' : 'w-full'}
+                                ${CORES_TIPO[ag.tipoCompromisso] || "bg-gray-500"}
+                                ${isCanceladoDia ? "opacity-40 cursor-not-allowed" : "hover:opacity-90 cursor-grab active:cursor-grabbing"}
+                                ${draggedAgendamento?.id === ag.id ? "ring-2 ring-white ring-offset-1" : ""}
+                              `}
+                              title={canDragDia ? "Arraste para reagendar" : ag.status}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  {(() => {
+                                    const statusInfo = getStatusIcon(ag.status, ag.tipoCompromisso);
+                                    if (statusInfo) {
+                                      const IconComponent = statusInfo.icon;
+                                      return (
+                                        <div className={`p-1 rounded ${statusInfo.bgColor}`} title={statusInfo.label}>
+                                          <IconComponent className={`w-3 h-3 ${statusInfo.color}`} />
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
+                                  <div>
+                                    <div className="font-medium text-sm">
+                                      {formatarHora(ag.dataHoraInicio)} - {formatarHora(ag.dataHoraFim)}
                                     </div>
-                                  );
-                                }
-                                return null;
-                              })()}
-                              <div>
-                                <div className="font-medium">
-                                  {formatarHora(ag.dataHoraInicio)} - {formatarHora(ag.dataHoraFim)}
+                                    <div className="text-xs opacity-90">
+                                      {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-sm opacity-90">
-                                  {ag.pacienteNome || ag.titulo || ag.tipoCompromisso}
+                                <div className="text-xs opacity-80">
+                                  {ag.local}
                                 </div>
                               </div>
                             </div>
-                            <div className="text-xs opacity-80">
-                              {ag.local}
-                            </div>
+                          );
+                        };
+                        
+                        return (
+                          <div className="flex flex-col gap-1">
+                            {/* Primeira metade (00-29 min) */}
+                            {primeiraMetade.length > 0 && (
+                              <div className={`flex gap-1 ${temColisaoPrimeira ? 'flex-row' : 'flex-col'}`}>
+                                {primeiraMetade.map((ag: any) => renderEvento(ag, temColisaoPrimeira, primeiraMetade.length))}
+                              </div>
+                            )}
+                            {/* Segunda metade (30-59 min) */}
+                            {segundaMetade.length > 0 && (
+                              <div className={`flex gap-1 ${temColisaoSegunda ? 'flex-row' : 'flex-col'}`}>
+                                {segundaMetade.map((ag: any) => renderEvento(ag, temColisaoSegunda, segundaMetade.length))}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      );
-                      })}
-                      </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 );
