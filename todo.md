@@ -4214,3 +4214,13 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - [x] Permitir múltiplas janelas minimizadas lado a lado (como tabs de browser)
 - [x] Manter estado persistente entre navegações de página
 - [x] Integrar com contexto global do React
+
+
+---
+
+## 🔧 GORGEN 3.9.87 - Mover Alertas para Sino Global (30/01/2026)
+
+### Correção de Alertas
+- [x] Remover NotificationDropdown do ProntuarioEvolucoesV4
+- [x] Integrar alertas de documentos pendentes no sino do DashboardLayout
+- [x] Manter contagem de pendentes visível no sino global

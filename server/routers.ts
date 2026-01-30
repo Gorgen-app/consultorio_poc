@@ -507,8 +507,9 @@ export const appRouter = router({
         // Contar pacientes duplicados
         const duplicados = await db.contarPacientesDuplicados(ctx.tenant.tenantId);
         
-        // Contar atendimentos sem evolução (placeholder - será implementado quando houver módulo de evolução)
-        const pendenciasDocumentacao = 0;
+        // Contar documentos pendentes de assinatura (evoluções e documentos médicos)
+        const { countDocumentosPendentes } = await import('./db-pendentes');
+        const documentosPendentesAssinatura = await countDocumentosPendentes(ctx.tenant.tenantId);
         
         // Contar pagamentos pendentes (placeholder)
         const pagamentosPendentes = 0;
@@ -518,10 +519,10 @@ export const appRouter = router({
         
         return {
           duplicados,
-          pendenciasDocumentacao,
+          documentosPendentesAssinatura,
           pagamentosPendentes,
           pacientesAguardando,
-          total: duplicados + pendenciasDocumentacao + pagamentosPendentes + pacientesAguardando,
+          total: duplicados + documentosPendentesAssinatura + pagamentosPendentes + pacientesAguardando,
         };
       }),
     

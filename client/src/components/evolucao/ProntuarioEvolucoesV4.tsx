@@ -21,7 +21,6 @@ import { Plus, FileText, Calendar, Clock, CheckCircle2, AlertCircle, Upload } fr
 // Importar componentes do módulo de evolução
 import {
   ModalEvolucao,
-  NotificationDropdown,
   ModalSelecionarExame,
 } from './components';
 
@@ -29,7 +28,6 @@ import {
 import {
   useTimer,
   useEvolucao,
-  usePendingDocuments,
 } from './hooks';
 
 // Importar contexto global de janelas minimizadas
@@ -143,9 +141,6 @@ export function ProntuarioEvolucoesV4({
   // Contexto global de janelas minimizadas
   const { addWindow, restoreWindow } = useMinimizedWindowsContext();
   
-  // Hooks customizados
-  const { pendentes, count: pendentesCount, refresh: refreshPendentes } = usePendingDocuments();
-  
   // Estado para armazenar dados da janela restaurada
   const [restoredWindowData, setRestoredWindowData] = useState<GlobalMinimizedWindow | null>(null);
 
@@ -215,15 +210,13 @@ export function ProntuarioEvolucoesV4({
   // Callback de sucesso ao salvar
   const handleSaveSuccess = useCallback(() => {
     refetchEvolucoes();
-    refreshPendentes();
-  }, [refetchEvolucoes, refreshPendentes]);
+  }, [refetchEvolucoes]);
 
   // Callback de sucesso ao assinar
   const handleSignSuccess = useCallback(() => {
     refetchEvolucoes();
-    refreshPendentes();
     handleCloseModal();
-  }, [refetchEvolucoes, refreshPendentes, handleCloseModal]);
+  }, [refetchEvolucoes, handleCloseModal]);
 
   // Importar exame
   const handleImportExam = useCallback((exameId: number) => {
@@ -244,13 +237,6 @@ export function ProntuarioEvolucoesV4({
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Dropdown de notificações */}
-          <NotificationDropdown 
-            pendentes={pendentes}
-            onViewAll={() => window.location.href = '/documentos-pendentes'}
-            onItemClick={(id) => console.log('Item clicked:', id)}
-          />
-          
           {/* Botão de upload */}
           <Button variant="outline" size="sm">
             <Upload className="w-4 h-4 mr-2" />
