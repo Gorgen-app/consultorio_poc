@@ -4442,3 +4442,24 @@ Dependencias quill e react-quill-new removidas (eram órfãs).
 - [x] Corrigir botão X para cor branca (botão customizado no cabeçalho)
 - [x] Afastar botão X do status "Em atendimento" (pr-12 no container + posição absoluta)
 
+
+
+---
+
+## 🚀 Deploy Automático GitHub → Manus Cloud
+
+- [ ] Pesquisar integração GitHub com Manus Cloud API
+- [ ] Configurar workflow do GitHub Actions com deploy real
+- [ ] Testar deploy automático com commit de teste
+- [ ] Documentar o processo
+
+
+
+---
+
+## 🌐 Configuração de Domínios
+
+- [ ] Investigar por que www.gorgen.com.br não mostra as correções
+- [ ] Verificar se há problema de DNS ou cache
+- [ ] Garantir que www.gorgen.com.br aponte para a mesma versão que drgorgenpoc-tyefpw5y.manus.space
+
