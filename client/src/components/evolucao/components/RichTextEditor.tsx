@@ -354,6 +354,7 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
         ref={editorRef}
         className="editor-content"
         contentEditable
+        dir="ltr"
         onInput={handleInput}
         dangerouslySetInnerHTML={{ __html: value }}
         data-placeholder={placeholder}
@@ -489,6 +490,10 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
           font-size: 14px;
           line-height: 1.6;
           min-height: 300px;
+          /* Forçar direção LTR para evitar bug de texto espelhado/RTL */
+          direction: ltr !important;
+          unicode-bidi: normal !important;
+          text-align: left;
         }
 
         .editor-content:focus {

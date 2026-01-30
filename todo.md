@@ -4338,3 +4338,61 @@ Dependencias quill e react-quill-new removidas (eram órfãs).
 - [x] Adicionar linha vermelha que se desloca conforme a hora do dia
 - [x] Atualizar posição automaticamente em tempo real (a cada 1 minuto)
 - [x] Círculo vermelho no início da linha para destaque visual
+
+
+---
+
+## 🔧 GORGEN 3.9.94 - Correções Diversas (30/01/2026)
+
+### Modal de Agendamento
+- [ ] Adicionar endereços dos consultórios abaixo do nome do local
+- [ ] Buscar endereços no Google para cada local de atuação
+
+### Modal de Agendamento Completo
+- [ ] Aumentar largura do modal
+- [ ] Adicionar CPF, data nascimento e ID do paciente no cabeçalho
+
+### Botão X de Fechar
+- [ ] Aumentar tamanho do botão X
+- [ ] Afastar do badge de status (estão sobrepostos)
+
+### Caixa de Texto da Evolução
+- [ ] Corrigir direção de escrita (RTL → LTR)
+- [ ] Corrigir caracteres espelhados/invertidos
+
+### Alergias
+- [ ] Adicionar opção "Nenhuma alergia conhecida" no registro de alergias
+
+
+---
+
+## 🔧 GORGEN 3.9.94 - Correções e Melhorias (30/01/2026)
+
+### Modal de Agendamento
+- [x] Adicionar endereços dos consultórios abaixo do nome no dropdown de local
+  - Consultório: Av. Cristóvão Colombo, 2948, sala 304 - Higienópolis, Porto Alegre/RS
+  - On-line: Atendimento remoto por vídeo
+  - HMV: R. Ramiro Barcelos, 910 - Moinhos de Vento, Porto Alegre/RS
+  - Santa Casa: R. Prof. Annes Dias, 295 - Centro, Porto Alegre/RS
+  - HMD: R. José de Alencar, 286 - Menino Deus, Porto Alegre/RS
+  - HMD CG: Av. Duque de Caxias, 474 - Centro, Campo Grande/MS
+- [x] Ampliar modal de agendamento para max-w-4xl
+- [x] Adicionar dados do paciente no cabeçalho (ID, CPF, Data de Nascimento)
+
+### Botão X de Fechar (Global)
+- [x] Aumentar tamanho do ícone X de 16px para 20px
+- [x] Adicionar padding e hover effect
+- [x] Afastar do canto para evitar sobreposição com status
+- [x] Adicionar z-index para garantir visibilidade
+
+### Editor de Evolução (RichTextEditor)
+- [x] Corrigir bug crítico de direção de texto RTL (espelhado)
+- [x] Adicionar atributo dir="ltr" no contentEditable
+- [x] Forçar direction: ltr e unicode-bidi: normal via CSS
+- [x] Garantir text-align: left
+
+### Alergias no Resumo Clínico
+- [x] Adicionar opção rápida "Nenhuma alergia conhecida (NKDA)" no modal de nova alergia
+- [x] Botão "Confirmar NKDA" para registro rápido
+- [x] Separador visual entre NKDA e registro de alergia específica
+

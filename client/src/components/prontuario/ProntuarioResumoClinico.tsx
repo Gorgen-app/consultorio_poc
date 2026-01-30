@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, AlertTriangle, Pill, Stethoscope, Save } from "lucide-react";
+import { Plus, Edit, Trash2, AlertTriangle, Pill, Stethoscope, Save, CheckCircle2 } from "lucide-react";
 
 interface Props {
   pacienteId: number;
@@ -330,6 +330,43 @@ export default function ProntuarioResumoClinico({
                 <DialogTitle>Nova Alergia</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
+                {/* Opção rápida para NKDA */}
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      <span className="text-sm font-medium text-emerald-800">Nenhuma alergia conhecida (NKDA)</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                      onClick={() => {
+                        createAlergia.mutate({ 
+                          pacienteId, 
+                          tipo: "Outro", 
+                          substancia: "NKDA - Nenhuma alergia conhecida", 
+                          reacao: "Paciente nega alergias", 
+                          gravidade: "Leve",
+                          confirmada: true 
+                        });
+                      }}
+                      disabled={createAlergia.isPending}
+                    >
+                      Confirmar NKDA
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">ou registrar alergia específica</span>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Tipo *</Label>

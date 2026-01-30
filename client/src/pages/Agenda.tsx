@@ -64,14 +64,16 @@ const TIPOS_BLOQUEIO = [
   "Outro",
 ] as const;
 
-const LOCAIS = [
-  "Consultório",
-  "On-line",
-  "HMV",
-  "Santa Casa",
-  "HMD",
-  "HMD CG",
+const LOCAIS_COM_ENDERECO = [
+  { nome: "Consultório", endereco: "Av. Cristóvão Colombo, 2948, sala 304 - Higienópolis, Porto Alegre/RS" },
+  { nome: "On-line", endereco: "Atendimento remoto por vídeo" },
+  { nome: "HMV", endereco: "R. Ramiro Barcelos, 910 - Moinhos de Vento, Porto Alegre/RS" },
+  { nome: "Santa Casa", endereco: "R. Prof. Annes Dias, 295 - Centro, Porto Alegre/RS" },
+  { nome: "HMD", endereco: "R. José de Alencar, 286 - Menino Deus, Porto Alegre/RS" },
+  { nome: "HMD CG", endereco: "Av. Duque de Caxias, 474 - Centro, Campo Grande/MS" },
 ];
+
+const LOCAIS = LOCAIS_COM_ENDERECO.map(l => l.nome);
 
 // Cores por tipo de compromisso
 const CORES_TIPO: Record<string, string> = {
@@ -1180,9 +1182,27 @@ export default function Agenda() {
 
       {/* Modal Novo Agendamento */}
       <Dialog open={modalNovoAberto} onOpenChange={setModalNovoAberto}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo Agendamento</DialogTitle>
+            {pacienteSelecionadoInfo && (
+              <div className="flex items-center gap-4 mt-2 p-2 bg-muted/50 rounded-lg text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{pacienteSelecionadoInfo.nome}</span>
+                </div>
+                <div className="text-muted-foreground">
+                  ID: {pacienteSelecionadoInfo.idPaciente}
+                </div>
+                <div className="text-muted-foreground">
+                  CPF: {pacienteSelecionadoInfo.cpf || "N/A"}
+                </div>
+                <div className="text-muted-foreground">
+                  Nasc: {pacienteSelecionadoInfo.dataNascimento 
+                    ? new Date(pacienteSelecionadoInfo.dataNascimento).toLocaleDateString('pt-BR')
+                    : "N/A"}
+                </div>
+              </div>
+            )}
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -1535,8 +1555,13 @@ export default function Agenda() {
                   <SelectValue placeholder="Selecione o local" />
                 </SelectTrigger>
                 <SelectContent>
-                  {LOCAIS.map((local) => (
-                    <SelectItem key={local} value={local}>{local}</SelectItem>
+                  {LOCAIS_COM_ENDERECO.map((local) => (
+                    <SelectItem key={local.nome} value={local.nome}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{local.nome}</span>
+                        <span className="text-xs text-muted-foreground">{local.endereco}</span>
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
