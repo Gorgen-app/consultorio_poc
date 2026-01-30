@@ -4278,3 +4278,29 @@ Adicionar os seguintes botões ao final da janela de evolução:
 - xlsx removido, substituído por exceljs 4.4.0 (corrige 2 vulnerabilidades)
 - Dependabot configurado com auto-merge para patches de segurança
 - Vulnerabilidades de alta severidade: 5 → 3 (redução de 40%)
+
+
+---
+
+## 🔒 Avaliação de Segurança Adicional (30/01/2026)
+
+### Análise do Quill
+- [x] Identificar onde o Quill é usado no projeto
+- [x] Avaliar complexidade da migração para TipTap
+- [x] Documentar recomendação
+
+**Resultado:** Quill NÃO é usado! O RichTextEditor usa document.execCommand nativo.
+Dependencias quill e react-quill-new removidas (eram órfãs).
+
+### Teste de Exportação Excel
+- [x] Testar exportação de pacientes para .xlsx
+- [x] Testar exportação de atendimentos para .xlsx
+- [x] Validar formatação e dados
+
+**Resultado:** Exportação Excel com exceljs funcionando (6650 bytes gerados)
+
+### Dependabot
+- [x] Verificar configuração no repositório
+- [x] Confirmar que workflows estão ativos
+
+**Resultado:** Arquivos criados localmente, serão enviados no próximo push
