@@ -491,45 +491,6 @@ export const RichTextEditor: React.FC<RichTextEditorExtendedProps> = ({
           font-size: 14px;
           line-height: 1.6;
           min-height: 300px;
-          /* Correção definitiva para texto espelhado/invertido */
-          direction: ltr !important;
-          unicode-bidi: normal !important;
-          text-align: left !important;
-          writing-mode: horizontal-tb !important;
-          text-orientation: mixed !important;
-          /* Reset de transformações */
-          transform: none !important;
-          /* Propriedades adicionais para garantir comportamento correto */
-          -webkit-text-size-adjust: 100%;
-          -moz-text-size-adjust: 100%;
-          text-size-adjust: 100%;
-          /* Forçar renderização LTR */
-          -webkit-locale: "pt-BR";
-        }
-
-        .editor-content * {
-          direction: inherit !important;
-          unicode-bidi: normal !important;
-          transform: none !important;
-        }
-
-        .editor-content p,
-        .editor-content div,
-        .editor-content span,
-        .editor-content strong,
-        .editor-content em,
-        .editor-content u,
-        .editor-content li,
-        .editor-content ol,
-        .editor-content ul {
-          direction: ltr !important;
-          unicode-bidi: normal !important;
-          text-align: left !important;
-        }
-
-        /* Prevenir herança de estilos RTL de elementos pais */
-        .editor-content[contenteditable="true"] {
-          -webkit-user-modify: read-write-plaintext-only;
         }
 
         .editor-content:focus {
